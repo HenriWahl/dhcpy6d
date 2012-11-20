@@ -33,17 +33,17 @@ cfg = Config()
 
 # RNDC Key for DNS updates from ISC Bind /etc/rndc.key
 if cfg.DNS_UPDATE:
-   import dns.update
-   import dns.tsigkeyring
-   import dns.query
-   import dns.resolver
-   import dns.reversename        
+    import dns.update
+    import dns.tsigkeyring
+    import dns.query
+    import dns.resolver
+    import dns.reversename        
     
-   Keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY : cfg.DNS_RNDC_SECRET})
+    Keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY : cfg.DNS_RNDC_SECRET})
 
-   # resolver for DNS updates
-   Resolver = dns.resolver.Resolver()
-   Resolver.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
+    # resolver for DNS updates
+    Resolver = dns.resolver.Resolver()
+    Resolver.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
 
 # Logging
 if cfg.LOG and cfg.LOG_FILE != "":
