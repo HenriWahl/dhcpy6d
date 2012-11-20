@@ -67,7 +67,7 @@ dnsqueue = Queue.Queue()
 # save OS 
 OS = platform.system()
 if "BSD" in OS:
-    OS = BSD
+    OS = "BSD"
 
 # platform-dependant neighbor cache call
 # every platform has its different output
