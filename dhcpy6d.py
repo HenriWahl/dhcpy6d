@@ -66,6 +66,8 @@ dnsqueue = Queue.Queue()
 
 # save OS 
 OS = platform.system()
+if "BSD" in OS:
+    OS = BSD
 
 # platform-dependant neighbor cache call
 # every platform has its different output
@@ -74,7 +76,7 @@ NBC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
                          "dev"  : 2,\
                          "llip" : 0,\
                          "mac"  : 4 },\
-        "OpenBSD": { "call" : "/usr/sbin/ndp -a -n",\
+        "BSD": { "call" : "/usr/sbin/ndp -a -n",\
                          "dev"  : 2,\
                          "llip" : 0,\
                          "mac"  : 1}
@@ -83,7 +85,7 @@ NBC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
 # libc access via ctypes, needed for interface handling
 if OS == "Linux":
     libc_name = "libc.so.6"
-elif OS == "OpenBSD":
+elif OS == "BSD":
     # libc_ver() returns version number of libc that is hardcoded in
     # libc file name
     libc_name = "libc.so." + platform.libc_ver()[1]
