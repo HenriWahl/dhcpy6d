@@ -144,7 +144,9 @@ class Config(object):
                         ErrorExit("%s Logfile '%s' is no file or link." % (msg_prefix, self.LOG_FILE))
                 else:
                     ErrorExit("%s Logfile '%s' does not exist." % (msg_prefix, self.LOG_FILE))
-                
+            if not self.LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+                ErrorExit("Log level %s is invalid" % (self.LOG_LEVEL))
+                    
         # check authentification information    
         if not self.AUTHENTICATION_INFORMATION.isalnum():
             ErrorExit("%s Authentification information '%s' must be alphanumeric." % (msg_prefix, self.AUTHENTICATION_INFORMATION))
@@ -276,6 +278,8 @@ class Config(object):
         self.LOG_CONSOLE = False
         # Logfile
         self.LOG_FILE = ""
+        # Log level
+        self.LOG_LEVEL = "INFO"
         
         # some 128 bits
         self.AUTHENTICATION_INFORMATION = "00000000000000000000000000000000"
@@ -397,7 +401,8 @@ class Config(object):
         self.DNS_IGNORE_CLIENT = BOOLPOOL[self.DNS_IGNORE_CLIENT]
         self.REALLY_DO_IT = BOOLPOOL[self.REALLY_DO_IT]
         self.LOG = BOOLPOOL[self.LOG]
-        self.LOG_CONSOLE = BOOLPOOL[self.LOG_CONSOLE]     
+        self.LOG_CONSOLE = BOOLPOOL[self.LOG_CONSOLE]
+        self.LOG_LEVEL = self.LOG_LEVEL.upper()
         
         # index of classes which add some identification rules etc.
         

@@ -22,6 +22,8 @@ import re
 import SocketServer
 import traceback
 import copy
+import logging
+import logging.handlers
 
 from dhcpy6d.Helpers import *
 from dhcpy6d.Constants import *
@@ -46,8 +48,18 @@ if cfg.DNS_UPDATE:
     Resolver.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
 
 # Logging
-if cfg.LOG and cfg.LOG_FILE != "":
-    Logfile = open(cfg.LOG_FILE, "a", 1)
+log = logging.getLogger('dhcpy6d')
+if cfg.LOG:
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    if cfg.LOG_FILE != "":
+        log_handler = logging.handlers.WatchedFileHandler(cfg.LOG_FILE)
+        log_handler.setFormatter(formatter)
+        log.addHandler(log_handler)
+    if cfg.LOG_CONSOLE:
+        log_handler = logging.StreamHandler()
+        log_handler.setFormatter(formatter)
+        log.addHandler(log_handler)
+    log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
 
 # dictionary to store transactions - key is transaction ID, value a transaction object
 Transactions = dict()
@@ -399,7 +411,8 @@ def BuildClient(transaction_id):
         return client
 
     except Exception,err:
-        Log("ERROR: BuildClient(): " + str(err))
+        #Log("ERROR: BuildClient(): " + str(err))
+        log.error("BuildClient(): " + str(err))
         print err
         import traceback
         traceback.print_exc(file=sys.stdout)
@@ -419,7 +432,8 @@ def CollectMACs():
                 if host["interface"] in cfg.INTERFACE:
                     if not CollectedMACs.has_key(host["llip"]) and host["llip"].lower().startswith("fe80:"):
                         CollectedMACs[host["llip"]] = host["mac"]
-                        Log("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
+                        #Log("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
+                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
                         volatilestore.store_mac_llip(host["mac"], host["llip"])
         else:
             # subject to change - other distros might have other paths - might become a task
@@ -436,13 +450,15 @@ def CollectMACs():
                     if not CollectedMACs.has_key(f[NBC[OS]["llip"]]) and f[NBC[OS]["llip"]].lower().startswith("fe80:")\
                        and ":" in f[NBC[OS]["mac"]]:
                         CollectedMACs[f[NBC[OS]["llip"]]] = f[NBC[OS]["mac"]]
-                        Log("Collected MAC: %s for LinkLocalIP: %s" % (f[NBC[OS]["mac"]], f[NBC[OS]["llip"]]))
+                        #Log("Collected MAC: %s for LinkLocalIP: %s" % (f[NBC[OS]["mac"]], f[NBC[OS]["llip"]]))
+                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NBC[OS]["mac"]], f[NBC[OS]["llip"]]))
                         volatilestore.store_mac_llip(f[NBC[OS]["mac"]], f[NBC[OS]["llip"]])
             
 
                     
     except Exception,err:
-        Log("ERROR: CollectMacs(): " + str(err))
+        #Log("ERROR: CollectMacs(): " + str(err))
+        log.error("CollectMacs(): " + str(err))        
         print err
         import traceback
         traceback.print_exc(file=sys.stdout)
@@ -551,7 +567,8 @@ class DNSQueryThread(threading.Thread):
                     update_rev.delete(dns.reversename.from_address(a.ADDRESS), "PTR")  
                 dns.query.tcp(update_rev, cfg.DNS_UPDATE_NAMESERVER)
             except Exception,err:
-                Log("ERROR: DNSUPDATE: " + str(err))
+                #Log("ERROR: DNSUPDATE: " + str(err))
+                log.error("DNSUPDATE: " + str(err))
                 print err
                 import traceback
                 traceback.print_exc(file=sys.stdout)            
@@ -625,7 +642,7 @@ def Log(logstring):
             Logfile.write(str(datetime.datetime.now()) + " - " + logstring + "\n")
         if cfg.LOG_CONSOLE:
             print str(datetime.datetime.now()) + " - " + logstring + "\n"
-
+               
 
 class TidyUpThread(threading.Thread):
     """
@@ -652,7 +669,8 @@ class TidyUpThread(threading.Thread):
 
                     except Exception, err:
                         print "TransactionID %s has already been deleted" % (str(err))
-                        Log("ERROR: TidyUp: TransactionID %s has already been deleted" % (str(err)))    
+                        #Log("ERROR: TidyUp: TransactionID %s has already been deleted" % (str(err)))    
+                        log.error("TidyUp: TransactionID %s has already been deleted" % (str(err)))
                         import traceback
                         traceback.print_exc(file=sys.stdout)
 
@@ -955,7 +973,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                         Transactions[transaction_id].LastMessageReceivedType = message_type
 
                     # logging
-                    Log("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, Transactions[transaction_id]._getOptionsString()))
+                    #Log("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, Transactions[transaction_id]._getOptionsString()))
+                    log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, Transactions[transaction_id]._getOptionsString()))
 
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
@@ -972,7 +991,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
                             except:
                                 # MAC not yet found :-(
-                                Log("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown." % (Transactions[transaction_id].ClientLLIP)))
+                                #Log("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown." % (Transactions[transaction_id].ClientLLIP)))
+                                log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown." % (Transactions[transaction_id].ClientLLIP)))
                         else:
                             # ADVERTISE
                             # if last request was a SOLICIT send an ADVERTISE (type 2) back
@@ -1077,7 +1097,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                     Transactions[transaction_id].Counter += 1
 
         except Exception,err:
-            Log("ERROR: handle(): " + str(err))
+            #Log("ERROR: handle(): " + str(err))
+            log.error("handle(): " + str(err))
             print err
             import traceback
             traceback.print_exc(file=sys.stdout)   
@@ -1281,12 +1302,14 @@ class Handler(SocketServer.DatagramRequestHandler):
             self.response = binascii.a2b_hex(response_ascii)
             # log client info
             if not Transactions[transaction_id].Client == None and 3 in options_request:
-                Log("%s: TransactionID: %s Options: %s %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request, Transactions[transaction_id].Client._getOptionsString()))
+                #Log("%s: TransactionID: %s Options: %s %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request, Transactions[transaction_id].Client._getOptionsString()))
+                log.info("%s: TransactionID: %s Options: %s %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request, Transactions[transaction_id].Client._getOptionsString()))
             else:
-                Log("%s: TransactionID: %s Options:%s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))
-
+                #Log("%s: TransactionID: %s Options:%s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))
+                log.info("%s: TransactionID: %s Options:%s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))      
         except Exception, err:
-            Log("ERROR: Response(): " + str(err))
+            #Log("ERROR: Response(): " + str(err))
+            log.error("Response(): " + str(err))
             print err
             import traceback
             traceback.print_exc(file=sys.stdout)
@@ -1311,7 +1334,8 @@ class Handler(SocketServer.DatagramRequestHandler):
 if __name__ == "__main__":
 
     print "Starting dhcpy6d daemon..."
-    Log("Starting dhcpy6d daemon...")
+    #Log("Starting dhcpy6d daemon...")
+    log.info("Starting dhcpy6d daemon...")
 
     # configure SocketServer
     UDPMulticastIPv6.address_family = socket.AF_INET6
