@@ -657,9 +657,9 @@ class TidyUpThread(threading.Thread):
             #get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                # keeping it for 60 seconds should be enough
+                # keeping it for 120 seconds should be enough
                 now = datetime.datetime.now()
-                timedelta = datetime.timedelta(seconds=60)
+                timedelta = datetime.timedelta(seconds=120)
                 for t in Transactions.copy().keys():
                     try:
                         if now > Transactions[t].Timestamp + timedelta:
