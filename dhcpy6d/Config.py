@@ -5,12 +5,15 @@
 
 import sys 
 import ConfigParser
+import stat
 import os.path
 import uuid
 import time
 import datetime
 import shlex
 import copy
+import platform
+
 from Helpers import *
 
 # needed for boolean options
@@ -135,17 +138,31 @@ class Config(object):
             else:
                 ErrorExit("%s SQLite file '%s' does not exist." % (msg_prefix, self.STORE_SQLITE_VOLATILE))
 
-        # check logfile's validity    
+        # check log validity    
         if self.LOG:
             if self.LOG_FILE != "":
                 if os.path.exists(self.LOG_FILE):
                     if not (os.path.isfile(self.LOG_FILE) or \
-                       os.path.islink(self.STORE_FILE_CONFIG)):
+                       os.path.islink(self.LOG_FILE)):
                         ErrorExit("%s Logfile '%s' is no file or link." % (msg_prefix, self.LOG_FILE))
                 else:
                     ErrorExit("%s Logfile '%s' does not exist." % (msg_prefix, self.LOG_FILE))
             if not self.LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
                 ErrorExit("Log level %s is invalid" % (self.LOG_LEVEL))
+            if self.LOG_SYSLOG:
+                if not self.LOG_SYSLOG_FACILITY in ["KERN", "USER", "MAIL", "DAEMON", "AUTH",\
+                                                     "LPR", "NEWS", "UUCP", "CRON", "SYSLOG",\
+                                                     "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3",\
+                                                     "LOCAL4", "LOCAL5", "LOCAL6", "LOCAL7"]:
+                    ErrorExit("%s Syslog facility '%s' is invalid." % (msg_prefix, self.LOG_SYSLOG_FACILITY))
+
+                if self.LOG_SYSLOG_DESTINATION.startswith("/"):
+                    stat_result = os.stat(self.LOG_SYSLOG_DESTINATION)
+                    if not stat.S_ISSOCK(stat_result.st_mode):
+                        ErrorExit("%s Syslog destination '%s' is no socket." % (msg_prefix, self.LOG_SYSLOG_DESTINATION))
+                elif self.LOG_SYSLOG_DESTINATION.count(":") > 0:
+                    if self.LOG_SYSLOG_DESTINATION.count(":") > 1:
+                        ErrorExit("%s Syslog destination '%s' is no valid host:port destination." % (msg_prefix, self.LOG_SYSLOG_DESTINATION))
                     
         # check authentification information    
         if not self.AUTHENTICATION_INFORMATION.isalnum():
@@ -274,20 +291,32 @@ class Config(object):
 
         # Log ot not
         self.LOG = False
+        # Log level
+        self.LOG_LEVEL = "INFO"
         # Log on console
         self.LOG_CONSOLE = False
         # Logfile
         self.LOG_FILE = ""
-        # Log level
-        self.LOG_LEVEL = "INFO"
+        # Log to syslog
+        self.LOG_SYSLOG = False
+        # Syslog facility
+        self.LOG_SYSLOG_FACILITY = "daemon"
+        # Local syslog socket or server:port
+        if platform.system() in ["Linux", "OpenBSD"]:
+            self.LOG_SYSLOG_DESTINATION = "/dev/log"
+        else:
+            self.LOG_SYSLOG_DESTINATION = "/var/run/log"
         
         # some 128 bits
         self.AUTHENTICATION_INFORMATION = "00000000000000000000000000000000"
         
-        # for debugging 
+        # for debugging - if False nothing is done 
         self.REALLY_DO_IT = True
         
-        # address and class schemes
+        # interval for TidyUp thread - time in seconds
+        self.CLEANING_INTERVAL = 10
+        
+        # Address and class schemes
         self.ADDRESSES = dict()
         self.CLASSES = dict()
         
@@ -402,7 +431,9 @@ class Config(object):
         self.REALLY_DO_IT = BOOLPOOL[self.REALLY_DO_IT]
         self.LOG = BOOLPOOL[self.LOG]
         self.LOG_CONSOLE = BOOLPOOL[self.LOG_CONSOLE]
-        self.LOG_LEVEL = self.LOG_LEVEL.upper()
+        self.LOG_LEVEL = self.LOG_LEVEL.upper()        
+        self.LOG_SYSLOG = BOOLPOOL[self.LOG_SYSLOG]
+        self.LOG_SYSLOG_FACILITY = self.LOG_SYSLOG_FACILITY.upper()
         
         # index of classes which add some identification rules etc.
         

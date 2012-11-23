@@ -48,18 +48,35 @@ if cfg.DNS_UPDATE:
     Resolver.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
 
 # Logging
-log = logging.getLogger('dhcpy6d')
+log = logging.getLogger("dhcpy6d")
 if cfg.LOG:
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
+    log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
     if cfg.LOG_FILE != "":
         log_handler = logging.handlers.WatchedFileHandler(cfg.LOG_FILE)
         log_handler.setFormatter(formatter)
         log.addHandler(log_handler)
+    # std err console output
     if cfg.LOG_CONSOLE:
         log_handler = logging.StreamHandler()
         log_handler.setFormatter(formatter)
         log.addHandler(log_handler)
-    log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
+    if cfg.LOG_SYSLOG:
+        # time should be added by syslog daemon
+        formatter = logging.Formatter("%(name)s %(levelname)s %(message)s")
+        # if /socket/file is given use this as addres
+        if cfg.LOG_SYSLOG_DESTINATION.startswith("/") == True:
+            destination = cfg.LOG_SYSLOG_DESTINATION
+        # if host and port are defined use them...
+        elif cfg.LOG_SYSLOG_DESTINATION.count(":") == 1:
+            destination = tuple(cfg.LOG_SYSLOG_DESTINATION.split(":"))
+        # ...otherwise add port 514 to given host address
+        else:
+            destination = (cfg.LOG_SYSLOG_DESTINATION, 514)
+        log_handler = logging.handlers.SysLogHandler(address=destination,\
+                      facility=logging.handlers.SysLogHandler.__dict__["LOG_" + cfg.LOG_SYSLOG_FACILITY])
+        log_handler.setFormatter(formatter)
+        log.addHandler(log_handler)
 
 # dictionary to store transactions - key is transaction ID, value a transaction object
 Transactions = dict()
@@ -654,32 +671,33 @@ class TidyUpThread(threading.Thread):
 
     def run(self):
         try:
+            # counter for database cleaning interval
+            dbcount = 0
+            
             #get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                # keeping it for 120 seconds should be enough
                 now = datetime.datetime.now()
-                timedelta = datetime.timedelta(seconds=120)
+                timedelta = datetime.timedelta(seconds=cfg.CLEANING_INTERVAL*3)
                 for t in Transactions.copy().keys():
                     try:
                         if now > Transactions[t].Timestamp + timedelta:
                             Transactions.pop(Transactions[t].ID)
-
                     except Exception, err:
-                        print "TransactionID %s has already been deleted" % (str(err))
-                        #Log("ERROR: TidyUp: TransactionID %s has already been deleted" % (str(err)))    
                         log.error("TidyUp: TransactionID %s has already been deleted" % (str(err)))
                         import traceback
                         traceback.print_exc(file=sys.stdout)
+                
+                # cleaning database once per minute should be enough
+                if dbcount > 60/cfg.CLEANING_INTERVAL:
+                    # remove leases which might not be recycled like random addresses for example
+                    volatilestore.remove_leases(category="random", timestamp=datetime.datetime.now())
+                    # set leases free whose valid lifetime is over
+                    volatilestore.release_free_leases(datetime.datetime.now())                    
+                    dbcount = 0
 
-                # remove leases which might not be recycled like random addresses for example
-                volatilestore.remove_leases(category="random", timestamp=datetime.datetime.now())
-
-                # set leases free whose valid lifetime is over
-                volatilestore.release_free_leases(datetime.datetime.now())
-
-                # cleaning once per minute should be enough
-                time.sleep(60)
+                dbcount += 1
+                time.sleep(cfg.CLEANING_INTERVAL)
 
         except:
             import traceback
@@ -1059,7 +1077,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                             elif Transactions[transaction_id].LastMessageReceivedType == 8:                            
                                 if cfg.DNS_UPDATE:
                                     # build client to be able to delete it from DNS
-                                    Transactions[transaction_id].Client = BuildClient(transaction_id)
+                                    ###Transactions[transaction_id].Client = BuildClient(transaction_id)
                                     for a in Transactions[transaction_id].Addresses:
                                         DNSDelete(transaction_id, address=a, action="release")
                                 for a in Transactions[transaction_id].Addresses:
@@ -1124,6 +1142,9 @@ class Handler(SocketServer.DatagramRequestHandler):
             response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
             # Option 2 server identifier
             response_ascii += BuildOption(2, cfg.SERVERDUID)
+            
+            if Transactions[transaction_id].Client == None:
+                Transactions[transaction_id].Client = BuildClient(transaction_id)
 
             # IA_NA non-temporary addresses
             # Option 3 + 5 Identity Association for Non-temporary Address
@@ -1131,8 +1152,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # sicherheitshalber noch mal pruefen ob wirklich eine MAC ueber die Link Local IP vom Client bekannt ist
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                     # sammle IA Informationen ueber Client in storage
-                    if Transactions[transaction_id].Client == None:
-                        Transactions[transaction_id].Client = BuildClient(transaction_id)
+                    ###if Transactions[transaction_id].Client == None:
+                    ###    Transactions[transaction_id].Client = BuildClient(transaction_id)
                     # embed option 5 into option 3 - several if necessary
                     ia_addresses = ""
                     for address in Transactions[transaction_id].Client.Addresses:
@@ -1169,7 +1190,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # sicherheitshalber noch mal pruefen ob wirklich eine MAC ueber die Link Local IP vom Client bekannt ist
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                     # sammle IA Informationen ueber Client in storage
-                    Transactions[transaction_id].Client = BuildClient(transaction_id)
+                    ###Transactions[transaction_id].Client = BuildClient(transaction_id)
                     # embed option 5 into option 4 - several if necessary
                     ia_addresses = ""
                     for address in Transactions[transaction_id].Client.Addresses:
