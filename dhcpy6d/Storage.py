@@ -362,9 +362,7 @@ class SQLite(Store):
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
-        
-        print "STORAGE INITIALIZED", self.connection
-        
+
         
     def DBConnect(self, storage_type="volatile"):
         """
@@ -549,9 +547,7 @@ class MySQL(Store):
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
-        
-        print "STORAGE INITIALIZED", self.connection
-        
+       
         
     def DBConnect(self):
         
