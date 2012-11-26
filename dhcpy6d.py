@@ -291,7 +291,7 @@ def BuildClient(transaction_id):
 
                                 # flag for lease usage
                                 use_lease = True
-
+                                
                                 # test lease validity against address prototype pattern only if not fixed                               
                                 if a["category"] != "fixed":
                                     # test if address matches pattern
@@ -326,8 +326,35 @@ def BuildClient(transaction_id):
                                                          valid_lifetime=cfg.ADDRESSES[a["type"]].VALID_LIFETIME,\
                                                          category=a["category"],\
                                                          ia_type=a["ia_type"],\
-                                                         aclass=a["class"])
-                                            client.Addresses.append(ia)                                       
+                                                         aclass=a["class"],\
+                                                         dns_update=cfg.ADDRESSES[a["type"]].DNS_UPDATE,\
+                                                         dns_zone=cfg.ADDRESSES[a["type"]].DNS_ZONE,\
+                                                         dns_rev_zone=cfg.ADDRESSES[a["type"]].DNS_REV_ZONE,\
+                                                         dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
+                                            client.Addresses.append(ia) 
+                                    
+                                    # depreferred random address has to be deleted and replaced
+                                    elif a["category"] == "random" and datetime.datetime.now() > a["preferred_until"]:                                        # create new random address if old one is depreferred
+                                        random_address = ParseAddressPattern(cfg.ADDRESSES[a["type"]], client_config, transaction_id)
+                                        # create new random address if old one is depreferred
+                                        # do not wait until it is invalid                                      
+                                        if not random_address == None:
+                                            ia = Address(address=random_address, ia_type=cfg.ADDRESSES[a["type"]].IA_TYPE,\
+                                                         preferred_lifetime=cfg.ADDRESSES[a["type"]].PREFERRED_LIFETIME,\
+                                                         valid_lifetime=cfg.ADDRESSES[a["type"]].VALID_LIFETIME,\
+                                                         category="random",\
+                                                         aclass=cfg.ADDRESSES[a["type"]].CLASS,\
+                                                         atype=cfg.ADDRESSES[a["type"]].TYPE,\
+                                                         dns_update=cfg.ADDRESSES[a["type"]].DNS_UPDATE,\
+                                                         dns_zone=cfg.ADDRESSES[a["type"]].DNS_ZONE,\
+                                                         dns_rev_zone=cfg.ADDRESSES[a["type"]].DNS_REV_ZONE,\
+                                                         dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
+                                            client.Addresses.append(ia)
+                                            # set depreferred address invalid
+                                            client.Addresses.append(Address(address=ColonifyIP6(a["address"]), valid=False,\
+                                                                            preferred_lifetime=0,\
+                                                                            valid_lifetime=0))
+                                        
                                     else: 
                                         # build IA partly of leases db, partly of config db
                                         ia = Address(address=ColonifyIP6(a["address"]),\
@@ -336,17 +363,20 @@ def BuildClient(transaction_id):
                                                      valid_lifetime=cfg.ADDRESSES[a["type"]].VALID_LIFETIME,\
                                                      category=a["category"],\
                                                      ia_type=a["ia_type"],\
-                                                     aclass=a["class"])
+                                                     aclass=a["class"],\
+                                                     dns_update=cfg.ADDRESSES[a["type"]].DNS_UPDATE,\
+                                                     dns_zone=cfg.ADDRESSES[a["type"]].DNS_ZONE,\
+                                                     dns_rev_zone=cfg.ADDRESSES[a["type"]].DNS_REV_ZONE,\
+                                                     dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
                                         client.Addresses.append(ia)
-        
-                    # look for addresses in transaction that are invalid and add them
-                    # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                    for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
-                        client.Addresses.append(Address(address=ColonifyIP6(a), valid=False,\
-                                                        preferred_lifetime=0,\
-                                                        valid_lifetime=0))
-                         
-                    return client
+
+            # look for addresses in transaction that are invalid and add them
+            # to client addresses with flag invalid and a RFC-compliant lifetime of 0
+            for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
+                client.Addresses.append(Address(address=ColonifyIP6(a), valid=False,\
+                                                preferred_lifetime=0,\
+                                                valid_lifetime=0))
+            return client
 
         # build IA addresses from config - fixed ones and dynamic
         if client_config != None:    
@@ -620,13 +650,13 @@ def ParseAddressPattern(address, client_config, transaction_id):
         # - is just shorter than the_first_seven_octets
         prefix = "".join(DecompressIP6(a.replace("$range$", "0000"))[:28])
         # first look for highest inactive (free) lease
-        lease = volatilestore.get_lease(active=0, prefix=prefix, frange=frange, trange=trange)
+        lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
         # gotten lease has to be in range - important after changed range boundaries 
         if not lease == None and frange <= lease[28:].lower() < trange:
             a = ":".join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
                           lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
         else:
-            lease = volatilestore.get_lease(active=1, prefix=prefix, frange=frange, trange=trange)
+            lease = volatilestore.get_range_lease(active=1, prefix=prefix, frange=frange, trange=trange)
             # second search highest active lease  
             if not lease == None and frange <= lease[28:].lower() < trange:     
                 # Here logging is very important if range has been exceeded

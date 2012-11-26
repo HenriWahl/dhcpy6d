@@ -30,9 +30,8 @@ class Config(object):
         """
         checks validity of config settings
         """
-        print "Checking configuration..."
-        #try:
         msg_prefix = "General configuration:"
+        
         # check interface for multicast
         for i in self.INTERFACE:
             if not i.isalnum():

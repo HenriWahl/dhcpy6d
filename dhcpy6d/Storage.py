@@ -127,7 +127,7 @@ class Store(object):
         return None    
     
     
-    def get_lease(self, active=1, prefix="", frange="", trange=""):
+    def get_range_lease(self, active=1, prefix="", frange="", trange=""):
         """
         ask DB for last known leases - active and inactive and if necessary range sensitive
         """ 
@@ -137,6 +137,7 @@ class Store(object):
             query =  "SELECT address FROM %s WHERE active = %s AND '%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
                   (self.table_leases, active, prefix+frange, prefix+trange) 
         answer = self.query(query)
+        
         # SQLite returns list, MySQL tuple - in case someone wonders here...
         if not (answer == [] or answer == ()):
             return answer[0][0]
@@ -180,7 +181,7 @@ class Store(object):
                  self.Transactions[transaction_id].DUID,\
                  self.Transactions[transaction_id].IAID)
                 
-        answer = self.query(query)
+        answer = self.query(query)        
         return answer
         
     
