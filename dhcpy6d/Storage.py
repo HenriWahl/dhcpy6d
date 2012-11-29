@@ -208,7 +208,6 @@ class Store(object):
         """
         get client config from db and build the appropriate config objects and indices
         """
-        
         if self.Transactions[transaction_id].ClientConfigDB == None:
             query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
                     hostname = '%s' OR mac LIKE '%%%s%%' OR duid = '%s'" % \
@@ -235,12 +234,13 @@ class Store(object):
                 self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC)
 
                 # and put the host objects into index
-                for m in self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
-                    if not m in self.Transactions[transaction_id].ClientConfigDB.IndexMAC:
-                        self.Transactions[transaction_id].ClientConfigDB.IndexMAC[m] = [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
-                    else:
-                        self.Transactions[transaction_id].ClientConfigDB.IndexMAC[m].append(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname])
-                        
+                if self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
+                    for m in self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
+                        if not m in self.Transactions[transaction_id].ClientConfigDB.IndexMAC:
+                            self.Transactions[transaction_id].ClientConfigDB.IndexMAC[m] = [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
+                        else:
+                            self.Transactions[transaction_id].ClientConfigDB.IndexMAC[m].append(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname])
+                            
                 # add DUIDs to IndexDUID
                 if not self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID == "":
                     if not self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID in self.Transactions[transaction_id].ClientConfigDB.IndexDUID:
@@ -254,7 +254,7 @@ class Store(object):
         get host(s?) and its information belonging to that mac
         """
         # get client config that most probably seems to fit
-        self.build_config_from_db(transaction_id)
+        #self.build_config_from_db(transaction_id)
         
         hosts = list()
         mac = self.Transactions[transaction_id].MAC
@@ -270,7 +270,7 @@ class Store(object):
         get host and its information belonging to that DUID
         """
         # get client config that most probably seems to fit
-        self.build_config_from_db(transaction_id)                
+        #self.build_config_from_db(transaction_id)                
         
         hosts = list()
         duid = self.Transactions[transaction_id].DUID
@@ -290,7 +290,7 @@ class Store(object):
         get host and its information by hostname
         """
         # get client config that most probably seems to fit
-        self.build_config_from_db(transaction_id)
+        #self.build_config_from_db(transaction_id)
         
         hostname = self.Transactions[transaction_id].FQDN.split(".")[0]
         if hostname in self.Transactions[transaction_id].ClientConfigDB.Hosts:
@@ -572,7 +572,6 @@ class MySQL(Store):
         except (AttributeError, MySQLdb.OperationalError):            
             import traceback
             traceback.print_exc(file=sys.stdout)
-            print "SECOND TRY"
             if not self.DBConnect():
                 return None
             else:

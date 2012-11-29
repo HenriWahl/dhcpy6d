@@ -221,6 +221,9 @@ def BuildClient(transaction_id):
             # check all given identification criteria - if they all match each other the client is identified       
             id_attributes = list()
 
+            # get client config that most probably seems to fit
+            configstore.build_config_from_db(transaction_id)
+
             # check every attribute which is required
             # depending on identificaton mode empty results are ignored or considered
             # finally all attributes are grouped in sets and for a correctly identified host
@@ -334,7 +337,7 @@ def BuildClient(transaction_id):
                                             client.Addresses.append(ia) 
                                     
                                     # depreferred random address has to be deleted and replaced
-                                    elif a["category"] == "random" and datetime.datetime.now() > a["preferred_until"]:                                        # create new random address if old one is depreferred
+                                    elif a["category"] == "random" and str(datetime.datetime.now()) > str(a["preferred_until"]):                                        # create new random address if old one is depreferred
                                         random_address = ParseAddressPattern(cfg.ADDRESSES[a["type"]], client_config, transaction_id)
                                         # create new random address if old one is depreferred
                                         # do not wait until it is invalid                                      
@@ -375,7 +378,7 @@ def BuildClient(transaction_id):
             for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
                 client.Addresses.append(Address(address=ColonifyIP6(a), valid=False,\
                                                 preferred_lifetime=0,\
-                                                valid_lifetime=0))
+                                                valid_lifetime=0))                   
             return client
 
         # build IA addresses from config - fixed ones and dynamic
@@ -403,7 +406,7 @@ def BuildClient(transaction_id):
     
                 if not client_config.CLASS == "":
                     # add all addresses which belong to that class
-                    for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:  
+                    for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
                         a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
                         # Address class is borrowed from Config.py
                         # in case range has been exceeded a will be None
@@ -455,7 +458,7 @@ def BuildClient(transaction_id):
                              dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,\
                              dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                 client.Addresses.append(ia)
-
+                				
         return client
 
     except Exception,err:
@@ -471,34 +474,29 @@ def CollectMACs():
         collect MAC address from clients to link local addresses with MACs
         if a client has a new MAC the LLIP changes - with privacy extension enabled anyway
         calls local ip command to get neighbor cache - any more sophisticated idea is welcome!
+    
+        The Linux netlink method proved to be unstable, e.g. did not show all cache entries, so
+        it is reverted back to /sbin/ip.
+    
     """
     try:
-        # Linux can use kernel neighbor cache
-        if OS == "Linux":
-            for host in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC):
-                if host["interface"] in cfg.INTERFACE:
-                    if not CollectedMACs.has_key(host["llip"]) and host["llip"].lower().startswith("fe80:"):
-                        CollectedMACs[host["llip"]] = host["mac"]
-                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
-                        volatilestore.store_mac_llip(host["mac"], host["llip"])
-        else:
-            # subject to change - other distros might have other paths - might become a task
-            # for a setup routine to find appropriate paths 
-            for host in commands.getoutput(NBC[OS]["call"]).splitlines():
-                # get fragments of output line
-                f = shlex.split(host)
-                if f[NBC[OS]["dev"]] in cfg.INTERFACE:
-                    # get rid of %interface 
-                    f[NBC[OS]["llip"]] = ColonifyIP6(DecompressIP6(f[NBC[OS]["llip"]].split("%")[0]))
-                    # correct maybe shortenend MAC
-                    f[NBC[OS]["mac"]] = CorrectMAC(f[NBC[OS]["mac"]]) 
-                    # put non yet existing LLIPs into dictionary - if they have MACs
-                    if not CollectedMACs.has_key(f[NBC[OS]["llip"]]) and f[NBC[OS]["llip"]].lower().startswith("fe80:")\
-                       and ":" in f[NBC[OS]["mac"]]:
-                        CollectedMACs[f[NBC[OS]["llip"]]] = f[NBC[OS]["mac"]]
-                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NBC[OS]["mac"]], f[NBC[OS]["llip"]]))
-                        volatilestore.store_mac_llip(f[NBC[OS]["mac"]], f[NBC[OS]["llip"]])
-                                
+        # subject to change - other distros might have other paths - might become a task
+        # for a setup routine to find appropriate paths 
+        for host in commands.getoutput(NBC[OS]["call"]).splitlines():
+            # get fragments of output line
+            f = shlex.split(host)
+            if f[NBC[OS]["dev"]] in cfg.INTERFACE:
+                # get rid of %interface 
+                f[NBC[OS]["llip"]] = ColonifyIP6(DecompressIP6(f[NBC[OS]["llip"]].split("%")[0]))
+                # correct maybe shortenend MAC
+                f[NBC[OS]["mac"]] = CorrectMAC(f[NBC[OS]["mac"]]) 
+                # put non yet existing LLIPs into dictionary - if they have MACs
+                if not CollectedMACs.has_key(f[NBC[OS]["llip"]]) and f[NBC[OS]["llip"]].lower().startswith("fe80:")\
+                   and ":" in f[NBC[OS]["mac"]]:
+                    CollectedMACs[f[NBC[OS]["llip"]]] = f[NBC[OS]["mac"]]
+                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NBC[OS]["mac"]], f[NBC[OS]["llip"]]))
+                    volatilestore.store_mac_llip(f[NBC[OS]["mac"]], f[NBC[OS]["llip"]])
+
     except Exception,err:
         log.error("CollectMacs(): " + str(err))        
         print err
@@ -773,7 +771,7 @@ class Transaction(object):
         # Interface the request came in
         self.Interface = interface
         # MAC address
-        self.MAC = ""
+        self.MAC = None
         # last message for following the protocol
         self.LastMessageReceivedType = message_type
         # dictionary for options
@@ -991,7 +989,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                 # only valid messages will be processed 
                 if message_type in MESSAGE_TYPES:
-                    # 2. Erstelle Transaction Object wenn noch nicht vorhanden
+                    # 2. create Transaction object if not yet done
                     if not Transactions.has_key(transaction_id):
                         Transactions[transaction_id] = Transaction(transaction_id, client_llip, interface, message_type, options)
                         # add client MAC address to transaction object
@@ -1009,7 +1007,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].DUID.isalnum():
                     # client will get answer if its LLIP/MAC is known MAC
                         if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                            # if not known senf status code option failure to get
+                            # if not known send status code option failure to get
                             # LLIP/MAC mapping from neighbor cache
                             self.build_response(7, transaction_id, [13], 0)
                             # complete MAC collection
@@ -1021,6 +1019,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # MAC not yet found :-(
                                 log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown." % (Transactions[transaction_id].ClientLLIP)))
                         else:
+                            if not Transactions[transaction_id].MAC:
+                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
                             # ADVERTISE
                             # if last request was a SOLICIT send an ADVERTISE (type 2) back
                             if Transactions[transaction_id].LastMessageReceivedType == 1 \
@@ -1087,8 +1087,9 @@ class Handler(SocketServer.DatagramRequestHandler):
                             # if last request was a RELEASE (type 8) sende a REPLY (type 7) back  
                             elif Transactions[transaction_id].LastMessageReceivedType == 8:                            
                                 if cfg.DNS_UPDATE:
-                                    # build client to be able to delete it from DNS
-                                    ###Transactions[transaction_id].Client = BuildClient(transaction_id)
+                                    #  build client to be able to delete it from DNS
+                                    if Transactions[transaction_id].Client == None:
+                                        Transactions[transaction_id].Client = BuildClient(transaction_id)                                    
                                     for a in Transactions[transaction_id].Addresses:
                                         DNSDelete(transaction_id, address=a, action="release")
                                 for a in Transactions[transaction_id].Addresses:
@@ -1153,17 +1154,17 @@ class Handler(SocketServer.DatagramRequestHandler):
             # Option 2 server identifier
             response_ascii += BuildOption(2, cfg.SERVERDUID)
             
-            if Transactions[transaction_id].Client == None:
-                Transactions[transaction_id].Client = BuildClient(transaction_id)
-
+            ###if Transactions[transaction_id].Client == None:
+            ###    Transactions[transaction_id].Client = BuildClient(transaction_id)
+            
             # IA_NA non-temporary addresses
             # Option 3 + 5 Identity Association for Non-temporary Address
             if 3 in options_request:
                 # sicherheitshalber noch mal pruefen ob wirklich eine MAC ueber die Link Local IP vom Client bekannt ist
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                    # sammle IA Informationen ueber Client in storage
-                    ###if Transactions[transaction_id].Client == None:
-                    ###    Transactions[transaction_id].Client = BuildClient(transaction_id)
+                    # collect client information
+                    if Transactions[transaction_id].Client == None:
+                        Transactions[transaction_id].Client = BuildClient(transaction_id)
                     # embed option 5 into option 3 - several if necessary
                     ia_addresses = ""
                     for address in Transactions[transaction_id].Client.Addresses:
@@ -1199,8 +1200,9 @@ class Handler(SocketServer.DatagramRequestHandler):
             if 4 in options_request:
                 # sicherheitshalber noch mal pruefen ob wirklich eine MAC ueber die Link Local IP vom Client bekannt ist
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                    # sammle IA Informationen ueber Client in storage
-                    ###Transactions[transaction_id].Client = BuildClient(transaction_id)
+                    # collect client information
+                    if Transactions[transaction_id].Client == None:
+                        Transactions[transaction_id].Client = BuildClient(transaction_id)
                     # embed option 5 into option 4 - several if necessary
                     ia_addresses = ""
                     for address in Transactions[transaction_id].Client.Addresses:
@@ -1339,7 +1341,6 @@ class Handler(SocketServer.DatagramRequestHandler):
             print err
             import traceback
             traceback.print_exc(file=sys.stdout)
-
             # clear any response
             self.response = ""
             return None
@@ -1354,6 +1355,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             self.socket.sendto(self.response, self.client_address)
         else:
             print "send nothing..."
+            
 
 ### MAIN ###
 

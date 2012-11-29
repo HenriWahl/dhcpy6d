@@ -186,9 +186,13 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC):
     get neighbor cache on Linux via NETLINK interface
     Pymnl available at http://pypi.python.org/pypi/pymnl/ helped a lot to
     find out how to get neighbor cache
+    
+    # DOES NOT WQORK RELIABLY :-(
+    
     """
     # result
-    result = list()
+    #result = list()
+    result = dict()
     
     # open raw NETLINK socket
     # NETLINK_ROUTE has neighbor cache information too
@@ -237,9 +241,15 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC):
                             llip = l[24:56]
                             # only care about configured device
                             if IF_NAME[i] == interface:                   
-                                result.append({"interface": IF_NUMBER[interface],\
-                                               "llip" : ColonifyIP6(llip),\
-                                               "mac" : ColonifyMAC(mac)})
+                                #result.append({"interface": IF_NUMBER[interface],\
+                                #               "llip" : ColonifyIP6(llip),\
+                                #               "mac" : ColonifyMAC(mac)})
+                                result["|".join((IF_NUMBER[interface],\
+                                                 ColonifyIP6(llip),\
+                                                 ColonifyMAC(mac)))] = [IF_NUMBER[interface],\
+                                                                       ColonifyIP6(llip),\
+                                                                       ColonifyMAC(mac)]
     # clean up 
-    s.close()                        
+    s.close()                    
+
     return result
