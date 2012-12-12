@@ -909,14 +909,17 @@ class Transaction(object):
             # ignore some attributes 
             if not o in ["OptionsRaw", "Client", "Timestamp", "DUIDLLAddress", "IAT1", "IAT2", "ClientConfigDB"] and \
                not self.__dict__[o] in [None, False, "", []]:
-                if not o == "Addresses":
-                    option = o + ": " + str(self.__dict__[o]) + " "
-                    optionsstring += option
-                else:
+                if o == "Addresses":
                     option = "Addresses:"
                     for a in self.__dict__[o]:
                         option += " " + ColonifyIP6(a)
                     optionsstring += option + " " 
+                elif o == "ClientLLIP":
+                    option = "ClientLLIP: " + ColonifyIP6(self.__dict__["ClientLLIP"])
+                    optionsstring += option + " "
+                else:
+                    option = o + ": " + str(self.__dict__[o]) + " "
+                    optionsstring += option
 
         return optionsstring.encode("ascii")
 
