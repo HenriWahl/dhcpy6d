@@ -11,6 +11,7 @@ import threading
 import ConfigParser
 from Helpers import *
 
+
 class QueryQueue(threading.Thread):
     """
     Pump queries around
@@ -56,7 +57,7 @@ class Store(object):
         self.table_macs_llips = "macs_llips"
         self.table_hosts = "hosts"
 
-        
+
     def query(self, query):
         """
         put queries received into query queue and return the answers from answer queue
@@ -540,7 +541,8 @@ class MySQL(Store):
     """
     MySQL database interface 
     for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
-    """
+    """    
+    
     def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
         Store.__init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs)
 
@@ -553,10 +555,10 @@ class MySQL(Store):
             traceback.print_exc(file=sys.stdout)
        
         
-    def DBConnect(self):
+    def DBConnect(self):         
         
-        import MySQLdb        
-        
+        import MySQLdb
+   
         try:
             self.connection = MySQLdb.connect(host=self.cfg.STORE_MYSQL_HOST,\
                                               db=self.cfg.STORE_MYSQL_DB,\
@@ -572,7 +574,7 @@ class MySQL(Store):
     def DBQuery(self, query):
         try:
             self.cursor.execute(query)
-        except (AttributeError, MySQLdb.OperationalError):            
+        except:            
             import traceback
             traceback.print_exc(file=sys.stdout)
             if not self.DBConnect():
@@ -580,7 +582,9 @@ class MySQL(Store):
             else:
                 try:
                     self.cursor.execute(query)
-                except (AttributeError, MySQLdb.OperationalError):
+                except:
+                    import traceback
+                    traceback.print_exc(file=sys.stdout)
                     return None
                 
         result = self.cursor.fetchall()

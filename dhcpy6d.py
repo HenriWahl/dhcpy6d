@@ -576,34 +576,35 @@ class DNSQueryThread(threading.Thread):
         # wait for new queries in queue until the end of the world
         while True:
             hostname, a, action = self.dnsqueue.get()
+            # colonify address for DNS
+            address = ColonifyIP6(a.ADDRESS)
             try:
                 # update AAAA record, delete old entry first
                 update = dns.update.Update(a.DNS_ZONE, keyring=Keyring)
                 update.delete(hostname, "AAAA")
                 # if DNS should be updated do it - not the case if IP is released
                 if action == "update":
-                    update.add(hostname, a.DNS_TTL, "AAAA", a.ADDRESS)
+                    update.add(hostname, a.DNS_TTL, "AAAA", address)
                 dns.query.tcp(update, cfg.DNS_UPDATE_NAMESERVER)
 
                 # the reverse record will be first checked if it points
                 # to the current hostname, if not, it will be deleted first
                 update_rev = dns.update.Update(a.DNS_REV_ZONE, keyring=Keyring)
                 try:
-                    answer = Resolver.query(dns.reversename.from_address(a.ADDRESS), "PTR")
+                    answer = Resolver.query(dns.reversename.from_address(address), "PTR")
                     for rdata in answer:
                         hostname_ns = str(rdata).split(".")[0]
                         # if ip address is related to another host delete this one
                         if hostname_ns != hostname:
-                            #update_rev.delete(dns.reversename.from_address(a.ADDRESS), "PTR", hostname_ns + "." + a.DNS_ZONE + ".")  
-                            update_rev.delete(dns.reversename.from_address(a.ADDRESS), "PTR", hostname_ns + "." + a.DNS_ZONE + ".")  
+                            update_rev.delete(dns.reversename.from_address(address), "PTR", hostname_ns + "." + a.DNS_ZONE + ".")  
 
                 except dns.resolver.NXDOMAIN:
                     pass
                 # if DNS should be updated do it - not the case if IP is released
                 if action == "update":
-                    update_rev.add(dns.reversename.from_address(a.ADDRESS), a.DNS_TTL, "PTR", hostname + "." + a.DNS_ZONE + ".")  
+                    update_rev.add(dns.reversename.from_address(address), a.DNS_TTL, "PTR", hostname + "." + a.DNS_ZONE + ".")  
                 elif action == "release":
-                    update_rev.delete(dns.reversename.from_address(a.ADDRESS), "PTR")  
+                    update_rev.delete(dns.reversename.from_address(address), "PTR")  
                 dns.query.tcp(update_rev, cfg.DNS_UPDATE_NAMESERVER)
             except Exception,err:
                 log.error("DNSUPDATE: " + str(err))
