@@ -101,14 +101,18 @@ if "BSD" in OS:
 
 # platform-dependant neighbor cache call
 # every platform has its different output
+# dev, llip and mac are positions of output of call
+# len is minimal length a line has to have to be evaluable
 NC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
                          "dev"  : 2,\
                          "llip" : 0,\
-                         "mac"  : 4 },\
+                         "mac"  : 4,\
+                         "len"  : 5},\
         "BSD": { "call" : "/usr/sbin/ndp -a -n",\
                          "dev"  : 2,\
                          "llip" : 0,\
-                         "mac"  : 1}
+                         "mac"  : 1,\
+                         "len"  : 3}
             }
 
 # libc access via ctypes, needed for interface handling
@@ -253,7 +257,7 @@ def BuildClient(transaction_id):
                     elif cfg.IDENTIFICATION_MODE == "match_all":
                         hostnames = set()
                         id_attributes.append("hostnames")
-
+                        
             # get intersection of all sets of identifying attributes - even the empty ones
             if len(id_attributes) > 0:
                 client_config = set.intersection(eval("&".join(id_attributes)))
@@ -264,7 +268,7 @@ def BuildClient(transaction_id):
                     # in case there is no client config we should maybe log this?
                     client_config = None
             else:
-                client_config = None
+                client_config = None                
 
         # If client gave some addresses for RENEW or REBIND consider them
         if Transactions[transaction_id].LastMessageReceivedType in (5, 6) and\
@@ -484,7 +488,7 @@ def CollectMACs():
         for host in commands.getoutput(NC[OS]["call"]).splitlines():
             # get fragments of output line
             f = shlex.split(host)
-            if f[NC[OS]["dev"]] in cfg.INTERFACE:
+            if f[NC[OS]["dev"]] in cfg.INTERFACE and len(f) >= NC[OS]["len"] :
                 # get rid of %interface 
                 f[NC[OS]["llip"]] = DecompressIP6(f[NC[OS]["llip"]].split("%")[0])
                 # correct maybe shortenend MAC
@@ -499,7 +503,8 @@ def CollectMACs():
     except Exception,err:
         log.error("CollectMacs(): " + str(err))        
         print err
-        import traceback
+        import traceback 
+        print host
         traceback.print_exc(file=sys.stdout)
 
 
@@ -1028,7 +1033,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
                             except:
                                 # MAC not yet found :-(
-                                log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown." % (Transactions[transaction_id].ClientLLIP)))
+                                log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
                         else:
                             if not Transactions[transaction_id].MAC:
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
