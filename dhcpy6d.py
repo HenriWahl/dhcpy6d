@@ -1026,8 +1026,6 @@ class Handler(SocketServer.DatagramRequestHandler):
                             try:
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
                             except:
-                                import traceback
-                                traceback.print_exc(file=sys.stdout)  
                                 # MAC not yet found :-(
                                 log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown." % (Transactions[transaction_id].ClientLLIP)))
                         else:
