@@ -322,7 +322,6 @@ def BuildClient(transaction_id):
                                         # if lease is still inside range boundaries use it
                                         if frange <= address[28:].lower() < trange:                                           
                                             # build IA partly of leases db, partly of config db
-                                            ###ia = ClientAddress(address=ColonifyIP6(a["address"]),\
                                             ia = ClientAddress(address=a["address"],\
                                                          atype=a["type"],\
                                                          preferred_lifetime=cfg.ADDRESSES[a["type"]].PREFERRED_LIFETIME,\
@@ -354,14 +353,12 @@ def BuildClient(transaction_id):
                                                          dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
                                             client.Addresses.append(ia)
                                             # set depreferred address invalid
-                                            ###client.Addresses.append(ClientAddress(address=ColonifyIP6(a["address"]), valid=False,\
                                             client.Addresses.append(ClientAddress(address=a["address"], valid=False,\
                                                                             preferred_lifetime=0,\
                                                                             valid_lifetime=0))
                                         
                                     else: 
                                         # build IA partly of leases db, partly of config db
-                                        ###ia = ClientAddress(address=ColonifyIP6(a["address"]),\
                                         ia = ClientAddress(address=a["address"],\
                                                         atype=a["type"],\
                                                         preferred_lifetime=cfg.ADDRESSES[a["type"]].PREFERRED_LIFETIME,\
@@ -378,7 +375,6 @@ def BuildClient(transaction_id):
             # look for addresses in transaction that are invalid and add them
             # to client addresses with flag invalid and a RFC-compliant lifetime of 0
             for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
-                ###client.Addresses.append(ClientAddress(address=ColonifyIP6(a), valid=False,\
                 client.Addresses.append(ClientAddress(address=a, valid=False,\
                                                 preferred_lifetime=0,\
                                                 valid_lifetime=0))                   
@@ -490,18 +486,14 @@ def CollectMACs():
             f = shlex.split(host)
             if f[NC[OS]["dev"]] in cfg.INTERFACE:
                 # get rid of %interface 
-                ###f[NC[OS]["llip"]] = ColonifyIP6(DecompressIP6(f[NC[OS]["llip"]].split("%")[0]))
                 f[NC[OS]["llip"]] = DecompressIP6(f[NC[OS]["llip"]].split("%")[0])
-
-                print f[NC[OS]["llip"]] 
-                
                 # correct maybe shortenend MAC
                 f[NC[OS]["mac"]] = CorrectMAC(f[NC[OS]["mac"]]) 
                 # put non yet existing LLIPs into dictionary - if they have MACs
                 if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
                    and ":" in f[NC[OS]["mac"]]:
                     CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
-                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], f[NC[OS]["llip"]]))
+                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
                     volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
 
     except Exception,err:
@@ -973,7 +965,6 @@ class Handler(SocketServer.DatagramRequestHandler):
             # clean client IP address - might come in short notation, which
             # should be extended
             client_llip, interface = self.client_address[0].split("%")
-            ###client_llip = ColonifyIP6(DecompressIP6(client_llip))
             client_llip = DecompressIP6(client_llip)
             
             # bad or too short message is thrown away
