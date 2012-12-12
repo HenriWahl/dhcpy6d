@@ -101,8 +101,7 @@ if "BSD" in OS:
 
 # platform-dependant neighbor cache call
 # every platform has its different output
-# not used on Linux anymore, here a netlink socket is used.
-NBC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
+NC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
                          "dev"  : 2,\
                          "llip" : 0,\
                          "mac"  : 4 },\
@@ -323,7 +322,8 @@ def BuildClient(transaction_id):
                                         # if lease is still inside range boundaries use it
                                         if frange <= address[28:].lower() < trange:                                           
                                             # build IA partly of leases db, partly of config db
-                                            ia = Address(address=ColonifyIP6(a["address"]),\
+                                            ###ia = ClientAddress(address=ColonifyIP6(a["address"]),\
+                                            ia = ClientAddress(address=a["address"],\
                                                          atype=a["type"],\
                                                          preferred_lifetime=cfg.ADDRESSES[a["type"]].PREFERRED_LIFETIME,\
                                                          valid_lifetime=cfg.ADDRESSES[a["type"]].VALID_LIFETIME,\
@@ -342,7 +342,7 @@ def BuildClient(transaction_id):
                                         # create new random address if old one is depreferred
                                         # do not wait until it is invalid                                      
                                         if not random_address == None:
-                                            ia = Address(address=random_address, ia_type=cfg.ADDRESSES[a["type"]].IA_TYPE,\
+                                            ia = ClientAddress(address=random_address, ia_type=cfg.ADDRESSES[a["type"]].IA_TYPE,\
                                                          preferred_lifetime=cfg.ADDRESSES[a["type"]].PREFERRED_LIFETIME,\
                                                          valid_lifetime=cfg.ADDRESSES[a["type"]].VALID_LIFETIME,\
                                                          category="random",\
@@ -354,29 +354,32 @@ def BuildClient(transaction_id):
                                                          dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
                                             client.Addresses.append(ia)
                                             # set depreferred address invalid
-                                            client.Addresses.append(Address(address=ColonifyIP6(a["address"]), valid=False,\
+                                            ###client.Addresses.append(ClientAddress(address=ColonifyIP6(a["address"]), valid=False,\
+                                            client.Addresses.append(ClientAddress(address=a["address"], valid=False,\
                                                                             preferred_lifetime=0,\
                                                                             valid_lifetime=0))
                                         
                                     else: 
                                         # build IA partly of leases db, partly of config db
-                                        ia = Address(address=ColonifyIP6(a["address"]),\
-                                                     atype=a["type"],\
-                                                     preferred_lifetime=cfg.ADDRESSES[a["type"]].PREFERRED_LIFETIME,\
-                                                     valid_lifetime=cfg.ADDRESSES[a["type"]].VALID_LIFETIME,\
-                                                     category=a["category"],\
-                                                     ia_type=a["ia_type"],\
-                                                     aclass=a["class"],\
-                                                     dns_update=cfg.ADDRESSES[a["type"]].DNS_UPDATE,\
-                                                     dns_zone=cfg.ADDRESSES[a["type"]].DNS_ZONE,\
-                                                     dns_rev_zone=cfg.ADDRESSES[a["type"]].DNS_REV_ZONE,\
-                                                     dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
+                                        ###ia = ClientAddress(address=ColonifyIP6(a["address"]),\
+                                        ia = ClientAddress(address=a["address"],\
+                                                        atype=a["type"],\
+                                                        preferred_lifetime=cfg.ADDRESSES[a["type"]].PREFERRED_LIFETIME,\
+                                                        valid_lifetime=cfg.ADDRESSES[a["type"]].VALID_LIFETIME,\
+                                                        category=a["category"],\
+                                                        ia_type=a["ia_type"],\
+                                                        aclass=a["class"],\
+                                                        dns_update=cfg.ADDRESSES[a["type"]].DNS_UPDATE,\
+                                                        dns_zone=cfg.ADDRESSES[a["type"]].DNS_ZONE,\
+                                                        dns_rev_zone=cfg.ADDRESSES[a["type"]].DNS_REV_ZONE,\
+                                                        dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
                                         client.Addresses.append(ia)
 
             # look for addresses in transaction that are invalid and add them
             # to client addresses with flag invalid and a RFC-compliant lifetime of 0
             for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
-                client.Addresses.append(Address(address=ColonifyIP6(a), valid=False,\
+                ###client.Addresses.append(ClientAddress(address=ColonifyIP6(a), valid=False,\
+                client.Addresses.append(ClientAddress(address=a, valid=False,\
                                                 preferred_lifetime=0,\
                                                 valid_lifetime=0))                   
             return client
@@ -397,7 +400,7 @@ def BuildClient(transaction_id):
                             # 
                             # todo: lifetime of address should be set by config too                       
                             #
-                            ia = Address(address=address, ia_type="na",\
+                            ia = ClientAddress(address=address, ia_type="na",\
                                          preferred_lifetime=cfg.PREFERRED_LIFETIME,\
                                          valid_lifetime=cfg.VALID_LIFETIME, category="fixed",\
                                          aclass="fixed", atype="fixed")
@@ -411,7 +414,7 @@ def BuildClient(transaction_id):
                         # Address class is borrowed from Config.py
                         # in case range has been exceeded a will be None
                         if not a == None:
-                            ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
+                            ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                                          preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
                                          valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
                                          category=cfg.ADDRESSES[address].CATEGORY,\
@@ -429,7 +432,7 @@ def BuildClient(transaction_id):
                         client.Class = "default_" + Transactions[transaction_id].Interface
                         a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
                         # Address class is borrowed from Config.py
-                        ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
+                        ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                                      preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
                                      valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
                                      category=cfg.ADDRESSES[address].CATEGORY,\
@@ -447,7 +450,7 @@ def BuildClient(transaction_id):
             for address in cfg.CLASSES["default_" + Transactions[transaction_id].Interface].ADDRESSES:  
                 a = ParseAddressPattern(cfg.ADDRESSES[address], client, transaction_id)
                 # Address class is borrowed from Config.py
-                ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
+                ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                              preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
                              valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
                              category=cfg.ADDRESSES[address].CATEGORY,\
@@ -482,20 +485,24 @@ def CollectMACs():
     try:
         # subject to change - other distros might have other paths - might become a task
         # for a setup routine to find appropriate paths 
-        for host in commands.getoutput(NBC[OS]["call"]).splitlines():
+        for host in commands.getoutput(NC[OS]["call"]).splitlines():
             # get fragments of output line
             f = shlex.split(host)
-            if f[NBC[OS]["dev"]] in cfg.INTERFACE:
+            if f[NC[OS]["dev"]] in cfg.INTERFACE:
                 # get rid of %interface 
-                f[NBC[OS]["llip"]] = ColonifyIP6(DecompressIP6(f[NBC[OS]["llip"]].split("%")[0]))
+                ###f[NC[OS]["llip"]] = ColonifyIP6(DecompressIP6(f[NC[OS]["llip"]].split("%")[0]))
+                f[NC[OS]["llip"]] = DecompressIP6(f[NC[OS]["llip"]].split("%")[0])
+
+                print f[NC[OS]["llip"]] 
+                
                 # correct maybe shortenend MAC
-                f[NBC[OS]["mac"]] = CorrectMAC(f[NBC[OS]["mac"]]) 
+                f[NC[OS]["mac"]] = CorrectMAC(f[NC[OS]["mac"]]) 
                 # put non yet existing LLIPs into dictionary - if they have MACs
-                if not CollectedMACs.has_key(f[NBC[OS]["llip"]]) and f[NBC[OS]["llip"]].lower().startswith("fe80:")\
-                   and ":" in f[NBC[OS]["mac"]]:
-                    CollectedMACs[f[NBC[OS]["llip"]]] = f[NBC[OS]["mac"]]
-                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NBC[OS]["mac"]], f[NBC[OS]["llip"]]))
-                    volatilestore.store_mac_llip(f[NBC[OS]["mac"]], f[NBC[OS]["llip"]])
+                if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
+                   and ":" in f[NC[OS]["mac"]]:
+                    CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
+                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], f[NC[OS]["llip"]]))
+                    volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
 
     except Exception,err:
         log.error("CollectMacs(): " + str(err))        
@@ -646,7 +653,7 @@ def ParseAddressPattern(address, client_config, transaction_id):
 
         # expecting range-range at the last octet, "prefix" means the first seven octets here 
         # - is just shorter than the_first_seven_octets
-        prefix = "".join(DecompressIP6(a.replace("$range$", "0000"))[:28])
+        prefix = DecompressIP6(a.replace("$range$", "0000"))[:28]
         # first look for highest inactive (free) lease
         lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
         # gotten lease has to be in range - important after changed range boundaries 
@@ -669,7 +676,8 @@ def ParseAddressPattern(address, client_config, transaction_id):
                 # this will be done only once - the first time if there is no other lease yet
                 # so it is safe to start from frange
                 a = a.replace("$range$", frange)
-    return a
+                
+    return DecompressIP6(a)
            
 
 class TidyUpThread(threading.Thread):
@@ -753,7 +761,7 @@ class Client(object):
                 else:
                     option = "Addresses:"
                     for a in self.__dict__[o]:
-                        option += " " + a.ADDRESS
+                        option += " " + ColonifyIP6(a.ADDRESS)
                     optionsstring += option + " "  
 
         return optionsstring.encode("ascii")
@@ -901,8 +909,15 @@ class Transaction(object):
             # ignore some attributes 
             if not o in ["OptionsRaw", "Client", "Timestamp", "DUIDLLAddress", "IAT1", "IAT2", "ClientConfigDB"] and \
                not self.__dict__[o] in [None, False, "", []]:
-                option = o + ": " + str(self.__dict__[o]) + " "
-                optionsstring += option
+                if not o == "Addresses":
+                    option = o + ": " + str(self.__dict__[o]) + " "
+                    optionsstring += option
+                else:
+                    option = "Addresses:"
+                    for a in self.__dict__[o]:
+                        option += " " + ColonifyIP6(a)
+                    optionsstring += option + " " 
+
         return optionsstring.encode("ascii")
 
 
@@ -955,8 +970,9 @@ class Handler(SocketServer.DatagramRequestHandler):
             # clean client IP address - might come in short notation, which
             # should be extended
             client_llip, interface = self.client_address[0].split("%")
-            client_llip = ColonifyIP6(DecompressIP6(client_llip))
-
+            ###client_llip = ColonifyIP6(DecompressIP6(client_llip))
+            client_llip = DecompressIP6(client_llip)
+            
             # bad or too short message is thrown away
             if not len(bytes) > 8:
                 pass
@@ -1005,7 +1021,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
                     if Transactions[transaction_id].DUID.isalnum():
-                    # client will get answer if its LLIP/MAC is known MAC
+                    # client will get answer if its LLIP & MAC is known 
                         if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
                             # if not known send status code option failure to get
                             # LLIP/MAC mapping from neighbor cache
@@ -1016,6 +1032,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                             try:
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
                             except:
+                                import traceback
+                                traceback.print_exc(file=sys.stdout)  
                                 # MAC not yet found :-(
                                 log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown." % (Transactions[transaction_id].ClientLLIP)))
                         else:
@@ -1153,14 +1171,11 @@ class Handler(SocketServer.DatagramRequestHandler):
             response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
             # Option 2 server identifier
             response_ascii += BuildOption(2, cfg.SERVERDUID)
-            
-            ###if Transactions[transaction_id].Client == None:
-            ###    Transactions[transaction_id].Client = BuildClient(transaction_id)
-            
+
             # IA_NA non-temporary addresses
             # Option 3 + 5 Identity Association for Non-temporary Address
             if 3 in options_request:
-                # sicherheitshalber noch mal pruefen ob wirklich eine MAC ueber die Link Local IP vom Client bekannt ist
+                # check if MAC of LLIP is really known
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                     # collect client information
                     if Transactions[transaction_id].Client == None:
@@ -1169,10 +1184,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                     ia_addresses = ""
                     for address in Transactions[transaction_id].Client.Addresses:
                         if address.IA_TYPE == "na":
-                            ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, address.ADDRESS))
+                            ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
                             # if a transaction consists of too many requests from client -
-                            # - might be caused by going wild windows clients -
-                            # reset all adddresses with lifetime 0
+                            # - might be caused by going wild Windows clients -
+                            # reset all addresses with lifetime 0
                             # lets start with maximal transaction count of 10
                             if Transactions[transaction_id].Counter < 10:
                                 preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
@@ -1207,9 +1222,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                     ia_addresses = ""
                     for address in Transactions[transaction_id].Client.Addresses:
                         if address.IA_TYPE == "ta":
+                            ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
                             # if a transaction consists of too many requests from client -
-                            # - might be caused by going wild windows clients -
-                            # reset all adddresses with lifetime 0
+                            # - might be caused by going wild Windows clients -
+                            # reset all addresses with lifetime 0
                             # lets start with maximal transaction count of 10
                             if Transactions[transaction_id].Counter < 10:
                                 preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))

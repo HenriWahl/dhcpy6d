@@ -76,13 +76,14 @@ class Store(object):
         store lease in lease DB
         """
         for a in self.Transactions[transaction_id].Client.Addresses:
-            query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, "".join(DecompressIP6(a.ADDRESS)))           
+            ###query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, "".join(DecompressIP6(a.ADDRESS)))           
+            query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)           
             answer = self.query(query)
             # if address is not leased yet add it
             if len(answer) == 0:
                 query = "INSERT INTO %s (address, active, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
                       (self.table_leases,\
-                       "".join(DecompressIP6(a.ADDRESS)),\
+                       a.ADDRESS,\
                        1,\
                        a.PREFERRED_LIFETIME,\
                        a.VALID_LIFETIME,\
@@ -120,7 +121,7 @@ class Store(object):
                        datetime.datetime.now(),\
                        datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
                        datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),\
-                       "".join(DecompressIP6(a.ADDRESS)))            
+                       a.ADDRESS)            
                 
                 answer = self.query(query)
         
@@ -515,7 +516,9 @@ class ClientConfig(object):
         self.MAC = mac
         # fixed addresses
         if address:
-            self.ADDRESS = ListifyOption(self.ADDRESS)
+            addresses = ListifyOption(self.ADDRESS)
+            for a in addresses:
+                self.ADDRESS.append(DecompressIP6(a))
         else:
             self.ADDRESS = None
         self.CLASS = aclass

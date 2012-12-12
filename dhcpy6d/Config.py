@@ -326,7 +326,7 @@ class Config(object):
         self.FILTERS = {"mac":[], "duid":[], "hostname":[]}
         
         # define a fallback default class and address scheme
-        self.ADDRESSES["default"] = Address(ia_type="na",\
+        self.ADDRESSES["default"] = ConfigAddress(ia_type="na",\
                                                    prefix_length="64",\
                                                    category="mac",\
                                                    pattern="fdef::$mac$",\
@@ -340,7 +340,7 @@ class Config(object):
         # define dummy address scheme for fixed addresses
         # pattern and prototype are not really needed as this
         # addresses are fixed
-        self.ADDRESSES["fixed"] = Address(ia_type="na",\
+        self.ADDRESSES["fixed"] = ConfigAddress(ia_type="na",\
                                                    prefix_length="64",\
                                                    category="fixed",\
                                                    pattern="fdef0000000000000000000000000001",\
@@ -371,7 +371,7 @@ class Config(object):
             if section.startswith("class_"):
                 self.CLASSES[section.split("class_")[1]] = Class(name=section.split("class_")[1].strip())
             if section.startswith("address_"):
-                self.ADDRESSES[section.split("address_")[1].strip()] = Address()
+                self.ADDRESSES[section.split("address_")[1].strip()] = ConfigAddress()
         
         for section in config.sections():
             # go through all items
@@ -471,9 +471,9 @@ class Config(object):
         self._check_config()
                    
             
-class Address(object):
+class ConfigAddress(object):
     """
-    class for address definition, used for config and clients
+    class for address definition, used for config
     """
     def __init__(self, address=None,\
                  ia_type="na",\
@@ -490,7 +490,6 @@ class Address(object):
                  dns_zone="",\
                  dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",\
                  dns_ttl = "0",\
-                 dns_use_client_fqdn = False,\
                  valid = True):
         self.PREFIX_LENGTH = prefix_length
         self.CATEGORY = category
@@ -562,7 +561,55 @@ class Address(object):
                 match = False
                 break
         return match
-        
+    
+
+class ClientAddress(object):
+    """
+    class for address definition, used for clients
+    """
+    def __init__(self, address=None,\
+                 ia_type="na",\
+                 prefix_length="64",\
+                 category="random",\
+                 #pattern="2001:db8::$random64$",\
+                 preferred_lifetime=0,\
+                 valid_lifetime=0,\
+                 atype="default",\
+                 aclass="default",\
+                 #prototype="",\
+                 #range="",\
+                 dns_update=False,\
+                 dns_zone="",\
+                 dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",\
+                 dns_ttl = "0",\
+                 valid = True,\
+                 ):
+        self.PREFIX_LENGTH = prefix_length
+        self.CATEGORY = category
+        #self.PATTERN = pattern
+        self.IA_TYPE = ia_type
+        self.PREFERRED_LIFETIME = preferred_lifetime
+        self.VALID_LIFETIME = valid_lifetime
+        self.ADDRESS = address
+        #self.RANGE = range.lower()
+        # because "class" is a python keyword we use "aclass" here
+        # this property stores the class the address is used for
+        self.CLASS = aclass
+        # same with type
+        self.TYPE = atype
+        # a prototypical address to be compared with leases given by
+        # clients - if prototype and lease address kind of match
+        # give back the lease as valid
+        #self.PROTOTYPE = prototype
+        # flag for updating address in DNS or not
+        self.DNS_UPDATE = dns_update
+        # DNS zone data
+        self.DNS_ZONE = dns_zone.lower()
+        self.DNS_REV_ZONE = dns_rev_zone.lower()
+        self.DNS_TTL = dns_ttl
+        # flag invalid addresses as invalid, valid ones as valid
+        self.VALID = valid
+
             
 class Class(object):
     """
