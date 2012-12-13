@@ -37,7 +37,6 @@ class QueryQueue(threading.Thread):
                 import traceback
                 traceback.print_exc(file=sys.stdout)
                 answer = ""
-                print query
 
             self.answerqueue.put(answer)
             
@@ -56,6 +55,8 @@ class Store(object):
         self.table_leases = "leases"
         self.table_macs_llips = "macs_llips"
         self.table_hosts = "hosts"
+        # flag to check if connection is OK
+        self.connected = False
 
 
     def query(self, query):
@@ -64,10 +65,6 @@ class Store(object):
         """
         self.queryqueue.put(query)
         answer = self.answerqueue.get()
-        
-        # maybe if one day server runs threaded and only with MySQL - SQLite seems not
-        # to be too thread-aware
-        #answer = self.DBQuery(query)
 
         return answer
     
@@ -76,57 +73,61 @@ class Store(object):
         """
         store lease in lease DB
         """
-        for a in self.Transactions[transaction_id].Client.Addresses:
-            ###query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, "".join(DecompressIP6(a.ADDRESS)))           
-            query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)           
-            answer = self.query(query)
-            # if address is not leased yet add it
-            if len(answer) == 0:
-                query = "INSERT INTO %s (address, active, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
-                      (self.table_leases,\
-                       a.ADDRESS,\
-                       1,\
-                       a.PREFERRED_LIFETIME,\
-                       a.VALID_LIFETIME,\
-                       self.Transactions[transaction_id].Client.Hostname,\
-                       a.TYPE,\
-                       a.CATEGORY,\
-                       a.IA_TYPE,\
-                       self.Transactions[transaction_id].Client.Class,\
-                       self.Transactions[transaction_id].MAC,\
-                       self.Transactions[transaction_id].DUID,\
-                       self.Transactions[transaction_id].IAID,\
-                       datetime.datetime.now(),\
-                       datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
-                       datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)))
+        # only if client exists
+        if self.Transactions[transaction_id].Client:
+            for a in self.Transactions[transaction_id].Client.Addresses:
+                ###query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, "".join(DecompressIP6(a.ADDRESS)))           
+                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)           
                 answer = self.query(query)
-            # otherwise update it if not a random address
-            elif a.CATEGORY != "random":
-                query = "UPDATE %s SET active = '%s', preferred_lifetime = '%s', valid_lifetime = '%s',\
-                      hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
-                      duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
-                      valid_until = '%s'\
-                      WHERE address = '%s'" % \
-                      (self.table_leases,\
-                       1,\
-                       a.PREFERRED_LIFETIME,\
-                       a.VALID_LIFETIME,\
-                       self.Transactions[transaction_id].Client.Hostname,\
-                       a.TYPE,\
-                       a.CATEGORY,\
-                       a.IA_TYPE,\
-                       self.Transactions[transaction_id].Client.Class,\
-                       self.Transactions[transaction_id].MAC,\
-                       self.Transactions[transaction_id].DUID,\
-                       self.Transactions[transaction_id].IAID,\
-                       datetime.datetime.now(),\
-                       datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
-                       datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),\
-                       a.ADDRESS)            
-                
-                answer = self.query(query)
-        
-        return None    
+                if answer:
+                    # if address is not leased yet add it
+                    if len(answer) == 0:
+                        query = "INSERT INTO %s (address, active, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
+                              (self.table_leases,\
+                               a.ADDRESS,\
+                               1,\
+                               a.PREFERRED_LIFETIME,\
+                               a.VALID_LIFETIME,\
+                               self.Transactions[transaction_id].Client.Hostname,\
+                               a.TYPE,\
+                               a.CATEGORY,\
+                               a.IA_TYPE,\
+                               self.Transactions[transaction_id].Client.Class,\
+                               self.Transactions[transaction_id].MAC,\
+                               self.Transactions[transaction_id].DUID,\
+                               self.Transactions[transaction_id].IAID,\
+                               datetime.datetime.now(),\
+                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
+                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)))
+                        answer = self.query(query)
+                    # otherwise update it if not a random address
+                    elif a.CATEGORY != "random":
+                        query = "UPDATE %s SET active = '%s', preferred_lifetime = '%s', valid_lifetime = '%s',\
+                              hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
+                              duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
+                              valid_until = '%s'\
+                              WHERE address = '%s'" % \
+                              (self.table_leases,\
+                               1,\
+                               a.PREFERRED_LIFETIME,\
+                               a.VALID_LIFETIME,\
+                               self.Transactions[transaction_id].Client.Hostname,\
+                               a.TYPE,\
+                               a.CATEGORY,\
+                               a.IA_TYPE,\
+                               self.Transactions[transaction_id].Client.Class,\
+                               self.Transactions[transaction_id].MAC,\
+                               self.Transactions[transaction_id].DUID,\
+                               self.Transactions[transaction_id].IAID,\
+                               datetime.datetime.now(),\
+                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
+                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),\
+                               a.ADDRESS)            
+                        
+                        answer = self.query(query)
+            return True
+        # if no client -> False
+        return False   
     
     
     def get_range_lease(self, active=1, prefix="", frange="", trange=""):
@@ -141,7 +142,7 @@ class Store(object):
         answer = self.query(query)
         
         # SQLite returns list, MySQL tuple - in case someone wonders here...
-        if not (answer == [] or answer == ()):
+        if not (answer == [] or answer == () or answer == None):
             return answer[0][0]
         else:
             return None
@@ -153,7 +154,7 @@ class Store(object):
         """
         query = "SELECT DISTINCT hostname, duid, mac, iaid FROM leases WHERE address='%s'" % (address)
         answer = self.query(query)       
-        if len(answer)>0:
+        if answer != None and len(answer)>0:
             if len(answer[0]) > 0:
                 return answer[0]
             else:
@@ -339,6 +340,7 @@ class Store(object):
                     import traceback
                     traceback.print_exc(file=sys.stdout)
                     return None
+                
         
     def DBQuery(self, query):
         """
@@ -376,6 +378,7 @@ class SQLite(Store):
             if storage_type == "config": storage = self.cfg.STORE_SQLITE_CONFIG
             self.connection = sqlite3.connect(storage, check_same_thread = False)
             self.cursor = self.connection.cursor()
+            self.connected = True                       
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
@@ -386,16 +389,18 @@ class SQLite(Store):
         """
         execute query on DB
         """
-        answer = self.cursor.execute(query)    
-        
-        # commit only if explicitly wanted
-        if query.startswith("INSERT"):
-            self.connection.commit()
-        if query.startswith("UPDATE"):
-            self.connection.commit()
+        try:
+            answer = self.cursor.execute(query)    
+            # commit only if explicitly wanted
+            if query.startswith("INSERT"):
+                self.connection.commit()
+            if query.startswith("UPDATE"):
+                self.connection.commit()
+            self.connected = True
+        except:
+            self.connected = False
 
         return answer.fetchall()
-    
     
         
 class Textfile(Store):
@@ -455,6 +460,9 @@ class Textfile(Store):
                     self.IndexDUID[self.Hosts[section].DUID] = [self.Hosts[section]]
                 else:
                     self.IndexDUID[self.Hosts[section].DUID].append(self.Hosts[section])
+        
+        # not very meaningful in case of databaseless textfile config but for completeness
+        self.connected = True
                     
     
     def get_client_config_by_mac(self, transaction_id):
@@ -553,7 +561,6 @@ class MySQL(Store):
        
         
     def DBConnect(self):         
-        
         import MySQLdb
    
         try:
@@ -562,6 +569,7 @@ class MySQL(Store):
                                               user=self.cfg.STORE_MYSQL_USER,\
                                               passwd=self.cfg.STORE_MYSQL_PASSWORD)
             self.cursor = self.connection.cursor()
+            self.connected = True           
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
@@ -571,17 +579,21 @@ class MySQL(Store):
     def DBQuery(self, query):
         try:
             self.cursor.execute(query)
+            self.connected = True
         except:            
             import traceback
             traceback.print_exc(file=sys.stdout)
             if not self.DBConnect():
+                self.connected = False
                 return None
             else:
                 try:
                     self.cursor.execute(query)
+                    self.connected = True
                 except:
                     import traceback
                     traceback.print_exc(file=sys.stdout)
+                    self.connected = False
                     return None
                 
         result = self.cursor.fetchall()
