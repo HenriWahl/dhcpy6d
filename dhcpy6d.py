@@ -112,6 +112,11 @@ NC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
                          "dev"  : 2,\
                          "llip" : 0,\
                          "mac"  : 1,\
+                         "len"  : 3},\
+        "Darwin": { "call" : "/usr/sbin/ndp -a -n",\
+                         "dev"  : 2,\
+                         "llip" : 0,\
+                         "mac"  : 1,\
                          "len"  : 3}
             }
 
