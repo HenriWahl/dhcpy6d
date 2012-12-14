@@ -127,6 +127,8 @@ elif OS == "BSD":
     # libc_ver() returns version number of libc that is hardcoded in
     # libc file name
     libc_name = "libc.so." + platform.libc_ver()[1]
+elif OS = "Darwin":
+    libcname = "libc.dylib"
 else:
     print "\n OS not yet supported. :-( \n"
     sys.exit(1)
