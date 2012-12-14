@@ -276,9 +276,6 @@ class Store(object):
         duid = self.Transactions[transaction_id].DUID
         
         if duid in self.Transactions[transaction_id].ClientConfigDB.IndexDUID:
-            """
-            was is nu eigentlich wenn ein host die selbe duid noch hat aber ne neue mac addresse?
-            """
             hosts.extend(self.Transactions[transaction_id].ClientConfigDB.IndexDUID[duid])
             return hosts
         else:
@@ -463,7 +460,7 @@ class Textfile(Store):
         
         # not very meaningful in case of databaseless textfile config but for completeness
         self.connected = True
-                    
+
     
     def get_client_config_by_mac(self, transaction_id):
         """

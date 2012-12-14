@@ -155,6 +155,8 @@ if cfg.STORE_CONFIG:
 else:
     # dummy configstore if no client config is needed
     configstore = Store(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+    # "none" store is always connected
+    configstore.connected = True
 
 # storage for changing data like leases, LLIPs, DUIDs etc.
 if cfg.STORE_VOLATILE == "mysql":
