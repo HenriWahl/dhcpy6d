@@ -583,6 +583,7 @@ class MySQL(Store):
         except:            
             import traceback
             traceback.print_exc(file=sys.stdout)
+            # try to reestablish database connection
             if not self.DBConnect():
                 self.connected = False
                 return None
@@ -598,4 +599,5 @@ class MySQL(Store):
                 
         result = self.cursor.fetchall()
         return result
- 
+    
+
