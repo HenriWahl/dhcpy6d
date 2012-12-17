@@ -394,13 +394,13 @@ def BuildClient(transaction_id):
                                                             dns_ttl=cfg.ADDRESSES[a["type"]].DNS_TTL)
                                             client.Addresses.append(ia)
     
-                # look for addresses in transaction that are invalid and add them
-                # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
-                    client.Addresses.append(ClientAddress(address=a, valid=False,\
+                    # look for addresses in transaction that are invalid and add them
+                    # to client addresses with flag invalid and a RFC-compliant lifetime of 0
+                    for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
+                        client.Addresses.append(ClientAddress(address=a, valid=False,\
                                                     preferred_lifetime=0,\
                                                     valid_lifetime=0))                   
-                return client
+                    return client
 
         # build IA addresses from config - fixed ones and dynamic
         if client_config != None:    
