@@ -126,8 +126,6 @@ class Store(object):
                         
                         answer = self.query(query)
                         
-                    print query
-                        
             return True
         # if no client -> False
         return False   
