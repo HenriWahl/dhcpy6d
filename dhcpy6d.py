@@ -25,10 +25,10 @@ import copy
 import logging
 import logging.handlers
 
-from dhcpy6d.Helpers import *
-from dhcpy6d.Constants import *
-from dhcpy6d.Config import *
-from dhcpy6d.Storage import *
+from dhcpy6.Helpers import *
+from dhcpy6.Constants import *
+from dhcpy6.Config import *
+from dhcpy6.Storage import *
 
 # create and read config file
 cfg = Config()

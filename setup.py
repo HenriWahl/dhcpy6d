@@ -21,6 +21,7 @@
 
 from distutils.core import setup
 import sys
+import os
 
 CLASSIFIERS = [
     'Intended Audience :: System Administrators',
@@ -34,7 +35,7 @@ CLASSIFIERS = [
 ]
 
 setup(name = 'dhcpy6d',
-    version = '0.1',
+    version = '20121217',
     license = 'GNU GPL v2',
     description = 'DHCPv6 server daemon',
     long_description = 'Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by DUID, hostname or MAC address as in the good old IPv4 days. It allows easy dualstack transistion, addresses may be generated randomly, by range, by arbitrary ID or MAC address. Clients can get more than one address, leases and client configuration can be stored in databases and DNS can be updated dynamically.',
@@ -43,11 +44,16 @@ setup(name = 'dhcpy6d',
     author_email = 'h.wahl@ifw-dresden.de',
     url = 'http://dhcpy6d.ifw-dresden.de',
     download_url = 'http://dhcpy6d.ifw-dresden.de/download',
-    scripts = ['dhcpy6d'],
-    packages = ['dhcpy6d'],
-    package_dir = {'dhcpy6d':'dhcpy6d'},
+    scripts = ['dhcpy6d.py'],
+    py_modules = ['dhcpy6.Helpers', 'dhcpy6.Constants',\
+                'dhcpy6.Config', 'dhcpy6.Storage'],
     data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
                   ('/var/log', ['var/log/dhcpy6d.log']),\
-                  ('/usr/share/doc', ['doc/*'])]
-)
+                  ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',\
+                                      'doc/config.sql',\
+                                      'doc/dhcpy6d-example.conf',\
+                                      'doc/dhcpy6d-minimal.conf',\
+                                      'doc/LICENSE',\
+                                      'doc/volatile.sql'])]
+    )
 
