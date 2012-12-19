@@ -1,9 +1,3 @@
 #!/usr/bin/make -f
-
-#export DH_ALWAYS_EXCLUDE=LICENSE
-
 %:
-	dh $@
-
-#override_dh_link:
-#	dh_link usr/bin/dhcpy6d.py usr/bin/dhcpy6d
+	dh $@ --with python2
