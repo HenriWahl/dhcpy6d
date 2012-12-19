@@ -44,7 +44,7 @@ setup(name = 'dhcpy6d',
     author_email = 'h.wahl@ifw-dresden.de',
     url = 'http://dhcpy6d.ifw-dresden.de',
     download_url = 'http://dhcpy6d.ifw-dresden.de/download',
-    scripts = ['dhcpy6d.py'],
+    scripts = ['dhcpy6d'],
     py_modules = ['dhcpy6.Helpers', 'dhcpy6.Constants',\
                 'dhcpy6.Config', 'dhcpy6.Storage'],
     data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
