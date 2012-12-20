@@ -1,3 +1,11 @@
+dhcpy6d (20121220-1) unstable; urgency=low
+
+  * New upstream
+    - testing Debian support
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Thu, 20 Dec 2012 11:25:00 +0200
+
+
 dhcpy6d (20121219-1) unstable; urgency=low
 
   * New upstream
