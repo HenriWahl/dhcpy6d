@@ -48,7 +48,8 @@ test -x $DHCPY6DBIN || exit 0
 case "$1" in
 	start)
 		if [ "$RUN" = "no" ]; then
-		   echo "dhcpy6d is disabled in /etc/default/dhcpy6d. Set RUN=yes to get it running."
+		   echo "\ndhcpy6d is disabled in /etc/default/dhcpy6d. Set RUN=yes to get it running.\n"
+		   echo "Please make sure that /etc/dhcpy6d.conf is configured.\n"
 		   exit 0
 		fi
 
