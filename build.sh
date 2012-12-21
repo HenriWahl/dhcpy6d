@@ -29,7 +29,11 @@ elif [ -f /etc/redhat-release ]
 	then
 		echo "Building .rpm package"
 
+		# setup.py checks if this file exists
+		touch /tmp/DHCPY6D_BUILDING_RPM
+	
 		python setup.py bdist_rpm --dist-dir . --binary-only
+
 else
 	echo "Package creation is only supported on Debian and RedHat derivatives."
 fi

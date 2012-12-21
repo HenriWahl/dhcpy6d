@@ -21,6 +21,7 @@
 
 from distutils.core import setup
 import sys
+import os.path
 
 CLASSIFIERS = [
     'Intended Audience :: System Administrators',
@@ -33,7 +34,7 @@ CLASSIFIERS = [
     'Topic :: System :: Networking'
 ]
 
-data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
+data_files_custom = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
               ('/var/log', ['var/log/dhcpy6d.log']),\
               ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',\
                                   'doc/config.sql',\
@@ -45,14 +46,20 @@ data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
 
 # RPM creation uses more files as data_files which on Debian are 
 # installed via debhelpers
-if "bdist_rpm" in sys.argv:
-    scripts = ''
-    data_files.append(('usr/sbin', ['dhcpy6d']))	
-    data_files.append(('etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
-    data_files.append(('etc/default', ['etc/default/dhcpy6d']))	
-    data_files.append(('etc/init.d', ['etc/init.d/dhcpy6d']))	
+# /tmp/DHCPY6D_BUILDING_RPM has been touched by build.sh
+if os.path.exists("/tmp/DHCPY6D_BUILDING_RPM"):
+    scripts_custom = ''
+    data_files_custom.append(('/usr/sbin', ['dhcpy6d']))	
+    data_files_custom.append(('/etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
+    data_files_custom.append(('/etc/default', ['etc/default/dhcpy6d']))	
+    data_files_custom.append(('/etc/init.d', ['etc/init.d/dhcpy6d']))	
 else:
-    scripts = 'dhcpy6d',
+    scripts_custom = ['dhcpy6d']
+
+print 10*"\n"
+print sys.argv, scripts_custom, data_files_custom
+#sys.exit(0)
+print 10*"\n"
 
 setup(name = 'dhcpy6d',
     version = '20121221',
@@ -66,7 +73,7 @@ setup(name = 'dhcpy6d',
     download_url = 'http://dhcpy6d.ifw-dresden.de/download',
     py_modules = ['dhcpy6.Helpers', 'dhcpy6.Constants',\
                 'dhcpy6.Config', 'dhcpy6.Storage'],
-    data_files=data_files,\
-    scripts = scripts\
+    data_files = data_files_custom,\
+    scripts = scripts_custom\
     )
 
