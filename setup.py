@@ -21,7 +21,6 @@
 
 from distutils.core import setup
 import sys
-import os
 
 CLASSIFIERS = [
     'Intended Audience :: System Administrators',
@@ -34,6 +33,27 @@ CLASSIFIERS = [
     'Topic :: System :: Networking'
 ]
 
+data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
+              ('/var/log', ['var/log/dhcpy6d.log']),\
+              ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',\
+                                  'doc/config.sql',\
+                                  'doc/dhcpy6d-example.conf',\
+                                  'doc/dhcpy6d-minimal.conf',\
+                                  'doc/LICENSE',\
+                                  'doc/volatile.sql']),\
+              ('/etc', ['etc/dhcpy6d.conf'])]
+
+# RPM creation uses more files as data_files which on Debian are 
+# installed via debhelpers
+if "bdist_rpm" in sys.argv:
+    scripts = ''
+    data_files.append(('usr/sbin', ['dhcpy6d']))	
+    data_files.append(('etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
+    data_files.append(('etc/default', ['etc/default/dhcpy6d']))	
+    data_files.append(('etc/init.d', ['etc/init.d/dhcpy6d']))	
+else:
+    scripts = 'dhcpy6d',
+
 setup(name = 'dhcpy6d',
     version = '20121220',
     license = 'GNU GPL v2',
@@ -44,17 +64,9 @@ setup(name = 'dhcpy6d',
     author_email = 'h.wahl@ifw-dresden.de',
     url = 'http://dhcpy6d.ifw-dresden.de',
     download_url = 'http://dhcpy6d.ifw-dresden.de/download',
-    scripts = ['dhcpy6d'],
     py_modules = ['dhcpy6.Helpers', 'dhcpy6.Constants',\
                 'dhcpy6.Config', 'dhcpy6.Storage'],
-    data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
-                  ('/var/log', ['var/log/dhcpy6d.log']),\
-                  ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',\
-                                      'doc/config.sql',\
-                                      'doc/dhcpy6d-example.conf',\
-                                      'doc/dhcpy6d-minimal.conf',\
-                                      'doc/LICENSE',\
-                                      'doc/volatile.sql']),\
-		  ('/etc', ['etc/dhcpy6d.conf'])]
+    data_files=data_files,\
+    scripts = scripts\
     )
 
