@@ -29,8 +29,7 @@ elif [ -f /etc/redhat-release ]
 	then
 		echo "Building .rpm package"
 
-		#python setup.py bdist --format=rpm --install-scripts=/usr/sbin --dist-dir .
-		python setup.py bdist_rpm --dist-dir .
+		python setup.py bdist_rpm --dist-dir . --binary-only
 else
 	echo "Package creation is only supported on Debian and RedHat derivatives."
 fi
