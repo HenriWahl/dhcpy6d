@@ -11,3 +11,5 @@ include var/log/dhcpy6d.log
 include etc/dhcpy6d.conf
 include etc/logrotate.d/dhcpy6d
 include etc/init.d/dhcpy6d
+include etc/default/dhcpy6d
+include installer/redhat/init.d/dhcpy6d

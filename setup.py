@@ -51,8 +51,7 @@ if os.path.exists("/tmp/DHCPY6D_BUILDING_RPM"):
     scripts_custom = ''
     data_files_custom.append(('/usr/sbin', ['dhcpy6d']))	
     data_files_custom.append(('/etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
-    data_files_custom.append(('/etc/default', ['etc/default/dhcpy6d']))	
-    data_files_custom.append(('/etc/init.d', ['etc/init.d/dhcpy6d']))	
+    data_files_custom.append(('/etc/init.d', ['installer/redhat/init.d/dhcpy6d']))
 else:
     scripts_custom = ['dhcpy6d']
 
@@ -62,7 +61,7 @@ print sys.argv, scripts_custom, data_files_custom
 print 10*"\n"
 
 setup(name = 'dhcpy6d',
-    version = '20121221',
+    version = '20130108',
     license = 'GNU GPL v2',
     description = 'DHCPv6 server daemon',
     long_description = 'Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by DUID, hostname or MAC address as in the good old IPv4 days. It allows easy dualstack transistion, addresses may be generated randomly, by range, by arbitrary ID or MAC address. Clients can get more than one address, leases and client configuration can be stored in databases and DNS can be updated dynamically.',
