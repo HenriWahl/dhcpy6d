@@ -39,10 +39,15 @@ start() {
     rh_status_q && return 0
 
     echo -n $"Starting $prog: "
-    daemon --pidfile=$pidfile $exec $config 2>/dev/null
+    $exec $config 2>/dev/null &
     RETVAL=$?
-    echo
+    pid=$!
+    echo $pid > $pidfile
     [ $RETVAL -eq 0 ] && touch $lockfile
+
+    [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+    echo
+
     return $RETVAL
 }
 
