@@ -17,7 +17,7 @@ import platform
 from Helpers import *
 
 # needed for boolean options
-BOOLPOOL = {"0":False, "1":True, "no":False, "yes":True, False:False, True:True, "on":True, "off":False}
+BOOLPOOL = {"0":False, "1":True, "no":False, "yes":True, "false":False, "true":True, False:False, True:True, "on":True, "off":False}
 
 # whitespace for options with more than one value
 WHITESPACE = " ,"
@@ -277,27 +277,27 @@ class Config(object):
         self.STORE_SQLITE_VOLATILE = "volatile.sqlite"
 
         # DNS Update settings
-        self.DNS_UPDATE = False
+        self.DNS_UPDATE = "False"
         self.DNS_UPDATE_NAMESERVER = "::1"
         self.DNS_TTL = 86400
         self.DNS_RNDC_KEY = "rndc-key"
         self.DNS_RNDC_SECRET = "0000000000000000000000000000000000000000000000000000000000000"
         # DNS RFC 4704 client DNS wishes          
         # use client supplied hostname
-        self.DNS_USE_CLIENT_HOSTNAME = False
+        self.DNS_USE_CLIENT_HOSTNAME = "False"
         # ignore client ideas about DNS (if at all, what name to use, self-updating...) 
-        self.DNS_IGNORE_CLIENT = True
+        self.DNS_IGNORE_CLIENT = "True"
 
         # Log ot not
-        self.LOG = False
+        self.LOG = "False"
         # Log level
         self.LOG_LEVEL = "INFO"
         # Log on console
-        self.LOG_CONSOLE = False
+        self.LOG_CONSOLE = "False"
         # Logfile
         self.LOG_FILE = ""
         # Log to syslog
-        self.LOG_SYSLOG = False
+        self.LOG_SYSLOG = "False"
         # Syslog facility
         self.LOG_SYSLOG_FACILITY = "daemon"
         # Local syslog socket or server:port
@@ -310,7 +310,7 @@ class Config(object):
         self.AUTHENTICATION_INFORMATION = "00000000000000000000000000000000"
         
         # for debugging - if False nothing is done 
-        self.REALLY_DO_IT = True
+        self.REALLY_DO_IT = "True"
         
         # interval for TidyUp thread - time in seconds
         self.CLEANING_INTERVAL = 10
@@ -416,22 +416,22 @@ class Config(object):
         self.STORE_VOLATILE = self.STORE_VOLATILE.lower()
     
         # boolize none-config-store
-        if self.STORE_CONFIG == "none":
-            self.STORE_CONFIG = False    
+        if self.STORE_CONFIG.lower() == "none":
+            self.STORE_CONFIG = False   
        
         # get nameservers as list
         if len(self.NAMESERVER) > 0:
             self.NAMESERVER = ListifyOption(self.NAMESERVER)
         
         # convert to boolean value
-        self.DNS_UPDATE = BOOLPOOL[self.DNS_UPDATE]
-        self.DNS_USE_CLIENT_HOSTNAME = BOOLPOOL[self.DNS_USE_CLIENT_HOSTNAME]
-        self.DNS_IGNORE_CLIENT = BOOLPOOL[self.DNS_IGNORE_CLIENT]
-        self.REALLY_DO_IT = BOOLPOOL[self.REALLY_DO_IT]
-        self.LOG = BOOLPOOL[self.LOG]
-        self.LOG_CONSOLE = BOOLPOOL[self.LOG_CONSOLE]
+        self.DNS_UPDATE = BOOLPOOL[self.DNS_UPDATE.lower()]
+        self.DNS_USE_CLIENT_HOSTNAME = BOOLPOOL[self.DNS_USE_CLIENT_HOSTNAME.lower()]
+        self.DNS_IGNORE_CLIENT = BOOLPOOL[self.DNS_IGNORE_CLIENT.lower()]
+        self.REALLY_DO_IT = BOOLPOOL[self.REALLY_DO_IT.lower()]
+        self.LOG = BOOLPOOL[self.LOG.lower()]
+        self.LOG_CONSOLE = BOOLPOOL[self.LOG_CONSOLE.lower()]
         self.LOG_LEVEL = self.LOG_LEVEL.upper()        
-        self.LOG_SYSLOG = BOOLPOOL[self.LOG_SYSLOG]
+        self.LOG_SYSLOG = BOOLPOOL[self.LOG_SYSLOG.lower()]
         self.LOG_SYSLOG_FACILITY = self.LOG_SYSLOG_FACILITY.upper()
         
         # index of classes which add some identification rules etc.

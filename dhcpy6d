@@ -990,6 +990,7 @@ class Handler(SocketServer.DatagramRequestHandler):
         """
         # empty dummy response
         self.response = ""
+               
         try:
             # convert raw message into ascii-bytes
             bytes = binascii.b2a_hex(self.request[0])
@@ -1147,7 +1148,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 self.build_response(7, transaction_id, [13], 3)
 
                             # INFORMATION-REQUEST    
-                            # wenn letzter Request ein INFORMATION-REQUEST (type 11) war sende ein REPLY (type 7) zurueck  
+                            # if last request was an INFORMATION-REQUEST (type 11) send a REPLY (type 7) back  
                             elif Transactions[transaction_id].LastMessageReceivedType == 11:
                                 self.build_response(7, transaction_id, Transactions[transaction_id].OptionsRequest)
 
@@ -1284,19 +1285,19 @@ class Handler(SocketServer.DatagramRequestHandler):
             # Option 11 Authentication Option
             # seems to be pretty unused at the moment - to be done
             if 11 in options_request:
-                # "3" fuer Reconfigure Key Authentication Protocol
+                # "3" for Reconfigure Key Authentication Protocol
                 protocol = "%02x" % (3)
-                # "1" fuer Algorithmus
+                # "1" for algorithm
                 algorithm = "%02x" % (1)
-                # tja, vermuten wir mal "0" als gueltige Replay Detection Method
+                # assuming "0" as valid Replay Detection method
                 rdm = "%02x" % (0)
-                # Replay Detection - nehmen wir einfach mal die aktuelle Zeit
+                # Replay Detection - current time for example
                 replay_detection = "%016x" % (int(datetime.datetime.now().strftime("%s")))
                 # Authentication Information Type
-                # ist bei erstem Senden 1, spaeter, bei HMAC-MD5, dann 2
+                # first 1, later with HMAC-MD5  2
                 ai_type = "%02x" % (1)
                 authentication_information = cfg.AUTHENTICATION_INFORMATION
-                # alles zusammen....
+                # stuffed together
                 response_ascii += BuildOption(11, protocol + algorithm + rdm + replay_detection + ai_type + authentication_information)            
 
             # Option 12 Server Unicast Option
@@ -1401,10 +1402,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                 response_ascii = "%02x" % (response_type)
                 response_ascii += transaction_id
     
-                # diese Optionen sind immer zu gebrauchen
-                # Option 1 client identifier
+                # always of interest
+                # option 1 client identifier
                 response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
-                # Option 2 server identifier
+                # option 2 server identifier
                 response_ascii += BuildOption(2, cfg.SERVERDUID)                    
                     
                 # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
@@ -1419,8 +1420,15 @@ class Handler(SocketServer.DatagramRequestHandler):
                 else:
                     log.info("%s: TransactionID: %s Options:%s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))      
       
-            # self.finish() sends self.response
+            # response
             self.response = binascii.a2b_hex(response_ascii)
+            
+            # send only if there is anything to send       
+            if cfg.REALLY_DO_IT:
+                if len(self.response) > 0:
+                    self.socket.sendto(self.response, self.client_address)
+            else:
+                log.error("Nothing sent - please set really_do_it = yes in config file.")            
             
         except Exception, err:
             log.error("Response(): " + str(err))
@@ -1429,21 +1437,10 @@ class Handler(SocketServer.DatagramRequestHandler):
             traceback.print_exc(file=sys.stdout)
             # clear any response
             self.response = ""
+            
             return None
 
-
-    def finish(self):
-        """
-            send response from self.response
-        """
-        # send only if there is anything to send
-        if cfg.REALLY_DO_IT:
-            if len(self.response) > 0:
-                self.socket.sendto(self.response, self.client_address)
-        else:
-            log.error("Nothing sent - please set really_do_it = yes in config file.")
-            
-
+        
 ### MAIN ###
 
 if __name__ == "__main__":
