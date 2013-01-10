@@ -1437,10 +1437,11 @@ class Handler(SocketServer.DatagramRequestHandler):
             send response from self.response
         """
         # send only if there is anything to send
-        if cfg.REALLY_DO_IT and len(self.response) > 0:
-            self.socket.sendto(self.response, self.client_address)
+        if cfg.REALLY_DO_IT:
+            if len(self.response) > 0:
+                self.socket.sendto(self.response, self.client_address)
         else:
-            print "send nothing..."
+            log.error("Nothing sent - please set really_do_it = yes in config file.")
             
 
 ### MAIN ###
