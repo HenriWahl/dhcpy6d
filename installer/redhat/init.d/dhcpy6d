@@ -39,7 +39,7 @@ start() {
     rh_status_q && return 0
 
     echo -n $"Starting $prog: "
-    $exec $config 2>/dev/null &
+    $exec $config &
     RETVAL=$?
     pid=$!
     echo $pid > $pidfile
