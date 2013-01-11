@@ -10,6 +10,11 @@
 # Short-Description: Start and stop the DHCPv6 server dhcpy6d
 # Description: dhcpy6d is a DHCPv6 server
 ### END INIT INFO
+# chkconfig: - 65 35
+# description: Start and stop the DHCPv6 server dhcpy6d
+# processname: dhcpy6d
+# config: /etc/dhcpy6d.conf
+# pidfile: /var/run/dhcpy6d.pid
 
 # this init.d file derived from /etc/init.d/dhcpd6
 

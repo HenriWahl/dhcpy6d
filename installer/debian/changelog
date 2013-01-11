@@ -1,3 +1,11 @@
+dhcpy6d (20130111-1) unstable; urgency=low
+
+  * New upstream
+    - more polishing for rpm packaging support
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 11 Jan 2013 13:18:00 +0200
+
+
 dhcpy6d (20130109-1) unstable; urgency=low
 
   * New upstream
