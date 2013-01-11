@@ -1,3 +1,11 @@
+dhcpy6d (0.1-1) unstable; urgency=low
+
+  * New upstream
+    - inital stable release
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 11 Jan 2013 14:10:00 +0200
+
+
 dhcpy6d (20130111-1) unstable; urgency=low
 
   * New upstream
