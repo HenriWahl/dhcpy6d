@@ -1,3 +1,11 @@
+dhcpy6d (0.1.1-1) unstable; urgency=low
+
+  * New upstream
+    - reverted to Handler.finish()
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 15 Jan 2013 07:35:00 +0200
+
+
 dhcpy6d (0.1-1) unstable; urgency=low
 
   * New upstream
