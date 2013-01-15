@@ -1423,13 +1423,6 @@ class Handler(SocketServer.DatagramRequestHandler):
             # response
             self.response = binascii.a2b_hex(response_ascii)
             
-            # send only if there is anything to send       
-            if cfg.REALLY_DO_IT:
-                if len(self.response) > 0:
-                    self.socket.sendto(self.response, self.client_address)
-            else:
-                log.error("Nothing sent - please set really_do_it = yes in config file.")            
-            
         except Exception, err:
             log.error("Response(): " + str(err))
             print err
@@ -1439,8 +1432,20 @@ class Handler(SocketServer.DatagramRequestHandler):
             self.response = ""
             
             return None
-
         
+        
+    def finish(self):
+        """
+        send response from self.response
+        """
+        # send only if there is anything to send       
+        if cfg.REALLY_DO_IT:
+            if len(self.response) > 0:
+                self.socket.sendto(self.response, self.client_address)
+        else:
+            log.error("Nothing sent - please set really_do_it = yes in config file.")            
+        
+    
 ### MAIN ###
 
 if __name__ == "__main__":
