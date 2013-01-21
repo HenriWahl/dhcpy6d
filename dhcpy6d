@@ -252,32 +252,36 @@ def BuildClient(transaction_id):
                 if i == "mac":
                     # get all MACs for client from config
                     macs = configstore.get_client_config_by_mac(transaction_id)
-                    if not macs == None:
+                    if macs:
                         macs = set(macs)
                         id_attributes.append("macs")
                     elif cfg.IDENTIFICATION_MODE == "match_all":
                         macs = set()
                         id_attributes.append("macs")
+                        
                 if i == "duid":
                     duids = configstore.get_client_config_by_duid(transaction_id)
-                    if not duids == None:
+                    if duids:
                         duids = set(duids)
                         id_attributes.append("duids")
                     elif cfg.IDENTIFICATION_MODE == "match_all":
                         duids = set()
                         id_attributes.append("duids")
+                        
                 if i == "hostname":
                     hostnames = configstore.get_client_config_by_hostname(transaction_id)
-                    if not hostnames == None:
+                    if hostnames:
                         hostnames = set(hostnames)
                         id_attributes.append("hostnames")
                     elif cfg.IDENTIFICATION_MODE == "match_all":
                         hostnames = set()
                         id_attributes.append("hostnames")
-                        
+
             # get intersection of all sets of identifying attributes - even the empty ones
             if len(id_attributes) > 0:
                 client_config = set.intersection(eval("&".join(id_attributes)))
+
+                # if exactly one client has been identified use that config
                 if len(client_config) == 1:
                     # reuse client_config, grab it out of the set
                     client_config = client_config.pop()

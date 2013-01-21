@@ -255,10 +255,11 @@ class Store(object):
                                   
     def get_client_config_by_mac(self, transaction_id):
         """
-        get host(s?) and its information belonging to that mac
+        get host and its information belonging to that mac
         """       
         hosts = list()
         mac = self.Transactions[transaction_id].MAC
+        
         if mac in self.Transactions[transaction_id].ClientConfigDB.IndexMAC:
             hosts.extend(self.Transactions[transaction_id].ClientConfigDB.IndexMAC[mac])
             return hosts
