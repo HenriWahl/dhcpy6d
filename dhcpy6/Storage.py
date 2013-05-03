@@ -427,7 +427,11 @@ class Textfile(Store):
         for section in config.sections():
             self.Hosts[section] = ClientConfig()
             for item in config.items(section):
-                self.Hosts[section].__setattr__(item[0].upper(), str(item[1]))
+                # lowercase all MAC addresses, DUIDs and IPv6 addresses
+                if item[0].upper() in ["MAC", "DUID", "ADDRESS"]:
+                    self.Hosts[section].__setattr__(item[0].upper(), str(item[1]).lower())
+                else:
+                    self.Hosts[section].__setattr__(item[0].upper(), str(item[1]))
             
             # Test if host has ID
             if cfg.CLASSES.has_key(self.Hosts[section].CLASS):
