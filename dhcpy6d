@@ -1110,6 +1110,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 #    ###volatilestore.store_lease(transaction_id)
                                 #    self.build_response(7, transaction_id, [13], 4)
                                 #    pass
+
                                 # the RFC 3315 is a little bit confusing regarding CONFIRM
                                 # messages so it won't hurt to simply let the client
                                 # solicit addresses again via answering "NotOnLink"
@@ -1457,6 +1458,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 if __name__ == "__main__":
 
     log.info("Starting dhcpy6d daemon...")
+    log.info("Server DUID: %s" % (cfg.SERVERDUID))
 
     # configure SocketServer
     UDPMulticastIPv6.address_family = socket.AF_INET6
@@ -1479,7 +1481,7 @@ if __name__ == "__main__":
     dnsquery = DNSQueryThread(dnsqueue)
     dnsquery.start()
 
-    # server forever :-)
+    # serve forever
     try:
         server.serve_forever()
     except KeyboardInterrupt:
