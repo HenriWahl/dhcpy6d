@@ -678,15 +678,23 @@ def ParseAddressPattern(address, client_config, transaction_id):
         # expecting range-range at the last octet, "prefix" means the first seven octets here 
         # - is just shorter than the_first_seven_octets
         prefix = DecompressIP6(a.replace("$range$", "0000"))[:28]
-        # first look for highest inactive (free) lease
-        lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
+
+        # first: check if requesting client still has an active lease that could be reused
+        lease = volatilestore.get_range_lease_for_recycling(active=1, prefix=prefix, frange=frange, trange=trange,\
+                                                  duid=Transactions[transaction_id].DUID,\
+                                                  mac=Transactions[transaction_id].MAC)
+
+        # second: if there was no lease look for highest inactive (free) lease
+        if lease == None:
+            lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
+
         # gotten lease has to be in range - important after changed range boundaries 
         if not lease == None and frange <= lease[28:].lower() < trange:
             a = ":".join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
                           lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
         else:
             lease = volatilestore.get_range_lease(active=1, prefix=prefix, frange=frange, trange=trange)
-            # second search highest active lease  
+            # third: search highest active lease
             if not lease == None and frange <= lease[28:].lower() < trange:     
                 # Here logging is very important if range has been exceeded
                 if lease[28:].lower() >= trange:
@@ -1093,7 +1101,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     DNSUpdate(transaction_id)
 
                             # CONFIRM
-                            # if last request was a CONFIRM (4) send a REPLY (type 7) back 
+                            # if last request was a CONFIRM (4) send a REPLY (type 7) back
+                            # Due to problems with different clients they will get a not-available-reply
+                            # but the next ADVERTISE will offer them the last known and still active
+                            # lease. This makes sense in case of fixed MAC-based, addresses, ranges and
+                            # ID-based addresses, Random addresses will be recalculated
                             elif Transactions[transaction_id].LastMessageReceivedType == 4:
                                 # Windows seems to have a problem with CONFIRM messages
                                 # Microsoft Enterprise Number EN is 311
@@ -1197,7 +1209,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             response_ascii = "%02x" % (response_type)
             response_ascii += transaction_id
 
-            # diese Optionen sind immer zu gebrauchen
+            # these options are always useful
             # Option 1 client identifier
             response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
             # Option 2 server identifier
@@ -1252,7 +1264,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                                
             # IA_TA temporary addresses
             if 4 in options_request:
-                # sicherheitshalber noch mal pruefen ob wirklich eine MAC ueber die Link Local IP vom Client bekannt ist
+                # check if MAC of LLIP is really known
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                     # collect client information
                     if Transactions[transaction_id].Client == None:

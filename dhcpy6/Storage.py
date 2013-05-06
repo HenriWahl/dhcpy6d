@@ -129,8 +129,38 @@ class Store(object):
             return True
         # if no client -> False
         return False   
-    
-    
+
+
+    def get_range_lease_for_recycling(self, active=1, prefix="", frange="", trange="", duid="", mac=""):
+        """
+        ask DB for last known leases of an already known host to be recycled
+        this is most useful for CONFIRM-requests that will get a not-available-answer but get an
+        ADVERTISE with the last known-as-good address for a client
+        """
+        if frange == trange == "":
+            query = "SELECT address FROM %s WHERE active = %s AND " \
+                    "address LIKE '%s%%' AND " \
+                    "duid = '%s' AND "\
+                    "mac = '%s'"\
+                    "ORDER BY last_update DESC LIMIT 1" % (self.table_leases, active, prefix, duid, mac)
+        else:
+            query = "SELECT address FROM %s WHERE active = %s AND "\
+                    "'%s' <= address AND "\
+                    "address <= '%s' AND "\
+                    "duid = '%s' AND "\
+                    "mac = '%s'"\
+                    "ORDER BY last_update DESC LIMIT 1" %\
+                    (self.table_leases, active, prefix+frange, prefix+trange, duid, mac)
+
+        answer = self.query(query)
+
+        # SQLite returns list, MySQL tuple - in case someone wonders here...
+        if not (answer == [] or answer == () or answer == None):
+            return answer[0][0]
+        else:
+            return None
+
+
     def get_range_lease(self, active=1, prefix="", frange="", trange=""):
         """
         ask DB for last known leases - active and inactive and if necessary range sensitive
@@ -224,15 +254,16 @@ class Store(object):
             # add client config which seems to fit to transaction 
             self.Transactions[transaction_id].ClientConfigDB = ClientConfigDB()  
             
-            # read al sections of config file
+            # read all sections of config file
             # a section here is a host
+            # lowering MAC and DUID information in case they where upper in database
             for host in answer:
                 hostname, mac, duid, aclass, address, id = host
                 self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname] = ClientConfig(hostname=hostname,\
-                                                mac=mac,\
-                                                duid=duid,\
+                                                mac=mac.lower(),\
+                                                duid=duid.lower(),\
                                                 aclass=aclass,\
-                                                address=address,\
+                                                address=address.lower(),\
                                                 id=id)
                 # in case of various MAC addresses split them...
                 self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC)

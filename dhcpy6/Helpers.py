@@ -14,7 +14,7 @@ import struct
 import binascii
 import ctypes
 
-# constants for GetNeighborCacheLinux()
+# constants for GetNeighborCacheLinux() - not uses now
 RTM_GETNEIGH = 30
 NLM_F_REQUEST = 1
 # Modifiers to GET request
