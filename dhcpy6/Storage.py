@@ -139,12 +139,14 @@ class Store(object):
         """
         if frange == trange == "":
             query = "SELECT address FROM %s WHERE active = %s AND " \
+                    "category = 'range' AND "\
                     "address LIKE '%s%%' AND " \
                     "duid = '%s' AND "\
                     "mac = '%s'"\
                     "ORDER BY last_update DESC LIMIT 1" % (self.table_leases, active, prefix, duid, mac)
         else:
             query = "SELECT address FROM %s WHERE active = %s AND "\
+                    "category = 'range' AND "\
                     "'%s' <= address AND "\
                     "address <= '%s' AND "\
                     "duid = '%s' AND "\
@@ -166,10 +168,15 @@ class Store(object):
         ask DB for last known leases - active and inactive and if necessary range sensitive
         """ 
         if frange == trange == "":
-            query = "SELECT address FROM %s WHERE active = %s AND address LIKE '%s%%' ORDER BY address DESC LIMIT 1" % (self.table_leases, active, prefix)           
+            query = "SELECT address FROM %s WHERE active = %s AND "\
+                    "category = 'range' AND "\
+                    "address LIKE '%s%%' ORDER BY address DESC LIMIT 1" %\
+                    (self.table_leases, active, prefix)
         else:
-            query =  "SELECT address FROM %s WHERE active = %s AND '%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
-                  (self.table_leases, active, prefix+frange, prefix+trange) 
+            query = "SELECT address FROM %s WHERE active = %s AND "\
+                    "category = 'range' AND "\
+                    "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
+                    (self.table_leases, active, prefix+frange, prefix+trange)
         answer = self.query(query)
         
         # SQLite returns list, MySQL tuple - in case someone wonders here...
