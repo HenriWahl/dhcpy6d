@@ -1347,7 +1347,10 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # Option 24 Domain Search List
             if 24 in options_request:
-                response_ascii += BuildOption(24, ConvertDNS2Binary(cfg.DOMAIN))
+                converted_domain_search_list = ""
+                for d in cfg.DOMAIN_SEARCH_LIST:
+                    converted_domain_search_list +=  ConvertDNS2Binary(d)
+                response_ascii += BuildOption(24, converted_domain_search_list)
 
             # Option 31 OPTION_SNTP_SERVERS
             #if 31 in options_request and cfg.SNTP_SERVERS != "":

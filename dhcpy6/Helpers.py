@@ -175,7 +175,7 @@ def ListifyOption(option):
     if option:
         lex = shlex.shlex(option)
         lex.whitespace = WHITESPACE
-        lex.wordchars += ":."
+        lex.wordchars += ":.-"
         return list(lex)
     else:
         return None

@@ -75,8 +75,20 @@ class Config(object):
         # partly check of domain name validity         
         if not self.DOMAIN.lower()[0].isalpha() or \
            not self.DOMAIN.lower()[-1].isalpha():
-                ErrorExit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN)) 
-                
+                ErrorExit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN))
+
+        # check domain search list domains
+        for d in self.DOMAIN_SEARCH_LIST:
+            # partly check of domain name validity
+            for i in d.lower():
+                if not i in ".-0123456789abcdefghijklmnopqrstuvwxyz":
+                    ErrorExit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
+
+            # partly check of domain name validity
+            if not d.lower()[0].isalpha() or \
+               not d.lower()[-1].isalpha():
+                    ErrorExit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
+
         # check if valid lifetime is a number    
         if not self.VALID_LIFETIME.isdigit():
             ErrorExit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.VALID_LIFETIME))
@@ -236,7 +248,12 @@ class Config(object):
         # year 2042 even if it is 2012 - time itself is OK
         self.SERVERDUID = "00010001%08x%012x" % (time.time(), uuid.getnode())
         self.NAMESERVER = ""
+
+        # domain for FQDN hostnames
         self.DOMAIN = "domain"
+        # domain search list for option 24, according to RFC 3646
+        # defaults to DOMAIN
+        self.DOMAIN_SEARCH_LIST = ""
 
         # IA_NA Options
         # Default preferred lifetime for addresses
@@ -417,8 +434,15 @@ class Config(object):
     
         # boolize none-config-store
         if self.STORE_CONFIG.lower() == "none":
-            self.STORE_CONFIG = False   
-       
+            self.STORE_CONFIG = False
+
+        # if no domain search list has been given use DOMAIN
+        if len(self.DOMAIN_SEARCH_LIST) == 0:
+            self.DOMAIN_SEARCH_LIST = self.DOMAIN
+
+        # domain search list has to be a list
+        self.DOMAIN_SEARCH_LIST = ListifyOption(self.DOMAIN_SEARCH_LIST)
+
         # get nameservers as list
         if len(self.NAMESERVER) > 0:
             self.NAMESERVER = ListifyOption(self.NAMESERVER)
@@ -435,7 +459,6 @@ class Config(object):
         self.LOG_SYSLOG_FACILITY = self.LOG_SYSLOG_FACILITY.upper()
         
         # index of classes which add some identification rules etc.
-        
         for c in self.CLASSES.values():
             if c.FILTER_MAC != "": self.FILTERS["mac"].append(c)
             if c.FILTER_DUID != "": self.FILTERS["duid"].append(c)
