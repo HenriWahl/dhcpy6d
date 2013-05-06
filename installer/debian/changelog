@@ -1,3 +1,12 @@
+dhcpy6d (0.1.3-1) unstable; urgency=low
+
+  * New upstream
+    - added domain_search_list option
+    - fixed case-sensitive MAC address config
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 06 May 2013 14:50:00 +0200
+
+
 dhcpy6d (0.1.2-1) unstable; urgency=low
 
   * New upstream
