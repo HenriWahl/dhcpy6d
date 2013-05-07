@@ -266,11 +266,15 @@ class Store(object):
             # lowering MAC and DUID information in case they where upper in database
             for host in answer:
                 hostname, mac, duid, aclass, address, id = host
+                # lower some attributes to comply with values from request
+                if mac: mac = mac.lower()
+                if duid: duid = duid.lower()
+                if address: address = address.lower()
                 self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname] = ClientConfig(hostname=hostname,\
-                                                mac=mac.lower(),\
-                                                duid=duid.lower(),\
+                                                mac=mac,\
+                                                duid=duid,\
                                                 aclass=aclass,\
-                                                address=address.lower(),\
+                                                address=address,\
                                                 id=id)
                 # in case of various MAC addresses split them...
                 self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC)
@@ -289,7 +293,10 @@ class Store(object):
                         self.Transactions[transaction_id].ClientConfigDB.IndexDUID[self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID] = [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
                     else:
                         self.Transactions[transaction_id].ClientConfigDB.IndexDUID[self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID].append(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname])
-      
+
+                # some cleaning
+                del host, mac, duid, address, aclass, id
+
                                   
     def get_client_config_by_mac(self, transaction_id):
         """
