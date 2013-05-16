@@ -184,7 +184,14 @@ class Store(object):
             return answer[0][0]
         else:
             return None
-        
+
+
+    def check_advertisement(self, duid="", mac="", llip="", interface=""):
+        """
+        check if an address for client has already been advertised
+        """
+        pass
+
         
     def get_host_lease(self, address):
         """
@@ -443,6 +450,7 @@ class SQLite(Store):
             self.connected = True
         except:
             self.connected = False
+            return ""
 
         return answer.fetchall()
     
