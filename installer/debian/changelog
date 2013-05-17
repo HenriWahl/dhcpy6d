@@ -1,3 +1,11 @@
+dhcpy6d (0.1.4.1-1) unstable; urgency=low
+
+  * New upstream
+    - fixed lease storage bug
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 18 May 2013 00:50:00 +0200
+ 
+ 
 dhcpy6d (0.1.4-1) unstable; urgency=low
 
   * New upstream
