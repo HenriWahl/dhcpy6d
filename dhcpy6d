@@ -177,17 +177,17 @@ def LegacyAdjustments():
     """
     adjust some existing data to work with newer versions of dhcpy6d
     """
-    if volatilestore.query("SELECT advertised FROM leases") == "":
-        # row 'advertised' in tables 'leases' does not exist yet, comes with version 0.1.4
-        volatilestore.query('ALTER TABLE leases ADD advertised INT NOT NULL DEFAULT 0')
-
-        if volatilestore.query("SELECT advertised FROM leases") == "":
-            log.warn("Adding row 'advertised' to table 'leases' in volatile storage failed! Exiting...")
-            sys.exit(1)
-        else:
+    try:
+        if volatilestore.query("SELECT advertised FROM leases LIMIT 1") == None:
+            # row 'advertised' in tables 'leases' does not exist yet, comes with version 0.1.4
+            volatilestore.query('ALTER TABLE leases ADD advertised INT NOT NULL DEFAULT 0')
             log.info("Adding row 'advertised' to table 'leases' in volatile storage succeeded.")
+    except:
+        print "\n'ALTER TABLE leases ADD advertised INT NOT NULL DEFAULT 0' on volatile database failed."
+        print "Please apply manually or grant necessary permissions.\n"
+        sys.exit(1)
 
-    
+
 def BuildClient(transaction_id):
     """
         builds client object of client config and transaction data

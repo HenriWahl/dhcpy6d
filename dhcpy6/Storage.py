@@ -504,7 +504,7 @@ class SQLite(Store):
             self.connected = True
         except:
             self.connected = False
-            return ""
+            return None
 
         return answer.fetchall()
     
