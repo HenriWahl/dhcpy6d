@@ -81,10 +81,11 @@ class Store(object):
                 if answer != None:
                     # if address is not leased yet add it
                     if len(answer) == 0:
-                        query = "INSERT INTO %s (address, active, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
+                        query = "INSERT INTO %s (address, active, advertised, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
                               (self.table_leases,\
                                a.ADDRESS,\
                                1,\
+			       0,\
                                a.PREFERRED_LIFETIME,\
                                a.VALID_LIFETIME,\
                                self.Transactions[transaction_id].Client.Hostname,\
