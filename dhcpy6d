@@ -526,10 +526,16 @@ def ParseAddressPattern(address, client_config, transaction_id):
         else:
             return None
     elif address.CATEGORY == "random":
-        ra = str(hex(random.getrandbits(64)))[2:][:-1]
-        ra = ":".join((ra[0:4], ra[4:8], ra[8:12], ra[12:16]))
-        # subject to change....
-        a = a.replace("$random64$", ra)
+        # first check if address already has been advertised
+        advertised_address = volatilestore.check_advertised_lease(transaction_id, category="random", atype=address.TYPE)
+        # when address already has been advertised for this client use it
+        if len(advertised_address) > 0:
+            a = advertised_address[0][0]
+        else:
+            ra = str(hex(random.getrandbits(64)))[2:][:-1]
+            ra = ":".join((ra[0:4], ra[4:8], ra[8:12], ra[12:16]))
+            # subject to change....
+            a = a.replace("$random64$", ra)
     elif address.CATEGORY == "range":
         frange, trange = address.RANGE.split("-")
         if len(frange)<4:
