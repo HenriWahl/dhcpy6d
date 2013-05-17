@@ -85,11 +85,7 @@ class Store(object):
                               (self.table_leases,\
                                a.ADDRESS,\
                                1,\
-<<<<<<< HEAD
                                0,\
-=======
-			       0,\
->>>>>>> 5e2bf21a45d75736325a5b5693c516a131bcf6f6
                                a.PREFERRED_LIFETIME,\
                                a.VALID_LIFETIME,\
                                self.Transactions[transaction_id].Client.Hostname,\
