@@ -76,8 +76,7 @@ class Store(object):
         # only if client exists
         if self.Transactions[transaction_id].Client:           
             for a in self.Transactions[transaction_id].Client.Addresses:
-                ###query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, "".join(DecompressIP6(a.ADDRESS)))           
-                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)           
+                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
                 answer = self.query(query)
                 if answer != None:
                     # if address is not leased yet add it
@@ -102,13 +101,12 @@ class Store(object):
                         answer = self.query(query)
                     # otherwise update it if not a random address
                     elif a.CATEGORY != "random":
-                        query = "UPDATE %s SET active = '%s', preferred_lifetime = '%s', valid_lifetime = '%s',\
+                        query = "UPDATE %s SET active = 1, preferred_lifetime = '%s', valid_lifetime = '%s',\
                               hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
                               duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
                               valid_until = '%s'\
                               WHERE address = '%s'" % \
                               (self.table_leases,\
-                               1,\
                                a.PREFERRED_LIFETIME,\
                                a.VALID_LIFETIME,\
                                self.Transactions[transaction_id].Client.Hostname,\
@@ -128,7 +126,41 @@ class Store(object):
                         
             return True
         # if no client -> False
-        return False   
+        return False
+
+
+    def lock_advertised_lease(self, transaction_id):
+        """
+        lock lease that has been freshly advertised to avoid race condition to deliver same address mire than once
+        """
+        # only if client exists
+        if self.Transactions[transaction_id].Client:
+            for a in self.Transactions[transaction_id].Client.Addresses:
+                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                answer = self.query(query)
+                if answer != None:
+                    query = "UPDATE %s SET advertised = 1 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                    answer = self.query(query)
+            return True
+        # if no client -> False
+        return False
+
+
+    def unlock_advertised_lease(self, transaction_id):
+        """
+        unlock lease that has been freshly advertised to avoid race condition to deliver same address mire than once
+        """
+        # only if client exists
+        if self.Transactions[transaction_id].Client:
+            for a in self.Transactions[transaction_id].Client.Addresses:
+                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                answer = self.query(query)
+                if answer != None:
+                    query = "UPDATE %s SET advertised = 0 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                    answer = self.query(query)
+            return True
+        # if no client -> False
+        return False
 
 
     def get_range_lease_for_recycling(self, active=1, prefix="", frange="", trange="", duid="", mac=""):
@@ -185,13 +217,6 @@ class Store(object):
         else:
             return None
 
-
-    def check_advertisement(self, duid="", mac="", llip="", interface=""):
-        """
-        check if an address for client has already been advertised
-        """
-        pass
-
         
     def get_host_lease(self, address):
         """
@@ -231,6 +256,25 @@ class Store(object):
                 
         answer = self.query(query)        
         return answer
+
+
+    def check_advertised_lease(self, transaction_id="", category="", atype=""):
+        """
+        check if there already advertised addresses for client
+        """
+        # attributes to identify host and lease
+        query = "SELECT address FROM %s WHERE advertised = 1\
+                 AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
+                 AND category = '%s' AND type = '%s'" % \
+                (self.table_leases,\
+                 self.Transactions[transaction_id].MAC,\
+                 self.Transactions[transaction_id].DUID,\
+                 self.Transactions[transaction_id].IAID,\
+                 category,\
+                 atype)
+
+        answer = self.query(query)
+        return answer
         
     
     def release_free_leases(self, timestamp=datetime.datetime.now()):
@@ -251,7 +295,17 @@ class Store(object):
         answer = self.query(query)    
         return answer
         
-    
+
+    def unlock_unused_advertised_leases(self, timestamp=datetime.datetime.now()):
+        """
+        unlock leases marked as advertised but apparently never been delivered
+        let's say a client should have requested its formerly advertised address after 1 minute
+        """
+        query = "UPDATE %s SET advertised = 0 WHERE last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
+        answer = self.query(query)
+        return answer
+
+
     def build_config_from_db(self, transaction_id):
         """
         get client config from db and build the appropriate config objects and indices

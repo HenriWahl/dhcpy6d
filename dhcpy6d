@@ -177,19 +177,15 @@ def LegacyAdjustments():
     """
     adjust some existing data to work with newer versions of dhcpy6d
     """
-    if volatilestore.query("SELECT * FROM advertisements") == "":
-        # table 'advertisements' does not exist yet, comes with version 0.1.4
-        volatilestore.query('CREATE TABLE "advertisements" ("address" VARCHAR PRIMARY KEY  NOT NULL,\
-                                                            "interface" VARCHAR NOT NULL,\
-                                                            "link_local_ip" VARCHAR NOT NULL,\
-                                                            "duid" VARCHAR NOT NULL,\
-                                                            "mac" VARCHAR NOT NULL,\
-                                                            "last_update" DATETIME NOT NULL);')
-        if volatilestore.query("SELECT * FROM advertisements") == "":
-            log.warn("Adding table 'advertisements' to volatile storage failed! Exiting...")
+    if volatilestore.query("SELECT advertised FROM leases") == "":
+        # row 'advertised' in tables 'leases' does not exist yet, comes with version 0.1.4
+        volatilestore.query('ALTER TABLE leases ADD advertised INT NOT NULL DEFAULT 0')
+
+        if volatilestore.query("SELECT advertised FROM leases") == "":
+            log.warn("Adding row 'advertised' to table 'leases' in volatile storage failed! Exiting...")
             sys.exit(1)
         else:
-            log.info("Adding table 'advertisements' to volatile storage succeeded.")
+            log.info("Adding row 'advertised' to table 'leases' in volatile storage succeeded.")
 
     
 def BuildClient(transaction_id):
@@ -543,45 +539,45 @@ def ParseAddressPattern(address, client_config, transaction_id):
         if frange > trange:
             frange, trange = trange, frange
 
-        # check first if there is an already advertised address for this client pending
-        volatilestore.check_advertisement(duid=Transactions[transaction_id].DUID,\
-                                          mac=Transactions[transaction_id].MAC,
-                                          llip=Transactions[transaction_id].ClientLLIP,\
-                                          interface=Transactions[transaction_id].Interface)
-
         # expecting range-range at the last octet, "prefix" means the first seven octets here
         # - is just shorter than the_first_seven_octets
         prefix = DecompressIP6(a.replace("$range$", "0000"))[:28]
 
-        # first: check if requesting client still has an active lease that could be reused
-        lease = volatilestore.get_range_lease_for_recycling(active=1, prefix=prefix, frange=frange, trange=trange,\
-                                                  duid=Transactions[transaction_id].DUID,\
-                                                  mac=Transactions[transaction_id].MAC)
-
-        # second: if there was no lease look for highest inactive (free) lease
-        if lease == None:
-            lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
-
-        # gotten lease has to be in range - important after changed range boundaries
-        if not lease == None and frange <= lease[28:].lower() < trange:
-            a = ":".join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
-                          lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
+        # first check if address already has been advertised
+        advertised_address = volatilestore.check_advertised_lease(transaction_id, category="range", atype=address.TYPE)
+        # when address already has been advertised for this client use it
+        if len(advertised_address) > 0:
+            a = advertised_address[0][0]
         else:
-            lease = volatilestore.get_range_lease(active=1, prefix=prefix, frange=frange, trange=trange)
-            # third: search highest active lease
+            # first: check if requesting client still has an active lease that could be reused
+            lease = volatilestore.get_range_lease_for_recycling(active=1, prefix=prefix, frange=frange, trange=trange,\
+                                                      duid=Transactions[transaction_id].DUID,\
+                                                      mac=Transactions[transaction_id].MAC)
+
+            # second: if there was no lease look for highest inactive (free) lease
+            if lease == None:
+                lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
+
+            # gotten lease has to be in range - important after changed range boundaries
             if not lease == None and frange <= lease[28:].lower() < trange:
-                # Here logging is very important if range has been exceeded
-                if lease[28:].lower() >= trange:
-                    #
-                    # log log log
-                    #
-                    return None
-                else:
-                    a = a.replace("$range$", str(hex(int(lease[28:], 16) + 1)).split("x")[1])
+                a = ":".join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
+                              lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
             else:
-                # this will be done only once - the first time if there is no other lease yet
-                # so it is safe to start from frange
-                a = a.replace("$range$", frange)
+                lease = volatilestore.get_range_lease(active=1, prefix=prefix, frange=frange, trange=trange)
+                # third: search highest active lease
+                if not lease == None and frange <= lease[28:].lower() < trange:
+                    # Here logging is very important if range has been exceeded
+                    if lease[28:].lower() >= trange:
+                        #
+                        # log log log
+                        #
+                        return None
+                    else:
+                        a = a.replace("$range$", str(hex(int(lease[28:], 16) + 1)).split("x")[1])
+                else:
+                    # this will be done only once - the first time if there is no other lease yet
+                    # so it is safe to start from frange
+                    a = a.replace("$range$", frange)
 
     return DecompressIP6(a)
 
@@ -772,7 +768,9 @@ class TidyUpThread(threading.Thread):
                         # remove leases which might not be recycled like random addresses for example
                         volatilestore.remove_leases(category="random", timestamp=datetime.datetime.now())
                         # set leases free whose valid lifetime is over
-                        volatilestore.release_free_leases(datetime.datetime.now())                    
+                        volatilestore.release_free_leases(datetime.datetime.now())
+                        # unlock advertised leases remaining
+                        volatilestore.unlock_unused_advertised_leases()
                         dbcount = 0
 
                 dbcount += 1
@@ -1106,9 +1104,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                                and Transactions[transaction_id].RapidCommit == False:
                                 # preference option (7) is for free
                                 self.build_response(2, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
-                                print "ADVERTISED ADDRESSES:"
-                                for a in Transactions[transaction_id].Client.Addresses:
-                                    print a.ADDRESS
+
+                                # store leases for addresses
+                                volatilestore.store_lease(transaction_id)
+                                # lock advertised address
+                                volatilestore.lock_advertised_lease(transaction_id)
 
                             # REQUEST
                             # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -1123,6 +1123,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, [3] + [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                 # store leases for addresses
                                 volatilestore.store_lease(transaction_id)
+                                volatilestore.unlock_advertised_lease(transaction_id)
                                 if cfg.DNS_UPDATE:
                                     DNSUpdate(transaction_id)
 
