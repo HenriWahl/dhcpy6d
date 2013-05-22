@@ -868,7 +868,8 @@ class Transaction(object):
         # Addresses given by client, for example for RENEW or RELEASE requests
         self.Addresses = list()
         # might be used against clients that are running wild
-        self.Counter = 0
+        # initial 1 as being increased after handling
+        self.Counter = 1
         # temporary storage for client configuration from DB config 
         # - only used if config comes from DB
         self.ClientConfigDB = None
@@ -1473,7 +1474,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                 if not Transactions[transaction_id].Client == None and 3 in options_request:
                     log.info("%s: TransactionID: %s Options: %s %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request, Transactions[transaction_id].Client._getOptionsString()))
                 else:
-                    log.info("%s: TransactionID: %s Options:%s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))      
+                    log.info("%s: TransactionID: %s Options: %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))
       
             # response
             self.response = binascii.a2b_hex(response_ascii)
