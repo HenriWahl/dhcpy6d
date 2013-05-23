@@ -64,12 +64,11 @@ class Store(object):
         put queries received into query queue and return the answers from answer queue
         """
         self.queryqueue.put(query)
-        answer = self.answerqueue.get()
-
+        answer = self.answerqueue.get()       
         return answer
     
     
-    def store_lease(self, transaction_id):
+    def store_lease(self, transaction_id, lock_advertised=0):
         """
         store lease in lease DB
         """
@@ -85,7 +84,7 @@ class Store(object):
                               (self.table_leases,\
                                a.ADDRESS,\
                                1,\
-                               0,\
+                               lock_advertised,\
                                a.PREFERRED_LIFETIME,\
                                a.VALID_LIFETIME,\
                                self.Transactions[transaction_id].Client.Hostname,\
@@ -102,12 +101,13 @@ class Store(object):
                         answer = self.query(query)
                     # otherwise update it if not a random address
                     elif a.CATEGORY != "random":
-                        query = "UPDATE %s SET active = 1, preferred_lifetime = '%s', valid_lifetime = '%s',\
+                        query = "UPDATE %s SET active = 1, advertised = %s, preferred_lifetime = '%s', valid_lifetime = '%s',\
                               hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
                               duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
                               valid_until = '%s'\
                               WHERE address = '%s'" % \
                               (self.table_leases,\
+                               lock_advertised,\
                                a.PREFERRED_LIFETIME,\
                                a.VALID_LIFETIME,\
                                self.Transactions[transaction_id].Client.Hostname,\
@@ -121,8 +121,11 @@ class Store(object):
                                datetime.datetime.now(),\
                                datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
                                datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),\
-                               a.ADDRESS)            
-                        
+                               a.ADDRESS)
+                        answer = self.query(query)
+                    else:
+                        # set advertised flag of random address
+                        query = "UPDATE %s SET advertised = %s, active = 1 WHERE address = '%s'" % (self.table_leases, lock_advertised, a.ADDRESS)
                         answer = self.query(query)
                         
             return True
@@ -132,16 +135,16 @@ class Store(object):
 
     def lock_advertised_lease(self, transaction_id):
         """
-        lock lease that has been freshly advertised to avoid race condition to deliver same address mire than once
+        lock lease that has been freshly advertised to avoid race condition to deliver same address more than once
         """
         # only if client exists
         if self.Transactions[transaction_id].Client:
             for a in self.Transactions[transaction_id].Client.Addresses:
-                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                #query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                #nswer = self.query(query)
+                #if answer != None:
+                query = "UPDATE %s SET advertised = 1, active = 1 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
                 answer = self.query(query)
-                if answer != None:
-                    query = "UPDATE %s SET advertised = 1 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
-                    answer = self.query(query)
             return True
         # if no client -> False
         return False
@@ -154,11 +157,11 @@ class Store(object):
         # only if client exists
         if self.Transactions[transaction_id].Client:
             for a in self.Transactions[transaction_id].Client.Addresses:
-                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                #query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                #answer = self.query(query)
+                #if answer != None:
+                query = "UPDATE %s SET advertised = 0, active = 1 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
                 answer = self.query(query)
-                if answer != None:
-                    query = "UPDATE %s SET advertised = 0 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
-                    answer = self.query(query)
             return True
         # if no client -> False
         return False
@@ -173,9 +176,10 @@ class Store(object):
         if frange == trange == "":
             query = "SELECT address FROM %s WHERE active = %s AND " \
                     "category = 'range' AND "\
-                    "address LIKE '%s%%' AND " \
+                    "address LIKE '%s%%' AND "\
                     "duid = '%s' AND "\
-                    "mac = '%s'"\
+                    "mac = '%s' AND "\
+                    "advertised = 0 "\
                     "ORDER BY last_update DESC LIMIT 1" % (self.table_leases, active, prefix, duid, mac)
         else:
             query = "SELECT address FROM %s WHERE active = %s AND "\
@@ -183,7 +187,8 @@ class Store(object):
                     "'%s' <= address AND "\
                     "address <= '%s' AND "\
                     "duid = '%s' AND "\
-                    "mac = '%s'"\
+                    "mac = '%s' AND "\
+                    "advertised = 0 "\
                     "ORDER BY last_update DESC LIMIT 1" %\
                     (self.table_leases, active, prefix+frange, prefix+trange, duid, mac)
 
@@ -261,10 +266,11 @@ class Store(object):
 
     def check_advertised_lease(self, transaction_id="", category="", atype=""):
         """
-        check if there already advertised addresses for client
+        check if there are already advertised addresses for client
         """
         # attributes to identify host and lease
         query = "SELECT address FROM %s WHERE advertised = 1\
+                 AND active = 1\
                  AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                  AND category = '%s' AND type = '%s'" % \
                 (self.table_leases,\
@@ -275,7 +281,12 @@ class Store(object):
                  atype)
 
         answer = self.query(query)
-        return answer
+        
+        # SQLite returns list, MySQL tuple - in case someone wonders here...
+        if not (answer == [] or answer == () or answer == None):
+            return answer[0][0]
+        else:
+            return None
         
     
     def release_free_leases(self, timestamp=datetime.datetime.now()):

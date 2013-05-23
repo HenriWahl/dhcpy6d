@@ -529,8 +529,8 @@ def ParseAddressPattern(address, client_config, transaction_id):
         # first check if address already has been advertised
         advertised_address = volatilestore.check_advertised_lease(transaction_id, category="random", atype=address.TYPE)
         # when address already has been advertised for this client use it
-        if len(advertised_address) > 0:
-            a = advertised_address[0][0]
+        if advertised_address:
+            a = advertised_address
         else:
             ra = str(hex(random.getrandbits(64)))[2:][:-1]
             ra = ":".join((ra[0:4], ra[4:8], ra[8:12], ra[12:16]))
@@ -552,8 +552,9 @@ def ParseAddressPattern(address, client_config, transaction_id):
         # first check if address already has been advertised
         advertised_address = volatilestore.check_advertised_lease(transaction_id, category="range", atype=address.TYPE)
         # when address already has been advertised for this client use it
-        if len(advertised_address) > 0:
-            a = advertised_address[0][0]
+        
+        if advertised_address:
+            a = advertised_address
         else:
             # first: check if requesting client still has an active lease that could be reused
             lease = volatilestore.get_range_lease_for_recycling(active=1, prefix=prefix, frange=frange, trange=trange,\
@@ -1113,9 +1114,9 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 self.build_response(2, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
 
                                 # store leases for addresses
-                                volatilestore.store_lease(transaction_id)
+                                volatilestore.store_lease(transaction_id, lock_advertised=1)
                                 # lock advertised address
-                                volatilestore.lock_advertised_lease(transaction_id)
+                                #volatilestore.lock_advertised_lease(transaction_id)
 
                             # REQUEST
                             # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -1129,8 +1130,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 else:
                                     self.build_response(7, transaction_id, [3] + [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                 # store leases for addresses
-                                volatilestore.store_lease(transaction_id)
-                                volatilestore.unlock_advertised_lease(transaction_id)
+                                volatilestore.store_lease(transaction_id, lock_advertised=0)
+                                #volatilestore.unlock_advertised_lease(transaction_id)
                                 if cfg.DNS_UPDATE:
                                     DNSUpdate(transaction_id)
 
@@ -1222,6 +1223,7 @@ class Handler(SocketServer.DatagramRequestHandler):
         except Exception,err:
             log.error("handle(): " + str(err))
             print err
+            print "Caused by:", self.client_address[0]
             import traceback
             traceback.print_exc(file=sys.stdout)   
             return None
