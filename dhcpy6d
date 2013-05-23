@@ -1113,10 +1113,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # preference option (7) is for free
                                 self.build_response(2, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
 
-                                # store leases for addresses
+                                # store leases for addresses and lock advertised address
                                 volatilestore.store_lease(transaction_id, lock_advertised=1)
-                                # lock advertised address
-                                #volatilestore.lock_advertised_lease(transaction_id)
 
                             # REQUEST
                             # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -1129,9 +1127,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
                                 else:
                                     self.build_response(7, transaction_id, [3] + [7] + [14] + Transactions[transaction_id].OptionsRequest)
-                                # store leases for addresses
+                                # store leases for addresses and unlock advertised address
                                 volatilestore.store_lease(transaction_id, lock_advertised=0)
-                                #volatilestore.unlock_advertised_lease(transaction_id)
                                 if cfg.DNS_UPDATE:
                                     DNSUpdate(transaction_id)
 

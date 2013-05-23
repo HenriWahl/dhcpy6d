@@ -133,40 +133,6 @@ class Store(object):
         return False
 
 
-    def lock_advertised_lease(self, transaction_id):
-        """
-        lock lease that has been freshly advertised to avoid race condition to deliver same address more than once
-        """
-        # only if client exists
-        if self.Transactions[transaction_id].Client:
-            for a in self.Transactions[transaction_id].Client.Addresses:
-                #query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
-                #nswer = self.query(query)
-                #if answer != None:
-                query = "UPDATE %s SET advertised = 1, active = 1 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
-                answer = self.query(query)
-            return True
-        # if no client -> False
-        return False
-
-
-    def unlock_advertised_lease(self, transaction_id):
-        """
-        unlock lease that has been freshly advertised to avoid race condition to deliver same address mire than once
-        """
-        # only if client exists
-        if self.Transactions[transaction_id].Client:
-            for a in self.Transactions[transaction_id].Client.Addresses:
-                #query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
-                #answer = self.query(query)
-                #if answer != None:
-                query = "UPDATE %s SET advertised = 0, active = 1 WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
-                answer = self.query(query)
-            return True
-        # if no client -> False
-        return False
-
-
     def get_range_lease_for_recycling(self, active=1, prefix="", frange="", trange="", duid="", mac=""):
         """
         ask DB for last known leases of an already known host to be recycled
