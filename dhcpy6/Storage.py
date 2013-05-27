@@ -68,7 +68,7 @@ class Store(object):
         return answer
     
     
-    def store_lease(self, transaction_id, lock_advertised=0):
+    def store_lease(self, transaction_id):
         """
         store lease in lease DB
         """
@@ -80,11 +80,11 @@ class Store(object):
                 if answer != None:
                     # if address is not leased yet add it
                     if len(answer) == 0:
-                        query = "INSERT INTO %s (address, active, advertised, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
+                        query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
                               (self.table_leases,\
                                a.ADDRESS,\
                                1,\
-                               lock_advertised,\
+                               self.Transactions[transaction_id].LastMessageReceivedType,\
                                a.PREFERRED_LIFETIME,\
                                a.VALID_LIFETIME,\
                                self.Transactions[transaction_id].Client.Hostname,\
@@ -101,13 +101,13 @@ class Store(object):
                         answer = self.query(query)
                     # otherwise update it if not a random address
                     elif a.CATEGORY != "random":
-                        query = "UPDATE %s SET active = 1, advertised = %s, preferred_lifetime = '%s', valid_lifetime = '%s',\
+                        query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s', valid_lifetime = '%s',\
                               hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
                               duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
                               valid_until = '%s'\
                               WHERE address = '%s'" % \
                               (self.table_leases,\
-                               lock_advertised,\
+                               self.Transactions[transaction_id].LastMessageReceivedType,\
                                a.PREFERRED_LIFETIME,\
                                a.VALID_LIFETIME,\
                                self.Transactions[transaction_id].Client.Hostname,\
@@ -124,8 +124,8 @@ class Store(object):
                                a.ADDRESS)
                         answer = self.query(query)
                     else:
-                        # set advertised flag of random address
-                        query = "UPDATE %s SET advertised = %s, active = 1 WHERE address = '%s'" % (self.table_leases, lock_advertised, a.ADDRESS)
+                        # set last message type of random address
+                        query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" % (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType, a.ADDRESS)
                         answer = self.query(query)
                         
             return True
@@ -138,25 +138,17 @@ class Store(object):
         ask DB for last known leases of an already known host to be recycled
         this is most useful for CONFIRM-requests that will get a not-available-answer but get an
         ADVERTISE with the last known-as-good address for a client
+        SOLICIT message type is 1
         """
-        if frange == trange == "":
-            query = "SELECT address FROM %s WHERE active = %s AND " \
-                    "category = 'range' AND "\
-                    "address LIKE '%s%%' AND "\
-                    "duid = '%s' AND "\
-                    "mac = '%s' AND "\
-                    "advertised = 0 "\
-                    "ORDER BY last_update DESC LIMIT 1" % (self.table_leases, active, prefix, duid, mac)
-        else:
-            query = "SELECT address FROM %s WHERE active = %s AND "\
-                    "category = 'range' AND "\
-                    "'%s' <= address AND "\
-                    "address <= '%s' AND "\
-                    "duid = '%s' AND "\
-                    "mac = '%s' AND "\
-                    "advertised = 0 "\
-                    "ORDER BY last_update DESC LIMIT 1" %\
-                    (self.table_leases, active, prefix+frange, prefix+trange, duid, mac)
+        query = "SELECT address FROM %s WHERE active = %s AND "\
+                "category = 'range' AND "\
+                "'%s' <= address AND "\
+                "address <= '%s' AND "\
+                "duid = '%s' AND "\
+                "mac = '%s' AND "\
+                "last_message != 1 "\
+                "ORDER BY last_update DESC LIMIT 1" %\
+                (self.table_leases, active, prefix+frange, prefix+trange, duid, mac)
 
         answer = self.query(query)
 
@@ -209,8 +201,9 @@ class Store(object):
     def release_lease(self, address):
         """
         release a lease via setting its active flag to False
+        set last_message to 8 because of RELEASE messages having this message id
         """
-        query = "UPDATE %s SET active = 0, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
+        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
         answer = self.query(query)
         
 
@@ -235,7 +228,7 @@ class Store(object):
         check if there are already advertised addresses for client
         """
         # attributes to identify host and lease
-        query = "SELECT address FROM %s WHERE advertised = 1\
+        query = "SELECT address FROM %s WHERE last_message = 1\
                  AND active = 1\
                  AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                  AND category = '%s' AND type = '%s'" % \
@@ -259,7 +252,7 @@ class Store(object):
         """
         release all invalid leases via setting their active flag to False
         """
-        query = "UPDATE %s SET active = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
+        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
         answer = self.query(query)    
         return answer
     
@@ -279,7 +272,7 @@ class Store(object):
         unlock leases marked as advertised but apparently never been delivered
         let's say a client should have requested its formerly advertised address after 1 minute
         """
-        query = "UPDATE %s SET advertised = 0 WHERE last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
+        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
         answer = self.query(query)
         return answer
 

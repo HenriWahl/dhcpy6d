@@ -178,12 +178,12 @@ def LegacyAdjustments():
     adjust some existing data to work with newer versions of dhcpy6d
     """
     try:
-        if volatilestore.query("SELECT advertised FROM leases LIMIT 1") == None:
-            # row 'advertised' in tables 'leases' does not exist yet, comes with version 0.1.4
-            volatilestore.query('ALTER TABLE leases ADD advertised INT NOT NULL DEFAULT 0')
-            log.info("Adding row 'advertised' to table 'leases' in volatile storage succeeded.")
+        if volatilestore.query("SELECT last_message FROM leases LIMIT 1") == None:
+            # row 'last_message' in tables 'leases' does not exist yet, comes with version 0.1.6
+            volatilestore.query('ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0')
+            log.info("Adding row 'last_message' to table 'leases' in volatile storage succeeded.")
     except:
-        print "\n'ALTER TABLE leases ADD advertised INT NOT NULL DEFAULT 0' on volatile database failed."
+        print "\n'ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0' on volatile database failed."
         print "Please apply manually or grant necessary permissions.\n"
         sys.exit(1)
 
@@ -313,6 +313,10 @@ def BuildClient(transaction_id):
                 # give client hostname
                 client.Hostname = client_config.HOSTNAME
                 client.Class = client_config.CLASS
+            else:
+                # use default class if host is unknown
+                client.Hostname = Transactions[transaction_id].Hostname
+                client.Class = "default_" + Transactions[transaction_id].Interface
             for address in Transactions[transaction_id].Addresses:
                 # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
                 answer = volatilestore.check_lease(address, transaction_id)
@@ -497,7 +501,7 @@ def BuildClient(transaction_id):
                              dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,\
                              dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                 client.Addresses.append(ia)
-                				
+
         return client
 
     except Exception,err:
@@ -561,9 +565,11 @@ def ParseAddressPattern(address, client_config, transaction_id):
                                                       duid=Transactions[transaction_id].DUID,\
                                                       mac=Transactions[transaction_id].MAC)
 
-            # second: if there was no lease look for highest inactive (free) lease
-            if lease == None:
-                lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
+            print "LEASE FOR RECYCLING:", lease
+
+            #### second: if there was no lease look for highest inactive (free) lease
+            ###if lease == None:
+            ###    lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
 
             # gotten lease has to be in range - important after changed range boundaries
             if not lease == None and frange <= lease[28:].lower() < trange:
@@ -578,6 +584,7 @@ def ParseAddressPattern(address, client_config, transaction_id):
                         #
                         # log log log
                         #
+                        log.info("Address space %s-%s exceeded" % (frange,trange))
                         return None
                     else:
                         a = a.replace("$range$", str(hex(int(lease[28:], 16) + 1)).split("x")[1])
@@ -1114,7 +1121,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 self.build_response(2, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
 
                                 # store leases for addresses and lock advertised address
-                                volatilestore.store_lease(transaction_id, lock_advertised=1)
+                                volatilestore.store_lease(transaction_id)
 
                             # REQUEST
                             # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -1127,8 +1134,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
                                 else:
                                     self.build_response(7, transaction_id, [3] + [7] + [14] + Transactions[transaction_id].OptionsRequest)
-                                # store leases for addresses and unlock advertised address
-                                volatilestore.store_lease(transaction_id, lock_advertised=0)
+                                # store leases for addresses
+                                volatilestore.store_lease(transaction_id)
                                 if cfg.DNS_UPDATE:
                                     DNSUpdate(transaction_id)
 
@@ -1219,7 +1226,6 @@ class Handler(SocketServer.DatagramRequestHandler):
 
         except Exception,err:
             log.error("handle(): " + str(err))
-            print err
             print "Caused by:", self.client_address[0]
             import traceback
             traceback.print_exc(file=sys.stdout)   
@@ -1479,10 +1485,13 @@ class Handler(SocketServer.DatagramRequestHandler):
             self.response = binascii.a2b_hex(response_ascii)
             
         except Exception, err:
-            log.error("Response(): " + str(err))
-            print err
             import traceback
             traceback.print_exc(file=sys.stdout)
+            log.error("Response(): " + str(err))
+            print err
+            print transaction_id
+            print Transactions[transaction_id].Client.__dict__
+
             # clear any response
             self.response = ""
             
