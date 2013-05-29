@@ -161,20 +161,14 @@ class Store(object):
             return None
 
 
-    def get_range_lease(self, active=1, prefix="", frange="", trange=""):
+    def get_highest_range_lease(self, prefix="", frange="", trange=""):
         """
-        ask DB for last known leases - active and inactive and if necessary range sensitive
+        ask DB for highest known leases - if necessary range sensitive
         """
-        if frange == trange == "":
-            query = "SELECT address FROM %s WHERE active = %s AND "\
-                    "category = 'range' AND "\
-                    "address LIKE '%s%%' ORDER BY address DESC LIMIT 1" %\
-                    (self.table_leases, active, prefix)
-        else:
-            query = "SELECT address FROM %s WHERE active = %s AND "\
-                    "category = 'range' AND "\
-                    "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
-                    (self.table_leases, active, prefix+frange, prefix+trange)
+        query = "SELECT address FROM %s WHERE active = 1 AND "\
+                "category = 'range' AND "\
+                "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
+                (self.table_leases, prefix+frange, prefix+trange)
         answer = self.query(query)
         # SQLite returns list, MySQL tuple - in case someone wonders here...
         if not (answer == [] or answer == () or answer == None):

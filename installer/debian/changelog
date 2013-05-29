@@ -2,8 +2,9 @@ dhcpy6d (0.1.6-1) unstable; urgency=low
 
   * New upstream
     - next fix in 'range' lease storage
+    - better logging
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Thu, 27 May 2013 14:45:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 29 May 2013 21:45:00 +0200
 
 
 dhcpy6d (0.1.5-1) unstable; urgency=low
