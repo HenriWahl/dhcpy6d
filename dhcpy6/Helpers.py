@@ -155,8 +155,11 @@ def ColonifyIP6(address):
     """
     return complete IPv6 address with colons 
     """
-    return ":".join((address[0:4], address[4:8], address[8:12], address[12:16],\
-                     address[16:20], address[20:24], address[24:28], address[28:32]))
+    if address:
+        return ":".join((address[0:4], address[4:8], address[8:12], address[12:16],\
+                        address[16:20], address[20:24], address[24:28], address[28:32]))
+    else:
+        return "N/A"
 
 
 def ErrorExit(message="An error occured.", status=1):

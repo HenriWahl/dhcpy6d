@@ -453,9 +453,8 @@ def BuildClient(transaction_id):
                     # add all addresses which belong to that class
                     for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
                         a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
-
                         # in case range has been exceeded a will be None
-                        if not a == None:
+                        if a:
                             ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                                          preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
                                          valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
@@ -473,42 +472,43 @@ def BuildClient(transaction_id):
                     for address in cfg.CLASS["default_" + Transactions[transaction_id].Interface].ADDRESSES:
                         client.Class = "default_" + Transactions[transaction_id].Interface
                         a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
-                        ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
-                                     preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
-                                     valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
-                                     category=cfg.ADDRESSES[address].CATEGORY,\
-                                     aclass=cfg.ADDRESSES[address].CLASS,\
-                                     atype=cfg.ADDRESSES[address].TYPE,\
-                                     dns_update=cfg.ADDRESSES[address].DNS_UPDATE,\
-                                     dns_zone=cfg.ADDRESSES[address].DNS_ZONE,\
-                                     dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,\
-                                     dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                        client.Addresses.append(ia)           
+                        if a:
+                            ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
+                                         preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
+                                         valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
+                                         category=cfg.ADDRESSES[address].CATEGORY,\
+                                         aclass=cfg.ADDRESSES[address].CLASS,\
+                                         atype=cfg.ADDRESSES[address].TYPE,\
+                                         dns_update=cfg.ADDRESSES[address].DNS_UPDATE,\
+                                         dns_zone=cfg.ADDRESSES[address].DNS_ZONE,\
+                                         dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,\
+                                         dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
+                            client.Addresses.append(ia)
         else:
             # use default class if host is unknown
             client.Hostname = Transactions[transaction_id].Hostname
             client.Class = "default_" + Transactions[transaction_id].Interface            
             for address in cfg.CLASSES["default_" + Transactions[transaction_id].Interface].ADDRESSES:  
                 a = ParseAddressPattern(cfg.ADDRESSES[address], client, transaction_id)
-                ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
-                             preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
-                             valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
-                             category=cfg.ADDRESSES[address].CATEGORY,\
-                             aclass=cfg.ADDRESSES[address].CLASS,\
-                             atype=cfg.ADDRESSES[address].TYPE,\
-                             dns_update=cfg.ADDRESSES[address].DNS_UPDATE,\
-                             dns_zone=cfg.ADDRESSES[address].DNS_ZONE,\
-                             dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,\
-                             dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                client.Addresses.append(ia)
+                if a:
+                    ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
+                                 preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
+                                 valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,\
+                                 category=cfg.ADDRESSES[address].CATEGORY,\
+                                 aclass=cfg.ADDRESSES[address].CLASS,\
+                                 atype=cfg.ADDRESSES[address].TYPE,\
+                                 dns_update=cfg.ADDRESSES[address].DNS_UPDATE,\
+                                 dns_zone=cfg.ADDRESSES[address].DNS_ZONE,\
+                                 dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,\
+                                 dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
+                    client.Addresses.append(ia)
 
         return client
 
     except Exception,err:
-        log.error("BuildClient(): " + str(err))
-        print err
         import traceback
         traceback.print_exc(file=sys.stdout)
+        log.error("BuildClient(): " + str(err))
         return None
 
 
@@ -561,37 +561,42 @@ def ParseAddressPattern(address, client_config, transaction_id):
             a = advertised_address
         else:
             # first: check if requesting client still has an active lease that could be reused
-            lease = volatilestore.get_range_lease_for_recycling(active=1, prefix=prefix, frange=frange, trange=trange,\
-                                                      duid=Transactions[transaction_id].DUID,\
-                                                      mac=Transactions[transaction_id].MAC)
-
-            print "LEASE FOR RECYCLING:", lease
-
-            #### second: if there was no lease look for highest inactive (free) lease
-            ###if lease == None:
-            ###    lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
-
+            lease = volatilestore.get_range_lease_for_recycling(prefix=prefix, frange=frange, trange=trange,\
+                                                                duid=Transactions[transaction_id].DUID,\
+                                                                mac=Transactions[transaction_id].MAC)
             # gotten lease has to be in range - important after changed range boundaries
-            if not lease == None and frange <= lease[28:].lower() < trange:
+            if not lease is None and frange <= lease[28:].lower() <= trange:
                 a = ":".join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
                               lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
             else:
+                # get highest active lease to increment address about 1
                 lease = volatilestore.get_range_lease(active=1, prefix=prefix, frange=frange, trange=trange)
                 # third: search highest active lease
-                if not lease == None and frange <= lease[28:].lower() < trange:
+                if not lease is None and frange <= lease[28:].lower() < trange:
                     # Here logging is very important if range has been exceeded
                     if lease[28:].lower() >= trange:
-                        #
-                        # log log log
-                        #
-                        log.info("Address space %s-%s exceeded" % (frange,trange))
-                        return None
+                        #log.critical("Address space %s-%s exceeded" % (frange,trange))
+                        #return None
+                        lease = volatilestore.get_range_lease(active=0, prefix=prefix, frange=frange, trange=trange)
+                        if lease is None:
+                            log.critical("Address space %s[%s-%s] exceeded" % (prefix, frange,trange))
+                            return None
                     else:
                         a = a.replace("$range$", str(hex(int(lease[28:], 16) + 1)).split("x")[1])
                 else:
-                    # this will be done only once - the first time if there is no other lease yet
-                    # so it is safe to start from frange
-                    a = a.replace("$range$", frange)
+                    #### ask for any inactive lease
+                    lease = volatilestore.get_oldest_inactive_range_lease(prefix=prefix, frange=frange, trange=trange)
+                    if lease is None:
+                        # if there are no leases stored yet
+                        if volatilestore.check_number_of_leases(prefix, frange, trange) <= 1:
+                            # this will be done only once - the first time if there is no other lease yet
+                            # so it is safe to start from frange
+                            a = a.replace("$range$", frange)
+                        else:
+                            log.critical("Address space %s[%s-%s] exceeded" % (prefix, frange,trange))
+                            return None
+                    # finally---
+                    a = lease
 
     return DecompressIP6(a)
 
@@ -625,11 +630,9 @@ def CollectMACs():
                     volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
 
     except Exception,err:
-        log.error("CollectMacs(): " + str(err))        
-        print err
-        import traceback 
-        print host
+        import traceback
         traceback.print_exc(file=sys.stdout)
+        log.error("CollectMacs(): " + str(err))        
 
 
 def DNSUpdate(transaction_id, action="update"):
@@ -739,11 +742,10 @@ class DNSQueryThread(threading.Thread):
                     update_rev.delete(dns.reversename.from_address(address), "PTR")  
                 dns.query.tcp(update_rev, cfg.DNS_UPDATE_NAMESERVER)
             except Exception,err:
-                log.error("DNSUPDATE: " + str(err))
-                print err
                 import traceback
-                traceback.print_exc(file=sys.stdout)            
-            
+                traceback.print_exc(file=sys.stdout)
+                log.error("DNSUPDATE: " + str(err))
+
 
 class TidyUpThread(threading.Thread):
     """
@@ -828,13 +830,13 @@ class Client(object):
             # ignore some attributes
             if not o in ["OptionsRaw", "Client", "Timestamp", "DUIDLLAddress", "IAT1", "IAT2", "IP6_old", "LLIP_old"] and not str(self.__dict__[o]) == "":
                 if not o == "Addresses":
-                    option = o + ": " + str(self.__dict__[o]) + " "
-                    optionsstring += option
+                    option = o + ": " + str(self.__dict__[o])
+                    optionsstring = optionsstring + " | "  + option
                 else:
                     option = "Addresses:"
                     for a in self.__dict__[o]:
                         option += " " + ColonifyIP6(a.ADDRESS)
-                    optionsstring += option + " "  
+                    optionsstring = optionsstring + " | "  + option
 
         return optionsstring.encode("ascii")
 
@@ -986,13 +988,13 @@ class Transaction(object):
                     option = "Addresses:"
                     for a in self.__dict__[o]:
                         option += " " + ColonifyIP6(a)
-                    optionsstring += option + " " 
+                    optionsstring = optionsstring + " | "  + option
                 elif o == "ClientLLIP":
                     option = "ClientLLIP: " + ColonifyIP6(self.__dict__["ClientLLIP"])
-                    optionsstring += option + " "
+                    optionsstring = optionsstring + " | "  + option
                 else:
-                    option = o + ": " + str(self.__dict__[o]) + " "
-                    optionsstring += option
+                    option = o + ": " + str(self.__dict__[o])
+                    optionsstring = optionsstring + " | "  + option
 
         return optionsstring.encode("ascii")
 
@@ -1091,8 +1093,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                         Transactions[transaction_id].Timestamp = datetime.datetime.now()
                         Transactions[transaction_id].LastMessageReceivedType = message_type
 
-                    # logging
-                    log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, Transactions[transaction_id]._getOptionsString()))
+                    # log incoming messages
+                    log.info("%s | TransactionID: %s%s" % (MESSAGE_TYPES[message_type], transaction_id, Transactions[transaction_id]._getOptionsString()))
 
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
@@ -1109,10 +1111,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
                             except:
                                 # MAC not yet found :-(
-                                log.info("%s: TransactionID: %s %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                                log.info("%s | TransactionID: %s | %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
                         else:
                             if not Transactions[transaction_id].MAC:
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
+
                             # ADVERTISE
                             # if last request was a SOLICIT send an ADVERTISE (type 2) back
                             if Transactions[transaction_id].LastMessageReceivedType == 1 \
@@ -1211,13 +1214,8 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                             # general error - statuscode 1 "Failure"
                             else:
-                                # sende Status Code Option (type 13) mit Failure (type 1) 
+                                # sende Status Code Option (type 13) mit Failure (type 1)
                                 self.build_response(7, transaction_id, [13], 1)
-
-                        # in case there is no address gibe back failure message
-                        if Transactions[transaction_id].Client <> None and len(Transactions[transaction_id].Client.Addresses) == 0:
-                            # give back error code 2 "No addresses available"
-                            self.build_response(7, transaction_id, [13], 2)
 
                     # count requests of transaction
                     # if there will be too much something went wrong
@@ -1225,10 +1223,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                     Transactions[transaction_id].Counter += 1
 
         except Exception,err:
+            import traceback
+            traceback.print_exc(file=sys.stdout)
             log.error("handle(): " + str(err))
             print "Caused by:", self.client_address[0]
-            import traceback
-            traceback.print_exc(file=sys.stdout)   
             return None
 
 
@@ -1268,35 +1266,39 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].Client:
                         # embed option 5 into option 3 - several if necessary
                         ia_addresses = ""
-                        for address in Transactions[transaction_id].Client.Addresses:
-                            if address.IA_TYPE == "na":
-                                ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
-                                # if a transaction consists of too many requests from client -
-                                # - might be caused by going wild Windows clients -
-                                # reset all addresses with lifetime 0
-                                # lets start with maximal transaction count of 10
-                                if Transactions[transaction_id].Counter < 10:
-                                    preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
-                                    valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
-                                else:
-                                    preferred_lifetime = "%08x" % (0)
-                                    valid_lifetime = "%08x" % (0)
-                                ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                ia_addresses += ia_address
+                        try:
+                            for address in Transactions[transaction_id].Client.Addresses:
+                                if address.IA_TYPE == "na":
+                                    ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
+                                    # if a transaction consists of too many requests from client -
+                                    # - might be caused by going wild Windows clients -
+                                    # reset all addresses with lifetime 0
+                                    # lets start with maximal transaction count of 10
+                                    if Transactions[transaction_id].Counter < 10:
+                                        preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
+                                        valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
+                                    else:
+                                        preferred_lifetime = "%08x" % (0)
+                                        valid_lifetime = "%08x" % (0)
+                                    ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
+                                    ia_addresses += ia_address
 
-                        if not ia_addresses == "":
-                            #
-                            # todo: default clients sometimes seem to have class ""
-                            #
-                            if Transactions[transaction_id].Client.Class != "":
-                                t1 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
-                                t2 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
-                            else:
-                                t1 = "%08x" % (int(cfg.T1))
-                                t2 = "%08x" % (int(cfg.T2))
-        
-                            ia_na = BuildOption(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
-                            response_ascii += ia_na
+                            if not ia_addresses == "":
+                                #
+                                # todo: default clients sometimes seem to have class ""
+                                #
+                                if Transactions[transaction_id].Client.Class != "":
+                                    t1 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
+                                    t2 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
+                                else:
+                                    t1 = "%08x" % (int(cfg.T1))
+                                    t2 = "%08x" % (int(cfg.T2))
+
+                                ia_na = BuildOption(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
+                                response_ascii += ia_na
+                        except:
+                            # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
+                            response_ascii += BuildOption(13, "%04x" % (2))
                     else:
                         # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                         response_ascii += BuildOption(13, "%04x" % (2))
@@ -1314,24 +1316,28 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].Client:                        
                         # embed option 5 into option 4 - several if necessary
                         ia_addresses = ""
-                        for address in Transactions[transaction_id].Client.Addresses:
-                            if address.IA_TYPE == "ta":
-                                ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
-                                # if a transaction consists of too many requests from client -
-                                # - might be caused by going wild Windows clients -
-                                # reset all addresses with lifetime 0
-                                # lets start with maximal transaction count of 10
-                                if Transactions[transaction_id].Counter < 10:
-                                    preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
-                                    valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
-                                else:
-                                    preferred_lifetime = "%08x" % (0)
-                                    valid_lifetime = "%08x" % (0)
-                                ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                ia_addresses += ia_address
-                        if not ia_addresses == "":
-                            ia_ta = BuildOption(4, Transactions[transaction_id].IAID + ia_addresses)
-                            response_ascii += ia_ta
+                        try:
+                            for address in Transactions[transaction_id].Client.Addresses:
+                                if address.IA_TYPE == "ta":
+                                    ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
+                                    # if a transaction consists of too many requests from client -
+                                    # - might be caused by going wild Windows clients -
+                                    # reset all addresses with lifetime 0
+                                    # lets start with maximal transaction count of 10
+                                    if Transactions[transaction_id].Counter < 10:
+                                        preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
+                                        valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
+                                    else:
+                                        preferred_lifetime = "%08x" % (0)
+                                        valid_lifetime = "%08x" % (0)
+                                    ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
+                                    ia_addresses += ia_address
+                            if not ia_addresses == "":
+                                ia_ta = BuildOption(4, Transactions[transaction_id].IAID + ia_addresses)
+                                response_ascii += ia_ta
+                        except:
+                            # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
+                            response_ascii += BuildOption(13, "%04x" % (2))
                     else:
                         # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                         response_ascii += BuildOption(13, "%04x" % (2))
@@ -1460,7 +1466,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # problems may have arisen while processing and these information
                 # is not valid anymore
                 # response type + transaction id
-                response_ascii = "%02x" % (response_type)
+                response_ascii = "%02x" % (7)
                 response_ascii += transaction_id
     
                 # always of interest
@@ -1471,16 +1477,39 @@ class Handler(SocketServer.DatagramRequestHandler):
                     
                 # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                 response_ascii += BuildOption(13, "%04x" % (2))
-                log.error("%s: TransactionID: %s DatabaseError: %s" % (MESSAGE_TYPES[response_type], transaction_id, " ".join(dberror)))
+                log.error("%s| TransactionID: %s | DatabaseError: %s" % (MESSAGE_TYPES[response_type], transaction_id, " ".join(dberror)))
 
             else:      
-                # no database trouble, normal response
-                # log client info
-                if not Transactions[transaction_id].Client == None and 3 in options_request:
-                    log.info("%s: TransactionID: %s Options: %s %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request, Transactions[transaction_id].Client._getOptionsString()))
+                # log response
+                if not Transactions[transaction_id].Client is None:
+                    if len(Transactions[transaction_id].Client.Addresses) == 0 and\
+                    Transactions[transaction_id].LastMessageReceivedType in [1, 3, 5, 6]:
+                        # create error response - headers have to be recreated because
+                        # problems may have arisen while processing and these information
+                        # is not valid anymore
+                        # response type + transaction id
+                        response_ascii = "%02x" % (7)
+                        response_ascii += transaction_id
+
+                        # always of interest
+                        # option 1 client identifier
+                        response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
+                        # option 2 server identifier
+                        response_ascii += BuildOption(2, cfg.SERVERDUID)
+
+                        # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
+                        response_ascii += BuildOption(13, "%04x" % (2))
+
+                        # log warning message about unavailable addresses
+                        log.warning("REPLY | No addresses available | TransactionID: %s | ClientLLIP: %s"  %\
+                                    (transaction_id, Transactions[transaction_id].ClientLLIP))
+                    elif 3 in options_request:
+                        log.info("%s | TransactionID: %s | Options: %s%s" % (MESSAGE_TYPES[response_type], transaction_id, options_request, Transactions[transaction_id].Client._getOptionsString()))
+                    else:
+                        log.info("what else")
                 else:
-                    log.info("%s: TransactionID: %s Options: %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))
-      
+                    log.info("%s | TransactionID: %s | Options: %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))
+
             # response
             self.response = binascii.a2b_hex(response_ascii)
             
@@ -1488,7 +1517,6 @@ class Handler(SocketServer.DatagramRequestHandler):
             import traceback
             traceback.print_exc(file=sys.stdout)
             log.error("Response(): " + str(err))
-            print err
             print transaction_id
             print Transactions[transaction_id].Client.__dict__
 

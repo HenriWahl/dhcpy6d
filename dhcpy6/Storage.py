@@ -75,72 +75,74 @@ class Store(object):
         # only if client exists
         if self.Transactions[transaction_id].Client:           
             for a in self.Transactions[transaction_id].Client.Addresses:
-                query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
-                answer = self.query(query)
-                if answer != None:
-                    # if address is not leased yet add it
-                    if len(answer) == 0:
-                        query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
-                              (self.table_leases,\
-                               a.ADDRESS,\
-                               1,\
-                               self.Transactions[transaction_id].LastMessageReceivedType,\
-                               a.PREFERRED_LIFETIME,\
-                               a.VALID_LIFETIME,\
-                               self.Transactions[transaction_id].Client.Hostname,\
-                               a.TYPE,\
-                               a.CATEGORY,\
-                               a.IA_TYPE,\
-                               self.Transactions[transaction_id].Client.Class,\
-                               self.Transactions[transaction_id].MAC,\
-                               self.Transactions[transaction_id].DUID,\
-                               self.Transactions[transaction_id].IAID,\
-                               datetime.datetime.now(),\
-                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
-                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)))
-                        answer = self.query(query)
-                    # otherwise update it if not a random address
-                    elif a.CATEGORY != "random":
-                        query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s', valid_lifetime = '%s',\
-                              hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
-                              duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
-                              valid_until = '%s'\
-                              WHERE address = '%s'" % \
-                              (self.table_leases,\
-                               self.Transactions[transaction_id].LastMessageReceivedType,\
-                               a.PREFERRED_LIFETIME,\
-                               a.VALID_LIFETIME,\
-                               self.Transactions[transaction_id].Client.Hostname,\
-                               a.TYPE,\
-                               a.CATEGORY,\
-                               a.IA_TYPE,\
-                               self.Transactions[transaction_id].Client.Class,\
-                               self.Transactions[transaction_id].MAC,\
-                               self.Transactions[transaction_id].DUID,\
-                               self.Transactions[transaction_id].IAID,\
-                               datetime.datetime.now(),\
-                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
-                               datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),\
-                               a.ADDRESS)
-                        answer = self.query(query)
-                    else:
-                        # set last message type of random address
-                        query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" % (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType, a.ADDRESS)
-                        answer = self.query(query)
-                        
+
+                if not a.ADDRESS is None:
+                    query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                    answer = self.query(query)
+                    if answer != None:
+                        # if address is not leased yet add it
+                        if len(answer) == 0:
+                            query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
+                                  (self.table_leases,\
+                                   a.ADDRESS,\
+                                   1,\
+                                   self.Transactions[transaction_id].LastMessageReceivedType,\
+                                   a.PREFERRED_LIFETIME,\
+                                   a.VALID_LIFETIME,\
+                                   self.Transactions[transaction_id].Client.Hostname,\
+                                   a.TYPE,\
+                                   a.CATEGORY,\
+                                   a.IA_TYPE,\
+                                   self.Transactions[transaction_id].Client.Class,\
+                                   self.Transactions[transaction_id].MAC,\
+                                   self.Transactions[transaction_id].DUID,\
+                                   self.Transactions[transaction_id].IAID,\
+                                   datetime.datetime.now(),\
+                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
+                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)))
+                            answer = self.query(query)
+                        # otherwise update it if not a random address
+                        elif a.CATEGORY != "random":
+                            query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s', valid_lifetime = '%s',\
+                                  hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
+                                  duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
+                                  valid_until = '%s'\
+                                  WHERE address = '%s'" % \
+                                  (self.table_leases,\
+                                   self.Transactions[transaction_id].LastMessageReceivedType,\
+                                   a.PREFERRED_LIFETIME,\
+                                   a.VALID_LIFETIME,\
+                                   self.Transactions[transaction_id].Client.Hostname,\
+                                   a.TYPE,\
+                                   a.CATEGORY,\
+                                   a.IA_TYPE,\
+                                   self.Transactions[transaction_id].Client.Class,\
+                                   self.Transactions[transaction_id].MAC,\
+                                   self.Transactions[transaction_id].DUID,\
+                                   self.Transactions[transaction_id].IAID,\
+                                   datetime.datetime.now(),\
+                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
+                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),\
+                                   a.ADDRESS)
+                            answer = self.query(query)
+                        else:
+                            # set last message type of random address
+                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" % (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType, a.ADDRESS)
+                            answer = self.query(query)
+
             return True
         # if no client -> False
         return False
 
 
-    def get_range_lease_for_recycling(self, active=1, prefix="", frange="", trange="", duid="", mac=""):
+    def get_range_lease_for_recycling(self, prefix="", frange="", trange="", duid="", mac=""):
         """
         ask DB for last known leases of an already known host to be recycled
         this is most useful for CONFIRM-requests that will get a not-available-answer but get an
         ADVERTISE with the last known-as-good address for a client
         SOLICIT message type is 1
         """
-        query = "SELECT address FROM %s WHERE active = %s AND "\
+        query = "SELECT address FROM %s WHERE "\
                 "category = 'range' AND "\
                 "'%s' <= address AND "\
                 "address <= '%s' AND "\
@@ -148,7 +150,7 @@ class Store(object):
                 "mac = '%s' AND "\
                 "last_message != 1 "\
                 "ORDER BY last_update DESC LIMIT 1" %\
-                (self.table_leases, active, prefix+frange, prefix+trange, duid, mac)
+                (self.table_leases, prefix+frange, prefix+trange, duid, mac)
 
         answer = self.query(query)
 
@@ -162,7 +164,7 @@ class Store(object):
     def get_range_lease(self, active=1, prefix="", frange="", trange=""):
         """
         ask DB for last known leases - active and inactive and if necessary range sensitive
-        """ 
+        """
         if frange == trange == "":
             query = "SELECT address FROM %s WHERE active = %s AND "\
                     "category = 'range' AND "\
@@ -174,7 +176,22 @@ class Store(object):
                     "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
                     (self.table_leases, active, prefix+frange, prefix+trange)
         answer = self.query(query)
-        
+        # SQLite returns list, MySQL tuple - in case someone wonders here...
+        if not (answer == [] or answer == () or answer == None):
+            return answer[0][0]
+        else:
+            return None
+
+
+    def get_oldest_inactive_range_lease(self, prefix="", frange="", trange=""):
+        """
+        ask DB for oldest known inactive lease to minimize chance of collisions
+        ordered by valid_until to get leases that are free as long as possible
+        """
+        query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
+                "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
+                (self.table_leases, prefix+frange, prefix+trange)
+        answer = self.query(query)
         # SQLite returns list, MySQL tuple - in case someone wonders here...
         if not (answer == [] or answer == () or answer == None):
             return answer[0][0]
@@ -205,7 +222,21 @@ class Store(object):
         """
         query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
         answer = self.query(query)
-        
+
+
+    def check_number_of_leases(self, prefix="", frange="", trange=""):
+        """
+        check how many leases are stored - used to find out if address range has been exceeded
+        """
+        query = "SELECT COUNT(address) FROM leases WHERE address LIKE '%s%%' AND "\
+                "'%s' <= address AND address <= '%s'" % (prefix, prefix+frange, prefix+trange)
+        answer = self.query(query)
+        # SQLite returns list, MySQL tuple - in case someone wonders here...
+        if not (answer == [] or answer == () or answer == None):
+            return answer[0][0]
+        else:
+            return 0
+
 
     def check_lease(self, address, transaction_id):
         """
@@ -238,9 +269,7 @@ class Store(object):
                  self.Transactions[transaction_id].IAID,\
                  category,\
                  atype)
-
         answer = self.query(query)
-        
         # SQLite returns list, MySQL tuple - in case someone wonders here...
         if not (answer == [] or answer == () or answer == None):
             return answer[0][0]
