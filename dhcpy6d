@@ -615,7 +615,6 @@ def CollectMACs():
     
         The Linux netlink method proved to be unstable, e.g. did not show all cache entries, so
         it is reverted back to /sbin/ip.
-    
     """
     try:
         # subject to change - other distros might have other paths - might become a task
@@ -638,7 +637,7 @@ def CollectMACs():
     except Exception,err:
         import traceback
         traceback.print_exc(file=sys.stdout)
-        log.error("CollectMacs(): " + str(err))        
+        log.error("CollectMACs(): " + str(err))
 
 
 def DNSUpdate(transaction_id, action="update"):
