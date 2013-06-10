@@ -1,7 +1,7 @@
 /var/log/dhcpy6d.log {
-	daily
+	weekly
 	missingok
-	rotate 7
+	rotate 4
 	compress
 	notifempty
 }

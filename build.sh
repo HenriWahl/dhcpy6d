@@ -41,6 +41,7 @@ elif [ -f /etc/redhat-release ]
 		# modify spec file to keep custom configuration when updating
 		echo "%config(noreplace) /etc/dhcpy6d.conf" >> ./dhcpy6d.spec
 		echo "%config(noreplace) /var/lib/dhcpy6d/volatile.sqlite" >> ./dhcpy6d.spec
+        echo "%config(noreplace) /var/log/dhcpy6d.log" >> ./dhcpy6d.spec
 
 		# use setup.py sdist build output to get package name
 		FILE=`python setup.py sdist --dist-dir ~/rpmbuild/SOURCES | grep "creating dhcpy6d-" | head -n1 | cut -d" " -f2`
