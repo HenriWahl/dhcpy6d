@@ -10,6 +10,9 @@ import datetime
 import threading
 import ConfigParser
 from Helpers import *
+import os
+import pwd
+import grp
 
 
 class QueryQueue(threading.Thread):
@@ -473,7 +476,10 @@ class SQLite(Store):
         import sqlite3
         
         try:
-            if storage_type == "volatile": storage = self.cfg.STORE_SQLITE_VOLATILE
+            if storage_type == "volatile":
+                storage = self.cfg.STORE_SQLITE_VOLATILE
+                # set ownership of storage file according to settings
+                os.chown(self.cfg.STORE_SQLITE_VOLATILE, pwd.getpwnam(self.cfg.USER).pw_uid, grp.getgrnam(self.cfg.GROUP).gr_gid)
             if storage_type == "config": storage = self.cfg.STORE_SQLITE_CONFIG
             self.connection = sqlite3.connect(storage, check_same_thread = False)
             self.cursor = self.connection.cursor()

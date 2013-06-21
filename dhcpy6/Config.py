@@ -9,10 +9,11 @@ import stat
 import os.path
 import uuid
 import time
-import datetime
 import shlex
 import copy
 import platform
+import pwd
+import grp
 
 from Helpers import *
 
@@ -31,6 +32,16 @@ class Config(object):
         checks validity of config settings
         """
         msg_prefix = "General configuration:"
+
+        # check user and group
+        try:
+            pwd.getpwnam(self.USER)
+        except:
+             ErrorExit("%s User '%s' does not exist" % (msg_prefix, self.USER))
+        try:
+            grp.getgrnam(self.GROUP)
+        except:
+             ErrorExit("%s Group '%s' does not exist" % (msg_prefix, self.GROUP))
         
         # check interface for multicast
         for i in self.INTERFACE:
@@ -243,6 +254,9 @@ class Config(object):
         self.MCAST = "ff02::1:2"
         self.PORT = "547"
         self.ADDRESS = "2001:db8::1"
+        # effective user and group - will have to be set mainly by distribution package
+        self.USER = "root"
+        self.GROUP = "root"
         # lets make the water turn black... or build a shiny server DUID
         # in case someone will ever debug something here: Wireshark shows
         # year 2042 even if it is 2012 - time itself is OK

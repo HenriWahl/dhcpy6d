@@ -13,17 +13,18 @@ import datetime
 import commands
 import shlex
 import sys
-import hmac
 import time
 import threading
 import Queue
-import os.path
+import os
 import re
 import SocketServer
 import traceback
 import copy
 import logging
 import logging.handlers
+import pwd
+import grp
 
 from dhcpy6.Helpers import *
 from dhcpy6.Constants import *
@@ -53,6 +54,7 @@ if cfg.LOG:
     formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
     log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
     if cfg.LOG_FILE != "":
+        os.chown(cfg.LOG_FILE, pwd.getpwnam(cfg.USER).pw_uid, grp.getgrnam(cfg.GROUP).gr_gid)
         log_handler = logging.handlers.WatchedFileHandler(cfg.LOG_FILE)
         log_handler.setFormatter(formatter)
         log.addHandler(log_handler)
@@ -1573,6 +1575,12 @@ if __name__ == "__main__":
     # start DNS query queue to care for DNS in background    
     dnsquery = DNSQueryThread(dnsqueue)
     dnsquery.start()
+
+    # set user and group
+    log.info("Running as user %s (UID %s) and group %s (GID %s)" % (cfg.USER, pwd.getpwnam(cfg.USER).pw_uid, cfg.GROUP, grp.getgrnam(cfg.GROUP).gr_gid))
+    # first set group because otherwise the freshly unprivileged user could not modify its groups itself
+    os.setgid(grp.getgrnam(cfg.GROUP).gr_gid)
+    os.setuid(pwd.getpwnam(cfg.USER).pw_uid)
 
     # serve forever
     try:
