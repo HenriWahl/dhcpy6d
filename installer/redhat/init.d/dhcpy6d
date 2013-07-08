@@ -2,11 +2,12 @@
 #
 ### BEGIN INIT INFO
 # Provides: dhcpy6d
-# Default-Start:
-# Default-Stop:
-# Should-Start:
-# Required-Start: $network
-# Required-Stop:
+# Required-Start: $syslog $network $remote_fs
+# Required-Stop: $syslog $remote_fs
+# Should-Start: $local_fs
+# Should-Stop: $local_fs
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
 # Short-Description: Start and stop the DHCPv6 server dhcpy6d
 # Description: dhcpy6d is a DHCPv6 server
 ### END INIT INFO
