@@ -35,6 +35,7 @@ NUD_REACHABLE = 2
 # whitespace for options with more than one value
 WHITESPACE = " ,"
 
+
 def ConvertDNS2Binary(name):
     """
         convert domain name as described in RFC 1035, 3.1

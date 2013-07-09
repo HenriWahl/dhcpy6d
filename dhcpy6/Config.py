@@ -14,6 +14,7 @@ import copy
 import platform
 import pwd
 import grp
+import getopt
 
 from Helpers import *
 
@@ -235,14 +236,6 @@ class Config(object):
                 if not self.ADDRESSES[a].IA_TYPE.strip().lower() in ["na", "ta"]:
                     ErrorExit("Address type '%s': IA type '%s' must be one of 'na' or 'ta'." % (a, self.ADDRESSES[a].IA_TYPE.strip())) 
 
-            # I see no use in checking the filters - if they are usable they
-            # will work, otherwise they won't...
-
-        #except:
-        #    import traceback
-        #    traceback.print_exc(file=sys.stdout)
-        #    sys.exit(1)
-            
     
     def __init__(self):
         """
@@ -380,11 +373,21 @@ class Config(object):
                                                    prototype="fdef0000000000000000000000000000")              
         
         # config file from command line
-        if len(sys.argv) == 1:
-            configfile = "dhcpy6d.conf"
-        else:
-            configfile = sys.argv[1]
-            
+        # default config file and cli values
+        configfile = cli_options = cli_user = cli_group = None
+        # get multiple options
+        cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:", ["config=", "user=", "group="])
+        for opt, arg in cli_options:
+            if opt in ("-c", "--config"):
+                configfile = arg
+            if opt in ("-g", "--group"):
+                cli_group = arg
+            if opt in ("-u", "--user"):
+                cli_user = arg
+
+        if configfile == None:
+           ErrorExit("No config file given - please use --config <config.file>")
+
         if os.path.exists(configfile):
             if not (os.path.isfile(configfile) or \
                os.path.islink(configfile)):
@@ -503,6 +506,12 @@ class Config(object):
             self.ADDRESSES[a].DNS_UPDATE = BOOLPOOL[self.ADDRESSES[a].DNS_UPDATE]
             if self.ADDRESSES[a].DNS_ZONE == "": self.ADDRESSES[a].DNS_ZONE = self.DOMAIN
             if self.ADDRESSES[a].DNS_TTL == "0": self.ADDRESSES[a].DNS_TTL = self.DNS_TTL
+
+        # check if some options are set by cli options
+        if not cli_user == None:
+            self.USER = cli_user
+        if not cli_group == None:
+            self.GROUP = cli_group
         
         # check config
         self._check_config()
