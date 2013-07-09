@@ -45,7 +45,7 @@ start() {
     rh_status_q && return 0
 
     echo -n $"Starting $prog: "
-    $exec $config &
+    $exec --config $config --user dhcpy6d --group dhcpy6d &
     RETVAL=$?
     pid=$!
     echo $pid > $pidfile

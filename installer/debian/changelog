@@ -2,6 +2,7 @@ dhcpy6d (0.3git-1) unstable; urgency=low
 
   * New upstream
     - rpm improvements
+    - running as non-root user dhcpy6d
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 10 Jun 2013 11:47:00 +0200
 
