@@ -5,12 +5,7 @@
 #
 
 case "$1" in
-    install|upgrade)
-
-    # If the package has default file it could be sourced, so that
-    # the local admin can overwrite the defaults
-
-    ###[ -f "/etc/default/packagename" ] && . /etc/default/packagename
+    install|upgrade|configure)
 
     # Sane defaults:
 
@@ -46,24 +41,11 @@ case "$1" in
     usermod -c "$SERVER_NAME" \
            -d $SERVER_HOME   \
            -g $SERVER_GROUP  \
-              $SERVER_USER
+              $SERVER_USER 2> /dev/null
     # 5. adjust file and directory permissions
-    if ! dpkg-statoverride --list $SERVER_HOME >/dev/null
-    then
-       chown -R $SERVER_USER:adm $SERVER_HOME
-       chmod u=rwx,g=rxs,o= $SERVER_HOME
-    fi
-    if ! dpkg-statoverride --list /var/log/dhcpy6d.log >/dev/null
-    then
-       chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log
-       chmod u=rwx,g=rxs,o= /var/log/dhcpy6d.log
-    fi
-    #### 6. Add the user to the ADDGROUP group
-    ###if test -n $ADDGROUP
-    ###then
-    ###   if ! groups $SERVER_USER | cut -d: -f2 | \
-    ###      grep -qw $ADDGROUP; then
-    ###        adduser $SERVER_USER $ADDGROUP
-    ###   fi
-    ###fi
-       ;;
+    chown -R $SERVER_USER:$SERVER_GROUP $SERVER_HOME
+    chmod -R 0770 $SERVER_HOME
+    chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log
+    chmod 0770 /var/log/dhcpy6d.log
+    ;;
+esac
