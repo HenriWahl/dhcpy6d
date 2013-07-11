@@ -170,6 +170,15 @@ class Config(object):
                         ErrorExit("%s Logfile '%s' is no file or link." % (msg_prefix, self.LOG_FILE))
                 else:
                     ErrorExit("%s Logfile '%s' does not exist." % (msg_prefix, self.LOG_FILE))
+                # check ownership of logfile
+                stat = os.lstat(self.LOG_FILE)
+                if not stat.st_uid == pwd.getpwnam(self.USER).pw_uid:
+                    ErrorExit("%s User %s is not owner of logfile '%s'." % (msg_prefix, self.USER, self.LOG_FILE))
+                if not stat.st_gid == grp.getgrnam(self.GROUP).gr_gid:
+                    ErrorExit("%s Group %s is not owner of logfile '%s'." % (msg_prefix, self.GROUP, self.LOG_FILE))
+            else:
+                ErrorExit("%s No logfile configured." % (msg_prefix))
+
             if not self.LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
                 ErrorExit("Log level %s is invalid" % (self.LOG_LEVEL))
             if self.LOG_SYSLOG:
