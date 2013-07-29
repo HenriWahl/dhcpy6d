@@ -19,6 +19,8 @@ DHCPY6DCONF=/etc/dhcpy6d.conf
 DHCPY6DPID=/var/run/dhcpy6d.pid
 NAME="dhcpy6d"
 DESC="dhcpy6d DHCPv6 server"
+USER=dhcpy6d
+GROUP=dhcpy6d
 
 RUN=no
 DEFAULTFILE=/etc/default/dhcpy6d
@@ -57,7 +59,7 @@ fi
 if ! check_status; then
 
 start-stop-daemon --start --make-pidfile --pidfile ${DHCPY6DPID} \
---background --oknodo --exec $DHCPY6DBIN -- --config $DHCPY6DCONF --user dhcpy6d --group dhcpy6d
+--background --oknodo --exec $DHCPY6DBIN -- --config $DHCPY6DCONF --user $USER --group $GROUP
 
 sleep 2
 if check_status -q; then

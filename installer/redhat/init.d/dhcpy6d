@@ -28,6 +28,8 @@ exec=/usr/sbin/dhcpy6d
 lockfile=/var/lock/subsys/dhcpy6d
 pidfile=/var/run/dhcpy6d.pid
 config=/etc/dhcpy6d.conf
+user=dhcpy6d
+group=dhcpy6d
 
 rh_status() {
     status -p $pidfile -l $(basename $lockfile) $exec
@@ -45,7 +47,7 @@ start() {
     rh_status_q && return 0
 
     echo -n $"Starting $prog: "
-    $exec --config $config --user dhcpy6d --group dhcpy6d &
+    $exec --config $config --user $user --group $group &
     RETVAL=$?
     pid=$!
     echo $pid > $pidfile
