@@ -1,0 +1,3 @@
+version=3
+
+https://dhcpy6d.ifw-dresden.de/download/ .*/dhcpy6d-(.*)\.tar\.gz
