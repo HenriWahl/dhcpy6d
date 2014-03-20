@@ -49,3 +49,5 @@ case "$1" in
     chmod 0770 /var/log/dhcpy6d.log
     ;;
 esac
+
+#DEBHELPER#
