@@ -4,7 +4,7 @@ XS-Python-Version: >= 2.6
 Priority: optional
 Maintainer: Henri Wahl <h.wahl@ifw-dresden.de>
 Uploaders: Henri Wahl <h.wahl@ifw-dresden.de>
-Build-Depends: debhelper (>= 7.0.50~), python (>= 2.6), quilt (>= 0.46-7~)
+Build-Depends: debhelper (>= 7.0.50~), python (>= 2.6)
 Build-Depends-Indep: python-support
 Homepage: http://dhcpy6d.ifw-dresden.de
 Vcs-Git: git://github.com/HenriWahl/dhcpy6d.git
