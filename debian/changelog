@@ -1,3 +1,9 @@
+dhcpy6d (0.3+dev-1) UNRELEASED; urgency=medium
+
+  * Switch back to non-native packaging
+
+ -- Axel Beckert <abe@debian.org>  Thu, 20 Mar 2014 18:55:17 +0100
+
 dhcpy6d (0.3) unstable; urgency=low
 
   * New upstream
