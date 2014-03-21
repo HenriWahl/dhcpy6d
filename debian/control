@@ -14,7 +14,7 @@ Package: dhcpy6d
 Architecture: all
 Depends: python (>= 2.6), ${misc:Depends}, adduser
 Suggests: python-dnspython, python-mysqldb
-Description: DHCPv6 server which can use MAC addreses for identification
+Description: MAC address aware DHCPv6 server written in Python
  Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be
  identified by DUID, hostname or MAC address as in the good old IPv4
  days. It allows easy dualstack transistion, addresses may be
