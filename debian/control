@@ -3,7 +3,8 @@ Section: utils
 XS-Python-Version: >= 2.6
 Priority: optional
 Maintainer: Henri Wahl <h.wahl@ifw-dresden.de>
-Build-Depends: debhelper (>= 7.0.50~), python (>= 2.6)
+Build-Depends: debhelper (>= 7.0.50~),
+               python (>= 2.6)
 Build-Depends-Indep: python-support
 Homepage: http://dhcpy6d.ifw-dresden.de
 Vcs-Git: git://github.com/HenriWahl/dhcpy6d.git
@@ -12,8 +13,11 @@ Standards-Version: 3.9.5
 
 Package: dhcpy6d
 Architecture: all
-Depends: python (>= 2.6), ${misc:Depends}, adduser
-Suggests: python-dnspython, python-mysqldb
+Depends: adduser,
+         python (>= 2.6),
+         ${misc:Depends}
+Suggests: python-dnspython,
+          python-mysqldb
 Description: MAC address aware DHCPv6 server written in Python
  Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be
  identified by DUID, hostname or MAC address as in the good old IPv4
