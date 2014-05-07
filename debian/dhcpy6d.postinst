@@ -47,6 +47,9 @@ case "$1" in
     # 5. adjust file and directory permissions
     chown -R $SERVER_USER:$SERVER_GROUP $SERVER_HOME
     chmod -R 0770 $SERVER_HOME
+    if [ ! -e /var/log/dhcpy6d.log ]; then
+        touch /var/log/dhcpy6d.log
+    fi
     chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log
     chmod 0770 /var/log/dhcpy6d.log
     ;;

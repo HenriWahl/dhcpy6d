@@ -5,3 +5,4 @@
 override_dh_auto_install:
 	dh_auto_install -- --install-scripts=/usr/sbin
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/LICENSE
+	rm -f debian/dhcpy6d/var/log/dhcpy6d.log
