@@ -1,6 +1,7 @@
 dhcpy6d (0.3+dev-1) UNRELEASED; urgency=medium
 
   * Switch back to non-native packaging
+  * Set myself as primary package maintainer
 
  -- Axel Beckert <abe@debian.org>  Thu, 20 Mar 2014 18:55:17 +0100
 
