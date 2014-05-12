@@ -1,7 +1,34 @@
 dhcpy6d (0.3+dev-1) UNRELEASED; urgency=medium
 
+  * New upstream snapshot
+  * First upload to Debian (Closes: #715010)
   * Switch back to non-native packaging
   * Set myself as primary package maintainer
+  * Switch to source format "3.0 (quilt)".
+  * Drop unnecessary build-dependency on quilt. Fixes lintian warning
+    quilt-build-dep-but-no-series-file.
+  * Add machine-readable debian/copyright. Fixes lintian warning
+    no-debian-copyright.
+  * Add "set -e" to postinst script to bail out on any error.
+  * Move adduser from Suggests to Depends. Used in the postinst script.
+  * Don't ship additional LICENSE file installed by upstream. Fixes
+    lintian warning extra-license-file.
+  * Add a debian/watch file. Fixes lintian warning
+    debian-watch-file-is-missing.
+  * Use short description from GitHub as short description.
+  * Don't ship empty log file, create it at install time. Fixes lintian
+    warning file-in-unusual-dir.
+  * Also fix the following lintian warnings:
+    + maintainer-address-malformed
+    + maintainer-also-in-uploaders
+    + no-standards-version-field
+    + maintainer-script-lacks-debhelper-token
+    + debhelper-but-no-misc-depends
+    + description-starts-with-package-name
+    + description-synopsis-might-not-be-phrased-properly
+    + description-too-long (refers to first line)
+    + extended-description-is-empty
+  * Apply wrap-and-sort
 
  -- Axel Beckert <abe@debian.org>  Thu, 20 Mar 2014 18:55:17 +0100
 
