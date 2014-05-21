@@ -19,6 +19,8 @@ dhcpy6d (0.3+dev-1) UNRELEASED; urgency=medium
   * Use short description from GitHub as short description.
   * Don't ship empty log file, create it at install time. Fixes lintian
     warning file-in-unusual-dir.
+  * Add minimal man page with pointer to online documentation. Fixes
+    lintian warning binary-without-manpage.
   * Also fix the following lintian warnings:
     + maintainer-address-malformed
     + maintainer-also-in-uploaders
