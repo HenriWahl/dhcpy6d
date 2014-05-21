@@ -5,6 +5,7 @@ dhcpy6d (0.3+dev-1) UNRELEASED; urgency=medium
   * Switch back to non-native packaging
   * Set myself as primary package maintainer
   * Switch to source format "3.0 (quilt)".
+    + Remove now obsolete README.source
   * Drop unnecessary build-dependency on quilt. Fixes lintian warning
     quilt-build-dep-but-no-series-file.
   * Add machine-readable debian/copyright. Fixes lintian warning
