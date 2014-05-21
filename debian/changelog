@@ -1,4 +1,4 @@
-dhcpy6d (0.3+dev-1) UNRELEASED; urgency=medium
+dhcpy6d (0.3+git2014.03.21-1) unstable; urgency=low
 
   * New upstream snapshot
   * First upload to Debian (Closes: #715010)
@@ -33,7 +33,7 @@ dhcpy6d (0.3+dev-1) UNRELEASED; urgency=medium
     + extended-description-is-empty
   * Apply wrap-and-sort
 
- -- Axel Beckert <abe@debian.org>  Thu, 20 Mar 2014 18:55:17 +0100
+ -- Axel Beckert <abe@debian.org>  Wed, 21 May 2014 14:25:27 +0200
 
 dhcpy6d (0.3) unstable; urgency=low
 
