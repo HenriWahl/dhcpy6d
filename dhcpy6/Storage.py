@@ -595,9 +595,6 @@ class Textfile(Store):
         hosts = list()
         duid = self.Transactions[transaction_id].DUID
         if duid in self.IndexDUID:
-            """
-            was is nu eigentlich wenn ein host die selbe duid noch hat aber ne neue mac addresse?
-            """
             hosts.extend(self.IndexDUID[duid])
             return hosts
         else:

@@ -46,8 +46,10 @@ class Config(object):
         
         # check interface for multicast
         for i in self.INTERFACE:
-            if not i.isalnum():
-                ErrorExit("%s Interface '%s' must be alphanumeric." % (msg_prefix, self.INTERFACE))
+            # also accept Linux VLAN definitions
+            if not (i.isalnum() or "." in i or ":" in i or "%" in i):
+                ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, self.INTERFACE))
+                
         # check multicast address
         try:
             DecompressIP6(self.MCAST)
