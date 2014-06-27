@@ -15,6 +15,7 @@ import platform
 import pwd
 import grp
 import getopt
+import re
 
 from Helpers import *
 
@@ -47,7 +48,7 @@ class Config(object):
         # check interface for multicast
         for i in self.INTERFACE:
             # also accept Linux VLAN definitions
-            if not (i.isalnum() or "." in i or ":" in i or "%" in i):
+            if not re.match("^[a-z0-9_:%]*$", i, re.IGNORECASE):
                 ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, self.INTERFACE))
                 
         # check multicast address
@@ -81,10 +82,9 @@ class Config(object):
             except Exception, err:
                 ErrorExit("%s Name server address '%s' is invalid." % (msg_prefix, err))
         
-        # partly check of domain name validity     
-        for i in self.DOMAIN.lower():
-            if not i in ".-0123456789abcdefghijklmnopqrstuvwxyz":
-                ErrorExit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN))  
+        # partly check of domain name validity
+        if not re.match("^[a-z0-9.-]*$", self.DOMAIN, re.IGNORECASE):
+            ErrorExit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN))
         
         # partly check of domain name validity         
         if not self.DOMAIN.lower()[0].isalpha() or \
@@ -94,9 +94,8 @@ class Config(object):
         # check domain search list domains
         for d in self.DOMAIN_SEARCH_LIST:
             # partly check of domain name validity
-            for i in d.lower():
-                if not i in ".-0123456789abcdefghijklmnopqrstuvwxyz":
-                    ErrorExit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
+            if not re.match("^[a-z0-9.-]*$", d, re.IGNORECASE):
+                ErrorExit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
 
             # partly check of domain name validity
             if not d.lower()[0].isalpha() or \
