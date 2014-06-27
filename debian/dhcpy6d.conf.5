@@ -1,1 +1,131 @@
 .TH dhcpy6d.conf 5 "Jun 27, 2014" "" "dhcpy6d.conf"
+
+.SH NAME
+
+dhcpy6d.conf - config file for DHCPv6 server dhcpy6d
+
+.SH DESCRIPTION
+This file contains the general settings for DHCPv6 server daemon dhcpy6d.
+It follows RFC 822 style parsed by Python ConfigParser module.
+This configuration file contains several sections which will be discussed in detail here.
+.PP
+An online documentation is also available at
+.I http://dhcpy6d.ifw-dresden.de/documentation/config/.
+.PP
+Boolean settings can be done with 1/0, on/off or yes/no values.
+
+.SH GENERAL CONFIGURATION IN SECTION [dhcpy6d]
+
+This section contains important general options. Values are sometimes examples and not meant to be used in production
+environments.
+
+.TP
+.BR really_do_it " = " yes
+Let dhcpy6d really_do_it and respond to client requests - might be of use for debugging and testing.
+
+.TP
+.BR interface " = " eth0\ eth1
+The interfaces the server listens on is defined with keyword interface.
+Multiple interfaces have to be separated by spaces.
+
+.TP
+.BR mcast " = " ff02::1:2
+The mcast address to listen at is ff02::1:2. Due to the facts that dhcpy6d at the moment works in local network
+segments only and to the restriction of MAC addresses only being usable there it will always have this value.
+
+.TP
+.BR port " = " 547
+Exactly the same applies to the port dhcpy6d listens on. Probably senseless to change it but who knows.
+
+.TP
+.BR serverduid " = " 0000000000000000000000000000
+The server DUID should be configured with serverduid. If there is none dhcpy6d creates a new one at every startup.
+Windows clients might run a little bit wild when server DUID changed. You are free to compose your own as long as it
+follows RFC 3315. Please note that it has to be in hexadecimal format - no octals, no "-", just like in the example below.
+The example here is a DUID-LLT (Link-layer Address Plus Time) even if it should be a DUID-TLL as timestamp comes first.
+It is composed of DUID-type(LLT=1) + Hardware-type(Ethernet=1) + Unixtime-in-hex + MAC-address what makes a
+0001 + 0001 + 11fb5dc9 + 01023472a6c5 = 0001000111fb5dc901023472a6c5.
+
+.TP
+.BR server_preference " = " 255
+The server_preference determines the priority of the server. The maximum value is 255 which means highest priority.
+
+.TP
+.BR user " = " dhcpy6d
+For security reasons dhcpy6d can be run as non-root user.
+
+.TP
+.BR group " = " dhcpy6d
+For security reasons dhcpy6d can be run as non-root group.
+
+.TP
+.BR nameserver " = " fd00::53:1\ fd00::53:2
+Nameservers to be replied to request option 23 are defined with nameserver.
+If more than one is needed they have to be separated by spaces.
+
+.TP
+.BR domain " = " example.com
+The domain to be used with FQDN hostnames for option 39.
+
+.TP
+.BR domain_search_list " = " foo.com\ bar.com
+Domain search lists to be used with option 24t. If none is given the value of domain above is used.
+Multiple domains have to be separated by space or comma.
+
+.TP
+.BR log " = " yes
+Enable logging.
+
+.TP
+.BR log_console " = " no
+Log to the console where
+.B dhcpy6d
+has been started.
+
+.TP
+.BR log_file " = " /path/to/dhcpy6d/log/file
+Defines the file used for logging. Will be created if it does not yet exist.
+
+.TP
+.BR log_syslog " = "yes
+If logs should go to syslog it is set here.
+
+.TP
+.BR log_syslog_destination " = " syslogserver
+An UDP syslog server may be used if log_syslog_destination points to it.
+Optionally a port other than default 514 can be set when adding ":port" to the destination.
+
+.TP
+.BR log_syslog_facility " = " local1
+The default syslog facility is "daemon" but can be changed here.
+
+.TP
+.BR store_config " = " file | sqlite | mysql
+Configuration of clients can be stored in a file or in a database.
+Databases MySQL and SQLite are supported at the moment, thus possible values are "file", "sqlite" and "mysql".
+To disable any client configuration source it has to be "none".
+
+.TP
+.BR store_file_config " = " /path/to/client/conf/file
+File which contains the clients configuration. Default is
+.B /etc/dhcpy6d-clients.conf.
+For details see
+.B dhcpy6d-clients.conf (5).
+
+.TP
+.BR store_sqlite_config " = " /path/to/sqlite/config/file
+SQLite database file which contains the clients configuration.
+
+.TP
+.BR store_sqlite_volatile " = " /path/to/sqlite/volatile/file
+If
+
+
+
+
+.SH SEE ALSO
+.nf
+.BR dhcpy6d (8)
+.BR dhcpy6d-clients.conf (5)
+https://dhcpy6d.ifw-dresden.de
+https://github.com/HenriWahl/dhcpy6d
