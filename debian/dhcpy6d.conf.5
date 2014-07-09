@@ -1,131 +1,152 @@
-.TH dhcpy6d.conf 5 "Jun 27, 2014" "" "dhcpy6d.conf"
+.TH "dhcpy6d.conf" "5" "Jun 27, 2014" "Henri Wahl" "dhcpy6d.conf"
+.SH "NAME"
+dhcpy6d.conf \- config file for DHCPv6 server dhcpy6d
 
-.SH NAME
-
-dhcpy6d.conf - config file for DHCPv6 server dhcpy6d
-
-.SH DESCRIPTION
+.SH "DESCRIPTION"
 This file contains the general settings for DHCPv6 server daemon dhcpy6d.
 It follows RFC 822 style parsed by Python ConfigParser module.
 This configuration file contains several sections which will be discussed in detail here.
-.PP
-An online documentation is also available at
-.I http://dhcpy6d.ifw-dresden.de/documentation/config/.
-.PP
-Boolean settings can be done with 1/0, on/off or yes/no values.
 
-.SH GENERAL CONFIGURATION IN SECTION [dhcpy6d]
+An online documentation is also available at 
+.I https://dhcpy6d.ifw\-dresden.de/documentation/config/.
 
+Boolean settings can be done with 1/0, on/off or yes/no values. 
+
+Some options allow multiple values. These have to be separated by spaces.
+
+.SH "GENERAL CONFIGURATION IN SECTION [dhcpy6d]"
 This section contains important general options. Values are sometimes examples and not meant to be used in production
 environments.
 
-.TP
+.TP 
 .BR really_do_it " = " yes
-Let dhcpy6d really_do_it and respond to client requests - might be of use for debugging and testing.
+Let dhcpy6d really_do_it and respond to client requests \- might be of use for debugging and testing.
 
-.TP
+.TP 
 .BR interface " = " eth0\ eth1
 The interfaces the server listens on is defined with keyword interface.
 Multiple interfaces have to be separated by spaces.
 
-.TP
+.TP 
 .BR mcast " = " ff02::1:2
 The mcast address to listen at is ff02::1:2. Due to the facts that dhcpy6d at the moment works in local network
 segments only and to the restriction of MAC addresses only being usable there it will always have this value.
 
-.TP
+.TP 
 .BR port " = " 547
 Exactly the same applies to the port dhcpy6d listens on. Probably senseless to change it but who knows.
 
-.TP
+.TP 
 .BR serverduid " = " 0000000000000000000000000000
 The server DUID should be configured with serverduid. If there is none dhcpy6d creates a new one at every startup.
 Windows clients might run a little bit wild when server DUID changed. You are free to compose your own as long as it
-follows RFC 3315. Please note that it has to be in hexadecimal format - no octals, no "-", just like in the example below.
-The example here is a DUID-LLT (Link-layer Address Plus Time) even if it should be a DUID-TLL as timestamp comes first.
-It is composed of DUID-type(LLT=1) + Hardware-type(Ethernet=1) + Unixtime-in-hex + MAC-address what makes a
+follows RFC 3315. Please note that it has to be in hexadecimal format \- no octals, no "\-", just like in the example below.
+The example here is a DUID\-LLT (Link\-layer Address Plus Time) even if it should be a DUID\-TLL as timestamp comes first.
+It is composed of DUID\-type(LLT=1) + Hardware\-type(Ethernet=1) + Unixtime\-in\-hex + MAC\-address what makes a
 0001 + 0001 + 11fb5dc9 + 01023472a6c5 = 0001000111fb5dc901023472a6c5.
 
-.TP
+.TP 
 .BR server_preference " = " 255
 The server_preference determines the priority of the server. The maximum value is 255 which means highest priority.
 
-.TP
+.TP 
 .BR user " = " dhcpy6d
-For security reasons dhcpy6d can be run as non-root user.
+For security reasons dhcpy6d can be run as non\-root user.
 
-.TP
+.TP 
 .BR group " = " dhcpy6d
-For security reasons dhcpy6d can be run as non-root group.
+For security reasons dhcpy6d can be run as non\-root group.
 
-.TP
+.TP 
 .BR nameserver " = " fd00::53:1\ fd00::53:2
 Nameservers to be replied to request option 23 are defined with nameserver.
 If more than one is needed they have to be separated by spaces.
 
-.TP
+.TP 
 .BR domain " = " example.com
 The domain to be used with FQDN hostnames for option 39.
 
-.TP
+.TP 
 .BR domain_search_list " = " foo.com\ bar.com
 Domain search lists to be used with option 24t. If none is given the value of domain above is used.
 Multiple domains have to be separated by space or comma.
 
-.TP
+.TP 
 .BR log " = " yes
 Enable logging.
 
-.TP
+.TP 
 .BR log_console " = " no
 Log to the console where
 .B dhcpy6d
 has been started.
 
-.TP
+.TP 
 .BR log_file " = " /path/to/dhcpy6d/log/file
 Defines the file used for logging. Will be created if it does not yet exist.
 
-.TP
-.BR log_syslog " = "yes
+.TP 
+.BR log_syslog " = " yes
 If logs should go to syslog it is set here.
 
-.TP
+.TP 
 .BR log_syslog_destination " = " syslogserver
 An UDP syslog server may be used if log_syslog_destination points to it.
 Optionally a port other than default 514 can be set when adding ":port" to the destination.
 
-.TP
+.TP 
 .BR log_syslog_facility " = " local1
 The default syslog facility is "daemon" but can be changed here.
 
-.TP
-.BR store_config " = " file | sqlite | mysql
+.TP 
+.BR store_config " = " file\ |\ sqlite\ |\ mysql
 Configuration of clients can be stored in a file or in a database.
-Databases MySQL and SQLite are supported at the moment, thus possible values are "file", "sqlite" and "mysql".
+Databases MySQL and SQLite are supported at the moment, thus possible values are "file", "sqlite" or "mysql".
 To disable any client configuration source it has to be "none".
 
-.TP
+.TP 
 .BR store_file_config " = " /path/to/client/conf/file
 File which contains the clients configuration. Default is
-.B /etc/dhcpy6d-clients.conf.
+.B /etc/dhcpy6d\-clients.conf.
 For details see
-.B dhcpy6d-clients.conf (5).
+.B dhcpy6d\-clients.conf (5).
 
-.TP
+.TP 
 .BR store_sqlite_config " = " /path/to/sqlite/config/file
 SQLite database file which contains the clients configuration.
 
-.TP
+.TP 
+.BR store_volatile " = " sqlite\ |\ mysql
+Volatile data like leases and the mapping between Link Local Addresses and MAC addresses can be stored in MySQL or SQLite database, so the possible values for store_volatile are "mysql" and "sqlite". Default is /var/lib/dhcpy6d/volatile.sqlite.
+
+.TP 
 .BR store_sqlite_volatile " = " /path/to/sqlite/volatile/file
-If
+If set store_volatile is set to "sqlite" a SQLite database file must be defined.
 
+.TP 
+.BR store_mysql_host " = " localhost
+.TP 
+.BR store_mysql_db " = " dhcpy6d_db
+.TP 
+.BR store_mysql_user " = " dhcpy6d_user
+.TP 
+.BR store_mysql_password " = " dhcpy6d_password
+.RI If " store_config " and/or " store_volatile "
+use a MySQL database to store information it has to be set with these self\-explanatory options. The same database is used for config and volatile data.
 
+.TP 
+.BR identification " = " <mac>\ <duid>\ <hostname>
+Clients can be set to be identified by several attributes \- MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database.
+Same MAC and different DUIDs might be interesting for clients with multiple OS.
 
-
-.SH SEE ALSO
-.nf
+.TP 
+.BR identification_mode " = " match_all\ |\ match_some
+If more than one identification attribute has been set, identification_mode can be one of "match_all" or "match_some". The first means that all attributes have to match to identify a client and the latter is more tolerant.
+.SH "EXAMPLES"
+To be written.
+.SH "SEE ALSO"
+.nf 
 .BR dhcpy6d (8)
-.BR dhcpy6d-clients.conf (5)
-https://dhcpy6d.ifw-dresden.de
+.BR dhcpy6d\-clients.conf (5)
+https://dhcpy6d.ifw\-dresden.de
 https://github.com/HenriWahl/dhcpy6d
