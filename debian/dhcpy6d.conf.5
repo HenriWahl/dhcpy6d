@@ -14,6 +14,20 @@ Boolean settings can be done with 1/0, on/off or yes/no values.
 
 Some options allow multiple values. These have to be separated by spaces.
 
+There are 3 types of sections:
+.TP
+.BR [dhcpy6d]
+This section contains general options like interfaces, storage and logging. Only one [dhcpy6d] section is allowed.
+
+.TP
+.BR [address_<address_name>]
+There can be various [address_<address_name>] sections. In address sections severall address ranges and types can be defind according to you needs.
+Addresses are organized in classes. For details read further down.
+
+.TP
+.BR [class_<class_name>]
+Class definitions allow to apply different addresses, time limits et al. to different types of clients.
+
 .SH "GENERAL CONFIGURATION IN SECTION [dhcpy6d]"
 This section contains important general options. Values are sometimes examples and not meant to be used in production
 environments.
@@ -142,6 +156,30 @@ Same MAC and different DUIDs might be interesting for clients with multiple OS.
 .TP 
 .BR identification_mode " = " match_all\ |\ match_some
 If more than one identification attribute has been set, identification_mode can be one of "match_all" or "match_some". The first means that all attributes have to match to identify a client and the latter is more tolerant.
+
+.SH ADDRESS DEFINITIONS IN SEVERAL [address_<address_name>] SECTIONS
+
+.RB The " <address_name> " part\ of\ an " [address_<address_name>] " section\ is\ an\ arbitrarily\ choosen\ identifier\ like\ "clients"\ or\ "invalid_clients".
+Every address definition may include several properties:
+
+.TP
+.BR category\ =\ mac\ |\ id\ |\ range\ |\ random
+Categories play an important role when defining patterns for addresses. An address belongs to a certain category:
+
+.BR mac " - uses MAC address from client request as part of address
+
+.BR id " - uses ID given to client in configuration file or database as one octet of address, should be in range 0-FFFF
+
+.BR range " - generate addresses of given ranges
+
+.BR random " - randomly created 64 bit values
+
+.TP
+.BR pattern\ =\ 2001:db8::$mac$|$id$|$range$|$random$
+Patterns allow to design the addresses according to their category.
+
+
+
 .SH "EXAMPLES"
 To be written.
 .SH "SEE ALSO"
