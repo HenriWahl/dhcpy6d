@@ -164,9 +164,9 @@ Dynamically update DNS. This works at the moment only with Bind DNS, but might b
 .TP
 .BR dns_update_nameserver\ =\ <namserver-address>
 .TP
-.BR dns_rndc_key\ =\ rndc-key
+.BR dns_rndc_key\ =\ <rndc-key_like_in_rndc.conf>
 .TP
-.BR dns_rndc_secret\ =\ <secretkeylikeinrndc.conf==>
+.BR dns_rndc_secret\ =\ <secret_key_like_in_rndc.conf>
 When connecting to a Bind DNS server its address and the necessary RNDC data must be set.
 
 .TP
@@ -178,13 +178,13 @@ Clients may request that they update the DNS record theirself. If their wishes s
 The client hostname either comes from configuration of dhcpy6d or in the client request.
 
 .TP
-.BR preferred_lifetime\ =\ 43200
+.BR preferred_lifetime\ =\ <seconds>
 .TP
-.BR valid_lifetime\ =\ 64800
+.BR valid_lifetime\ =\ <seconds>
 .TP
-.BR t1\ =\ 21600
+.BR t1\ =\ <seconds>
 .TP
-.BR t2\ =\ 32400
+.BR t2\ =\ <seconds>
 Preferred lifetime, valid lifetime, T1 and T2 in seconds are configured with the corresponding options.
 
 .TP
@@ -210,7 +210,7 @@ Categories play an important role when defining patterns for addresses. An addre
 
 .TP
 .BR pattern\ =\ 2001:db8::$mac$|$id$|$range$|$random$
-Patterns allow to design the addresses according to their category.
+Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
 
 .BR $mac$ " - The MAC address from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder.
 It will be stretched over 3 octets like 00:11:22:33:44:55 becomes 0011:2233:4455.
@@ -223,6 +223,29 @@ This is why the range can span from 0000-FFFF. Clients will get an address out o
 
 .BR $random$ " - A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would
 if privacy extensions were used. The random part will span over 4 octets.
+
+.TP
+.BR prefix_length\ =\ <0-128>
+Default prefix length for addresses is 64 but it can be customized here.
+
+.TP
+.BR ia_type\ =\ na\ |\ ta
+IA (Identity Association) types can be one of non-temporary address "na" or temporary address "ta". Default and probably most used is "na".
+
+.TP
+.BR preferred_lifetime\ =\ <seconds>
+.TP
+.BR valid_lifetime\ =\ <seconds>
+As default preferred and valid lifetime are set in general settings, but it is configurable individually for every address setting.
+
+.TP
+.BR dns_update\ =\ yes\ |\ no
+.TP
+.BR dns_zone\ =\ <dnszone>
+.TP
+.BR dns_rev_zone\ =\ <reverse_dnszone>
+If these addresses should be synchronized with Bind DNS, these three settings have to be set accordingly.
+The nameserver for updates is set in general settings.
 
 .SH "EXAMPLES"
 To be written.
