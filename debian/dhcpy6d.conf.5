@@ -113,7 +113,7 @@ Optionally a port other than default 514 can be set when adding ":port" to the d
 The default syslog facility is "daemon" but can be changed here.
 
 .TP 
-.BR store_config\ =\ file\ |\ sqlite\ |\ mysql
+.BR store_config\ =\ file\ |\ sqlite\ |\ mysql\ |\ none
 Configuration of clients can be stored in a file or in a database.
 Databases MySQL and SQLite are supported at the moment, thus possible values are "file", "sqlite" or "mysql".
 To disable any client configuration source it has to be "none".
@@ -248,6 +248,14 @@ As default preferred and valid lifetime are set in general settings, but it is c
 If these addresses should be synchronized with Bind DNS, these three settings have to be set accordingly.
 The nameserver for updates is set in general settings.
 
+.SS DEFAULT\ ADDRESS
+The address scheme used for the default class "class_default" is by default named "address_default".
+It should be enough if address_default is defined, only if unknown clients should get extra nameservers etc. a class_default has to be set.
+
+.TP
+.BR [address_default]
+Address scheme used as default for clients which do not match any other class than "class_default".
+
 .SH CLASS DEFINITIONS IN SEVERAL [class_<class_name>] SECTIONS
 
 .RB The " <class_name> " part\ of\ an " [class_<class_name>] " section\ is\ an\ arbitrarily\ choosen\ identifier\ like\ "clients"\ or\ "invalid_clients".
@@ -289,6 +297,8 @@ It is possible to let a class only apply on specific interfaces. These have to b
 .SS DEFAULT\ CLASS
 At the moment every client which does not match any other class by client configuration or filter automatically matches the class "default".
 This class could get an address scheme too.
+It should be enough if address_default is defined, only if unknown clients should get extra nameservers etc. a class_default has to be set.
+
 .TP
 .BR [class_default]
 Default class for all clients that do not match any other class.
@@ -299,7 +309,100 @@ Like any other class it could contain all options that appyl to a class.
 If dhcpy6d listens at multiple interfaces, one can define a default class for every interface.
 
 .SH "EXAMPLES"
-To be written.
+The following paragraphs contain some hopefully helpful examples.
+
+.SS 1. MINIMAL CONFIGURATION
+Here in this minimalistic example the server daemon listens on interface eth0.
+It does not use any client configuration source but answers requests with default addresses.
+These are made of the pattern fd01:db8:dead:bad:beef:$mac$
+and result in addresses like fd01:db8:deaf:bad:beef:1020:3040:5060 if the MAC address of the
+requesting client was 10:20:30:40:50:60.
+
+.nf
+[dhcpy6d]
+# set to yes to really answer to clients
+really_do_it = yes
+
+# Interface to listen to multicast ff02::1:2.
+interface = eth0
+
+# some server DUID
+serverduid = 0001000134824528134567366121
+
+# Do not identify and configure clients.
+store_config = none
+
+# SQLite DB for leases and LLIP-MAC-mapping.
+store_volatile = sqlite
+store_sqlite_volatile = volatile.sqlite
+
+# Special address type which applies to all not specially
+# configured clients.
+[address_default]
+# Choosing MAC-based addresses.
+category = mac
+# ULA-type address pattern.
+pattern = fd01:db8:dead:bad:beef:$mac$
+
+.fi
+
+.SS 2. MORE COMPLEX CONFIGURATION
+This example shows some more complexity
+
+.nf
+[dhcpy6d]
+# set to yes to really answer to clients
+really_do_it = yes
+
+# Interface to listen to multicast ff02::1:2.
+interface = eth0
+
+# Server DUID - if not set there will be one generated every time dhcpy6d starts.
+# This might cause trouble for Windows clients because they go crazy about the
+# changed server DUID.
+serverduid = 0001000134824528134567366121
+
+# non-privileged user/group
+user = dhcpy6d
+group = dhcpy6d
+
+# Nameservers for option 23 - there can be several specified separated by spaces.
+nameserver = fd01:db8::53
+
+# Domain to be used for option 39 - host FQDN
+domain = example.com
+
+# Domain search list for option 24 - domain search list.
+# If omited the value of option "domain" above is taken as default
+domain_search_list = example.com
+
+# Do logging.
+log = yes
+# Log to console.
+log_console = no
+# Path to logfile.
+log_file = /var/log/dhcpy6d.log
+
+# Use SQLite for client configuration
+store_config = sqlite
+
+# Paths to SQLite database files.
+store_sqlite_config = config.sqlite
+store_sqlite_volatile = volatile.sqlite
+
+# Declare which attributes of a requesting client should be checked
+# to prove its identity. It is  possible to mix them, separated by spaces.
+identification = mac
+
+# Declare if all checked attributes have to match or is it enough if
+# some do. Kind of senseless with just one attribute.
+identification_mode = match_all
+
+
+
+
+.fi
+
 .SH "SEE ALSO"
 .nf 
 .BR dhcpy6d (8)
