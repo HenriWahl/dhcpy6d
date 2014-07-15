@@ -33,25 +33,25 @@ This section contains important general options. Values are sometimes examples a
 environments.
 
 .TP 
-.BR really_do_it " = " yes
+.BR really_do_it\ =\ yes\ |\ no
 Let dhcpy6d really_do_it and respond to client requests \- might be of use for debugging and testing.
 
 .TP 
-.BR interface\ =\ eth0\ eth1
+.BR interface\ =\ <interface> [<interface> ...]
 The interfaces the server listens on is defined with keyword interface.
 Multiple interfaces have to be separated by spaces.
 
 .TP 
-.BR mcast\ =\ ff02::1:2
-The mcast address to listen at is ff02::1:2. Due to the facts that dhcpy6d at the moment works in local network
+.BR mcast\ =\ <multicast-address>
+The multicast address to listen at is ff02::1:2. Due to the facts that dhcpy6d at the moment works in local network
 segments only and to the restriction of MAC addresses only being usable there it will always have this value.
 
 .TP 
-.BR port\ =\ 547
-Exactly the same applies to the port dhcpy6d listens on. Probably senseless to change it but who knows.
+.BR port\ =\ <port>
+Exactly the same applies to the port dhcpy6d listens on. Default is 547. Probably senseless to change it but who knows.
 
 .TP 
-.BR serverduid\ =\ 0000000000000000000000000000
+.BR serverduid\ =\ <longlongserverduid>
 The server DUID should be configured with serverduid. If there is none dhcpy6d creates a new one at every startup.
 Windows clients might run a little bit wild when server DUID changed. You are free to compose your own as long as it
 follows RFC 3315. Please note that it has to be in hexadecimal format \- no octals, no "\-", just like in the example below.
@@ -60,37 +60,37 @@ It is composed of DUID\-type(LLT=1) + Hardware\-type(Ethernet=1) + Unixtime\-in\
 0001 + 0001 + 11fb5dc9 + 01023472a6c5 = 0001000111fb5dc901023472a6c5.
 
 .TP 
-.BR server_preference\ =\ 255
+.BR server_preference\ =\ <0-255>
 The server_preference determines the priority of the server. The maximum value is 255 which means highest priority.
 
 .TP 
-.BR user\ =\ dhcpy6d
+.BR user\ =\ <user>
 For security reasons dhcpy6d can be run as non\-root user.
 
 .TP 
-.BR group\ =\ dhcpy6d
+.BR group\ =\ <group>
 For security reasons dhcpy6d can be run as non\-root group.
 
 .TP 
-.BR nameserver\ =\ fd00::53:1\ fd00::53:2
+.BR nameserver\ =\ <nameserver-address>\ [<nameserver-address>\ ...]
 Nameservers to be replied to request option 23 are defined with nameserver.
 If more than one is needed they have to be separated by spaces.
 
 .TP 
-.BR domain\ =\ example.com
+.BR domain\ =\ <domaine-name>
 The domain to be used with FQDN hostnames for option 39.
 
 .TP 
-.BR domain_search_list\ =\ foo.com\ bar.com
+.BR domain_search_list\ =\ <domainname>\ [<domainname>\ ...]
 Domain search lists to be used with option 24t. If none is given the value of domain above is used.
 Multiple domains have to be separated by space or comma.
 
 .TP 
-.BR log\ =\ yes
+.BR log\ =\ yes\ |\ no
 Enable logging.
 
 .TP 
-.BR log_console\ =\ no
+.BR log_console\ =\ yes\ |\ no
 Log to the console where
 .B dhcpy6d
 has been started.
@@ -100,7 +100,7 @@ has been started.
 Defines the file used for logging. Will be created if it does not yet exist.
 
 .TP 
-.BR log_syslog\ =\ yes
+.BR log_syslog\ =\ yes\ |\ no
 If logs should go to syslog it is set here.
 
 .TP 
@@ -109,7 +109,7 @@ An UDP syslog server may be used if log_syslog_destination points to it.
 Optionally a port other than default 514 can be set when adding ":port" to the destination.
 
 .TP 
-.BR log_syslog_facility\ =\ local1
+.BR log_syslog_facility\ =\ <log-facility>
 The default syslog facility is "daemon" but can be changed here.
 
 .TP 
@@ -138,13 +138,13 @@ Volatile data like leases and the mapping between Link Local Addresses and MAC a
 If set store_volatile is set to "sqlite" a SQLite database file must be defined.
 
 .TP 
-.BR store_mysql_host\ =\ localhost
+.BR store_mysql_host\ =\ <database-host>
 .TP 
-.BR store_mysql_db\ =\ dhcpy6d_db
+.BR store_mysql_db\ =\ <database-name>
 .TP 
-.BR store_mysql_user\ =\ dhcpy6d_user
+.BR store_mysql_user\ =\<database-user>
 .TP 
-.BR store_mysql_password\ =\ dhcpy6d_password
+.BR store_mysql_password\ =\ <database-password>
 .RI If " store_config " and/or " store_volatile "
 use a MySQL database to store information it has to be set with these self\-explanatory options. The same database is used for config and volatile data.
 
@@ -162,7 +162,7 @@ If more than one identification attribute has been set, identification_mode can 
 Dynamically update DNS. This works at the moment only with Bind DNS, but might be extended to others, maybe via call of an external command.
 
 .TP
-.BR dns_update_nameserver\ =\ <namserver-address>
+.BR dns_update_nameserver\ =\ <nameserver-address>\ [<nameserver-address>\ ...]
 .TP
 .BR dns_rndc_key\ =\ <rndc-key_like_in_rndc.conf>
 .TP
@@ -188,12 +188,13 @@ The client hostname either comes from configuration of dhcpy6d or in the client 
 Preferred lifetime, valid lifetime, T1 and T2 in seconds are configured with the corresponding options.
 
 .TP
-.BR information_refresh_time\ =\ 7200
+.BR information_refresh_time\ =\ <seconds>
 The lifetime of information given to clients as response to an information-request message.
 
 .SH ADDRESS DEFINITIONS IN SEVERAL [address_<address_name>] SECTIONS
 
 .RB The " <address_name> " part\ of\ an " [address_<address_name>] " section\ is\ an\ arbitrarily\ choosen\ identifier\ like\ "clients"\ or\ "invalid_clients".
+There can be many address definitions which will be used by classes.
 Every address definition may include several properties:
 
 .TP
@@ -246,6 +247,56 @@ As default preferred and valid lifetime are set in general settings, but it is c
 .BR dns_rev_zone\ =\ <reverse_dnszone>
 If these addresses should be synchronized with Bind DNS, these three settings have to be set accordingly.
 The nameserver for updates is set in general settings.
+
+.SH CLASS DEFINITIONS IN SEVERAL [class_<class_name>] SECTIONS
+
+.RB The " <class_name> " part\ of\ an " [class_<class_name>] " section\ is\ an\ arbitrarily\ choosen\ identifier\ like\ "clients"\ or\ "invalid_clients".
+Clients can be grouped in classes. Different classes can have different properties, different address sets and different numbers of addresses.
+Classes also might have different name servers, time intervals, filters and interfaces.
+
+A client gets the addresses, nameserver and T1/T2 values of the class which it is configured for in client configuration database or file.
+
+.TP
+.BR addresses\ =\ <address_name>\ [<address_name>\ ...]
+A class can contain as many addresses as needed. Their names have to be separated by spaces.
+
+.TP
+.BR nameserver\ =\ <nameserver-address>\ [<nameserver-address>\ ...]
+Each class can have its own nameservers. If this option is used it replaces the nameservers from general settings.
+
+.TP
+.BR t1\ =\ <seconds>
+.TP
+.BR t2\ =\ <seconds>
+.RB  Each\ class\ can\ have\ its\ own " t1 " and " t2 " values.
+The ones from general settings will be overridden. Might be of use for some invalid-but-about-to-become-valid-somehow-soon class.
+
+.TP
+.BR filter_hostname\ =\ <regular_expression>
+.TP
+.BR filter_mac\ =\ <regular_expression>
+.TP
+.BR filter_duid\ =\ <regular_expression>
+Filters allow to apply a class to a client not by configuration but by a matching regular expression filter.
+Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
+The regular expressions are meant to by Python Regular Expressions.
+.RI See " https://docs.python.org/2/howto/regex.html " and\ examples\ section\ below\ for\ details.
+
+.TP
+.BR interface\ =\ <interface>\ [<interface>\s ...]
+It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
+
+.SS DEFAULT\ CLASS
+At the moment every client which does not match any other class by client configuration or filter automatically matches the class "default".
+This class could get an address scheme too.
+.TP
+.BR [class_default]
+Default class for all clients that do not match any other class.
+Like any other class it could contain all options that appyl to a class.
+
+.TP
+.BR [class_default_<interface>]
+If dhcpy6d listens at multiple interfaces, one can define a default class for every interface.
 
 .SH "EXAMPLES"
 To be written.
