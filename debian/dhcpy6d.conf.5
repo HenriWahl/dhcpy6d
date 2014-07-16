@@ -320,13 +320,13 @@ requesting client was 10:20:30:40:50:60.
 
 .nf
 [dhcpy6d]
-# set to yes to really answer to clients
+# Set to yes to really answer to clients.
 really_do_it = yes
 
 # Interface to listen to multicast ff02::1:2.
 interface = eth0
 
-# some server DUID
+# Some server DUID.
 serverduid = 0001000134824528134567366121
 
 # Do not identify and configure clients.
@@ -336,7 +336,7 @@ store_config = none
 store_volatile = sqlite
 store_sqlite_volatile = volatile.sqlite
 
-# Special address type which applies to all not specially
+# Special address type which applies to all not specially.
 # configured clients.
 [address_default]
 # Choosing MAC-based addresses.
@@ -346,12 +346,13 @@ pattern = fd01:db8:dead:bad:beef:$mac$
 
 .fi
 
-.SS 2. MORE COMPLEX CONFIGURATION
-This example shows some more complexity
+.SS 2. CONFIGURATION WITH VALID AND UNKNOWN CLIENTS
+This example shows some more complexity. Here only valid hosts will get a random global address from 2001:db8::/64.
+Unknown clients get a default ULA range address from fc00::/7.
 
 .nf
 [dhcpy6d]
-# set to yes to really answer to clients
+# Set to yes to really answer to clients.
 really_do_it = yes
 
 # Interface to listen to multicast ff02::1:2.
@@ -362,18 +363,18 @@ interface = eth0
 # changed server DUID.
 serverduid = 0001000134824528134567366121
 
-# non-privileged user/group
+# Non-privileged user/group.
 user = dhcpy6d
 group = dhcpy6d
 
 # Nameservers for option 23 - there can be several specified separated by spaces.
-nameserver = fd01:db8::53
+nameserver = fd00:db8::53
 
-# Domain to be used for option 39 - host FQDN
+# Domain to be used for option 39 - host FQDN.
 domain = example.com
 
 # Domain search list for option 24 - domain search list.
-# If omited the value of option "domain" above is taken as default
+# If omited the value of option "domain" above is taken as default.
 domain_search_list = example.com
 
 # Do logging.
@@ -383,8 +384,11 @@ log_console = no
 # Path to logfile.
 log_file = /var/log/dhcpy6d.log
 
-# Use SQLite for client configuration
+# Use SQLite for client configuration.
 store_config = sqlite
+
+# Use SQLite for volatile data.
+store_volatile = sqlite
 
 # Paths to SQLite database files.
 store_sqlite_config = config.sqlite
@@ -398,8 +402,178 @@ identification = mac
 # some do. Kind of senseless with just one attribute.
 identification_mode = match_all
 
+# These lifetimes are also used as default for addresses which
+# have no extra defined lifetimes.
+preferred_lifetime = 43200
+valid_lifetime = 64800
+t1 = 21600
+t2 = 32400
+
+# ADDRESS DEFINITION
+
+# Addresses for proper valid clients.
+[address_valid_clients]
+# Better privacy for global addresses with category random.
+category = random
+# The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
+pattern = 2001:db8::$random$
+
+# Default addresses for unknown invalid clients.
+[address_default]
+# Unknown clients will get an internal ULA range-based address.
+category = range
+# The keyword "range" sets the range used in pattern.
+range = 1000-1FFF
+# This pattern results in addresses like fd00::1234.
+pattern = fd00::$range$
+
+# CLASS DEFINITION
+
+# Class for proper valid client.
+[class_valid_clients]
+# At least one of the above address schemes has to be set.
+addresses = valid_clients
+# Valid clients get a different nameserver.
+nameserver = 2001:db8::53
+
+# Default class for unknown hosts - only necessary here because of time interval settings.
+[class_default]
+addresses = default
+# Short interval of address refresh attempts so that a client's status change will be reflected in IPv6 address soon.
+t1 = 600
+t2 = 900
+
+.fi
+
+.SS 3. CONFIGURATION WITH 2 NETWORK SEGMENTS, SERVERS, VALID AND UNKNOWN CLIENTS
+
+This example uses 2 network segments, one for servers and one for clients. Servers here only get local ULA addresses.
+Valid clients get 2 addresses, one local ULA and one global GUA address. This feature of DHCPv6 is at the moment only
+well supported by Windows clients. Unknown clients will get a local ULA address. Only valid clients and servers will
+get informations about nameservers.
+
+.nf
+[dhcpy6d]
+# Set to yes to really answer to clients.
+really_do_it = yes
+
+# Interfaces to listen to multicast ff02::1:2.
+# eth1 - client network
+# eth2 - server network
+interface = eth1 eth2
+
+# Server DUID - if not set there will be one generated every time dhcpy6d starts.
+# This might cause trouble for Windows clients because they go crazy about the
+# changed server DUID.
+serverduid = 0001000134824528134567366121
+
+# Non-privileged user/group.
+user = dhcpy6d
+group = dhcpy6d
+
+# Domain to be used for option 39 - host FQDN.
+domain = example.com
+
+# Domain search list for option 24 - domain search list.
+# If omited the value of option "domain" above is taken as default.
+domain_search_list = example.com
+
+# Do logging.
+log = yes
+# Log to console.
+log_console = no
+# Path to logfile.
+log_file = /var/log/dhcpy6d.log
+
+# Use MySQL for client configuration.
+store_config = mysql
+
+# Use MySQL for volatile data.
+store_volatile = mysql
+
+# Data used for MySQL storage.
+store_mysql_host = localhost
+store_mysql_db = dhcpy6d
+store_mysql_user = dhcpy6d
+store_mysql_password = dhcpy6d
+
+# Declare which attributes of a requesting client should be checked
+# to prove its identity. It is  possible to mix them, separated by spaces.
+identification = mac
+
+# Declare if all checked attributes have to match or is it enough if
+# some do. Kind of senseless with just one attribute.
+identification_mode = match_all
+
+# These lifetimes are also used as default for addresses which
+# have no extra defined lifetimes.
+preferred_lifetime = 43200
+valid_lifetime = 64800
+t1 = 21600
+t2 = 32400
+
+# ADDRESS DEFINITION
+
+# Global addresses for proper valid clients (GUA).
+[address_valid_clients_global]
+# Better privacy for global addresses with category random.
+category = random
+# The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
+pattern = 2001:db8::$random$
+
+# Local addresses for proper valid clients (ULA).
+[address_valid_clients_local]
+# Local addresses need no privacy, so they will be based of range.
+category = range
+range = 2000-2FFF
+# Valid clients will get local ULA addresses from fd01::/64.
+pattern = fd01::$range$
+
+# Servers in servers network will get local addresses based on IDs from client configuration.
+[address_servers]
+# IDs are set in client configuration database in range of 0-FFFF.
+category = id
+# Servers will get local ULA addresses from fd02::/64.
+pattern = fd02::$id$
+
+# Default addresses for unknown invalid clients
+[address_default]
+# Unknown clients will get an internal ULA range-based address.
+category = range
+# The keyword "range" sets the range used in pattern.
+range = 1000-1FFF
+# This pattern results in addresses like fd00::1234.
+pattern = fd00::$range$
+
+# CLASS DEFINITION
+
+# Class for proper valid client.
+[class_valid_clients]
+# Clients only exist in network linked with eth1.
+interface = eth1
+# Valid clients get 2 addresses, one local ULA and one global GUA (only works reliably with Windows clients).
+addresses = valid_clients_global valid_clients_local
+# Only valid clients get a nameserver from server network.
+nameserver = fd02::53
+
+# Class for servers in network on eth2
+[class_servers]
+# Servers only exist in network linked with eth2.
+interface = eth2
+# Only local addresses for servers.
+adresses = servers
+# Nameserver from server network.
+nameserver = fd02::53
+
+# Default class for unknown hosts - only necessary here because of time interval settings
+[class_default]
+addresses = default
+# Short interval of address refresh attempts so that a client's status change will be reflected in IPv6 address soon.
+t1 = 600
+t2 = 900
 
 
+.SS 4. EXAMPLE FOR DYNAMIC DNS UPDATES
 
 .fi
 
