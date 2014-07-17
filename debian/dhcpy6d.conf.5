@@ -1,11 +1,11 @@
-.TH "dhcpy6d.conf" "5" "Jun 27, 2014" "Henri Wahl" "dhcpy6d.conf"
+.TH "dhcpy6d.conf" "5" "Jul 17, 2014" "Henri Wahl" "dhcpy6d.conf"
 .SH "NAME"
-dhcpy6d.conf \- config file for DHCPv6 server dhcpy6d
+dhcpy6d.conf \- configuration file for DHCPv6 server dhcpy6d
 
 .SH "DESCRIPTION"
 This file contains the general settings for DHCPv6 server daemon dhcpy6d.
 It follows RFC 822 style parsed by Python ConfigParser module.
-This configuration file contains several sections which will be discussed in detail here.
+It contains several sections which will be discussed in detail here.
 
 An online documentation is also available at 
 .I https://dhcpy6d.ifw\-dresden.de/documentation/config/.
@@ -96,7 +96,7 @@ Log to the console where
 has been started.
 
 .TP 
-.BR log_file\ =\ /path/to/dhcpy6d/log/file
+.BR log_file\ =\ </path/to/dhcpy6d/log/file>
 Defines the file used for logging. Will be created if it does not yet exist.
 
 .TP 
@@ -119,11 +119,11 @@ Databases MySQL and SQLite are supported at the moment, thus possible values are
 To disable any client configuration source it has to be "none".
 
 .TP 
-.BR store_file_config\ =\ /path/to/client/conf/file
+.BR store_file_config\ =\ </path/to/client/conf/file>
 File which contains the clients configuration. Default is
 .B /etc/dhcpy6d\-clients.conf.
 For details see
-.B dhcpy6d\-clients.conf (5).
+.IR dhcpy6d\-clients.conf (5) ".
 
 .TP 
 .BR store_sqlite_config\ =\ /path/to/sqlite/config/file
@@ -145,7 +145,7 @@ If set store_volatile is set to "sqlite" a SQLite database file must be defined.
 .BR store_mysql_user\ =\<database-user>
 .TP 
 .BR store_mysql_password\ =\ <database-password>
-.RI If " store_config " and/or " store_volatile "
+.RB If " store_config " and/or " store_volatile "
 use a MySQL database to store information it has to be set with these self\-explanatory options. The same database is used for config and volatile data.
 
 .TP 
@@ -191,7 +191,7 @@ Preferred lifetime, valid lifetime, T1 and T2 in seconds are configured with the
 .BR information_refresh_time\ =\ <seconds>
 The lifetime of information given to clients as response to an information-request message.
 
-.SH ADDRESS DEFINITIONS IN SEVERAL [address_<address_name>] SECTIONS
+.SH ADDRESS DEFINITIONS IN MULTIPLE [address_<address_name>] SECTIONS
 
 .RB The " <address_name> " part\ of\ an " [address_<address_name>] " section\ is\ an\ arbitrarily\ choosen\ identifier\ like\ "clients"\ or\ "invalid_clients".
 There can be many address definitions which will be used by classes.
@@ -222,7 +222,7 @@ Thus the ID has to be in the range of 0000-FFFF.
 .BR $range$ " - If address is of category range the range defined with extra keyword " range " will be used here in place of one octet.
 This is why the range can span from 0000-FFFF. Clients will get an address out of the given range.
 
-.BR $random$ " - A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would
+.BR $random64$ " - A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would
 if privacy extensions were used. The random part will span over 4 octets.
 
 .TP
@@ -256,7 +256,7 @@ It should be enough if address_default is defined, only if unknown clients shoul
 .BR [address_default]
 Address scheme used as default for clients which do not match any other class than "class_default".
 
-.SH CLASS DEFINITIONS IN SEVERAL [class_<class_name>] SECTIONS
+.SH CLASS DEFINITIONS IN MULTIPLE [class_<class_name>] SECTIONS
 
 .RB The " <class_name> " part\ of\ an " [class_<class_name>] " section\ is\ an\ arbitrarily\ choosen\ identifier\ like\ "clients"\ or\ "invalid_clients".
 Clients can be grouped in classes. Different classes can have different properties, different address sets and different numbers of addresses.
@@ -347,6 +347,7 @@ pattern = fd01:db8:dead:bad:beef:$mac$
 .fi
 
 .SS 2. CONFIGURATION WITH VALID AND UNKNOWN CLIENTS
+
 This example shows some more complexity. Here only valid hosts will get a random global address from 2001:db8::/64.
 Unknown clients get a default ULA range address from fc00::/7.
 
@@ -416,7 +417,7 @@ t2 = 32400
 # Better privacy for global addresses with category random.
 category = random
 # The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
-pattern = 2001:db8::$random$
+pattern = 2001:db8::$random64$
 
 # Default addresses for unknown invalid clients.
 [address_default]
@@ -519,7 +520,7 @@ t2 = 32400
 # Better privacy for global addresses with category random.
 category = random
 # The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
-pattern = 2001:db8::$random$
+pattern = 2001:db8::$random64$
 
 # Local addresses for proper valid clients (ULA).
 [address_valid_clients_local]
@@ -571,11 +572,195 @@ addresses = default
 # Short interval of address refresh attempts so that a client's status change will be reflected in IPv6 address soon.
 t1 = 600
 t2 = 900
+.fi
 
+.SS 4. CONFIGURATION WITH DYNAMIC DNS UPDATES
 
-.SS 4. EXAMPLE FOR DYNAMIC DNS UPDATES
+In this example the hostnames of valid clients will be registered in the Bind DNS server. The zones to be updated are
+configured for every address definition. Here only the global GUA addresses for valid clients will be updated in DNS.
+The hostnames will be taken from client configuration data - the ones supplied by the clients are ignored.
+
+.nf
+[dhcpy6d]
+# Set to yes to really answer to clients.
+really_do_it = yes
+
+# Interface to listen to multicast ff02::1:2.
+interface = eth0
+
+# Server DUID - if not set there will be one generated every time dhcpy6d starts.
+# This might cause trouble for Windows clients because they go crazy about the
+# changed server DUID.
+serverduid = 0001000134824528134567366121
+
+# Non-privileged user/group.
+user = dhcpy6d
+group = dhcpy6d
+
+# Nameservers for option 23 - there can be several specified separated by spaces.
+nameserver = fd00:db8::53
+
+# Domain to be used for option 39 - host FQDN.
+domain = example.com
+
+# Domain search list for option 24 - domain search list.
+# If omited the value of option "domain" above is taken as default.
+domain_search_list = example.com
+
+# This works at the moment only for ISC Bind nameservers.
+dns_update = yes
+
+# RNDC key name for DNS Update.
+dns_rndc_key = rndc-key
+
+# RNDC secret - mostly some MD5-hash. Take it from
+# nameservers' /etc/rndc.key.
+dns_rndc_secret = 0123456789012345679
+
+# Nameserver to talk to.
+dns_update_nameserver = ::1
+
+# Regarding RFC 4704 5. there are 3 kinds of client behaviour
+# for N O S bits:
+# - client wants to update DNS itself -> sends 0 0 0
+# - client wants server to update DNS -> sends 0 0 1
+# - client wants no server DNS update -> sends 1 0 0
+# Ignore client ideas about DNS (if at all, what name to use, self-updating...)
+# Here client hostname is taken from client configuration
+dns_ignore_client = yes
+
+# Do logging.
+log = yes
+# Log to console.
+log_console = no
+# Path to logfile.
+log_file = /var/log/dhcpy6d.log
+
+# Use SQLite for client configuration.
+store_config = sqlite
+
+# Use SQLite for volatile data.
+store_volatile = sqlite
+
+# Paths to SQLite database files.
+store_sqlite_config = config.sqlite
+store_sqlite_volatile = volatile.sqlite
+
+# Declare which attributes of a requesting client should be checked
+# to prove its identity. It is  possible to mix them, separated by spaces.
+identification = mac
+
+# ADDRESS DEFINITION
+
+# Addresses for proper valid clients.
+[address_valid_clients]
+# Better privacy for global addresses with category random.
+category = random
+# The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
+pattern = 2001:db8::$random64$
+# Update these addresses in Bind DNS
+dns_update = yes
+# Zone to update.
+dns_zone = example.com
+# Reverse zone to update
+dns_rev_zone = 8.b.d.0.1.0.0.2.ip6.arpa
+
+# Default addresses for unknown invalid clients.
+[address_default]
+# Unknown clients will get an internal ULA range-based address.
+category = range
+# The keyword "range" sets the range used in pattern.
+range = 1000-1FFF
+# This pattern results in addresses like fd00::1234.
+pattern = fd00::$range$
+
+# CLASS DEFINITION
+
+# Class for proper valid client.
+[class_valid_clients]
+# At least one of the above address schemes has to be set.
+addresses = valid_clients
+# Valid clients get a different nameserver.
+nameserver = 2001:db8::53
 
 .fi
+
+.SS 5. CONFIGURATION WITH FILTER
+
+In this example the membership of a client to a class is defined by a filter for hostnames. All Windows machines have
+win*-names here and when requesting an address this hostname gets filtered.
+
+.nf
+[dhcpy6d]
+# Set to yes to really answer to clients.
+really_do_it = yes
+
+# Interface to listen to multicast ff02::1:2.
+interface = eth0
+
+# Server DUID - if not set there will be one generated every time dhcpy6d starts.
+# This might cause trouble for Windows clients because they go crazy about the
+# changed server DUID.
+serverduid = 0001000134824528134567366121
+
+# Use no client configuration.
+store_config = none
+
+# Use SQLite for volatile data.
+store_volatile = sqlite
+
+# Paths to SQLite database file.
+store_sqlite_volatile = volatile.sqlite
+
+# ADDRESS DEFINITION
+
+[address_local]
+category = range
+range = 1000-1FFF
+pattern = fd00::$range$
+
+[address_global]
+category = random
+pattern = 2001:638::$random64$
+
+# CLASS DEFINITION
+
+[class_windows]
+addresses = local
+# Python regular expressions to be used here
+filter_hostname = win.*
+
+[class_default]
+addresses = global
+
+.fi
+
+.SH AUTHOR
+
+Copyright (C) 2012-2014 Henri Wahl <\fBh.wahl@ifw-dresden.de\fP>
+
+.SH LICENSE
+
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public
+License along with this package; if not, write to the Free
+Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301 USA
+
+On Debian systems, the full text of the GNU General Public
+License version 2 can be found in the file
+`/usr/share/common-licenses/GPL-2'.
 
 .SH "SEE ALSO"
 .nf 

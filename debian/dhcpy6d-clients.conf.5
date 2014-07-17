@@ -1,1 +1,71 @@
-.TH dhcpy6d-clients.conf 5 "Jun 27, 2014" "" "dhcpy6d-clients.conf"
+.TH dhcpy6d-clients.conf 5 "Jul 17, 2014" "Henri Wahl" "dhcpy6d-clients.conf"
+
+.SH "NAME"
+dhcpy6d-clients.conf \- clients configuration file for DHCPv6 server dhcpy6d
+
+.SH "DESCRIPTION"
+This file contains all client configuration data if these options are set in
+.IR dhcpy6d.conf ":
+
+.B store_config = file
+
+and
+
+.B store_file_config = /path/to/dhcpy6d-clients.conf
+
+An alternative method to store client configuration is using database storage with SQLite or MySQL databases.
+Further details are available at
+.IR https://dhcpy6d.ifw\-dresden.de/documentation/config/.
+
+This file follows RFC 822 style parsed by Python ConfigParser module.
+
+Some options allow multiple values. These have to be separated by spaces.
+
+.SH CLIENT SECTIONS
+
+.TP
+.BR [host_name]
+Every client is configured in one section. It might have multiple attributes which are necessary depending on the
+configured
+.BR identification
+and general address settings from
+.IR dhcpy6d.conf ".
+
+.SH CLIENT ATTRIBUTES
+Every client section contains several attributes.
+.BR hostname " and " class
+are mandatory. A third one should match at least one of the identification attributes configured in
+.IR dhcpy6d.conf ".
+
+
+.SS MANDATORY CLIENT ATTRIBUTE class
+Both of the following 2 attributes are necessary.
+
+.TP
+.BR class\ =\ <class>
+Every client needs a class. If a client is identified, it depends from its class, which addresses it will get.
+This relation is configured in
+.IR dhcpy6d.conf ".
+
+.SS SEMI-MANDATORY CLIENT ATTRIBUTES
+
+Depending on
+.B identification
+in
+.I dhcpy6d.conf
+clients need to have the corresponding attributes. At least one of them is needed.
+
+.TP
+,B mac = <mac-address>
+The MAC address of the Link Local Address of the client DHCPv6 request.
+
+.TP
+.B duid = <duid>
+The DUID of the client which comes with the DHCPv6 request message.
+
+.TP
+.B hostname = <hostname>
+The client hostname. It will be used for dynamic DNS update.
+
+.SS EXTRA ATTRIBUTES
+
