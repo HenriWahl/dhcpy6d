@@ -43,6 +43,9 @@ data_files_custom = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
                                   'doc/config.sql',\
                                   'doc/dhcpy6d-example.conf',\
                                   'doc/dhcpy6d-minimal.conf',\
+                                  'doc/dhcpy6d.8',\
+                                  'doc/dhcpy6d.conf.5',\
+                                  'doc/dhcpy6d-clients.conf.5',\
                                   'doc/LICENSE',\
                                   'doc/volatile.sql']),\
               ('/etc', ['etc/dhcpy6d.conf'])]

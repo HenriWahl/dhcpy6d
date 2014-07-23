@@ -1,1 +1,3 @@
-debian/dhcpy6d.8
+doc/dhcpy6d.8
+doc/dhcpy6d.conf.5
+doc/dhcpy6d-clients.conf.5
