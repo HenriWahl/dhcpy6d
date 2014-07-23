@@ -1,0 +1,115 @@
+.TH dhcpy6d 8 "Jun 27, 2014" "" "dhcpy6d"
+
+.SH NAME
+
+dhcpy6d - MAC address aware DHCPv6 server
+
+.SH SYNOPSIS
+
+\fBdhcpy6d\fP
+[\fB\-c\fR \fIfile\fR]
+[\fB\-u\fR \fIuser\fR]
+[\fB\-g\fR \fIgroup\fR]
+
+.SH DESCRIPTION
+.B dhcpy6d
+is an open source server for DHCPv6, the DHCP protocol for IPv6.
+.PP
+Its development is driven by the need to be able to use the existing
+IPv4 infrastructure in coexistence with IPv6.  In a dualstack
+scenario, the existing DHCPv4 most probably uses MAC addresses of
+clients to identify them.  This is not intended by RFC 3315 for
+DHCPv6, but also not forbidden.  Dhcpy6d is able to do so in local
+network segments and therefore offers a pragmatical method for
+parallel use of DHCPv4 and DHCPv6, because existing client management
+solutions could be used further.
+.PP
+.B dhcpy6d
+comes with the following features:
+.br
+.I \fR * identifies clients by MAC address, DUID or hostname
+.br
+.I \fR * generates addresses randomly, by MAC address, by range or by given ID
+.br
+.I \fR * filters clients by MAC, DUID or hostname
+.br
+.I \fR * assigns multiple addresses per client
+.br
+.I \fR * allows to organize clients in different classes
+.br
+.I \fR * stores leases in MySQL or SQLite database
+.br
+.I \fR * client information can be retrieved from database or textfile
+.br
+.I \fR * dynamically updates DNS (Bind)
+.br
+.I \fR * supports rapid commit
+.br
+.I \fR * listens on multiple interfaces
+.br
+
+.SH OPTIONS
+
+Most configuration is done via the configuration file.
+
+.TP
+.BR \-c, " \-\-config=\fIconfigfile\fR
+Set the configuration file to use. Default is /etc/dhcpy6d.conf.
+.TP
+.BR \-u, " \-\-user=\fIuser\fR
+Set the unprivileged user to be used.
+.TP
+.BR \-g, " \-\-group=\fIgroup\fR
+Set the unprivileged group to be used.
+
+.SH FULL DOCUMENTATION
+
+For now the full documentation is only available online at
+\fBhttps://dhcpy6d.ifw-dresden.de/documentation\fP.  Additionally there
+are also some configuration file examples available locally at
+\fB/usr/share/doc/dhcpy6d/\fP.
+.PP
+A manpage on \fIdhcpy6d.conf\fR is in the works.
+
+
+.SH FILES
+.nf
+/etc/dhcpy6d.conf
+/etc/dhcpy6d-clients.conf
+/var/lib/dhcpy6d/
+/var/log/dhcpy6d.log
+
+
+.SH AUTHOR
+
+Copyright (C) 2012-2014 Henri Wahl <\fBh.wahl@ifw-dresden.de\fP>
+
+.SH LICENSE
+
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public
+License along with this package; if not, write to the Free
+Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301 USA
+
+On Debian systems, the full text of the GNU General Public
+License version 2 can be found in the file
+`/usr/share/common-licenses/GPL-2'.
+
+.SH SEE ALSO
+.nf
+.BR dhcpy6d.conf (5)
+.BR dhcpy6d-clients.conf (5)
+https://dhcpy6d.ifw-dresden.de
+https://github.com/HenriWahl/dhcpy6d
