@@ -200,7 +200,7 @@ The
 .B <address_name>
 part of an
 .B [address_<address_name>]
-section is an arbitrarily choosen identifier like "clients" or "invalid_clients".
+section is an arbitrarily chosen identifier like "clients" or "invalid_clients".
 There can be many address definitions which will be used by classes.
 Every address definition may include several properties:
 
@@ -273,7 +273,7 @@ The
 .B <class_name>
 part of an
 .B [class_<class_name>]
-section is an arbitrarily choosen identifier like "clients" or "invalid_clients".
+section is an arbitrarily chosen identifier like "clients" or "invalid_clients".
 Clients can be grouped in classes. Different classes can have different properties, different address sets and different numbers of addresses.
 Classes also might have different name servers, time intervals, filters and interfaces.
 
@@ -473,7 +473,7 @@ t2 = 900
 This example uses 2 network segments, one for servers and one for clients. Servers here only get local ULA addresses.
 Valid clients get 2 addresses, one local ULA and one global GUA address. This feature of DHCPv6 is at the moment only
 well supported by Windows clients. Unknown clients will get a local ULA address. Only valid clients and servers will
-get informations about nameservers.
+get information about nameservers.
 
 .nf
 [dhcpy6d]
@@ -585,7 +585,7 @@ nameserver = fd02::53
 # Servers only exist in network linked with eth2.
 interface = eth2
 # Only local addresses for servers.
-adresses = servers
+addresses = servers
 # Nameserver from server network.
 nameserver = fd02::53
 
