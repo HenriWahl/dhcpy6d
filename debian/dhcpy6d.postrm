@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# Delete dhcpy6d's log files upon package purge.
+#
+
+set -e
+
+case "$1" in
+    purge)
+        rm -f /var/log/dhcpy6d.log*
+        ;;
+esac
+
+#DEBHELPER#
