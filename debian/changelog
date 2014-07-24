@@ -5,6 +5,9 @@ dhcpy6d (0.3+git2014.07.23-1) UNRELEASED; urgency=medium
     + Don't ship man pages installed to /usr/share/doc/dhcpy6d/
   * Delete dhcpy6d's log files upon package purge.
   * Add missing dependency on iproute2 or iproute. Thanks Henri!
+  * Complete the switch from now deprecated python-support to dh_python2.
+    + Only debian/control changes. (debian/rules was fine already.)
+    + Fixes lintian warning build-depends-on-obsolete-package.
 
  -- Axel Beckert <abe@debian.org>  Wed, 23 Jul 2014 18:22:28 +0200
 
