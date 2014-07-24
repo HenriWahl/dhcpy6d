@@ -1,4 +1,4 @@
-dhcpy6d (0.3+git2014.07.23-1) UNRELEASED; urgency=medium
+dhcpy6d (0.3+git2014.07.23-1) unstable; urgency=medium
 
   * New upstream snapshot.
     + Man pages moved from Debian to Upstream
@@ -9,7 +9,7 @@ dhcpy6d (0.3+git2014.07.23-1) UNRELEASED; urgency=medium
     + Only debian/control changes. (debian/rules was fine already.)
     + Fixes lintian warning build-depends-on-obsolete-package.
 
- -- Axel Beckert <abe@debian.org>  Wed, 23 Jul 2014 18:22:28 +0200
+ -- Axel Beckert <abe@debian.org>  Thu, 24 Jul 2014 14:27:31 +0200
 
 dhcpy6d (0.3+git2014.03.21-1) unstable; urgency=low
 
