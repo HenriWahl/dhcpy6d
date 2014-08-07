@@ -25,6 +25,15 @@ BOOLPOOL = {"0":False, "1":True, "no":False, "yes":True, "false":False, "true":T
 # whitespace for options with more than one value
 WHITESPACE = " ,"
 
+# default usage text - to be extended
+USAGE = """
+dhcpy6d - DHCPv6 server
+
+Usage: dhcpy6d --config <file> [--user <user>] [--group <group>]
+
+See manpage dhcpy6d(8) for details.
+"""
+
 class Config(object):
     """
       general settings  
@@ -386,14 +395,18 @@ class Config(object):
         # default config file and cli values
         configfile = cli_options = cli_user = cli_group = None
         # get multiple options
-        cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:", ["config=", "user=", "group="])
-        for opt, arg in cli_options:
-            if opt in ("-c", "--config"):
-                configfile = arg
-            if opt in ("-g", "--group"):
-                cli_group = arg
-            if opt in ("-u", "--user"):
-                cli_user = arg
+        try:
+            cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:", ["config=", "user=", "group="])
+            for opt, arg in cli_options:
+                if opt in ("-c", "--config"):
+                    configfile = arg
+                if opt in ("-g", "--group"):
+                    cli_group = arg
+                if opt in ("-u", "--user"):
+                    cli_user = arg
+        except:
+            print USAGE
+            sys.exit(1)
 
         if configfile == None:
            ErrorExit("No config file given - please use --config <config.file>")
