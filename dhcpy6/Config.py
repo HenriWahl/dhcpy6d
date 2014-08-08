@@ -34,6 +34,10 @@ Usage: dhcpy6d --config <file> [--user <user>] [--group <group>]
 See manpage dhcpy6d(8) for details.
 """
 
+def GenerateDUID():
+    return "00010001%08x%012x" % (time.time(), uuid.getnode())
+
+
 class Config(object):
     """
       general settings  
@@ -393,10 +397,15 @@ class Config(object):
         
         # config file from command line
         # default config file and cli values
-        configfile = cli_options = cli_user = cli_group = None
+        configfile = cli_options = cli_user = cli_group = cli_duid = cli_really_do_it = None
         # get multiple options
         try:
-            cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:", ["config=", "user=", "group="])
+            cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:d:G",
+                                                                      ["config=",
+                                                                       "user=",
+                                                                       "group=",
+                                                                       "duid=",
+                                                                       "generate-duid"])
             for opt, arg in cli_options:
                 if opt in ("-c", "--config"):
                     configfile = arg
@@ -404,7 +413,14 @@ class Config(object):
                     cli_group = arg
                 if opt in ("-u", "--user"):
                     cli_user = arg
-        except:
+                if opt in ("-d", "--duid"):
+                    cli_duid = arg
+                if opt in ("-r", "--really-do-it"):
+                    cli_really_do_it = arg
+                if opt in ("-G", "--generate-duid"):
+                    print GenerateDUID()
+                    sys.exit(0)
+        except getopt.GetoptError:
             print USAGE
             sys.exit(1)
 
@@ -535,7 +551,10 @@ class Config(object):
             self.USER = cli_user
         if not cli_group == None:
             self.GROUP = cli_group
-        
+        if not cli_duid == None:
+            self.SERVERDUID = cli_duid
+        if not cli_really_do_it == None:
+            self.REALLY_DO_IT =  BOOLPOOL[cli_really_do_it.lower()]
         # check config
         self._check_config()
                    
