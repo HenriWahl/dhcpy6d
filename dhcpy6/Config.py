@@ -25,6 +25,19 @@ BOOLPOOL = {"0":False, "1":True, "no":False, "yes":True, "false":False, "true":T
 # whitespace for options with more than one value
 WHITESPACE = " ,"
 
+# default usage text - to be extended
+USAGE = """
+dhcpy6d - DHCPv6 server
+
+Usage: dhcpy6d --config <file> [--user <user>] [--group <group>]
+
+See manpage dhcpy6d(8) for details.
+"""
+
+def GenerateDUID():
+    return "00010001%08x%012x" % (time.time(), uuid.getnode())
+
+
 class Config(object):
     """
       general settings  
@@ -57,7 +70,7 @@ class Config(object):
         except Exception, err:
             ErrorExit("%s Multicast address '%s' is invalid." % (msg_prefix, err))
         if not self.MCAST.lower().startswith("ff"):    
-            ErrorExit("%s Multicast address '%s' is invalid." % (msg_prefix, err))
+            ErrorExit("Multicast address '%s' is invalid." % (msg_prefix))
         
         # check DHCPv6 port    
         if not self.PORT.isdigit():
@@ -138,7 +151,7 @@ class Config(object):
         # check validity of config file
         if self.STORE_CONFIG == "file":
             if os.path.exists(self.STORE_FILE_CONFIG):
-                if not (os.path.isfile(self.STORE_FILE_CONFIG) or \
+                if not (os.path.isfile(self.STORE_FILE_CONFIG) or
                    os.path.islink(self.STORE_FILE_CONFIG)):
                     ErrorExit("%s Config file '%s' is no file or link." % (msg_prefix, self.STORE_FILE_CONFIG))
             else:
@@ -147,7 +160,7 @@ class Config(object):
         # check validity of config db sqlite file        
         if self.STORE_CONFIG == "sqlite":
             if os.path.exists(self.STORE_SQLITE_CONFIG):
-                if not (os.path.isfile(self.STORE_SQLITE_CONFIG) or \
+                if not (os.path.isfile(self.STORE_SQLITE_CONFIG) or
                    os.path.islink(self.STORE_SQLITE_CONFIG)):
                     ErrorExit("%s SQLite file '%s' is no file or link." % (msg_prefix, self.STORE_SQLITE_CONFIG))
             else:
@@ -156,7 +169,7 @@ class Config(object):
         # check validity of volatile db sqlite file        
         if self.STORE_VOLATILE == "sqlite":
             if os.path.exists(self.STORE_SQLITE_VOLATILE):
-                if not (os.path.isfile(self.STORE_SQLITE_VOLATILE) or \
+                if not (os.path.isfile(self.STORE_SQLITE_VOLATILE) or
                    os.path.islink(self.STORE_SQLITE_VOLATILE)):
                     ErrorExit("%s SQLite file '%s' is no file or link." % (msg_prefix, self.STORE_SQLITE_VOLATILE))
             else:
@@ -166,16 +179,16 @@ class Config(object):
         if self.LOG:
             if self.LOG_FILE != "":
                 if os.path.exists(self.LOG_FILE):
-                    if not (os.path.isfile(self.LOG_FILE) or \
+                    if not (os.path.isfile(self.LOG_FILE) or
                        os.path.islink(self.LOG_FILE)):
                         ErrorExit("%s Logfile '%s' is no file or link." % (msg_prefix, self.LOG_FILE))
                 else:
                     ErrorExit("%s Logfile '%s' does not exist." % (msg_prefix, self.LOG_FILE))
                 # check ownership of logfile
-                stat = os.lstat(self.LOG_FILE)
-                if not stat.st_uid == pwd.getpwnam(self.USER).pw_uid:
+                stat_result = os.stat(self.LOG_FILE)
+                if not stat_result.st_uid == pwd.getpwnam(self.USER).pw_uid:
                     ErrorExit("%s User %s is not owner of logfile '%s'." % (msg_prefix, self.USER, self.LOG_FILE))
-                if not stat.st_gid == grp.getgrnam(self.GROUP).gr_gid:
+                if not stat_result.st_gid == grp.getgrnam(self.GROUP).gr_gid:
                     ErrorExit("%s Group %s is not owner of logfile '%s'." % (msg_prefix, self.GROUP, self.LOG_FILE))
             else:
                 ErrorExit("%s No logfile configured." % (msg_prefix))
@@ -183,9 +196,9 @@ class Config(object):
             if not self.LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
                 ErrorExit("Log level %s is invalid" % (self.LOG_LEVEL))
             if self.LOG_SYSLOG:
-                if not self.LOG_SYSLOG_FACILITY in ["KERN", "USER", "MAIL", "DAEMON", "AUTH",\
-                                                     "LPR", "NEWS", "UUCP", "CRON", "SYSLOG",\
-                                                     "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3",\
+                if not self.LOG_SYSLOG_FACILITY in ["KERN", "USER", "MAIL", "DAEMON", "AUTH",
+                                                     "LPR", "NEWS", "UUCP", "CRON", "SYSLOG",
+                                                     "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3",
                                                      "LOCAL4", "LOCAL5", "LOCAL6", "LOCAL7"]:
                     ErrorExit("%s Syslog facility '%s' is invalid." % (msg_prefix, self.LOG_SYSLOG_FACILITY))
 
@@ -360,12 +373,12 @@ class Config(object):
         self.FILTERS = {"mac":[], "duid":[], "hostname":[]}
         
         # define a fallback default class and address scheme
-        self.ADDRESSES["default"] = ConfigAddress(ia_type="na",\
-                                                   prefix_length="64",\
-                                                   category="mac",\
-                                                   pattern="fdef::$mac$",\
-                                                   aclass="default",\
-                                                   atype="default",\
+        self.ADDRESSES["default"] = ConfigAddress(ia_type="na",
+                                                   prefix_length="64",
+                                                   category="mac",
+                                                   pattern="fdef::$mac$",
+                                                   aclass="default",
+                                                   atype="default",
                                                    prototype="fdef0000000000000000XXXXXXXXXXXX")
         
         self.CLASSES["default"] = Class()
@@ -374,32 +387,48 @@ class Config(object):
         # define dummy address scheme for fixed addresses
         # pattern and prototype are not really needed as this
         # addresses are fixed
-        self.ADDRESSES["fixed"] = ConfigAddress(ia_type="na",\
-                                                   prefix_length="64",\
-                                                   category="fixed",\
-                                                   pattern="fdef0000000000000000000000000001",\
-                                                   aclass="default",\
+        self.ADDRESSES["fixed"] = ConfigAddress(ia_type="na",
+                                                   prefix_length="64",
+                                                   category="fixed",
+                                                   pattern="fdef0000000000000000000000000001",
+                                                   aclass="default",
                                                    atype="fixed",
                                                    prototype="fdef0000000000000000000000000000")              
         
         # config file from command line
         # default config file and cli values
-        configfile = cli_options = cli_user = cli_group = None
+        configfile = cli_options = cli_user = cli_group = cli_duid = cli_really_do_it = None
         # get multiple options
-        cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:", ["config=", "user=", "group="])
-        for opt, arg in cli_options:
-            if opt in ("-c", "--config"):
-                configfile = arg
-            if opt in ("-g", "--group"):
-                cli_group = arg
-            if opt in ("-u", "--user"):
-                cli_user = arg
+        try:
+            cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:d:G",
+                                                                      ["config=",
+                                                                       "user=",
+                                                                       "group=",
+                                                                       "duid=",
+                                                                       "generate-duid"])
+            for opt, arg in cli_options:
+                if opt in ("-c", "--config"):
+                    configfile = arg
+                if opt in ("-g", "--group"):
+                    cli_group = arg
+                if opt in ("-u", "--user"):
+                    cli_user = arg
+                if opt in ("-d", "--duid"):
+                    cli_duid = arg
+                if opt in ("-r", "--really-do-it"):
+                    cli_really_do_it = arg
+                if opt in ("-G", "--generate-duid"):
+                    print GenerateDUID()
+                    sys.exit(0)
+        except getopt.GetoptError:
+            print USAGE
+            sys.exit(1)
 
         if configfile == None:
            ErrorExit("No config file given - please use --config <config.file>")
 
         if os.path.exists(configfile):
-            if not (os.path.isfile(configfile) or \
+            if not (os.path.isfile(configfile) or
                os.path.islink(configfile)):
                 ErrorExit("Configuration file '%s' is no file or link." % (configfile))
         else:
@@ -522,7 +551,10 @@ class Config(object):
             self.USER = cli_user
         if not cli_group == None:
             self.GROUP = cli_group
-        
+        if not cli_duid == None:
+            self.SERVERDUID = cli_duid
+        if not cli_really_do_it == None:
+            self.REALLY_DO_IT =  BOOLPOOL[cli_really_do_it.lower()]
         # check config
         self._check_config()
                    
@@ -531,21 +563,21 @@ class ConfigAddress(object):
     """
     class for address definition, used for config
     """
-    def __init__(self, address=None,\
-                 ia_type="na",\
-                 prefix_length="64",\
-                 category="random",\
-                 pattern="2001:db8::$random64$",\
-                 preferred_lifetime=0,\
-                 valid_lifetime=0,\
-                 atype="default",\
-                 aclass="default",\
-                 prototype="",\
-                 range="",\
-                 dns_update=False,\
-                 dns_zone="",\
-                 dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",\
-                 dns_ttl = "0",\
+    def __init__(self, address=None,
+                 ia_type="na",
+                 prefix_length="64",
+                 category="random",
+                 pattern="2001:db8::$random64$",
+                 preferred_lifetime=0,
+                 valid_lifetime=0,
+                 atype="default",
+                 aclass="default",
+                 prototype="",
+                 range="",
+                 dns_update=False,
+                 dns_zone="",
+                 dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",
+                 dns_ttl = "0",
                  valid = True):
         self.PREFIX_LENGTH = prefix_length
         self.CATEGORY = category
@@ -623,22 +655,22 @@ class ClientAddress(object):
     """
     class for address definition, used for clients
     """
-    def __init__(self, address=None,\
-                 ia_type="na",\
-                 prefix_length="64",\
-                 category="random",\
+    def __init__(self, address=None,
+                 ia_type="na",
+                 prefix_length="64",
+                 category="random",
                  #pattern="2001:db8::$random64$",\
-                 preferred_lifetime=0,\
-                 valid_lifetime=0,\
-                 atype="default",\
-                 aclass="default",\
+                 preferred_lifetime=0,
+                 valid_lifetime=0,
+                 atype="default",
+                 aclass="default",
                  #prototype="",\
                  #range="",\
-                 dns_update=False,\
-                 dns_zone="",\
-                 dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",\
-                 dns_ttl = "0",\
-                 valid = True,\
+                 dns_update=False,
+                 dns_zone="",
+                 dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",
+                 dns_ttl = "0",
+                 valid = True,
                  ):
         self.PREFIX_LENGTH = prefix_length
         self.CATEGORY = category
