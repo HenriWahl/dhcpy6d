@@ -1,3 +1,12 @@
+dhcpy6d (0.3+git2014.08.08-1) UNRELEASED; urgency=medium
+
+  * New upstream snapshot
+
+  [ Henri Wahl ]
+  * Append generated DUID to /etc/default/dhcpy6d if not yet present
+
+ -- Axel Beckert <abe@debian.org>  Mon, 18 Aug 2014 15:45:32 +0200
+
 dhcpy6d (0.3+git2014.07.23-1) unstable; urgency=medium
 
   * New upstream snapshot.
