@@ -1,5 +1,5 @@
 Source: dhcpy6d
-Section: utils
+Section: net
 X-Python-Version: >= 2.6
 Priority: optional
 Maintainer: Axel Beckert <abe@debian.org>
