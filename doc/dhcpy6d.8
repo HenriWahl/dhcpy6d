@@ -12,7 +12,7 @@ dhcpy6d - MAC address aware DHCPv6 server
 [\fB\-g\fR \fIgroup\fR]
 [\fB\-r\fR \fIyes|no\fR]
 [\fB\-d\fR \fIduid\fR]
-[\fB\-G
+[\fB\-G\fR]
 
 
 .SH DESCRIPTION
@@ -73,7 +73,7 @@ Really activate the DHCPv6 server. This is a precaution to prevent larger networ
 Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d.
 .TP
 .BR \-G, " \-\-generate-duid
-Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d.
+Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
 
 .SH FILES
 .nf
