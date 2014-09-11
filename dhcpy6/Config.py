@@ -29,7 +29,8 @@ WHITESPACE = " ,"
 USAGE = """
 dhcpy6d - DHCPv6 server
 
-Usage: dhcpy6d --config <file> [--user <user>] [--group <group>]
+Usage: dhcpy6d --config <file> [--user <user>] [--group <group>] [--duid <duid>] [--really-do-it <yes>|<no>]
+       dhcpy6d --generate-duid
 
 See manpage dhcpy6d(8) for details.
 """
@@ -400,12 +401,13 @@ class Config(object):
         configfile = cli_options = cli_user = cli_group = cli_duid = cli_really_do_it = None
         # get multiple options
         try:
-            cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:d:G",
+            cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:d:Gr:",
                                                                       ["config=",
                                                                        "user=",
                                                                        "group=",
                                                                        "duid=",
-                                                                       "generate-duid"])
+                                                                       "generate-duid",
+                                                                       "really-do-it="])
             for opt, arg in cli_options:
                 if opt in ("-c", "--config"):
                     configfile = arg
@@ -420,7 +422,8 @@ class Config(object):
                 if opt in ("-G", "--generate-duid"):
                     print GenerateDUID()
                     sys.exit(0)
-        except getopt.GetoptError:
+        except getopt.GetoptError, err:
+            print err
             print USAGE
             sys.exit(1)
 
