@@ -59,7 +59,7 @@ fi
 if ! check_status; then
 
 start-stop-daemon --start --make-pidfile --pidfile ${DHCPY6DPID} \
---background --oknodo --exec $DHCPY6DBIN -- --config $DHCPY6DCONF \
+--background --oknodo --no-close --exec $DHCPY6DBIN -- --config $DHCPY6DCONF \
 --user $USER --group $GROUP \ --duid $DUID --really-do-it $RUN
 
 sleep 2

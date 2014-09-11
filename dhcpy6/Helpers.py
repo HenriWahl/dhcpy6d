@@ -168,7 +168,7 @@ def ErrorExit(message="An error occured.", status=1):
     exit with given error message
     allow prefix, especially for spitting out section of configuration errors
     """
-    print "\n", message, "\n"
+    sys.stderr.write( "\n", message, "\n\n")
     sys.exit(status)
     
     
