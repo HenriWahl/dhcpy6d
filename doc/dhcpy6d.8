@@ -10,6 +10,10 @@ dhcpy6d - MAC address aware DHCPv6 server
 [\fB\-c\fR \fIfile\fR]
 [\fB\-u\fR \fIuser\fR]
 [\fB\-g\fR \fIgroup\fR]
+[\fB\-r\fR \fIyes|no\fR]
+[\fB\-d\fR \fIduid\fR]
+[\fB\-G
+
 
 .SH DESCRIPTION
 .B dhcpy6d
@@ -61,6 +65,15 @@ Set the unprivileged user to be used.
 .TP
 .BR \-g, " \-\-group=\fIgroup\fR
 Set the unprivileged group to be used.
+.TP
+.BR \-r, " \-\-really\-do\-it=\fIyes|no\fR
+Really activate the DHCPv6 server. This is a precaution to prevent larger network trouble.
+.TP
+.BR \-d, " \-\-duid=\fIgroup\fR
+Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d.
+.TP
+.BR \-G, " \-\-generate-duid
+Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d.
 
 .SH FILES
 .nf
