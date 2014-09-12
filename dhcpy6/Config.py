@@ -63,7 +63,7 @@ class Config(object):
         for i in self.INTERFACE:
             # also accept Linux VLAN and other definitions
             if not re.match("^[a-z0-9_:%-]*$", i, re.IGNORECASE):
-                ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, i)
+                ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, i))
                 
         # check multicast address
         try:
