@@ -127,20 +127,8 @@ NC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
                          "len"  : 3}
             }
 
-# libc access via ctypes, needed for interface handling
-if OS == "Linux":
-    libc_name = "libc.so.6"
-elif OS == "BSD":
-    # libc_ver() returns version number of libc that is hardcoded in
-    # libc file name
-    libc_name = "libc.so." + platform.libc_ver()[1]
-elif OS == "Darwin":
-    libc_name = "libc.dylib"
-else:
-    print "\n OS not yet supported. :-( \n"
-    sys.exit(1)
-# use ctypes for libc access
-LIBC = ctypes.cdll.LoadLibrary(libc_name)
+# libc access via ctypes, needed for interface handling, get it by Helpers.GetLibC()
+LIBC = GetLibC()
 
 # index IF name > number, gets filled in UDPMulticastIPv6
 IF_NAME = dict()

@@ -16,8 +16,12 @@ import pwd
 import grp
 import getopt
 import re
+import ctypes
 
 from Helpers import *
+
+# use ctypes for libc access in GetLibC from Helpers
+LIBC = GetLibC()
 
 # needed for boolean options
 BOOLPOOL = {"0":False, "1":True, "no":False, "yes":True, "false":False, "true":True, False:False, True:True, "on":True, "off":False}
@@ -60,10 +64,10 @@ class Config(object):
         except:
              ErrorExit("%s Group '%s' does not exist" % (msg_prefix, self.GROUP))
         
-        # check interface for multicast
+        # check interface
         for i in self.INTERFACE:
-            # also accept Linux VLAN and other definitions
-            if not re.match("^[a-z0-9_:%-]*$", i, re.IGNORECASE):
+            # also accept Linux VLAN and other definitions but interface must exist
+            if LIBC.if_nametoindex(i) == 0 or not re.match("^[a-z0-9_:%-]*$", i, re.IGNORECASE):
                 ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, i))
                 
         # check multicast address

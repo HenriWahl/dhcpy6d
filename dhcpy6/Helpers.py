@@ -13,6 +13,7 @@ import socket
 import struct
 import binascii
 import ctypes
+import platform
 
 # constants for GetNeighborCacheLinux() - not uses now
 RTM_GETNEIGH = 30
@@ -257,3 +258,24 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC):
     s.close()                    
 
     return result
+
+
+def GetLibC():
+    """
+        return libC-object to be used for NIC handling in dhcpy6d and Config.py
+        first get the library to connect to - OS-dependent
+    """
+    OS = platform.system()
+    if OS == "Linux":
+        libc_name = "libc.so.6"
+    elif OS == "BSD":
+        # libc_ver() returns version number of libc that is hardcoded in
+        # libc file name
+        libc_name = "libc.so." + platform.libc_ver()[1]
+    elif OS == "Darwin":
+        libc_name = "libc.dylib"
+    else:
+        print "\n OS not yet supported. :-( \n"
+        sys.exit(1)
+    # use ctypes for libc access
+    return ctypes.cdll.LoadLibrary(libc_name)
