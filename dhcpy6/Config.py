@@ -483,7 +483,15 @@ class Config(object):
                             lex.wordchars += ":."
                             for address in lex:
                                 if len(address) > 0:
-                                    self.CLASSES[section.split("class_")[1]].ADDRESSES.append(address) 
+                                    self.CLASSES[section.split("class_")[1]].ADDRESSES.append(address)
+                        elif item[0].upper() == "INTERFACE":
+                            # strip whitespace and separators of interfaces
+                            lex = shlex.shlex(item[1])
+                            lex.whitespace = WHITESPACE
+                            lex.wordchars += ":."
+                            for interface in lex:
+                                if not interface in self.INTERFACE:
+                                    ErrorExit("Interface '%s' used in section '[%s]' of configuration file '%s' is not defined in general settings." % (interface, section, configfile))
                         else:
                             self.CLASSES[section.split("class_")[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
