@@ -35,6 +35,7 @@ Usage: dhcpy6d --config <file> [--user <user>] [--group <group>] [--duid <duid>]
 See manpage dhcpy6d(8) for details.
 """
 
+
 def GenerateDUID():
     return "00010001%08x%012x" % (time.time(), uuid.getnode())
 
@@ -453,15 +454,24 @@ class Config(object):
             # go through all items
             for item in config.items(section):
                 if section.upper() == "DHCPY6D":
-                    # ConfigParser eems to be not case sensitive so settings get normalized
+                    # check if keyword is known - if not, exit
+                    if not item[0].upper() in self.__dict__:
+                        ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
+                    # ConfigParser seems to be not case sensitive so settings get normalized
                     object.__setattr__(self, item[0].upper(), str(item[1]).strip())
                 else:
                     # global address schemes
                     if section.startswith("address_"):
+                        # check if keyword is known - if not, exit
+                        if not item[0].upper() in self.ADDRESSES[section.split("address_")[1]].__dict__:
+                            ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                         self.ADDRESSES[section.split("address_")[1]].__setattr__(item[0].upper(), str(item[1]).strip())   
                                                             
                     # global classes with their addresses
                     elif section.startswith("class_"):
+                        # check if keyword is known - if not, exit
+                        if not item[0].upper() in self.CLASSES[section.split("class_")[1]].__dict__:
+                            ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                         if item[0].upper() == "ADDRESSES":
                             # strip whitespace and separators of addresses
                             lex = shlex.shlex(item[1])
