@@ -1,25 +1,22 @@
 dhcpy6d (0.3.99-1) UNRELEASED; urgency=medium
 
-  * allow VLAN interface definitions
-  * check if used interfaces exist
-  * improved usability with more clear mesages if there are configuration errors
-  * full man pages dhcpy6d.8 and dhcpy6d.conf.5 added
-  * added command line arguments --really-do-it and --duid to be configured in /etc/defaults/dhcpy6d
-  * added command line argument --generate-duid for DUID generation at setup
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 15 Sep 2014 14:40:00 +0200
-
-dhcpy6d (0.3+git2014.08.08-1) UNRELEASED; urgency=medium
-
-  * New upstream snapshot
+  * New upstream release candidate
+    + allow VLAN interface definitions
+    + check if used interfaces exist
+    + improved usability with more clear mesages if there are
+      configuration errors
+    + full man pages dhcpy6d.8 and dhcpy6d.conf.5 added
+    + added command line argument --generate-duid for DUID generation at setup
 
   [ Henri Wahl ]
   * Append generated DUID to /etc/default/dhcpy6d if not yet present
+  * Added command line arguments --really-do-it and --duid to be
+    configured in /etc/defaults/dhcpy6d
 
   [ Axel Beckert ]
   * Switch section from "utils" to "net" like most other DHCP servers.
 
- -- Axel Beckert <abe@debian.org>  Mon, 18 Aug 2014 15:45:32 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 15 Sep 2014 14:40:00 +0200
 
 dhcpy6d (0.3+git2014.07.23-1) unstable; urgency=medium
 
