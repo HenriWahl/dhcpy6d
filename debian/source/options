@@ -1,4 +1,4 @@
 extend-diff-ignore=MANIFEST\.in
 extend-diff-ignore=README\.md
 extend-diff-ignore=build\.sh
-extend-diff-ignore=installer
+extend-diff-ignore=redhat
