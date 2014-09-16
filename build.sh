@@ -17,13 +17,13 @@ elif [ -f /etc/redhat-release ]
 		echo "Building .rpm package"
 
         TOPDIR=$HOME/dhcpy6d.$$
-        SPEC=installer/redhat/dhcpy6d.spec
+        SPEC=redhat/dhcpy6d.spec
 
 		# create source folder for rpmbuild
 		mkdir -p $TOPDIR/SOURCES
 	
         # init needed in TOPDIR/SOURCES
-        cp -pf installer/redhat/init.d/dhcpy6d $TOPDIR/SOURCES
+        cp -pf redhat/init.d/dhcpy6d $TOPDIR/SOURCES
 
 		# use setup.py sdist build output to get package name
 		FILE=`python setup.py sdist --dist-dir $TOPDIR/SOURCES | grep "creating dhcpy6d-" | head -n1 | cut -d" " -f2`

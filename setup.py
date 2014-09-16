@@ -43,12 +43,12 @@ data_files_custom = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),\
                                   'doc/config.sql',\
                                   'doc/dhcpy6d-example.conf',\
                                   'doc/dhcpy6d-minimal.conf',\
-                                  'doc/dhcpy6d.8',\
-                                  'doc/dhcpy6d.conf.5',\
-                                  'doc/dhcpy6d-clients.conf.5',\
                                   'doc/LICENSE',\
                                   'doc/volatile.sql']),\
-              ('/etc', ['etc/dhcpy6d.conf'])]
+              ('/usr/share/man/man5', ['man/man5/dhcpy6d.conf.5',\
+                                       'man/man5/dhcpy6d-clients.conf.5']),
+              ('/usr/share/man/man8', ['man/man8/dhcpy6d.8']),\
+              ('/etc', ['etc/dhcpy6d.conf']),]
 
 # RPM creation uses more files as data_files which on Debian are 
 # installed via debhelpers
@@ -57,7 +57,7 @@ if os.path.exists("/tmp/DHCPY6D_BUILDING_RPM"):
     scripts_custom = ''
     data_files_custom.append(('/usr/sbin', ['dhcpy6d']))	
     data_files_custom.append(('/etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
-    data_files_custom.append(('/etc/init.d', ['installer/redhat/init.d/dhcpy6d']))
+    data_files_custom.append(('/etc/init.d', ['redhat/init.d/dhcpy6d']))
 else:
     scripts_custom = ['dhcpy6d']
 

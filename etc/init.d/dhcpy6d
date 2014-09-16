@@ -54,13 +54,16 @@ echo "dhcpy6d is disabled in /etc/default/dhcpy6d. Set RUN=yes to get it running
 exit 0
 fi
 
-                log_daemon_msg "Starting $DESC $NAME"
+log_daemon_msg "Starting $DESC $NAME"
 
 if ! check_status; then
 
 start-stop-daemon --start --make-pidfile --pidfile ${DHCPY6DPID} \
 --background --oknodo --no-close --exec $DHCPY6DBIN -- --config $DHCPY6DCONF \
---user $USER --group $GROUP \ --duid $DUID --really-do-it $RUN
+                                            --user $USER \
+                                            --group $GROUP \
+                                            --duid $DUID \
+                                            --really-do-it $RUN
 
 sleep 2
 if check_status -q; then

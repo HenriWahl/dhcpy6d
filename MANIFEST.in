@@ -6,10 +6,13 @@ include doc/config.sql
 include doc/dhcpy6d-example.conf
 include doc/dhcpy6d-minimal.conf
 include doc/volatile.sql
+include man/man5/dhcpy6d.conf.5
+include man/man5/dhcpy6d-clients.conf.5
+include man/man8/dhcpy6d.8
 include var/lib/volatile.sqlite
 include var/log/dhcpy6d.log
 include etc/dhcpy6d.conf
 include etc/logrotate.d/dhcpy6d
 include etc/init.d/dhcpy6d
 include etc/default/dhcpy6d
-include installer/redhat/init.d/dhcpy6d
+include redhat/init.d/dhcpy6d
