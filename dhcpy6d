@@ -299,7 +299,7 @@ def BuildClient(transaction_id):
                     # in case there is no client config we should maybe log this?
                     client_config = None
             else:
-                client_config = None                
+                client_config = None
 
         # If client gave some addresses for RENEW or REBIND consider them
         if Transactions[transaction_id].LastMessageReceivedType in (5, 6) and\
@@ -308,10 +308,14 @@ def BuildClient(transaction_id):
                 # give client hostname
                 client.Hostname = client_config.HOSTNAME
                 client.Class = client_config.CLASS
+                # apply answer type of client to transaction - useful if no answer or no address available is configured
+                Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
             else:
                 # use default class if host is unknown
                 client.Hostname = Transactions[transaction_id].Hostname
                 client.Class = "default_" + Transactions[transaction_id].Interface
+                # apply answer type of client to transaction - useful if no answer or no address available is configured
+                Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
             for address in Transactions[transaction_id].Addresses:
                 # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
                 answer = volatilestore.check_lease(address, transaction_id)
@@ -426,7 +430,8 @@ def BuildClient(transaction_id):
             # give client hostname + class
             client.Hostname = client_config.HOSTNAME
             client.Class = client_config.CLASS
-
+            # apply answer type of client to transaction - useful if no answer or no address available is configured
+            Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
             # continue only if request interface matches class interfaces
             if Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                 # if fixed addresses are given build them
@@ -482,7 +487,10 @@ def BuildClient(transaction_id):
         else:
             # use default class if host is unknown
             client.Hostname = Transactions[transaction_id].Hostname
-            client.Class = "default_" + Transactions[transaction_id].Interface            
+            client.Class = "default_" + Transactions[transaction_id].Interface
+            # apply answer type of client to transaction - useful if no answer or no address available is configured
+            Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
+
             for address in cfg.CLASSES["default_" + Transactions[transaction_id].Interface].ADDRESSES:  
                 a = ParseAddressPattern(cfg.ADDRESSES[address], client, transaction_id)
                 if a:
@@ -799,7 +807,7 @@ class TidyUpThread(threading.Thread):
 
 class Client(object):
     """
-        client objected, generated from configuration database or on the fly
+        client object, generated from configuration database or on the fly
     """
     def __init__(self):
         # Addresses, depending on class or fixed addresses
@@ -890,6 +898,9 @@ class Transaction(object):
         self.VendorClassData = ""
         # Rapid Commit flag
         self.RapidCommit = False
+        # answer type - take from class definition, one of "normal", "noaddress"y or "none"
+        # defaults to "address" as this is the main purpose of dhcpy6d
+        self.Answer = "normal"
 
         # DUID of client
         # 1 Client Identifier Option
@@ -1187,7 +1198,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 volatilestore.store_lease(transaction_id)
 
                             # RELEASE
-                            # if last request was a RELEASE (type 8) sende a REPLY (type 7) back  
+                            # if last request was a RELEASE (type 8) send a REPLY (type 7) back
                             elif Transactions[transaction_id].LastMessageReceivedType == 8:                            
                                 if cfg.DNS_UPDATE:
                                     #  build client to be able to delete it from DNS
@@ -1214,7 +1225,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                             # general error - statuscode 1 "Failure"
                             else:
-                                # sende Status Code Option (type 13) mit Failure (type 1)
+                                # send Status Code Option (type 13) with failure (type 1)
                                 self.build_response(7, transaction_id, [13], 1)
 
                     # count requests of transaction
@@ -1260,48 +1271,60 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # collect client information
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = BuildClient(transaction_id)
-                    
-                    # if client could not be built because of database problems send
-                    # status message back
-                    if Transactions[transaction_id].Client:
-                        # embed option 5 into option 3 - several if necessary
-                        ia_addresses = ""
-                        try:
-                            for address in Transactions[transaction_id].Client.Addresses:
-                                if address.IA_TYPE == "na":
-                                    ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
-                                    # if a transaction consists of too many requests from client -
-                                    # - might be caused by going wild Windows clients -
-                                    # reset all addresses with lifetime 0
-                                    # lets start with maximal transaction count of 10
-                                    if Transactions[transaction_id].Counter < 10:
-                                        preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
-                                        valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
-                                    else:
-                                        preferred_lifetime = "%08x" % (0)
-                                        valid_lifetime = "%08x" % (0)
-                                    ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                    ia_addresses += ia_address
 
-                            if not ia_addresses == "":
-                                #
-                                # todo: default clients sometimes seem to have class ""
-                                #
-                                if Transactions[transaction_id].Client.Class != "":
-                                    t1 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
-                                    t2 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
-                                else:
-                                    t1 = "%08x" % (int(cfg.T1))
-                                    t2 = "%08x" % (int(cfg.T2))
-
-                                ia_na = BuildOption(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
-                                response_ascii += ia_na
-                        except:
+                    # check if only a short NoAddrAvail answer or none at all ist t be returned
+                    if not Transactions[transaction_id].Answer == "normal":
+                        if Transactions[transaction_id].Answer == "noaddress":
                             # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                             response_ascii += BuildOption(13, "%04x" % (2))
+                            # clean client addresses which not be deployed anyway
+                            Transactions[transaction_id].Client.Addresses[:] = []
+                        else:
+                            # clean response as there is nothing to respond in case of answer = none
+                            self.response = ""
+                            return None
                     else:
-                        # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
-                        response_ascii += BuildOption(13, "%04x" % (2))
+                        # if client could not be built because of database problems send
+                        # status message back
+                        if Transactions[transaction_id].Client:
+                            # embed option 5 into option 3 - several if necessary
+                            ia_addresses = ""
+                            try:
+                                for address in Transactions[transaction_id].Client.Addresses:
+                                    if address.IA_TYPE == "na":
+                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
+                                        # if a transaction consists of too many requests from client -
+                                        # - might be caused by going wild Windows clients -
+                                        # reset all addresses with lifetime 0
+                                        # lets start with maximal transaction count of 10
+                                        if Transactions[transaction_id].Counter < 10:
+                                            preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
+                                            valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
+                                        else:
+                                            preferred_lifetime = "%08x" % (0)
+                                            valid_lifetime = "%08x" % (0)
+                                        ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
+                                        ia_addresses += ia_address
+
+                                if not ia_addresses == "":
+                                    #
+                                    # todo: default clients sometimes seem to have class ""
+                                    #
+                                    if Transactions[transaction_id].Client.Class != "":
+                                        t1 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
+                                        t2 = "%08x" % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
+                                    else:
+                                        t1 = "%08x" % (int(cfg.T1))
+                                        t2 = "%08x" % (int(cfg.T2))
+
+                                    ia_na = BuildOption(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
+                                    response_ascii += ia_na
+                            except:
+                                # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
+                                response_ascii += BuildOption(13, "%04x" % (2))
+                        else:
+                            # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
+                            response_ascii += BuildOption(13, "%04x" % (2))
                                                
             # IA_TA temporary addresses
             if 4 in options_request:
@@ -1310,37 +1333,49 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # collect client information
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = BuildClient(transaction_id)
-                        
-                    # if client could not be built because of database problems send
-                    # status message back
-                    if Transactions[transaction_id].Client:                        
-                        # embed option 5 into option 4 - several if necessary
-                        ia_addresses = ""
-                        try:
-                            for address in Transactions[transaction_id].Client.Addresses:
-                                if address.IA_TYPE == "ta":
-                                    ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
-                                    # if a transaction consists of too many requests from client -
-                                    # - might be caused by going wild Windows clients -
-                                    # reset all addresses with lifetime 0
-                                    # lets start with maximal transaction count of 10
-                                    if Transactions[transaction_id].Counter < 10:
-                                        preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
-                                        valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
-                                    else:
-                                        preferred_lifetime = "%08x" % (0)
-                                        valid_lifetime = "%08x" % (0)
-                                    ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                    ia_addresses += ia_address
-                            if not ia_addresses == "":
-                                ia_ta = BuildOption(4, Transactions[transaction_id].IAID + ia_addresses)
-                                response_ascii += ia_ta
-                        except:
+
+                    # check if only a short NoAddrAvail answer or none at all ist t be returned
+                    if not Transactions[transaction_id].Answer == "normal":
+                        if Transactions[transaction_id].Answer == "noaddress":
                             # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                             response_ascii += BuildOption(13, "%04x" % (2))
+                            # clean client addresses which not be deployed anyway
+                            Transactions[transaction_id].Client.Addresses[:] = []
+                        else:
+                            # clean response as there is nothing to respond in case of answer = none
+                            self.response = ""
+                            return None
                     else:
-                        # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
-                        response_ascii += BuildOption(13, "%04x" % (2))
+                        # if client could not be built because of database problems send
+                        # status message back
+                        if Transactions[transaction_id].Client:
+                            # embed option 5 into option 4 - several if necessary
+                            ia_addresses = ""
+                            try:
+                                for address in Transactions[transaction_id].Client.Addresses:
+                                    if address.IA_TYPE == "ta":
+                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
+                                        # if a transaction consists of too many requests from client -
+                                        # - might be caused by going wild Windows clients -
+                                        # reset all addresses with lifetime 0
+                                        # lets start with maximal transaction count of 10
+                                        if Transactions[transaction_id].Counter < 10:
+                                            preferred_lifetime = "%08x" % (int(address.PREFERRED_LIFETIME))
+                                            valid_lifetime = "%08x" % (int(address.VALID_LIFETIME))
+                                        else:
+                                            preferred_lifetime = "%08x" % (0)
+                                            valid_lifetime = "%08x" % (0)
+                                        ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
+                                        ia_addresses += ia_address
+                                if not ia_addresses == "":
+                                    ia_ta = BuildOption(4, Transactions[transaction_id].IAID + ia_addresses)
+                                    response_ascii += ia_ta
+                            except:
+                                # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
+                                response_ascii += BuildOption(13, "%04x" % (2))
+                        else:
+                            # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
+                            response_ascii += BuildOption(13, "%04x" % (2))
 
             # Option 7 Server Preference
             if 7 in options_request:
@@ -1483,7 +1518,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # log response
                 if not Transactions[transaction_id].Client is None:
                     if len(Transactions[transaction_id].Client.Addresses) == 0 and\
-                    Transactions[transaction_id].LastMessageReceivedType in [1, 3, 5, 6]:
+                       Transactions[transaction_id].Answer == "normal" and\
+                       Transactions[transaction_id].LastMessageReceivedType in [1, 3, 5, 6]:
                         # create error response - headers have to be recreated because
                         # problems may have arisen while processing and these information
                         # is not valid anymore
@@ -1535,7 +1571,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             if len(self.response) > 0:
                 self.socket.sendto(self.response, self.client_address)
         else:
-            log.error("Nothing sent - please set really_do_it = yes in config file.")            
+            log.error("Nothing sent - please set 'really_do_it = yes' in config file.")
         
     
 ### MAIN ###
