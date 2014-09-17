@@ -748,4 +748,4 @@ class Class(object):
         # in certain cases it might be useful not to give any address to clients, for example if only a defined group
         # of hosts should get IPv6 addresses and others not. They will get a "NoAddrsAvail" response if this option
         # is set to "noaddress" or no answer at all if set to "none"
-        self.ANSWER = "nornal"
+        self.ANSWER = "normal"
