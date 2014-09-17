@@ -241,7 +241,7 @@ class Config(object):
                     ErrorExit("Class %s: Address type '%s' is not defined." % (c, a))
                 # test validity of category
                 if not self.ADDRESSES[a].CATEGORY.strip() in ["fixed", "range", "random", "mac", "id"]:
-                    ErrorExit(" Address category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac' and 'id'." % (a, self.ADDRESSES[a].CATEGORY))
+                    ErrorExit("Address type '%s': Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac' and 'id'." % (a, self.ADDRESSES[a].CATEGORY))
                 # test numberness and length of prefix
                 if not self.ADDRESSES[a].PREFIX_LENGTH.strip().isdigit():
                     ErrorExit("Address type '%s': Prefix length '%s' is not a number." % (a, self.ADDRESSES[a].PREFIX_LENGTH.strip()))               
