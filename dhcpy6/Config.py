@@ -230,14 +230,18 @@ class Config(object):
             ErrorExit("%s Identification mode must be one of 'match_all' or 'macht_some'." % (msg_prefix))
         
         # cruise through classes    
+        # more checks to come...
         for c in self.CLASSES:
+            if not self.CLASSES[c].ANSWER in ["normal", "noaddress", "none"]:
+                ErrorExit("Class %s: answer type must be one of 'normal', 'noaddress' and 'none'." % (c))
+
             for a in self.CLASSES[c].ADDRESSES:
                 # test if used addresses are defined
                 if not a in self.ADDRESSES:
                     ErrorExit("Class %s: Address type '%s' is not defined." % (c, a))
                 # test validity of category
                 if not self.ADDRESSES[a].CATEGORY.strip() in ["fixed", "range", "random", "mac", "id"]:
-                    ErrorExit(" Address category '%s' is invalid. Category must be one of 'fixed', 'range', 'random' or 'mac'." % (a, self.ADDRESSES[a].CATEGORY))
+                    ErrorExit("Address type '%s': Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac' and 'id'." % (a, self.ADDRESSES[a].CATEGORY))
                 # test numberness and length of prefix
                 if not self.ADDRESSES[a].PREFIX_LENGTH.strip().isdigit():
                     ErrorExit("Address type '%s': Prefix length '%s' is not a number." % (a, self.ADDRESSES[a].PREFIX_LENGTH.strip()))               
@@ -261,7 +265,6 @@ class Config(object):
                     if not 0 < self.ADDRESSES[a].PATTERN.count("$random64$") < 2:
                         ErrorExit("Address type '%s': Pattern '%s' contains wrong number of '$random64$' variables for category 'random'." % (a, self.ADDRESSES[a].PATTERN.strip())) 
                 # check ia_type
-                
                 if not self.ADDRESSES[a].IA_TYPE.strip().lower() in ["na", "ta"]:
                     ErrorExit("Address type '%s': IA type '%s' must be one of 'na' or 'ta'." % (a, self.ADDRESSES[a].IA_TYPE.strip())) 
 
@@ -742,3 +745,7 @@ class Class(object):
         self.T2 = 0
         # at which interface this class of clients is served
         self.INTERFACE = ""
+        # in certain cases it might be useful not to give any address to clients, for example if only a defined group
+        # of hosts should get IPv6 addresses and others not. They will get a "NoAddrsAvail" response if this option
+        # is set to "noaddress" or no answer at all if set to "none"
+        self.ANSWER = "normal"
