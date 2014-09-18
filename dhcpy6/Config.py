@@ -129,10 +129,28 @@ class Config(object):
         if not self.PREFERRED_LIFETIME.isdigit():
             ErrorExit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.PREFERRED_LIFETIME))
         
-        # check if valid lifetime is longer than preferref lifetime    
+        # check if valid lifetime is longer than preferred lifetime
         if not int(self.VALID_LIFETIME) > int(self.PREFERRED_LIFETIME):
             ErrorExit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." %\
-                      (msg_prefix, self.VALID_LIFETIME, self.PREFERRED_LIFETIME) )
+                      (msg_prefix, self.VALID_LIFETIME, self.PREFERRED_LIFETIME))
+
+        # check if T1 is a number
+        if not self.T1.isdigit():
+            ErrorExit("%s T1 '%s' is invalid." % (msg_prefix, self.T1))
+
+        # check if T2 is a number
+        if not self.T2.isdigit():
+            ErrorExit("%s T2 '%s' is invalid." % (msg_prefix, self.T2))
+
+        # check T2 is not smaller than T1
+        if not int(self.T2) >= int(self.T1):
+            ErrorExit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." %\
+                      (msg_prefix, self.T2, self.T1))
+
+        # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
+        if not (int(self.T1) <= int(self.T2) <= int(self.PREFERRED_LIFETIME) <= int(self.VALID_LIFETIME)):
+            ErrorExit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." %\
+                      (msg_prefix, self.T1, self.T2, self.PREFERRED_LIFETIME, self.VALID_LIFETIME))
             
         # check server preference    
         if not self.SERVER_PREFERENCE.isdigit():
@@ -232,41 +250,102 @@ class Config(object):
         # cruise through classes    
         # more checks to come...
         for c in self.CLASSES:
+            msg_prefix = "Class '%s':" % (c)
             if not self.CLASSES[c].ANSWER in ["normal", "noaddress", "none"]:
-                ErrorExit("Class %s: answer type must be one of 'normal', 'noaddress' and 'none'." % (c))
+                ErrorExit("%s answer type must be one of 'normal', 'noaddress' and 'none'." % (msg_prefix))
 
+            # check interface
+            for i in self.CLASSES[c].INTERFACE:
+                # also accept Linux VLAN and other definitions but interface must exist
+                if LIBC.if_nametoindex(i) == 0 or not re.match("^[a-z0-9_:%-]*$", i, re.IGNORECASE):
+                    ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, i))
+
+            # check nameserver to be given to client
+            for nameserver in self.CLASSES[c].NAMESERVER:
+                try:
+                    DecompressIP6(nameserver)
+                except Exception, err:
+                    ErrorExit("%s Name server address '%s' is invalid." % (msg_prefix, err))
+
+            # check if T1 is a number
+            if not self.CLASSES[c].T1.isdigit():
+                ErrorExit("%s T1 '%s' is invalid." % (msg_prefix, self.CLASSES[c].T1))
+
+            # check if T2 is a number
+            if not self.CLASSES[c].T2.isdigit():
+                ErrorExit("%s T2 '%s' is invalid." % (msg_prefix, self.CLASSES[c].T2))
+
+            # check T2 is not smaller than T1
+            if not int(self.CLASSES[c].T2) >= int(self.CLASSES[c].T1):
+                ErrorExit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." %\
+                          (msg_prefix, self.CLASSES[c].T2, self.CLASSES[c].T1))
+
+            # check every single address of a class
             for a in self.CLASSES[c].ADDRESSES:
+                msg_prefix = "Class '%s' Address type '%s':" % (c, a)
                 # test if used addresses are defined
                 if not a in self.ADDRESSES:
-                    ErrorExit("Class %s: Address type '%s' is not defined." % (c, a))
+                    ErrorExit("%s Address type '%s' is not defined." % (msg_prefix, a))
+
                 # test validity of category
                 if not self.ADDRESSES[a].CATEGORY.strip() in ["fixed", "range", "random", "mac", "id"]:
-                    ErrorExit("Address type '%s': Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac' and 'id'." % (a, self.ADDRESSES[a].CATEGORY))
+                    ErrorExit("%s Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac' and 'id'." % (msg_prefix, self.ADDRESSES[a].CATEGORY))
+
                 # test numberness and length of prefix
                 if not self.ADDRESSES[a].PREFIX_LENGTH.strip().isdigit():
-                    ErrorExit("Address type '%s': Prefix length '%s' is not a number." % (a, self.ADDRESSES[a].PREFIX_LENGTH.strip()))               
+                    ErrorExit("%s Prefix length '%s' is not a number." % (msg_prefix, self.ADDRESSES[a].PREFIX_LENGTH.strip()))
                 elif not  0 <= int(self.ADDRESSES[a].PREFIX_LENGTH) <= 128:
-                    ErrorExit("Address type '%s': Prefix length '%s' is out of range." % (a, self.ADDRESSES[a].PREFIX_LENGTH.strip())) 
+                    ErrorExit("%s Prefix length '%s' is out of range." % (msg_prefix, self.ADDRESSES[a].PREFIX_LENGTH.strip()))
+
                 # test validity of pattern - has its own error output
                 self.ADDRESSES[a]._build_prototype()
                 # test existence of category specific variable in pattern
                 if self.ADDRESSES[a].CATEGORY == "range":
                     if not 0 < self.ADDRESSES[a].PATTERN.count("$range$") < 2:
-                        ErrorExit("Address type '%s': Pattern '%s' contains wrong number of '$range$' variables for category 'range'." % (a, self.ADDRESSES[a].PATTERN.strip())) 
+                        ErrorExit("%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." %\
+                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
                     elif not self.ADDRESSES[a].PATTERN.endswith("$range$"):
-                        ErrorExit("Address type '%s': Pattern '%s' must end with '$range$' variable for category 'range'." % (a, self.ADDRESSES[a].PATTERN.strip())) 
+                        ErrorExit("%s Pattern '%s' must end with '$range$' variable for category 'range'." %\
+                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+
                 if self.ADDRESSES[a].CATEGORY == "mac":
                     if not 0 < self.ADDRESSES[a].PATTERN.count("$mac$") < 2:
-                        ErrorExit("Address type '%s': Pattern '%s' contains wrong number of '$mac$' variables for category 'mac'." % (a, self.ADDRESSES[a].PATTERN.strip())) 
+                        ErrorExit("%s Pattern '%s' contains wrong number of '$mac$' variables for category 'mac'." %\
+                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+
                 if self.ADDRESSES[a].CATEGORY == "id":
-                    if not 0 < self.ADDRESSES[a].PATTERN.count("$id$") < 2:
-                        ErrorExit("Address type '%s': Pattern '%s' contains wrong number of '$id$' variables for category 'id'." % (a, self.ADDRESSES[a].PATTERN.strip())) 
+                    if not self.ADDRESSES[a].PATTERN.count("$id$") == 1:
+                        ErrorExit("%s Pattern '%s' contains wrong number of '$id$' variables for category 'id'." %\
+                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+
                 if self.ADDRESSES[a].CATEGORY == "random":
-                    if not 0 < self.ADDRESSES[a].PATTERN.count("$random64$") < 2:
-                        ErrorExit("Address type '%s': Pattern '%s' contains wrong number of '$random64$' variables for category 'random'." % (a, self.ADDRESSES[a].PATTERN.strip())) 
+                    if not self.ADDRESSES[a].PATTERN.count("$random64$") == 1:
+                        ErrorExit("%s Pattern '%s' contains wrong number of '$random64$' variables for category 'random'." %\
+                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+
                 # check ia_type
                 if not self.ADDRESSES[a].IA_TYPE.strip().lower() in ["na", "ta"]:
-                    ErrorExit("Address type '%s': IA type '%s' must be one of 'na' or 'ta'." % (a, self.ADDRESSES[a].IA_TYPE.strip())) 
+                    ErrorExit("%s: IA type '%s' must be one of 'na' or 'ta'." % (msg_prefix, self.ADDRESSES[a].IA_TYPE.strip()))
+
+                # check if valid lifetime is a number
+                if not self.ADDRESSES[a].VALID_LIFETIME.isdigit():
+                    ErrorExit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME))
+
+                # check if preferred lifetime is a number
+                if not self.ADDRESSES[a].PREFERRED_LIFETIME.isdigit():
+                    ErrorExit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].PREFERRED_LIFETIME))
+
+                # check if valid lifetime is longer than preferred lifetime
+                if not int(self.ADDRESSES[a].VALID_LIFETIME) >= int(self.ADDRESSES[a].PREFERRED_LIFETIME):
+                    ErrorExit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." %\
+                              (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME, self.ADDRESSES[a].PREFERRED_LIFETIME))
+
+                # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
+                if not (int(self.CLASSES[c].T1) <= int(self.CLASSES[c].T2) <=\
+                        int(self.ADDRESSES[a].PREFERRED_LIFETIME) <= int(self.ADDRESSES[a].VALID_LIFETIME)):
+                    ErrorExit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." %\
+                              (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
+                               self.ADDRESSES[a].PREFERRED_LIFETIME, self.ADDRESSES[a].VALID_LIFETIME))
 
     
     def __init__(self):
