@@ -16,6 +16,7 @@ dhcpy6d (0.3.99-1) UNRELEASED; urgency=medium
   [ Axel Beckert ]
   * Switch section from "utils" to "net" like most other DHCP servers.
   * Update debian/source/options to follow upstream directory name changes
+  * Bump Standards-Version to 3.9.6 (no changes)
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 15 Sep 2014 14:40:00 +0200
 
