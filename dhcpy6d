@@ -1262,6 +1262,9 @@ class Handler(SocketServer.DatagramRequestHandler):
             response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
             # Option 2 server identifier
             response_ascii += BuildOption(2, cfg.SERVERDUID)
+
+            # list of options in answer to be logged
+            options_answer = []
             
             # IA_NA non-temporary addresses
             # Option 3 + 5 Identity Association for Non-temporary Address
@@ -1279,6 +1282,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                             response_ascii += BuildOption(13, "%04x" % (2))
                             # clean client addresses which not be deployed anyway
                             Transactions[transaction_id].Client.Addresses[:] = []
+                            # options in answer to be logged
+                            options_answer.append(13)
                         else:
                             # clean response as there is nothing to respond in case of answer = none
                             self.response = ""
@@ -1319,13 +1324,19 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                                     ia_na = BuildOption(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
                                     response_ascii += ia_na
+                                # options in answer to be logged
+                                options_answer.append(3)
                             except:
                                 # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                                 response_ascii += BuildOption(13, "%04x" % (2))
+                                # options in answer to be logged
+                                options_answer.append(3)
                         else:
                             # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                             response_ascii += BuildOption(13, "%04x" % (2))
-                                               
+                            # options in answer to be logged
+                            options_answer.append(3)
+
             # IA_TA temporary addresses
             if 4 in options_request:
                 # check if MAC of LLIP is really known
@@ -1341,6 +1352,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                             response_ascii += BuildOption(13, "%04x" % (2))
                             # clean client addresses which not be deployed anyway
                             Transactions[transaction_id].Client.Addresses[:] = []
+                            # options in answer to be logged
+                            options_answer.append(13)
                         else:
                             # clean response as there is nothing to respond in case of answer = none
                             self.response = ""
@@ -1370,16 +1383,24 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 if not ia_addresses == "":
                                     ia_ta = BuildOption(4, Transactions[transaction_id].IAID + ia_addresses)
                                     response_ascii += ia_ta
+                                # options in answer to be logged
+                                options_answer.append(4)
                             except:
                                 # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                                 response_ascii += BuildOption(13, "%04x" % (2))
+                                # options in answer to be logged
+                                options_answer.append(13)
                         else:
                             # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                             response_ascii += BuildOption(13, "%04x" % (2))
+                            # options in answer to be logged
+                            options_answer.append(13)
 
             # Option 7 Server Preference
             if 7 in options_request:
                 response_ascii += BuildOption(7, "%02x" % (int(cfg.SERVER_PREFERENCE)))
+                # options in answer to be logged
+                options_answer.append(7)
 
             # Option 11 Authentication Option
             # seems to be pretty unused at the moment - to be done
@@ -1398,18 +1419,26 @@ class Handler(SocketServer.DatagramRequestHandler):
                 authentication_information = cfg.AUTHENTICATION_INFORMATION
                 # stuffed together
                 response_ascii += BuildOption(11, protocol + algorithm + rdm + replay_detection + ai_type + authentication_information)            
+                # options in answer to be logged
+                options_answer.append(11)
 
             # Option 12 Server Unicast Option
             if 12 in options_request:
                 response_ascii += BuildOption(12, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)))
+                # options in answer to be logged
+                options_answer.append(12)
 
             # Option 13 Status Code Option - statuscode is taken from dictionary
             if 13 in options_request:
                 response_ascii += BuildOption(13, "%04x" % (status))
+                # options in answer to be logged
+                options_answer.append(13)
 
             # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
             if 14 in options_request:
                 response_ascii += BuildOption(14, "")
+                # options in answer to be logged
+                options_answer.append(14)
 
             # Option 23 DNS recursive name server
             if 23 in options_request and Transactions[transaction_id].Client:
@@ -1424,6 +1453,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                         for ns in cfg.NAMESERVER:
                             nameserver += socket.inet_pton(socket.AF_INET6, ns)
                     response_ascii += BuildOption(23, binascii.b2a_hex(nameserver))
+                    # options in answer to be logged
+                    options_answer.append(23)
 
             # Option 24 Domain Search List
             if 24 in options_request:
@@ -1431,6 +1462,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                 for d in cfg.DOMAIN_SEARCH_LIST:
                     converted_domain_search_list +=  ConvertDNS2Binary(d)
                 response_ascii += BuildOption(24, converted_domain_search_list)
+                # options in answer to be logged
+                options_answer.append(24)
 
             # Option 31 OPTION_SNTP_SERVERS
             #if 31 in options_request and cfg.SNTP_SERVERS != "":
@@ -1442,7 +1475,9 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # Option 32 Information Refresh Time
             if 32 in options_request:
-                response_ascii += BuildOption(32, "%08x" % int(cfg.INFORMATION_REFRESH_TIME))        
+                response_ascii += BuildOption(32, "%08x" % int(cfg.INFORMATION_REFRESH_TIME))
+                # options in answer to be logged
+                options_answer.append(32)
 
             # Option 39 FQDN
             # http://tools.ietf.org/html/rfc4704#page-5
@@ -1485,6 +1520,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                 else:
                     # if no hostname given put something in and force client override
                     response_ascii += BuildOption(39, "%02x" % (3) + ConvertDNS2Binary("invalid-hostname"))
+                # options in answer to be logged
+                options_answer.append(39)
 
             # if databases are not connected send error to client
             if not (configstore.connected == volatilestore.connected == True):
@@ -1512,6 +1549,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     
                 # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                 response_ascii += BuildOption(13, "%04x" % (2))
+
                 log.error("%s| TransactionID: %s | DatabaseError: %s" % (MESSAGE_TYPES[response_type], transaction_id, " ".join(dberror)))
 
             else:      
@@ -1535,16 +1573,21 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                         # Option 13 Status Code Option - statuscode is 2: "No Addresses available"
                         response_ascii += BuildOption(13, "%04x" % (2))
+                        # options in answer to be logged
+                        options_answer.append(3)
 
                         # log warning message about unavailable addresses
                         log.warning("REPLY | No addresses available | TransactionID: %s | ClientLLIP: %s"  %\
                                     (transaction_id, Transactions[transaction_id].ClientLLIP))
-                    elif 3 in options_request:
-                        log.info("%s | TransactionID: %s | Options: %s%s" % (MESSAGE_TYPES[response_type], transaction_id, options_request, Transactions[transaction_id].Client._getOptionsString()))
+
+                    elif 3 in options_request or 4 in options_request:
+                        options_answer.sort()
+                        log.info("%s | TransactionID: %s | Options: %s%s" % (MESSAGE_TYPES[response_type], transaction_id, options_answer, Transactions[transaction_id].Client._getOptionsString()))
                     else:
-                        log.info("what else")
+                        log.info("what else should I do?")
                 else:
-                    log.info("%s | TransactionID: %s | Options: %s" % (MESSAGE_TYPES[response_type], transaction_id, options_request))
+                    options_answer.sort()
+                    log.info("%s | TransactionID: %s | Options: %s" % (MESSAGE_TYPES[response_type], transaction_id, options_answer))
 
             # response
             self.response = binascii.a2b_hex(response_ascii)
