@@ -91,6 +91,8 @@ Transactions = dict()
 
 # collected MAC addresses from clients, mapping to link local IPs
 CollectedMACs = dict()
+# timestamps of collected MACs, needed for cleaning
+CollectedMACs_Timestamps = dict()
 
 # queues for queries
 configqueryqueue = Queue.Queue()
@@ -627,6 +629,7 @@ def CollectMACs():
                     continue
                 if not CollectedMACs.has_key(host["llip"]) and host["llip"].lower().startswith("fe80"):
                     CollectedMACs[host["llip"]] = host["mac"]
+                    CollectedMACs_Timestamps[host["llip"]] = int(time.time())
                     log.info("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
                     if cfg.CACHE_MAC_LLIP == True:
                         volatilestore.store_mac_llip(host["mac"], host["llip"])
@@ -645,6 +648,7 @@ def CollectMACs():
                     if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
                        and ":" in f[NC[OS]["mac"]]:
                         CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
+                        CollectedMACs_Timestamps[f[NC[OS]["llip"]]] = int(time.time())
                         log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
                         volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
     except Exception,err:
@@ -794,8 +798,7 @@ class TidyUpThread(threading.Thread):
                 
                 # if disconnected try reconnect
                 if not volatilestore.connected:
-                    if not volatilestore.connected:
-                        volatilestore.DBConnect()
+                    volatilestore.DBConnect()
                 else:
                     # cleaning database once per minute should be enough
                     if dbcount > 60/cfg.CLEANING_INTERVAL:
@@ -806,11 +809,16 @@ class TidyUpThread(threading.Thread):
                         # unlock advertised leases remaining
                         volatilestore.unlock_unused_advertised_leases()
                         dbcount = 0
-
                 dbcount += 1
 
-                time.sleep(cfg.CLEANING_INTERVAL)
+                # clean collected MAC addresses
+                if cfg.CACHE_MAC_LLIP == False:
+                    for t in CollectedMACs_Timestamps.copy():
+                        if CollectedMACs_Timestamps[t] + cfg.CLEANING_INTERVAL < int(time.time()):
+                            CollectedMACs.pop(t)
+                            CollectedMACs_Timestamps.pop(t)
 
+                time.sleep(cfg.CLEANING_INTERVAL)
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)

@@ -451,7 +451,7 @@ class Config(object):
         self.REALLY_DO_IT = "True"
         
         # interval for TidyUp thread - time to sleep in TidyUpThread
-        self.CLEANING_INTERVAL = 10
+        self.CLEANING_INTERVAL = 5
         
         # Address and class schemes
         self.ADDRESSES = dict()

@@ -219,83 +219,11 @@ def ListifyOption(option):
         return None
 
 
-"""
-def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC):
-    # get neighbor cache on Linux via NETLINK interface
-    # Pymnl available at http://pypi.python.org/pypi/pymnl/ helped a lot to
-    # find out how to get neighbor cache
-    
-    # DOES NOT WORK RELIABLY :-(
-    
-    # result
-    #result = list()
-    result = dict()
-    
-    # open raw NETLINK socket
-    # NETLINK_ROUTE has neighbor cache information too
-    s = socket.socket(socket.AF_NETLINK, socket.SOCK_RAW, socket.NETLINK_ROUTE)
-    # PID 0 means AUTOPID, let socket choose
-    s.bind((0, 0))
-    pid, groups = s.getsockname()
-
-    # random sequence for NETLINK access
-    MSG_HEADER_SEQ = random.randint(0, pow(2,31))
-
-    MSG_HEADER = struct.pack("IHHII",\
-                             MSG_HEADER_LENGTH,
-                             MSG_HEADER_TYPE,\
-                             MSG_HEADER_FLAGS,\
-                             MSG_HEADER_SEQ, pid)
-    
-    # send message with header
-    s.send(MSG_HEADER + MSG)
-
-    # use a large buffer for answer message
-    answer = s.recv(65536) 
-    
-    # convert answer to ascii
-    # might be more efficient with some struct.unpack()
-    # but still faster than external call
-    answer = binascii.b2a_hex(answer)
-    
-    # split answer without header by "0a000000" because it
-    # separates different cache entries
-    for l in answer[32:].split("0a000000")[1:]:
-        # because we need at least the first 76 bytes the answer has to be
-        # at least that long - it varies 
-        if len(l) >= 76:
-            interface = int(l[0:2])
-            # only care about configured devices
-            for i in cfg.INTERFACE:
-                if IF_NAME[i] == interface:  
-                    # /include/linux/neighbour.h defines NTF_ROUTER as 0x80
-                    # but routers etc. not needed here
-                    if l[12:14] == "00":
-                        mac = l[64:76]
-                        # no need for multicast address cache entries
-                        if not mac.startswith("3333"):
-                            # get Link Local IP
-                            llip = l[24:56]
-                            # only care about configured device
-                            if IF_NAME[i] == interface:                   
-                                #result.append({"interface": IF_NUMBER[interface],\
-                                #               "llip" : ColonifyIP6(llip),\
-                                #               "mac" : ColonifyMAC(mac)})
-                                result["|".join((IF_NUMBER[interface],\
-                                                 ColonifyIP6(llip),\
-                                                 ColonifyMAC(mac)))] = [IF_NUMBER[interface],\
-                                                                       ColonifyIP6(llip),\
-                                                                       ColonifyMAC(mac)]
-    # clean up 
-    s.close()                    
-
-    return result
-"""
-
 def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
     """
         imported version of https://github.com/vokac/dhcpy6d
         https://github.com/vokac/dhcpy6d/commit/bd34d3efb18ba6016a2b3afea0b6a3fcdfb524a4
+        Thanks for donating!
     """
     # result
     #result = list()
