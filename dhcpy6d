@@ -630,7 +630,8 @@ def CollectMACs():
                 if not CollectedMACs.has_key(host["llip"]) and host["llip"].lower().startswith("fe80"):
                     CollectedMACs[host["llip"]] = host["mac"]
                     CollectedMACs_Timestamps[host["llip"]] = int(time.time())
-                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
+                    if cfg.LOG_MAC_ADDRESSES == True:
+                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
                     if cfg.CACHE_MAC_LLIP == True:
                         volatilestore.store_mac_llip(host["mac"], host["llip"])
         else:
@@ -649,7 +650,8 @@ def CollectMACs():
                        and ":" in f[NC[OS]["mac"]]:
                         CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
                         CollectedMACs_Timestamps[f[NC[OS]["llip"]]] = int(time.time())
-                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
+                        if cfg.LOG_MAC_ADDRESSES == True:
+                            log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
                         volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
     except Exception,err:
         import traceback
