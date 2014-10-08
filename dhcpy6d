@@ -112,7 +112,7 @@ if "BSD" in OS:
 # every platform has its different output
 # dev, llip and mac are positions of output of call
 # len is minimal length a line has to have to be evaluable
-NC = { "Linux": { "call" : "/sbin/ipsy -6 neigh show",\
+NC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
                          "dev"  : 2,\
                          "llip" : 0,\
                          "mac"  : 4,\
