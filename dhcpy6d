@@ -110,7 +110,7 @@ if "BSD" in OS:
 # every platform has its different output
 # dev, llip and mac are positions of output of call
 # len is minimal length a line has to have to be evaluable
-NC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
+NC = { "Linux": { "call" : "/sbin/ipsy -6 neigh show",\
                          "dev"  : 2,\
                          "llip" : 0,\
                          "mac"  : 4,\
@@ -620,23 +620,33 @@ def CollectMACs():
         it is reverted back to /sbin/ip.
     """
     try:
-        # subject to change - other distros might have other paths - might become a task
-        # for a setup routine to find appropriate paths 
-        for host in commands.getoutput(NC[OS]["call"]).splitlines():
-            # get fragments of output line
-            f = shlex.split(host)
-            if f[NC[OS]["dev"]] in cfg.INTERFACE and len(f) >= NC[OS]["len"] :
-                # get rid of %interface 
-                f[NC[OS]["llip"]] = DecompressIP6(f[NC[OS]["llip"]].split("%")[0])
-                # correct maybe shortenend MAC
-                f[NC[OS]["mac"]] = CorrectMAC(f[NC[OS]["mac"]]) 
-                # put non yet existing LLIPs into dictionary - if they have MACs
-                if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
-                   and ":" in f[NC[OS]["mac"]]:
-                    CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
-                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
-                    volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
-
+        # Linux can use kernel neighbor cache
+        if OS == "Linux":
+            for host in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
+                if host["interface"] not in cfg.INTERFACE:
+                    continue
+                if not CollectedMACs.has_key(host["llip"]) and host["llip"].lower().startswith("fe80"):
+                    CollectedMACs[host["llip"]] = host["mac"]
+                    log.info("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
+                    if cfg.CACHE_MAC_LLIP == True:
+                        volatilestore.store_mac_llip(host["mac"], host["llip"])
+        else:
+            # subject to change - other distros might have other paths - might become a task
+            # for a setup routine to find appropriate paths
+            for host in commands.getoutput(NC[OS]["call"]).splitlines():
+                # get fragments of output line
+                f = shlex.split(host)
+                if f[NC[OS]["dev"]] in cfg.INTERFACE and len(f) >= NC[OS]["len"] :
+                    # get rid of %interface
+                    f[NC[OS]["llip"]] = DecompressIP6(f[NC[OS]["llip"]].split("%")[0])
+                    # correct maybe shortenend MAC
+                    f[NC[OS]["mac"]] = CorrectMAC(f[NC[OS]["mac"]])
+                    # put non yet existing LLIPs into dictionary - if they have MACs
+                    if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
+                       and ":" in f[NC[OS]["mac"]]:
+                        CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
+                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
+                        volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
     except Exception,err:
         import traceback
         traceback.print_exc(file=sys.stdout)
@@ -798,6 +808,7 @@ class TidyUpThread(threading.Thread):
                         dbcount = 0
 
                 dbcount += 1
+
                 time.sleep(cfg.CLEANING_INTERVAL)
 
         except:
@@ -1110,7 +1121,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
                     if Transactions[transaction_id].DUID.isalnum():
-                    # client will get answer if its LLIP & MAC is known 
+                    # client will get answer if its LLIP & MAC is known
                         if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
                             # if not known send status code option failure to get
                             # LLIP/MAC mapping from neighbor cache
@@ -1638,7 +1649,8 @@ if __name__ == "__main__":
     LegacyAdjustments()
 
     # collect all known MAC addresses from database
-    volatilestore.CollectMACsFromDB()
+    if cfg.CACHE_MAC_LLIP == True:
+        volatilestore.CollectMACsFromDB()
 
     # start TidyUp thread for cleaning in background
     tidyup = TidyUpThread()

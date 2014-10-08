@@ -7,8 +7,10 @@ import binascii
 import random
 import sys
 import shlex
+import logging
 
-# needed for neighor cache access
+# needed for neighbor cache access
+import select
 import socket
 import struct
 import binascii
@@ -16,6 +18,8 @@ import ctypes
 import platform
 
 # constants for GetNeighborCacheLinux() - not uses now
+RTM_NEWNEIGH = 28
+RTM_DELNEIGH = 29
 RTM_GETNEIGH = 30
 NLM_F_REQUEST = 1
 # Modifiers to GET request
@@ -32,6 +36,35 @@ MSG_HEADER_TYPE = RTM_GETNEIGH
 MSG_HEADER_FLAGS = (NLM_F_REQUEST | NLM_F_DUMP)
 # state of peer 
 NUD_REACHABLE = 2
+
+NLMSG_NOOP             = 0x1     #/* Nothing.             */
+NLMSG_ERROR            = 0x2     #/* Error                */
+NLMSG_DONE             = 0x3     #/* End of a dump        */
+NLMSG_OVERRUN          = 0x4     #/* Data lost            */
+
+NUD_INCOMPLETE  = 0x01
+NUD_REACHABLE   = 0x02
+NUD_STALE       = 0x04
+NUD_DELAY       = 0x08
+NUD_PROBE       = 0x10
+NUD_FAILED      = 0x20
+NUD_NOARP       = 0x40
+NUD_PERMANENT   = 0x80
+NUD_NONE        = 0x00
+
+NDA = {
+  0: 'NDA_UNSPEC',
+  1: 'NDA_DST',
+  2: 'NDA_LLADDR',
+  3: 'NDA_CACHEINFO',
+  4: 'NDA_PROBES',
+  5: 'NDA_VLAN',
+  6: 'NDA_PORT',
+  7: 'NDA_VNI',
+  8: 'NDA_IFINDEX',
+}
+NLMSG_ALIGNTO = 4
+NLA_ALIGNTO = 4
 
 # whitespace for options with more than one value
 WHITESPACE = " ,"
@@ -185,16 +218,15 @@ def ListifyOption(option):
     else:
         return None
 
-    
+
+"""
 def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC):
-    """
-    get neighbor cache on Linux via NETLINK interface
-    Pymnl available at http://pypi.python.org/pypi/pymnl/ helped a lot to
-    find out how to get neighbor cache
+    # get neighbor cache on Linux via NETLINK interface
+    # Pymnl available at http://pypi.python.org/pypi/pymnl/ helped a lot to
+    # find out how to get neighbor cache
     
-    # DOES NOT WQORK RELIABLY :-(
+    # DOES NOT WORK RELIABLY :-(
     
-    """
     # result
     #result = list()
     result = dict()
@@ -258,6 +290,200 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC):
     s.close()                    
 
     return result
+"""
+
+def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
+    """
+        imported version of https://github.com/vokac/dhcpy6d
+        https://github.com/vokac/dhcpy6d/commit/bd34d3efb18ba6016a2b3afea0b6a3fcdfb524a4
+    """
+    # result
+    #result = list()
+    result = dict()
+
+    # open raw NETLINK socket
+    # NETLINK_ROUTE has neighbor cache information too
+    s = socket.socket(socket.AF_NETLINK, socket.SOCK_RAW, socket.NETLINK_ROUTE)
+    # PID 0 means AUTOPID, let socket choose
+    s.bind((0, 0))
+    pid, groups = s.getsockname()
+
+    # random sequence for NETLINK access
+    seq = random.randint(0, pow(2,31))
+
+    # netlink message header (struct nlmsghdr)
+    MSG_HEADER = struct.pack("IHHII", MSG_HEADER_LENGTH,
+            MSG_HEADER_TYPE, MSG_HEADER_FLAGS, seq, pid)
+
+    # NETLINK message is always the same except header seq (struct ndmsg)
+    MSG = struct.pack("B", socket.AF_INET6)
+
+    # send message with header
+    s.send(MSG_HEADER + MSG)
+
+    # read all data from socket
+    answer = ''
+    while True:
+        r,w,e = select.select([s], [], [], 0.)
+        if s not in r: break # no more data
+        answer += s.recv(16384)
+
+    result = []
+    curr_pos = 0
+    answer_pos = 0
+    answer_len = len(answer)
+
+    nlmsghdr_fmt = 'IHHII' # struct nlmsghdr
+    nlattr_fmt = 'HH' # struct nlattr
+    ndmsg_fmt = 'BBHiHBB' # struct ndmsg
+
+    nlmsg_header_len = (struct.calcsize(nlmsghdr_fmt)+NLMSG_ALIGNTO-1) & ~(NLMSG_ALIGNTO-1) # alginment to 4
+    nla_header_len = (struct.calcsize(nlattr_fmt)+NLA_ALIGNTO-1) & ~(NLA_ALIGNTO-1) # alginment to 4
+
+    # parse netlink answer to RTM_GETNEIGH
+    try:
+
+
+        while answer_pos < answer_len:
+            curr_pos = answer_pos
+            if log.getEffectiveLevel() <= logging.DEBUG:
+                log.debug("nlm[%i:]: parsing up to %i..." % (answer_pos, answer_len))
+
+            nlmsg_len, nlmsg_type, nlmsg_flags, nlmsg_seq, nlmsg_pid = \
+                    struct.unpack_from("<%s" % nlmsghdr_fmt, answer, answer_pos)
+
+            # basic safety checks for received data (imitates NLMSG_OK)
+            if nlmsg_len < struct.calcsize("<%s" % nlmsghdr_fmt):
+                log.warn("broken data from netlink (position %i, nlmsg_len %i): "\
+                         "nlmsg_len is smaler then structure size" % (answer_pos, nlmsg_len))
+                break
+            if answer_len-answer_pos < struct.calcsize("<%s" % nlmsghdr_fmt):
+                log.warn("broken data from netlink (position %i, length avail %i): "\
+                         "received data size is smaler then structure size" % \
+                         (answer_pos, answer_len-answer_pos))
+                break
+            if answer_len-answer_pos < nlmsg_len:
+                log.warn("broken data from netlink (position %i, length avail %i): "\
+                         "received data size is smaller then nlmsg_len" % \
+                         (answer_pos, answer_len-answer_pos))
+                break
+            if (pid != nlmsg_pid or seq != nlmsg_seq):
+                log.warn("broken data from netlink (position %i, length avail %i): "\
+                         "invalid seq (%s x %s) or pid (%s x %s)" % \
+                         (answer_pos, answer_len-answer_pos, seq, nlmsg_seq, pid, nlmsg_pid))
+                break
+
+            # data for this Routing/device hook record
+            nlmsg_data = answer[answer_pos+nlmsg_header_len:answer_pos+nlmsg_len]
+            if log.getEffectiveLevel() <= logging.DEBUG:
+                log.debug("nlm[%i:%i]%s: %s" % (answer_pos, answer_pos+nlmsg_len, \
+                          str(struct.unpack_from("<%s" % nlmsghdr_fmt, answer, answer_pos)), \
+                          binascii.b2a_hex(nlmsg_data)))
+
+            if nlmsg_type == NLMSG_DONE:
+                break
+            if nlmsg_type == NLMSG_ERROR:
+                nlmsgerr_error, nlmsgerr_len, nlmsgerr_type, nlmsgerr_flags, nlmsgerr_seq, nlmsgerr_pid = \
+                        struct.unpack_from("<sIHHII", nlmsg_data)
+                log.warn("broken data from netlink (position %i, length avail %i): "\
+                         "invalid message (errno %i)" % (answer_pos, \
+                         answer_len-answer_pos, nlmsgerr_error))
+                break
+            if nlmsg_type not in [ RTM_NEWNEIGH, RTM_DELNEIGH, RTM_GETNEIGH ]:
+                log.warn("broken data from netlink (position %i, length avail %i): "\
+                         "this is realy wierd, wrong message type %i" % \
+                         (answer_pos, answer_len-answer_pos, nlmsg_type))
+                break
+
+            curr_pos = answer_pos+nlmsg_header_len
+            ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type = \
+                    struct.unpack_from("<%s" % ndmsg_fmt, nlmsg_data, 0)
+            if log.getEffectiveLevel() <= logging.DEBUG:
+                log.debug("nlm[%i:%i]: family %s, pad1 %s, pad2 %s, ifindex %s, state %s, flags %s, type %s" % \
+                          (answer_pos, answer_pos+nlmsg_len, ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type))
+
+            nda = {
+                'NDM_FAMILY' : ndm_family, 'NDM_IFINDEX': ndm_ifindex,
+                'NDM_STATE': ndm_state, 'NDM_FLAGS': ndm_flags,
+                'NDM_TYPE': ndm_type }
+            nlmsg_data_pos = 0
+            nlmsg_data_len = nlmsg_len-nlmsg_header_len
+            while nlmsg_data_pos < nlmsg_data_len:
+                curr_pos = answer_pos+nlmsg_header_len+nlmsg_data_pos
+                if log.getEffectiveLevel() <= logging.DEBUG:
+                    log.debug("nla[%i:]: parsing up to %i..." % (nlmsg_data_pos, nlmsg_data_len))
+
+                nla_len, nla_type = \
+                        struct.unpack_from("<%s" % nlattr_fmt, nlmsg_data, nlmsg_data_pos)
+
+                # basic safety checks for received data (imitates RTA_OK)
+                if nla_len < struct.calcsize("<%s" % nlattr_fmt):
+                    log.debug("This is normal for last record, but we should not get here "\
+                              "(because of NLMSG_DONE); data size: %i, data[%i:%i] = %s" % \
+                              (answer_len, answer_pos+nlmsg_header_len, \
+                               answer_pos+nlmsg_len, binascii.b2a_hex(nlmsg_data)))
+                    break
+
+                # data for this Routing/device hook record attribute
+                nla_data = nlmsg_data[nlmsg_data_pos+nla_header_len:nlmsg_data_pos+nla_len]
+                if log.getEffectiveLevel() <= logging.DEBUG:
+                    log.debug("nla[%i:]%s: %s" % (nlmsg_data_pos, \
+                              str(struct.unpack_from("<%s" % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
+                              binascii.b2a_hex(nla_data)))
+
+                nda_type_key = NDA.get(nla_type, str(nla_type))
+                if nda_type_key == 'NDA_DST':
+                    nda[nda_type_key] = ColonifyIP6(binascii.b2a_hex(nla_data))
+                elif nda_type_key == 'NDA_LLADDR':
+                    nda[nda_type_key] = ColonifyMAC(binascii.b2a_hex(nla_data))
+                elif nda_type_key == 'NDA_CACHEINFO':
+                    nda[nda_type_key] = struct.unpack_from("<IIII", nla_data)
+                elif nda_type_key == 'NDA_VLAN':
+                    nda[nda_type_key] = binascii.b2a_hex(nla_data)
+                else:
+                    nda[nda_type_key] = nla_data
+                #nda[nda_type_key] = binascii.b2a_hex(nla_data)
+
+                nlmsg_data_pos += nla_header_len
+                nlmsg_data_pos += (nla_len-nla_header_len+NLA_ALIGNTO-1) & ~(NLA_ALIGNTO-1) # alginment to 4
+
+            if log.getEffectiveLevel() <= logging.DEBUG:
+                log.debug("nlm[%i:%i]: %s" % (answer_pos, answer_pos+nlmsg_len, str(nda)))
+
+            # prepare all required data to be returned to callee
+            # * only care about configured devices
+            # * no need for multicast address cache entries (MAC 33:33:...)
+            # * skip NTF_ROUTER ... not implemented (I did not understand original code)
+            #log.debug("TEST %s -> %s, state = %s, %s %s" % (nda.get('NDM_IFINDEX'), IF_NUMBER.get(nda.get('NDM_IFINDEX', '')), ndm_state, nda.get('NDA_DST'), nda.get('NDA_LLADDR')))
+            if nda['NDM_STATE'] & ~(NUD_INCOMPLETE|NUD_FAILED|NUD_NOARP):
+                if not IF_NUMBER.has_key(nda['NDM_IFINDEX']):
+                    log.debug("can't find device for interface index %i" % nda['NDM_IFINDEX'])
+                elif not nda.has_key('NDA_DST'):
+                    log.warn("can't find destination address (wrong entry state: %i?!)" % nda['NDM_STATE'])
+                elif not nda.has_key('NDA_LLADDR'):
+                    log.warn("can't find local hardware address (wrong entry state: %i?!)" % nda['NDM_STATE'])
+                else:
+                    if_name = IF_NUMBER[nda['NDM_IFINDEX']]
+                    if if_name in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
+                        record = {
+                            'interface': if_name,
+                            'llip': DecompressIP6(nda['NDA_DST']),
+                            'mac': nda['NDA_LLADDR'],
+                        }
+                        result.append(record)
+
+            # move to next record
+            answer_pos += nlmsg_len
+
+    except struct.error, e:
+        log.warn("broken data from netlink (position %i, data[%i:%i] = %s...): %s" % \
+                 (answer_pos, curr_pos, answer_len, \
+                  binascii.b2a_hex(answer[curr_pos:curr_pos+8]), str(e)))
+
+    # clean up
+    s.close()
+
+    return result
 
 
 def GetLibC():
@@ -279,3 +505,42 @@ def GetLibC():
         sys.exit(1)
     # use ctypes for libc access
     return ctypes.cdll.LoadLibrary(libc_name)
+
+
+def Log(cfg):
+    """
+        Logging - has been in dhcpy6d main file, easier to access here for GetNeighborCacheLinux
+    """
+
+    log = logging.getLogger("dhcpy6d")
+    if cfg.LOG:
+        formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
+        log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
+        if cfg.LOG_FILE != "":
+            os.chown(cfg.LOG_FILE, pwd.getpwnam(cfg.USER).pw_uid, grp.getgrnam(cfg.GROUP).gr_gid)
+            log_handler = logging.handlers.WatchedFileHandler(cfg.LOG_FILE)
+            log_handler.setFormatter(formatter)
+            log.addHandler(log_handler)
+        # std err console output
+        if cfg.LOG_CONSOLE:
+            log_handler = logging.StreamHandler()
+            log_handler.setFormatter(formatter)
+            log.addHandler(log_handler)
+        if cfg.LOG_SYSLOG:
+            # time should be added by syslog daemon
+            hostname = socket.gethostname().split(".")[0]
+            formatter = logging.Formatter(hostname + " %(name)s %(levelname)s %(message)s")
+            # if /socket/file is given use this as addres
+            if cfg.LOG_SYSLOG_DESTINATION.startswith("/") == True:
+                destination = cfg.LOG_SYSLOG_DESTINATION
+            # if host and port are defined use them...
+            elif cfg.LOG_SYSLOG_DESTINATION.count(":") == 1:
+                destination = tuple(cfg.LOG_SYSLOG_DESTINATION.split(":"))
+            # ...otherwise add port 514 to given host address
+            else:
+                destination = (cfg.LOG_SYSLOG_DESTINATION, 514)
+            log_handler = logging.handlers.SysLogHandler(address=destination,\
+                          facility=logging.handlers.SysLogHandler.__dict__["LOG_" + cfg.LOG_SYSLOG_FACILITY])
+            log_handler.setFormatter(formatter)
+            log.addHandler(log_handler)
+    return log

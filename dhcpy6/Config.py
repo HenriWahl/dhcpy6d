@@ -411,6 +411,9 @@ class Config(object):
         self.STORE_SQLITE_CONFIG = "config.sqlite"
         self.STORE_SQLITE_VOLATILE = "volatile.sqlite"
 
+        # whether MAC-LLIP pairs should be stored forever or retrieved freshly if needed
+        self.CACHE_MAC_LLIP = "False"
+
         # DNS Update settings
         self.DNS_UPDATE = "False"
         self.DNS_UPDATE_NAMESERVER = "::1"
@@ -447,7 +450,7 @@ class Config(object):
         # for debugging - if False nothing is done 
         self.REALLY_DO_IT = "True"
         
-        # interval for TidyUp thread - time in seconds
+        # interval for TidyUp thread - time to sleep in TidyUpThread
         self.CLEANING_INTERVAL = 10
         
         # Address and class schemes
@@ -619,6 +622,8 @@ class Config(object):
         self.LOG_CONSOLE = BOOLPOOL[self.LOG_CONSOLE.lower()]
         self.LOG_LEVEL = self.LOG_LEVEL.upper()        
         self.LOG_SYSLOG = BOOLPOOL[self.LOG_SYSLOG.lower()]
+        self.CACHE_MAC_LLIP = BOOLPOOL[self.CACHE_MAC_LLIP.lower()]
+
         self.LOG_SYSLOG_FACILITY = self.LOG_SYSLOG_FACILITY.upper()
         
         # index of classes which add some identification rules etc.
