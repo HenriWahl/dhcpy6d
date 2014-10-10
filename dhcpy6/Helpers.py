@@ -16,8 +16,9 @@ import struct
 import binascii
 import ctypes
 import platform
+import time
 
-# constants for GetNeighborCacheLinux() - not uses now
+# used for NETLINK in GetNeighborCacheLinux() access by Github/vokac
 RTM_NEWNEIGH = 28
 RTM_DELNEIGH = 29
 RTM_GETNEIGH = 30
@@ -34,9 +35,8 @@ MSG_HEADER_LENGTH = 17
 MSG_HEADER_TYPE = RTM_GETNEIGH
 # ...flags.
 MSG_HEADER_FLAGS = (NLM_F_REQUEST | NLM_F_DUMP)
-# state of peer 
+# state of peer
 NUD_REACHABLE = 2
-
 NLMSG_NOOP             = 0x1     #/* Nothing.             */
 NLMSG_ERROR            = 0x2     #/* Error                */
 NLMSG_DONE             = 0x3     #/* End of a dump        */
@@ -219,6 +219,18 @@ def ListifyOption(option):
         return None
 
 
+# neighbor cache object
+class NeighborCacheRecord(object):
+    """
+        object for neighbor cache entries to be returned by GetNeighborCacheLinux() and in CollectedMACs
+    """
+    def __init__(self, llip, mac, interface):
+        self.llip = llip
+        self.mac = mac
+        self.interface = interface
+        self.timestamp = time.time()
+
+
 def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
     """
         imported version of https://github.com/vokac/dhcpy6d
@@ -256,7 +268,8 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
         if s not in r: break # no more data
         answer += s.recv(16384)
 
-    result = []
+    ###result = []
+    result = {}
     curr_pos = 0
     answer_pos = 0
     answer_len = len(answer)
@@ -265,13 +278,11 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
     nlattr_fmt = 'HH' # struct nlattr
     ndmsg_fmt = 'BBHiHBB' # struct ndmsg
 
-    nlmsg_header_len = (struct.calcsize(nlmsghdr_fmt)+NLMSG_ALIGNTO-1) & ~(NLMSG_ALIGNTO-1) # alginment to 4
-    nla_header_len = (struct.calcsize(nlattr_fmt)+NLA_ALIGNTO-1) & ~(NLA_ALIGNTO-1) # alginment to 4
+    nlmsg_header_len = (struct.calcsize(nlmsghdr_fmt)+NLMSG_ALIGNTO-1) & ~(NLMSG_ALIGNTO-1) # alignment to 4
+    nla_header_len = (struct.calcsize(nlattr_fmt)+NLA_ALIGNTO-1) & ~(NLA_ALIGNTO-1) # alignment to 4
 
     # parse netlink answer to RTM_GETNEIGH
     try:
-
-
         while answer_pos < answer_len:
             curr_pos = answer_pos
             if log.getEffectiveLevel() <= logging.DEBUG:
@@ -393,13 +404,17 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
                 else:
                     if_name = IF_NUMBER[nda['NDM_IFINDEX']]
                     if if_name in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
-                        record = {
-                            'interface': if_name,
-                            'llip': DecompressIP6(nda['NDA_DST']),
-                            'mac': nda['NDA_LLADDR'],
-                        }
-                        result.append(record)
-
+                        ###record = {
+                        ###    'interface': if_name,
+                        ###    'llip': DecompressIP6(nda['NDA_DST']),
+                        ###    'mac': nda['NDA_LLADDR'],
+                        ###}
+                        ###result.append(record)
+                        # store neighbor caches entries
+                        record = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
+                                                    mac=nda['NDA_LLADDR'],
+                                                    interface=if_name)
+                        result[str(record.llip)] = record
             # move to next record
             answer_pos += nlmsg_len
 
@@ -439,7 +454,6 @@ def Log(cfg):
     """
         Logging - has been in dhcpy6d main file, easier to access here for GetNeighborCacheLinux
     """
-
     log = logging.getLogger("dhcpy6d")
     if cfg.LOG:
         formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")

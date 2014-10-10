@@ -91,8 +91,6 @@ Transactions = dict()
 
 # collected MAC addresses from clients, mapping to link local IPs
 CollectedMACs = dict()
-# timestamps of collected MACs, needed for cleaning
-CollectedMACs_Timestamps = dict()
 
 # queues for queries
 configqueryqueue = Queue.Queue()
@@ -624,16 +622,16 @@ def CollectMACs():
     try:
         # Linux can use kernel neighbor cache
         if OS == "Linux":
-            for host in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
-                if host["interface"] not in cfg.INTERFACE:
+            for host in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log).values():
+                print host.llip, host.mac
+                if host.interface not in cfg.INTERFACE:
                     continue
-                if not CollectedMACs.has_key(host["llip"]) and host["llip"].lower().startswith("fe80"):
-                    CollectedMACs[host["llip"]] = host["mac"]
-                    CollectedMACs_Timestamps[host["llip"]] = int(time.time())
+                if not CollectedMACs.has_key(host.llip) and host.llip.lower().startswith("fe80"):
+                    CollectedMACs[str(host.llip)] = host
                     if cfg.LOG_MAC_ADDRESSES == True:
-                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (host["mac"], host["llip"]))
+                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (host.mac, host.llip))
                     if cfg.CACHE_MAC_LLIP == True:
-                        volatilestore.store_mac_llip(host["mac"], host["llip"])
+                        volatilestore.store_mac_llip(host.mac, host.llip)
         else:
             # subject to change - other distros might have other paths - might become a task
             # for a setup routine to find appropriate paths
@@ -649,7 +647,6 @@ def CollectMACs():
                     if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
                        and ":" in f[NC[OS]["mac"]]:
                         CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
-                        CollectedMACs_Timestamps[f[NC[OS]["llip"]]] = int(time.time())
                         if cfg.LOG_MAC_ADDRESSES == True:
                             log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
                         volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
@@ -815,10 +812,10 @@ class TidyUpThread(threading.Thread):
 
                 # clean collected MAC addresses
                 if cfg.CACHE_MAC_LLIP == False:
-                    for t in CollectedMACs_Timestamps.copy():
-                        if CollectedMACs_Timestamps[t] + cfg.CLEANING_INTERVAL < int(time.time()):
-                            CollectedMACs.pop(t)
-                            CollectedMACs_Timestamps.pop(t)
+                    for record in CollectedMACs.values():
+                        if record.timestamp + cfg.CLEANING_INTERVAL < time.time():
+                            print "Delete", record, record.llip, record.mac
+                            CollectedMACs.pop(record.llip)
 
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:
@@ -1120,7 +1117,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         Transactions[transaction_id] = Transaction(transaction_id, client_llip, interface, message_type, options)
                         # add client MAC address to transaction object
                         if CollectedMACs.has_key(Transactions[transaction_id].ClientLLIP):
-                            Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
+                            Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                     else:
                         Transactions[transaction_id].Timestamp = datetime.datetime.now()
                         Transactions[transaction_id].LastMessageReceivedType = message_type
@@ -1133,20 +1130,34 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].DUID.isalnum():
                     # client will get answer if its LLIP & MAC is known
                         if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                            # if not known send status code option failure to get
-                            # LLIP/MAC mapping from neighbor cache
-                            self.build_response(7, transaction_id, [13], 0)
-                            # complete MAC collection
-                            CollectMACs()
+
+                            print "GetNeighborCacheLinux:"
+                            for i in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
+                                print i
+
+                            for record in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log).values():
+                                if record.llip == Transactions[transaction_id].ClientLLIP:
+                                    CollectedMACs[Transactions[transaction_id].ClientLLIP] = record
+
+                            print CollectedMACs.has_key(Transactions[transaction_id].ClientLLIP)
+
+                            if not CollectedMACs.has_key(Transactions[transaction_id].ClientLLIP):
+                                # if not known send status code option failure to get
+                                # LLIP/MAC mapping from neighbor cache
+                                self.build_response(7, transaction_id, [13], 0)
+                                # complete MAC collection
+                                CollectMACs()
                             # try to add client MAC address to transaction object
                             try:
-                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
+                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                             except:
                                 # MAC not yet found :-(
                                 log.info("%s | TransactionID: %s | %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
-                        else:
+
+                        # if finally there is some info about the client try to answer the request
+                        if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                             if not Transactions[transaction_id].MAC:
-                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP]
+                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
 
                             # ADVERTISE
                             # if last request was a SOLICIT send an ADVERTISE (type 2) back
