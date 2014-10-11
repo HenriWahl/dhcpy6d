@@ -1613,7 +1613,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                         # log warning message about unavailable addresses
                         log.warning("REPLY | No addresses available | TransactionID: %s | ClientLLIP: %s"  %\
-                                    (transaction_id, Transactions[transaction_id].ClientLLIP))
+                                    (transaction_id, ColonifyIP6(Transactions[transaction_id].ClientLLIP)))
 
                     elif 3 in options_request or 4 in options_request:
                         options_answer.sort()
