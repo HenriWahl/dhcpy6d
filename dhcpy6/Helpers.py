@@ -223,8 +223,9 @@ def ListifyOption(option):
 class NeighborCacheRecord(object):
     """
         object for neighbor cache entries to be returned by GetNeighborCacheLinux() and in CollectedMACs
+        .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB
     """
-    def __init__(self, llip, mac, interface):
+    def __init__(self, llip="", mac="", interface=""):
         self.llip = llip
         self.mac = mac
         self.interface = interface
@@ -404,12 +405,6 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
                 else:
                     if_name = IF_NUMBER[nda['NDM_IFINDEX']]
                     if if_name in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
-                        ###record = {
-                        ###    'interface': if_name,
-                        ###    'llip': DecompressIP6(nda['NDA_DST']),
-                        ###    'mac': nda['NDA_LLADDR'],
-                        ###}
-                        ###result.append(record)
                         # store neighbor caches entries
                         record = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
                                                     mac=nda['NDA_LLADDR'],

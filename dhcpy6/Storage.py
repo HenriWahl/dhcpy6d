@@ -435,7 +435,9 @@ class Store(object):
             for m in answer:               
                 try:
                     # m[0] is LLIP, m[1] is the matching MAC
-                    self.CollectedMACs[m[0]] = m[1]
+                    # interface is ignored and timestamp comes with instance of NeighborCacheRecord()
+                    ###self.CollectedMACs[m[0]] = m[1]
+                    self.CollectedMACs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1])
                 except Exception, err:
                     #Log("ERROR: CollectMACsFromDB(): " + str(err))
                     print err

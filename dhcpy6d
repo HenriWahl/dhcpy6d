@@ -623,13 +623,12 @@ def CollectMACs():
         # Linux can use kernel neighbor cache
         if OS == "Linux":
             for host in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log).values():
-                print host.llip, host.mac
                 if host.interface not in cfg.INTERFACE:
                     continue
                 if not CollectedMACs.has_key(host.llip) and host.llip.lower().startswith("fe80"):
                     CollectedMACs[str(host.llip)] = host
                     if cfg.LOG_MAC_ADDRESSES == True:
-                        log.info("Collected MAC: %s for LinkLocalIP: %s" % (host.mac, host.llip))
+                        log.info("Collected MAC %s for LinkLocalIP %s" % (host.mac, ColonifyIP6(host.llip)))
                     if cfg.CACHE_MAC_LLIP == True:
                         volatilestore.store_mac_llip(host.mac, host.llip)
         else:
@@ -648,7 +647,7 @@ def CollectMACs():
                        and ":" in f[NC[OS]["mac"]]:
                         CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
                         if cfg.LOG_MAC_ADDRESSES == True:
-                            log.info("Collected MAC: %s for LinkLocalIP: %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
+                            log.info("Collected MAC %s for LinkLocalIP %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
                         volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
     except Exception,err:
         import traceback
@@ -810,11 +809,12 @@ class TidyUpThread(threading.Thread):
                         dbcount = 0
                 dbcount += 1
 
-                # clean collected MAC addresses
+                # clean collected MAC addresses after 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
                     for record in CollectedMACs.values():
-                        if record.timestamp + cfg.CLEANING_INTERVAL < time.time():
-                            print "Delete", record, record.llip, record.mac
+                        if record.timestamp + 30 < time.time():
+                            if cfg.LOG_MAC_ADDRESSES == True:
+                                log.info("Deleted MAC %s for LinkLocalIP %s" % (record.mac, ColonifyIP6(record.llip)))
                             CollectedMACs.pop(record.llip)
 
                 time.sleep(cfg.CLEANING_INTERVAL)
@@ -1130,29 +1130,30 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].DUID.isalnum():
                     # client will get answer if its LLIP & MAC is known
                         if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                            ###if platform.os == "Linux":
+                            ###    for record in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log).values():
+                            ###        if record.llip == Transactions[transaction_id].ClientLLIP:
+                            ###            CollectedMACs[Transactions[transaction_id].ClientLLIP] = record
 
-                            print "GetNeighborCacheLinux:"
-                            for i in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
-                                print i
+                            # complete MAC collection
+                            CollectMACs()
 
-                            for record in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log).values():
-                                if record.llip == Transactions[transaction_id].ClientLLIP:
-                                    CollectedMACs[Transactions[transaction_id].ClientLLIP] = record
-
-                            print CollectedMACs.has_key(Transactions[transaction_id].ClientLLIP)
-
-                            if not CollectedMACs.has_key(Transactions[transaction_id].ClientLLIP):
+                            # when still no trace of the client in neighbor cache then send silly signal back
+                            if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
                                 # if not known send status code option failure to get
                                 # LLIP/MAC mapping from neighbor cache
-                                self.build_response(7, transaction_id, [13], 0)
+                                # status code "Success" sounds silly but works best
+                                self.build_response(7, transaction_id, [13], status=0)
                                 # complete MAC collection
                                 CollectMACs()
+
                             # try to add client MAC address to transaction object
                             try:
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                             except:
                                 # MAC not yet found :-(
-                                log.info("%s | TransactionID: %s | %s" % (MESSAGE_TYPES[message_type], transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                                if cfg.LOG_MAC_ADDRESSES == True:
+                                    log.info("TransactionID: %s | %s" % (transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
 
                         # if finally there is some info about the client try to answer the request
                         if Transactions[transaction_id].ClientLLIP in CollectedMACs:
@@ -1197,21 +1198,23 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 #if Transactions[transaction_id].VendorClassEN == 311 and\
                                 #   Transactions[transaction_id].VendorClassData.startswith("MSFT"):
                                 #    # try with error to force new solicit
-                                #    #self.build_response(7, transaction_id, [13], 1)
-                                #    self.build_response(7, transaction_id, [13], 4)
+                                #    #self.build_response(7, transaction_id, [13], status=1)
+                                #    self.build_response(7, transaction_id, [13], status=4)
                                 #
                                 #else:
                                 #    # the others need to be tested...
                                 #    ###self.build_response(7, transaction_id, [3] + Transactions[transaction_id].OptionsRequest)
                                 #    # store leases for addresses
                                 #    ###volatilestore.store_lease(transaction_id)
-                                #    self.build_response(7, transaction_id, [13], 4)
+                                #    self.build_response(7, transaction_id, [13], status=4)
                                 #    pass
 
                                 # the RFC 3315 is a little bit confusing regarding CONFIRM
                                 # messages so it won't hurt to simply let the client
                                 # solicit addresses again via answering "NotOnLink"
-                                self.build_response(7, transaction_id, [13], 4)
+                                #self.build_response(7, transaction_id, [13], status=4)
+                                # status 3 "NoBinding" might be more appropriate
+                                self.build_response(7, transaction_id, [13], status=3)
 
                             # RENEW
                             # if last request was a RENEW (type 5) send a REPLY (type 7) back  
@@ -1242,13 +1245,13 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # free lease
                                     volatilestore.release_lease(a)   
                                 # send status code option (type 13) with success (type 0) 
-                                self.build_response(7, transaction_id, [13], 0)                      
+                                self.build_response(7, transaction_id, [13], status=0)
 
                             # DECLINE
                             # if last request was a DECLINE (type 9) send a REPLY (type 7) back  
                             elif Transactions[transaction_id].LastMessageReceivedType == 9:
                                 # maybe has to be refined - now only a status code "NoBinding" is answered
-                                self.build_response(7, transaction_id, [13], 3)
+                                self.build_response(7, transaction_id, [13], status=3)
 
                             # INFORMATION-REQUEST    
                             # if last request was an INFORMATION-REQUEST (type 11) send a REPLY (type 7) back  
@@ -1257,8 +1260,8 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                             # general error - statuscode 1 "Failure"
                             else:
-                                # send Status Code Option (type 13) with failure (type 1)
-                                self.build_response(7, transaction_id, [13], 1)
+                                # send Status Code Option (type 13) with status code "UnspecFail"
+                                self.build_response(7, transaction_id, [13], status=1)
 
                     # count requests of transaction
                     # if there will be too much something went wrong
@@ -1687,6 +1690,9 @@ if __name__ == "__main__":
     os.setgid(grp.getgrnam(cfg.GROUP).gr_gid)
     os.setuid(pwd.getpwnam(cfg.USER).pw_uid)
 
+    # log interfaces
+    log.info("Listening on interfaces: %s" % (" ".join(IF_NAME)))
+    
     # serve forever
     try:
         server.serve_forever()
