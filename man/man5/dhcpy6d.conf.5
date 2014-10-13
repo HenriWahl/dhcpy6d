@@ -157,7 +157,7 @@ use a MySQL database to store information it has to be set with these self\-expl
 
 .TP
 .B cache_mac_llip = yes | no
-Cache discovered MAC/LLIP pairs in database. This reduces response time but might increase system load and open dhcpy6d to MAC/LLIP poisoning.
+Cache discovered MAC/LLIP pairs in database. If enabled reduces response and open dhcpy6d to MAC/LLIP poisoning. If disabled might increase system load.
 
 .TP 
 .B identification = <mac> <duid> <hostname>
