@@ -445,7 +445,7 @@ class Config(object):
             self.LOG_SYSLOG_DESTINATION = "/var/run/log"
 
         # Log newly found MAC addresses - if CACHE_MAC_LLIP is false this might be way too much
-        self.LOG_MAC_ADDRESSES = "False"
+        self.LOG_MAC_LLIP = "False"
         
         # some 128 bits
         self.AUTHENTICATION_INFORMATION = "00000000000000000000000000000000"
@@ -626,7 +626,7 @@ class Config(object):
         self.LOG_LEVEL = self.LOG_LEVEL.upper()        
         self.LOG_SYSLOG = BOOLPOOL[self.LOG_SYSLOG.lower()]
         self.CACHE_MAC_LLIP = BOOLPOOL[self.CACHE_MAC_LLIP.lower()]
-        self.LOG_MAC_ADDRESSES = BOOLPOOL[self.LOG_MAC_ADDRESSES.lower()]
+        self.LOG_MAC_LLIP= BOOLPOOL[self.LOG_MAC_LLIP.lower()]
 
         self.LOG_SYSLOG_FACILITY = self.LOG_SYSLOG_FACILITY.upper()
         

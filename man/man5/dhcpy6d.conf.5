@@ -112,6 +112,10 @@ Optionally a port other than default 514 can be set when adding ":port" to the d
 .B log_syslog_facility = <log-facility>
 The default syslog facility is "daemon" but can be changed here.
 
+.TP
+.B log_mac_llip = yes | no
+Log discovered MAC/LLIP pairs of clients. Might be pretty verbose in larger setups and with disabled MAC/LLIP pair caching.
+
 .TP 
 .B store_config = file | sqlite | mysql | none
 Configuration of clients can be stored in a file or in a database.
@@ -150,6 +154,10 @@ If
 and/or
 .B store_volatile
 use a MySQL database to store information it has to be set with these self\-explanatory options. The same database is used for config and volatile data.
+
+.TP
+.B cache_mac_llip = yes | no
+Cache discovered MAC/LLIP pairs in database. This reduces response time but might increase system load and open dhcpy6d to MAC/LLIP poisoning.
 
 .TP 
 .B identification = <mac> <duid> <hostname>
