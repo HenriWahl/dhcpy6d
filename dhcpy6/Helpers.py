@@ -432,7 +432,7 @@ def GetLibC():
     OS = platform.system()
     if OS == "Linux":
         libc_name = "libc.so.6"
-    elif OS == "BSD":
+    elif "BSD" in OS:
         # libc_ver() returns version number of libc that is hardcoded in
         # libc file name
         libc_name = "libc.so." + platform.libc_ver()[1]

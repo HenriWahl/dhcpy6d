@@ -645,7 +645,10 @@ def CollectMACs():
                     # put non yet existing LLIPs into dictionary - if they have MACs
                     if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
                        and ":" in f[NC[OS]["mac"]]:
-                        CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
+                        #CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
+                        CollectedMACs[f[NC[OS]["llip"]]] = NeighborCacheRecord(llip=f[NC[OS]["llip"]],
+                                                                               mac=f[NC[OS]["mac"]],
+                                                                               interface=f[NC[OS]["dev"]])
                         if cfg.LOG_MAC_LLIP == True:
                             log.info("Collected MAC %s for LinkLocalIP %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
                         volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
