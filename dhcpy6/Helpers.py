@@ -239,7 +239,6 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
         Thanks for donating!
     """
     # result
-    #result = list()
     result = dict()
 
     # open raw NETLINK socket
@@ -382,7 +381,6 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
                     nda[nda_type_key] = binascii.b2a_hex(nla_data)
                 else:
                     nda[nda_type_key] = nla_data
-                #nda[nda_type_key] = binascii.b2a_hex(nla_data)
 
                 nlmsg_data_pos += nla_header_len
                 nlmsg_data_pos += (nla_len-nla_header_len+NLA_ALIGNTO-1) & ~(NLA_ALIGNTO-1) # alginment to 4
@@ -393,7 +391,6 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
             # prepare all required data to be returned to callee
             # * only care about configured devices
             # * no need for multicast address cache entries (MAC 33:33:...)
-            # * skip NTF_ROUTER ... not implemented (I did not understand original code)
             #log.debug("TEST %s -> %s, state = %s, %s %s" % (nda.get('NDM_IFINDEX'), IF_NUMBER.get(nda.get('NDM_IFINDEX', '')), ndm_state, nda.get('NDA_DST'), nda.get('NDA_LLADDR')))
             if nda['NDM_STATE'] & ~(NUD_INCOMPLETE|NUD_FAILED|NUD_NOARP):
                 if not IF_NUMBER.has_key(nda['NDM_IFINDEX']):

@@ -1080,9 +1080,16 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # clean client IP address - might come in short notation, which
             # should be extended
-            client_llip, interface = self.client_address[0].split("%")
-            client_llip = DecompressIP6(client_llip)
-            
+            # if sent from non-LLIP there is no interface - the request should be
+            # repeated using multicast - Code 5 of StatusCode message type 13
+            try:
+                client_llip, interface = self.client_address[0].split("%")
+                client_llip = DecompressIP6(client_llip)
+            except:
+                # interface is set to "" and later evaluated to trigger a statuscode message
+                client_llip, interface = self.client_address[0], ""
+                client_llip = DecompressIP6(client_llip)
+
             # bad or too short message is thrown away
             if not len(bytes) > 8:
                 pass
@@ -1131,140 +1138,122 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
                     if Transactions[transaction_id].DUID.isalnum():
-                    # client will get answer if its LLIP & MAC is known
-                        if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                            ###if platform.os == "Linux":
-                            ###    for record in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log).values():
-                            ###        if record.llip == Transactions[transaction_id].ClientLLIP:
-                            ###            CollectedMACs[Transactions[transaction_id].ClientLLIP] = record
-
-                            # complete MAC collection
-                            CollectMACs()
-
-                            # when still no trace of the client in neighbor cache then send silly signal back
+                        # if request was not addressed to multicast address resend it please!
+                        if Transactions[transaction_id].Interface == "":
+                            self.build_response(7, transaction_id, [13], status=5)
+                            log.info("TransactionID: %s | %s" % (transaction_id, "Multicast necessary" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                        else:
+                            # client will get answer if its LLIP & MAC is known
                             if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                # if not known send status code option failure to get
-                                # LLIP/MAC mapping from neighbor cache
-                                # status code "Success" sounds silly but works best
-                                self.build_response(7, transaction_id, [13], status=0)
-                                # complete MAC collection
+                                # complete MAC collection - will make most sence on Linux and its native neighborcache access
                                 CollectMACs()
 
-                            # try to add client MAC address to transaction object
-                            try:
-                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
-                            except:
-                                # MAC not yet found :-(
-                                if cfg.LOG_MAC_LLIP == True:
-                                    log.info("TransactionID: %s | %s" % (transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                                # when still no trace of the client in neighbor cache then send silly signal back
+                                if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                                    # if not known send status code option failure to get
+                                    # LLIP/MAC mapping from neighbor cache
+                                    # status code "Success" sounds silly but works best
+                                    self.build_response(7, transaction_id, [13], status=0)
+                                    # complete MAC collection
+                                    CollectMACs()
 
-                        # if finally there is some info about the client try to answer the request
-                        if Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                            if not Transactions[transaction_id].MAC:
-                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
+                                # try to add client MAC address to transaction object
+                                try:
+                                    Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
+                                except:
+                                    # MAC not yet found :-(
+                                    if cfg.LOG_MAC_LLIP == True:
+                                        log.info("TransactionID: %s | %s" % (transaction_id, "MAC address for LinkLocalIP %s unknown" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
 
-                            # ADVERTISE
-                            # if last request was a SOLICIT send an ADVERTISE (type 2) back
-                            if Transactions[transaction_id].LastMessageReceivedType == 1 \
-                               and Transactions[transaction_id].RapidCommit == False:
-                                # preference option (7) is for free
-                                self.build_response(2, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
+                            # if finally there is some info about the client try to answer the request
+                            if Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                                if not Transactions[transaction_id].MAC:
+                                    Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
 
-                                # store leases for addresses and lock advertised address
-                                volatilestore.store_lease(transaction_id)
+                                # ADVERTISE
+                                # if last request was a SOLICIT send an ADVERTISE (type 2) back
+                                if Transactions[transaction_id].LastMessageReceivedType == 1 \
+                                   and Transactions[transaction_id].RapidCommit == False:
+                                    # preference option (7) is for free
+                                    self.build_response(2, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
 
-                            # REQUEST
-                            # if last request was a REQUEST (type 3) send a REPLY (type 7) back
-                            elif Transactions[transaction_id].LastMessageReceivedType == 3 or \
-                                 (Transactions[transaction_id].LastMessageReceivedType == 1 and \
-                                  Transactions[transaction_id].RapidCommit == True):
-                                # preference option (7) is for free
-                                # if RapidCommit was set give it back
-                                if not Transactions[transaction_id].RapidCommit:
+                                    # store leases for addresses and lock advertised address
+                                    volatilestore.store_lease(transaction_id)
+
+                                # REQUEST
+                                # if last request was a REQUEST (type 3) send a REPLY (type 7) back
+                                elif Transactions[transaction_id].LastMessageReceivedType == 3 or \
+                                     (Transactions[transaction_id].LastMessageReceivedType == 1 and \
+                                      Transactions[transaction_id].RapidCommit == True):
+                                    # preference option (7) is for free
+                                    # if RapidCommit was set give it back
+                                    if not Transactions[transaction_id].RapidCommit:
+                                        self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
+                                    else:
+                                        self.build_response(7, transaction_id, [3] + [7] + [14] + Transactions[transaction_id].OptionsRequest)
+                                    # store leases for addresses
+                                    volatilestore.store_lease(transaction_id)
+                                    if cfg.DNS_UPDATE:
+                                        DNSUpdate(transaction_id)
+
+                                # CONFIRM
+                                # if last request was a CONFIRM (4) send a REPLY (type 7) back
+                                # Due to problems with different clients they will get a not-available-reply
+                                # but the next ADVERTISE will offer them the last known and still active
+                                # lease. This makes sense in case of fixed MAC-based, addresses, ranges and
+                                # ID-based addresses, Random addresses will be recalculated
+                                elif Transactions[transaction_id].LastMessageReceivedType == 4:
+                                    # the RFC 3315 is a little bit confusing regarding CONFIRM
+                                    # messages so it won't hurt to simply let the client
+                                    # solicit addresses again via answering "NoBinding"
+                                    self.build_response(7, transaction_id, [13], status=3)
+
+                                # RENEW
+                                # if last request was a RENEW (type 5) send a REPLY (type 7) back
+                                elif Transactions[transaction_id].LastMessageReceivedType == 5:
                                     self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
-                                else:
-                                    self.build_response(7, transaction_id, [3] + [7] + [14] + Transactions[transaction_id].OptionsRequest)
-                                # store leases for addresses
-                                volatilestore.store_lease(transaction_id)
-                                if cfg.DNS_UPDATE:
-                                    DNSUpdate(transaction_id)
+                                    # store leases for addresses
+                                    volatilestore.store_lease(transaction_id)
+                                    if cfg.DNS_UPDATE:
+                                        DNSUpdate(transaction_id)
 
-                            # CONFIRM
-                            # if last request was a CONFIRM (4) send a REPLY (type 7) back
-                            # Due to problems with different clients they will get a not-available-reply
-                            # but the next ADVERTISE will offer them the last known and still active
-                            # lease. This makes sense in case of fixed MAC-based, addresses, ranges and
-                            # ID-based addresses, Random addresses will be recalculated
-                            elif Transactions[transaction_id].LastMessageReceivedType == 4:
-                                # Windows seems to have a problem with CONFIRM messages
-                                # Microsoft Enterprise Number EN is 311
-                                #if Transactions[transaction_id].VendorClassEN == 311 and\
-                                #   Transactions[transaction_id].VendorClassData.startswith("MSFT"):
-                                #    # try with error to force new solicit
-                                #    #self.build_response(7, transaction_id, [13], status=1)
-                                #    self.build_response(7, transaction_id, [13], status=4)
-                                #
-                                #else:
-                                #    # the others need to be tested...
-                                #    ###self.build_response(7, transaction_id, [3] + Transactions[transaction_id].OptionsRequest)
-                                #    # store leases for addresses
-                                #    ###volatilestore.store_lease(transaction_id)
-                                #    self.build_response(7, transaction_id, [13], status=4)
-                                #    pass
+                                # REBIND
+                                # if last request was a REBIND (type 6) send a REPLY (type 7) back
+                                elif Transactions[transaction_id].LastMessageReceivedType == 6:
+                                    self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
+                                    # store leases for addresses
+                                    volatilestore.store_lease(transaction_id)
 
-                                # the RFC 3315 is a little bit confusing regarding CONFIRM
-                                # messages so it won't hurt to simply let the client
-                                # solicit addresses again via answering "NotOnLink"
-                                #self.build_response(7, transaction_id, [13], status=4)
-                                # status 3 "NoBinding" might be more appropriate
-                                self.build_response(7, transaction_id, [13], status=3)
-
-                            # RENEW
-                            # if last request was a RENEW (type 5) send a REPLY (type 7) back  
-                            elif Transactions[transaction_id].LastMessageReceivedType == 5:
-                                self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
-                                # store leases for addresses
-                                volatilestore.store_lease(transaction_id)
-                                if cfg.DNS_UPDATE:
-                                    DNSUpdate(transaction_id)
-
-                            # REBIND
-                            # if last request was a REBIND (type 6) send a REPLY (type 7) back  
-                            elif Transactions[transaction_id].LastMessageReceivedType == 6:
-                                self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
-                                # store leases for addresses
-                                volatilestore.store_lease(transaction_id)
-
-                            # RELEASE
-                            # if last request was a RELEASE (type 8) send a REPLY (type 7) back
-                            elif Transactions[transaction_id].LastMessageReceivedType == 8:                            
-                                if cfg.DNS_UPDATE:
-                                    #  build client to be able to delete it from DNS
-                                    if Transactions[transaction_id].Client == None:
-                                        Transactions[transaction_id].Client = BuildClient(transaction_id)                                    
+                                # RELEASE
+                                # if last request was a RELEASE (type 8) send a REPLY (type 7) back
+                                elif Transactions[transaction_id].LastMessageReceivedType == 8:
+                                    if cfg.DNS_UPDATE:
+                                        #  build client to be able to delete it from DNS
+                                        if Transactions[transaction_id].Client == None:
+                                            Transactions[transaction_id].Client = BuildClient(transaction_id)
+                                        for a in Transactions[transaction_id].Addresses:
+                                            DNSDelete(transaction_id, address=a, action="release")
                                     for a in Transactions[transaction_id].Addresses:
-                                        DNSDelete(transaction_id, address=a, action="release")
-                                for a in Transactions[transaction_id].Addresses:
-                                    # free lease
-                                    volatilestore.release_lease(a)   
-                                # send status code option (type 13) with success (type 0) 
-                                self.build_response(7, transaction_id, [13], status=0)
+                                        # free lease
+                                        volatilestore.release_lease(a)
+                                    # send status code option (type 13) with success (type 0)
+                                    self.build_response(7, transaction_id, [13], status=0)
 
-                            # DECLINE
-                            # if last request was a DECLINE (type 9) send a REPLY (type 7) back  
-                            elif Transactions[transaction_id].LastMessageReceivedType == 9:
-                                # maybe has to be refined - now only a status code "NoBinding" is answered
-                                self.build_response(7, transaction_id, [13], status=3)
+                                # DECLINE
+                                # if last request was a DECLINE (type 9) send a REPLY (type 7) back
+                                elif Transactions[transaction_id].LastMessageReceivedType == 9:
+                                    # maybe has to be refined - now only a status code "NoBinding" is answered
+                                    self.build_response(7, transaction_id, [13], status=3)
 
-                            # INFORMATION-REQUEST    
-                            # if last request was an INFORMATION-REQUEST (type 11) send a REPLY (type 7) back  
-                            elif Transactions[transaction_id].LastMessageReceivedType == 11:
-                                self.build_response(7, transaction_id, Transactions[transaction_id].OptionsRequest)
+                                # INFORMATION-REQUEST
+                                # if last request was an INFORMATION-REQUEST (type 11) send a REPLY (type 7) back
+                                elif Transactions[transaction_id].LastMessageReceivedType == 11:
+                                    self.build_response(7, transaction_id, Transactions[transaction_id].OptionsRequest)
 
-                            # general error - statuscode 1 "Failure"
-                            else:
-                                # send Status Code Option (type 13) with status code "UnspecFail"
-                                self.build_response(7, transaction_id, [13], status=1)
+                                # general error - statuscode 1 "Failure"
+                                else:
+                                    # send Status Code Option (type 13) with status code "UnspecFail"
+                                    self.build_response(7, transaction_id, [13], status=1)
 
                     # count requests of transaction
                     # if there will be too much something went wrong
