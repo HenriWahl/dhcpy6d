@@ -1,3 +1,10 @@
+dhcpy6d (0.3.99+git2014.10.14-1) UNRELEASED; urgency=medium
+
+  * New upstream release candidate + snapshot
+    + send StatusCode 5 "UseMultiCast" if clients request from non-LLIP-address
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 14 Oct 2014 15:18:00 +0200
+
 dhcpy6d (0.3.99+git2014.10.12-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate + snapshot
