@@ -1141,7 +1141,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         # if request was not addressed to multicast address resend it please!
                         if Transactions[transaction_id].Interface == "":
                             self.build_response(7, transaction_id, [13], status=5)
-                            log.info("TransactionID: %s | %s" % (transaction_id, "Multicast necessary" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                            log.info("TransactionID: %s | %s" % (transaction_id, "Multicast necessary but message came from %s" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
                         else:
                             # client will get answer if its LLIP & MAC is known
                             if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
