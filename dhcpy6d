@@ -1138,10 +1138,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
                     if Transactions[transaction_id].DUID.isalnum():
-                        # if request was not addressed to multicast address resend it please!
+                        # if request was not addressed to multicast do nothing but logging
                         if Transactions[transaction_id].Interface == "":
-                            self.build_response(7, transaction_id, [13], status=5)
                             log.info("TransactionID: %s | %s" % (transaction_id, "Multicast necessary but message came from %s" % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                            # reset transaction counter
+                            Transactions[transaction_id].Counter = 0
                         else:
                             # client will get answer if its LLIP & MAC is known
                             if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
