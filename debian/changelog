@@ -1,4 +1,4 @@
-dhcpy6d (0.4) UNRELEASED; urgency=medium
+dhcpy6d (0.4-1) UNRELEASED; urgency=medium
 
   * New upstream release
     + new options: log_mac_llip, cache_mac_llip (avoids cache poisoning)
