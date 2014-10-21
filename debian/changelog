@@ -1,7 +1,12 @@
 dhcpy6d (0.4-1) UNRELEASED; urgency=medium
 
+  [ Henri Wahl ]
   * New upstream release
     + new options: log_mac_llip, cache_mac_llip (avoids cache poisoning)
+
+  [ Axel Beckert ]
+  * Add get-orig-source target to debian/rules for easier snapshot
+    packaging.
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 21 Oct 2014 19:00:00 +0200
 
