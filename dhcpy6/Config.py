@@ -487,7 +487,7 @@ class Config(object):
                                                    pattern="fdef0000000000000000000000000001",
                                                    aclass="default",
                                                    atype="fixed",
-                                                   prototype="fdef0000000000000000000000000000")              
+                                                   prototype="fdef0000000000000000000000000000")
         
         # config file from command line
         # default config file and cli values

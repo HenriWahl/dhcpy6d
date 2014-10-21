@@ -1,3 +1,10 @@
+dhcpy6d (0.4) UNRELEASED; urgency=medium
+
+  * New upstream release
+    + reverted send StatusCode 5 "UseMultiCast" to ignore unicast clients
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 21 Oct 2014 19:00:00 +0200
+
 dhcpy6d (0.3.99+git2014.10.14-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate + snapshot
