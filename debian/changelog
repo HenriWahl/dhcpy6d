@@ -8,6 +8,7 @@ dhcpy6d (0.4-1) UNRELEASED; urgency=medium
   * Add get-orig-source target to debian/rules for easier snapshot
     packaging.
   * Depend on ${python:Depends} instead of a hardcoded python (>= 2.6).
+  * Add "Pre-Depends: dpkg (>= 1.16.5) for "start-stop-daemon --no-close"
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 21 Oct 2014 19:00:00 +0200
 

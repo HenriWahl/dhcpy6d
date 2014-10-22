@@ -19,6 +19,7 @@ Depends: adduser,
          python (>= 2.6),
          ${misc:Depends},
          ${python:Depends}
+Pre-Depends: dpkg (>= 1.16.5)
 Suggests: python-dnspython,
           python-mysqldb
 Description: MAC address aware DHCPv6 server written in Python
