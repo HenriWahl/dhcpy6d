@@ -1,7 +1,22 @@
 # encoding: utf8
 #
-# config
+# DHCPy6d DHCPv6 Daemon
 #
+# Copyright (C) 2009-2014 Henri Wahl <h.wahl@ifw-dresden.de>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 import sys 
 import ConfigParser
@@ -51,7 +66,7 @@ class Config(object):
 
     def __init__(self):
         """
-            evaluate config file
+            define defaults
         """
         # default settings
         # Server cfg.INTERFACE + addresses
@@ -727,11 +742,10 @@ class ConfigAddress(object):
         
     def _build_prototype(self):
         """
-        build prototype of pattern for later comparison with leases
+            build prototype of pattern for later comparison with leases
         """
         a = self.PATTERN
-        #a = a.replace("$prefix$", self.PREFIX)
-        
+
         # check different client address categories - to be extended!
         if self.CATEGORY in ["mac", "id", "range", "random"]:
             if self.CATEGORY == "mac":
@@ -754,9 +768,9 @@ class ConfigAddress(object):
     
     def matches_prototype(self, address):
         """
-        test if given address matches prototype and therefore this address' DNS zone
-        information might be used
-        only used for address types, not client instances
+            test if given address matches prototype and therefore this address' DNS zone
+            information might be used
+            only used for address types, not client instances
         """
         match = False
         # compare all chars of address and prototype, if they do match or
@@ -773,19 +787,16 @@ class ConfigAddress(object):
 
 class ClientAddress(object):
     """
-    class for address definition, used for clients
+        class for address definition, used for clients
     """
     def __init__(self, address=None,
                  ia_type="na",
                  prefix_length="64",
                  category="random",
-                 #pattern="2001:db8::$random64$",\
                  preferred_lifetime=0,
                  valid_lifetime=0,
                  atype="default",
                  aclass="default",
-                 #prototype="",\
-                 #range="",\
                  dns_update=False,
                  dns_zone="",
                  dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",
@@ -794,21 +805,15 @@ class ClientAddress(object):
                  ):
         self.PREFIX_LENGTH = prefix_length
         self.CATEGORY = category
-        #self.PATTERN = pattern
         self.IA_TYPE = ia_type
         self.PREFERRED_LIFETIME = preferred_lifetime
         self.VALID_LIFETIME = valid_lifetime
         self.ADDRESS = address
-        #self.RANGE = range.lower()
         # because "class" is a python keyword we use "aclass" here
         # this property stores the class the address is used for
         self.CLASS = aclass
         # same with type
         self.TYPE = atype
-        # a prototypical address to be compared with leases given by
-        # clients - if prototype and lease address kind of match
-        # give back the lease as valid
-        #self.PROTOTYPE = prototype
         # flag for updating address in DNS or not
         self.DNS_UPDATE = dns_update
         # DNS zone data
@@ -821,7 +826,7 @@ class ClientAddress(object):
             
 class Class(object):
     """
-    class for class definition
+        class for class definition
     """
     def __init__(self, name=""):
         self.NAME = name

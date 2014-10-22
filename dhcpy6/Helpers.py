@@ -1,7 +1,22 @@
 # encoding: utf8
 #
-# some little helping helpers
+# DHCPy6d DHCPv6 Daemon
 #
+# Copyright (C) 2009-2014 Henri Wahl <h.wahl@ifw-dresden.de>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 import binascii
 import random
@@ -117,7 +132,7 @@ def BuildOption(number, payload):
     
 def CorrectMAC(mac):
     """
-    OpenBSD shortens MAC addresses in ndp output - here they grow again
+        OpenBSD shortens MAC addresses in ndp output - here they grow again
     """
     decompressed = map(lambda m: "%02x" % (int(m, 16)), mac.split(":")) 
     return ":".join(decompressed)
@@ -125,7 +140,7 @@ def CorrectMAC(mac):
 
 def ColonifyMAC(mac):
     """
-    return complete MAC address with colons 
+        return complete MAC address with colons
     """
     return ":".join((mac[0:2], mac[2:4], mac[4:6],\
                      mac[6:8], mac[8:10], mac[10:12]))
@@ -188,7 +203,7 @@ def DecompressIP6(ip6, strict=True):
 
 def ColonifyIP6(address):
     """
-    return complete IPv6 address with colons 
+        return complete IPv6 address with colons
     """
     if address:
         return ":".join((address[0:4], address[4:8], address[8:12], address[12:16],\
@@ -199,8 +214,8 @@ def ColonifyIP6(address):
 
 def ErrorExit(message="An error occured.", status=1):
     """
-    exit with given error message
-    allow prefix, especially for spitting out section of configuration errors
+        exit with given error message
+        allow prefix, especially for spitting out section of configuration errors
     """
     sys.stderr.write("\n%s\n\n" % (message))
     sys.exit(status)
@@ -208,7 +223,7 @@ def ErrorExit(message="An error occured.", status=1):
     
 def ListifyOption(option):
     """
-    return any comma or space separated option as list
+        return any comma or space separated option as list
     """
     if option:
         lex = shlex.shlex(option)
@@ -219,7 +234,6 @@ def ListifyOption(option):
         return None
 
 
-# neighbor cache object
 class NeighborCacheRecord(object):
     """
         object for neighbor cache entries to be returned by GetNeighborCacheLinux() and in CollectedMACs
@@ -268,7 +282,6 @@ def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
         if s not in r: break # no more data
         answer += s.recv(16384)
 
-    ###result = []
     result = {}
     curr_pos = 0
     answer_pos = 0

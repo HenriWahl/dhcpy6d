@@ -1,9 +1,22 @@
 # encoding: utf8
 #
-# storage machinery:
-# - store volatile info like leases
-# - get stored configuratiion info for clients
+# DHCPy6d DHCPv6 Daemon
 #
+# Copyright (C) 2009-2014 Henri Wahl <h.wahl@ifw-dresden.de>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 import sys
 import datetime
@@ -17,7 +30,7 @@ import grp
 
 class QueryQueue(threading.Thread):
     """
-    Pump queries around
+        Pump queries around
     """
     def __init__(self, cfg, store, queryqueue, answerqueue):
         threading.Thread.__init__(self, name="QueryQueue")
@@ -29,8 +42,8 @@ class QueryQueue(threading.Thread):
 
     def run(self):
         """
-        receive queries and ask the DB interface for answers which will be put into
-        answer queue
+            receive queries and ask the DB interface for answers which will be put into
+            answer queue
         """
         while True:
             query = self.queryqueue.get()
@@ -46,7 +59,7 @@ class QueryQueue(threading.Thread):
     
 class Store(object):
     """
-    abstract class to present MySQL or SQLlite
+        abstract class to present MySQL or SQLlite
     """
     def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
         self.cfg = cfg
@@ -64,7 +77,7 @@ class Store(object):
 
     def query(self, query):
         """
-        put queries received into query queue and return the answers from answer queue
+            put queries received into query queue and return the answers from answer queue
         """
         self.queryqueue.put(query)
         answer = self.answerqueue.get()       
@@ -73,7 +86,7 @@ class Store(object):
     
     def store_lease(self, transaction_id):
         """
-        store lease in lease DB
+            store lease in lease DB
         """
         # only if client exists
         if self.Transactions[transaction_id].Client:           
@@ -140,10 +153,10 @@ class Store(object):
 
     def get_range_lease_for_recycling(self, prefix="", frange="", trange="", duid="", mac=""):
         """
-        ask DB for last known leases of an already known host to be recycled
-        this is most useful for CONFIRM-requests that will get a not-available-answer but get an
-        ADVERTISE with the last known-as-good address for a client
-        SOLICIT message type is 1
+            ask DB for last known leases of an already known host to be recycled
+            this is most useful for CONFIRM-requests that will get a not-available-answer but get an
+            ADVERTISE with the last known-as-good address for a client
+            SOLICIT message type is 1
         """
         query = "SELECT address FROM %s WHERE "\
                 "category = 'range' AND "\
@@ -166,7 +179,7 @@ class Store(object):
 
     def get_highest_range_lease(self, prefix="", frange="", trange=""):
         """
-        ask DB for highest known leases - if necessary range sensitive
+            ask DB for highest known leases - if necessary range sensitive
         """
         query = "SELECT address FROM %s WHERE active = 1 AND "\
                 "category = 'range' AND "\
@@ -182,8 +195,8 @@ class Store(object):
 
     def get_oldest_inactive_range_lease(self, prefix="", frange="", trange=""):
         """
-        ask DB for oldest known inactive lease to minimize chance of collisions
-        ordered by valid_until to get leases that are free as long as possible
+            ask DB for oldest known inactive lease to minimize chance of collisions
+            ordered by valid_until to get leases that are free as long as possible
         """
         query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
                 "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
@@ -198,7 +211,7 @@ class Store(object):
         
     def get_host_lease(self, address):
         """
-        get the hostname, DUID, MAC and IAID to verify a lease to delete its address in the DNS
+            get the hostname, DUID, MAC and IAID to verify a lease to delete its address in the DNS
         """
         query = "SELECT DISTINCT hostname, duid, mac, iaid FROM leases WHERE address='%s'" % (address)
         answer = self.query(query)       
@@ -214,8 +227,8 @@ class Store(object):
     
     def release_lease(self, address):
         """
-        release a lease via setting its active flag to False
-        set last_message to 8 because of RELEASE messages having this message id
+            release a lease via setting its active flag to False
+            set last_message to 8 because of RELEASE messages having this message id
         """
         query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
         answer = self.query(query)
@@ -223,7 +236,7 @@ class Store(object):
 
     def check_number_of_leases(self, prefix="", frange="", trange=""):
         """
-        check how many leases are stored - used to find out if address range has been exceeded
+            check how many leases are stored - used to find out if address range has been exceeded
         """
         query = "SELECT COUNT(address) FROM leases WHERE address LIKE '%s%%' AND "\
                 "'%s' <= address AND address <= '%s'" % (prefix, prefix+frange, prefix+trange)
@@ -237,7 +250,7 @@ class Store(object):
 
     def check_lease(self, address, transaction_id):
         """
-        check state of a lease for REBIND and RENEW messages
+            check state of a lease for REBIND and RENEW messages
         """
         # attributes to identify host and lease
         query = "SELECT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
@@ -253,7 +266,7 @@ class Store(object):
 
     def check_advertised_lease(self, transaction_id="", category="", atype=""):
         """
-        check if there are already advertised addresses for client
+            check if there are already advertised addresses for client
         """
         # attributes to identify host and lease
         query = "SELECT address FROM %s WHERE last_message = 1\
@@ -276,7 +289,7 @@ class Store(object):
     
     def release_free_leases(self, timestamp=datetime.datetime.now()):
         """
-        release all invalid leases via setting their active flag to False
+            release all invalid leases via setting their active flag to False
         """
         query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
         answer = self.query(query)    
@@ -285,8 +298,8 @@ class Store(object):
     
     def remove_leases(self, category="random", timestamp=datetime.datetime.now()):
         """
-        remove all leases of a certain category like random - they will grow the database 
-        but be of no further use
+            remove all leases of a certain category like random - they will grow the database
+            but be of no further use
         """
         query = "DELETE FROM %s WHERE active = 0 AND category = '%s' AND valid_until < '%s'" % (self.table_leases, category, timestamp)
         answer = self.query(query)    
@@ -295,8 +308,8 @@ class Store(object):
 
     def unlock_unused_advertised_leases(self, timestamp=datetime.datetime.now()):
         """
-        unlock leases marked as advertised but apparently never been delivered
-        let's say a client should have requested its formerly advertised address after 1 minute
+            unlock leases marked as advertised but apparently never been delivered
+            let's say a client should have requested its formerly advertised address after 1 minute
         """
         query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
         answer = self.query(query)
@@ -305,7 +318,7 @@ class Store(object):
 
     def build_config_from_db(self, transaction_id):
         """
-        get client config from db and build the appropriate config objects and indices
+            get client config from db and build the appropriate config objects and indices
         """
         if self.Transactions[transaction_id].ClientConfigDB == None:
             query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
@@ -358,7 +371,7 @@ class Store(object):
                                   
     def get_client_config_by_mac(self, transaction_id):
         """
-        get host and its information belonging to that mac
+            get host and its information belonging to that mac
         """       
         hosts = list()
         mac = self.Transactions[transaction_id].MAC
@@ -372,7 +385,7 @@ class Store(object):
         
     def get_client_config_by_duid(self, transaction_id):
         """
-        get host and its information belonging to that DUID
+            get host and its information belonging to that DUID
         """
         # get client config that most probably seems to fit
         #self.build_config_from_db(transaction_id)                
@@ -436,7 +449,6 @@ class Store(object):
                 try:
                     # m[0] is LLIP, m[1] is the matching MAC
                     # interface is ignored and timestamp comes with instance of NeighborCacheRecord()
-                    ###self.CollectedMACs[m[0]] = m[1]
                     self.CollectedMACs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1])
                 except Exception, err:
                     #Log("ERROR: CollectMACsFromDB(): " + str(err))
@@ -448,7 +460,7 @@ class Store(object):
         
     def DBQuery(self, query):
         """
-        no not execute query on DB - dummy
+            no not execute query on DB - dummy
         """
         # return empty tuple as dummy
         return ()
@@ -456,7 +468,7 @@ class Store(object):
 
 class SQLite(Store):
     """
-    file-based SQLite database, might be an option for single installations
+        file-based SQLite database, might be an option for single installations
     """
     def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs, storage_type="volatile"):
 
