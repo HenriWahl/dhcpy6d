@@ -140,6 +140,9 @@ fi
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
 
 %changelog
+* Tue Oct 21 2014 Henri Wahl <h.wahl@ifw-dresden.de> - 0.4-1
+- New upstream release
+
 * Sun Jun 09 2013 Marcin Dulak <Marcin.Dulak@gmail.com> - 0.2-1
 - RHEL and openSUSE versions based on Christopher Meng's spec
 

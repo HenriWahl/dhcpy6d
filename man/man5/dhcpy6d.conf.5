@@ -292,6 +292,10 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 A class can contain as many addresses as needed. Their names have to be separated by spaces.
 
 .TP
+.B answer = normal | noaddress | none
+Normally a client will get an answer, but if for whatever reason is a need to give it an NoAddrAvail message back or completely ignore the client it can be set here.
+
+.TP
 .B nameserver = <nameserver-address> [<nameserver-address> ...]
 Each class can have its own nameservers. If this option is used it replaces the nameservers from general settings.
 

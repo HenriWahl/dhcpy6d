@@ -1,17 +1,16 @@
-dhcpy6d (0.3.99+git2014.10.12-1) UNRELEASED; urgency=medium
+dhcpy6d (0.4-1) UNRELEASED; urgency=medium
 
-  * New upstream release candidate + snapshot
-    + refined option to disable longterm cache of MAC addresses to avoid poisoning
-    + new options: log_mac_addresses, cache_mac_llip
+  [ Henri Wahl ]
+  * New upstream release
+    + new options: log_mac_llip, cache_mac_llip (avoids cache poisoning)
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Sun, 12 Oct 2014 01:10:00 +0200
+  [ Axel Beckert ]
+  * Add get-orig-source target to debian/rules for easier snapshot
+    packaging.
+  * Depend on ${python:Depends} instead of a hardcoded python (>= 2.6).
+  * Add "Pre-Depends: dpkg (>= 1.16.5) for "start-stop-daemon --no-close"
 
-dhcpy6d (0.3.99+git2014.10.08-1) UNRELEASED; urgency=medium
-
-  * New upstream release candidate + snapshot
-    + added option to disable longterm cache of MAC addresses to avoid poisoning
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 08 Oct 2014 15:09:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 21 Oct 2014 19:00:00 +0200
 
 dhcpy6d (0.3.99+git2014.09.18-1) unstable; urgency=medium
 

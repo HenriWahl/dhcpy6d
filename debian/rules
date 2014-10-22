@@ -7,3 +7,9 @@ override_dh_auto_install:
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/LICENSE
 	rm -f debian/dhcpy6d/var/log/dhcpy6d.log
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/*.[0-9]
+
+# make -f debian/rules get-orig-source
+get-orig-source:
+	python setup.py sdist
+	mv -v dist/dhcpy6d-*.tar.gz ../dhcpy6d_`dpkg-parsechangelog -SVersion | cut -d- -f1`.orig.tar.gz
+	rm -r MANIFEST dist

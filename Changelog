@@ -1,0 +1,54 @@
+Changelog for dhcpy6d
+
+2014-10-22 0.4
+
+    listen on VLAN interfaces
+    access neighbor cache natively on Linux
+    allows empty answers
+    do not cache MAC/LLIP addresses longterm as default
+    ability to generate server DUID
+    complete manpages
+    more complete configuration correctness checks
+    fixed single address definition error
+
+2013-07-29 0.3
+
+    added ability to run as non-privileged user
+
+2013-05-31 0.2
+
+    Attention: leases database scheme changed. Possibly leases database
+        has to be recreated!
+    'range' address lease management got more robust
+    logging output changed
+
+2013-05-23 0.1.5
+
+    fixed race condition bug in category 'range' address lease storage
+
+2013-05-18 0.1.4.1
+
+    fixed lease storage bug
+
+2013-05-17 0.1.4
+
+    fixed race condition bug with already advertised addresses
+
+2013-05-07 0.1.3
+
+    added RFC 3646 compliant domain search list option 24
+    reuse addresses of category "range" in a sensible way
+    fixed bug with case sensitive textfile client config options
+
+2013-03-19 0.1.2
+
+    fixed multiple addresses renew bug
+
+2013-01-15 0.1.1
+
+    reverted to Handler.finish() method to prevent empty extra answer
+        packets
+
+2013-01-11 0.1
+
+    initial stable release
