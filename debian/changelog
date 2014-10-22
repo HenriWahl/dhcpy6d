@@ -1,4 +1,4 @@
-dhcpy6d (0.4-1) UNRELEASED; urgency=medium
+dhcpy6d (0.4-1) unstable; urgency=low
 
   [ Henri Wahl ]
   * New upstream release
@@ -11,7 +11,7 @@ dhcpy6d (0.4-1) UNRELEASED; urgency=medium
   * Add "Pre-Depends: dpkg (>= 1.16.5) for "start-stop-daemon --no-close"
   * Drop dependency on iproute/iproute2 as /sbin/ip is no more used.
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 21 Oct 2014 19:00:00 +0200
+ -- Axel Beckert <abe@debian.org>  Wed, 22 Oct 2014 21:03:56 +0200
 
 dhcpy6d (0.3.99+git2014.09.18-1) unstable; urgency=medium
 
