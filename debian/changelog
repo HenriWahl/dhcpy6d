@@ -9,6 +9,7 @@ dhcpy6d (0.4-1) UNRELEASED; urgency=medium
     packaging.
   * Depend on ${python:Depends} instead of a hardcoded python (>= 2.6).
   * Add "Pre-Depends: dpkg (>= 1.16.5) for "start-stop-daemon --no-close"
+  * Drop dependency on iproute/iproute2 as /sbin/ip is no more used.
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 21 Oct 2014 19:00:00 +0200
 
