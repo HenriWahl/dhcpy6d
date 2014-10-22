@@ -110,21 +110,16 @@ if "BSD" in OS:
 # every platform has its different output
 # dev, llip and mac are positions of output of call
 # len is minimal length a line has to have to be evaluable
-NC = { "Linux": { "call" : "/sbin/ip -6 neigh show",\
-                         "dev"  : 2,\
-                         "llip" : 0,\
-                         "mac"  : 4,\
-                         "len"  : 5},\
-        "BSD": { "call" : "/usr/sbin/ndp -a -n",\
-                         "dev"  : 2,\
-                         "llip" : 0,\
-                         "mac"  : 1,\
-                         "len"  : 3},\
-        "Darwin": { "call" : "/usr/sbin/ndp -a -n",\
-                         "dev"  : 2,\
-                         "llip" : 0,\
-                         "mac"  : 1,\
-                         "len"  : 3}
+NC = { "BSD": { "call" : "/usr/sbin/ndp -a -n",
+                "dev"  : 2,
+                "llip" : 0,
+                "mac"  : 1,
+                "len"  : 3},
+       "Darwin": { "call" : "/usr/sbin/ndp -a -n",
+                   "dev"  : 2,
+                   "llip" : 0,
+                   "mac"  : 1,
+                   "len"  : 3}
             }
 
 # libc access via ctypes, needed for interface handling, get it by Helpers.GetLibC()
@@ -616,8 +611,7 @@ def CollectMACs():
         if a client has a new MAC the LLIP changes - with privacy extension enabled anyway
         calls local ip command to get neighbor cache - any more sophisticated idea is welcome!
     
-        The Linux netlink method proved to be unstable, e.g. did not show all cache entries, so
-        it is reverted back to /sbin/ip.
+        The Linux netlink method is considered stable now.
     """
     try:
         # Linux can use kernel neighbor cache
@@ -640,12 +634,11 @@ def CollectMACs():
                 if f[NC[OS]["dev"]] in cfg.INTERFACE and len(f) >= NC[OS]["len"] :
                     # get rid of %interface
                     f[NC[OS]["llip"]] = DecompressIP6(f[NC[OS]["llip"]].split("%")[0])
-                    # correct maybe shortenend MAC
+                    # correct maybe shortened MAC
                     f[NC[OS]["mac"]] = CorrectMAC(f[NC[OS]["mac"]])
                     # put non yet existing LLIPs into dictionary - if they have MACs
                     if not CollectedMACs.has_key(f[NC[OS]["llip"]]) and f[NC[OS]["llip"]].lower().startswith("fe80")\
                        and ":" in f[NC[OS]["mac"]]:
-                        #CollectedMACs[f[NC[OS]["llip"]]] = f[NC[OS]["mac"]]
                         CollectedMACs[f[NC[OS]["llip"]]] = NeighborCacheRecord(llip=f[NC[OS]["llip"]],
                                                                                mac=f[NC[OS]["mac"]],
                                                                                interface=f[NC[OS]["dev"]])
