@@ -8,6 +8,7 @@ set -e
 case "$1" in
     purge)
         rm -f /var/log/dhcpy6d.log*
+        ucf --purge /etc/default/dhcpy6d
         ;;
 esac
 

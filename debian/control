@@ -17,7 +17,8 @@ Architecture: all
 Depends: adduser,
          ${misc:Depends},
          ${python:Depends}
-Pre-Depends: dpkg (>= 1.16.5)
+Pre-Depends: dpkg (>= 1.16.5),
+             ucf
 Suggests: python-dnspython,
           python-mysqldb
 Description: MAC address aware DHCPv6 server written in Python
