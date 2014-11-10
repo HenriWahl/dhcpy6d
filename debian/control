@@ -15,10 +15,10 @@ Standards-Version: 3.9.6
 Package: dhcpy6d
 Architecture: all
 Depends: adduser,
+         ucf,
          ${misc:Depends},
          ${python:Depends}
-Pre-Depends: dpkg (>= 1.16.5),
-             ucf
+Pre-Depends: dpkg (>= 1.16.5)
 Suggests: python-dnspython,
           python-mysqldb
 Description: MAC address aware DHCPv6 server written in Python
