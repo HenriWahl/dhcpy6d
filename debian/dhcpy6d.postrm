@@ -8,7 +8,16 @@ set -e
 case "$1" in
     purge)
         rm -f /var/log/dhcpy6d.log*
-        ucf --purge /etc/default/dhcpy6d
+        # Taken from ucf's postrm example
+        for ext in '~' '%' .bak .ucf-new .ucf-old .ucf-dist; do
+            rm -f "/etc/default/dhcpy6d$ext"
+        done
+        if which ucf >/dev/null; then
+            ucf --purge /etc/default/dhcpy6d
+        fi
+        if which ucfr >/dev/null; then
+            ucfr --purge dhcpy6d /etc/default/dhcpy6d
+        fi
         ;;
 esac
 
