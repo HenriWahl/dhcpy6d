@@ -7,6 +7,7 @@ override_dh_auto_install:
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/LICENSE
 	rm -f debian/dhcpy6d/var/log/dhcpy6d.log
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/*.[0-9]
+	mv -v debian/dhcpy6d/var/lib/dhcpy6d/volatile.sqlite debian/dhcpy6d/usr/share/dhcpy6d/
 
 # make -f debian/rules get-orig-source
 get-orig-source:

@@ -4,6 +4,9 @@ dhcpy6d (0.4-2) UNRELEASED; urgency=medium
     + Install file to /usr/share/dhcpy6d/default/dhcpy6d instead, remove
       symlink debian/dhcpy6d.default, add debian/dhcpy6d.install.
     + Depend on ucf.
+  * Install volatile.sqlite into /usr/share/dhcpy6d/ and copy it to
+    /var/lib/dhcpy6d/volatile.sqlite during postinst only if it doesn't
+    yet exist. Remove it upon purge. (Closes: #768989)
 
  -- Axel Beckert <abe@debian.org>  Fri, 07 Nov 2014 19:46:05 +0100
 

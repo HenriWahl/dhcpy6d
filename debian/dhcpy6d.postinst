@@ -50,8 +50,11 @@ case "$1" in
     if [ ! -e /var/log/dhcpy6d.log ]; then
         touch /var/log/dhcpy6d.log
     fi
-    chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log
-    chmod 0770 /var/log/dhcpy6d.log
+    if [ ! -e /var/lib/dhcpy6d/volatile.sqlite ]; then
+        cp /usr/share/dhcpy6d/volatile.sqlite /var/lib/dhcpy6d/volatile.sqlite
+    fi
+    chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
+    chmod 0770 /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
     # 6. add DUID entry to /etc/default/dhcpy6d if not yet existing
     TMPFILE=`mktemp`
     cat /usr/share/dhcpy6d/default/dhcpy6d  > "${TMPFILE}"
