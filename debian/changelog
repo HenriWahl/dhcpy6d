@@ -7,6 +7,9 @@ dhcpy6d (0.4-2) UNRELEASED; urgency=medium
   * Install volatile.sqlite into /usr/share/dhcpy6d/ and copy it to
     /var/lib/dhcpy6d/volatile.sqlite during postinst only if it doesn't
     yet exist. Remove it upon purge. (Closes: #768989)
+  * Both fixes above together also remove unnecessary executable bits.
+    (Else the fix for #767817 newly introduces the lintian warning
+    executable-not-elf-or-script; closes: #769006)
 
  -- Axel Beckert <abe@debian.org>  Fri, 07 Nov 2014 19:46:05 +0100
 
