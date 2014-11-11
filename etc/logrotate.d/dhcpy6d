@@ -4,6 +4,6 @@
 	rotate 4
 	compress
 	notifempty
-	create 770 dhcpy6d dhcpy6d
+	create 660 dhcpy6d dhcpy6d
 }
 
