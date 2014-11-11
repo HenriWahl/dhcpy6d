@@ -1,1 +1,9 @@
-../etc/logrotate.d/dhcpy6d
+/var/log/dhcpy6d.log {
+	weekly
+	missingok
+	rotate 4
+	compress
+	notifempty
+	create 660 dhcpy6d dhcpy6d
+}
+

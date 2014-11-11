@@ -10,6 +10,9 @@ dhcpy6d (0.4-2) UNRELEASED; urgency=medium
   * Both fixes above together also remove unnecessary executable bits.
     (Else the fix for #767817 newly introduces the lintian warning
     executable-not-elf-or-script; closes: #769006)
+  * Additionally replace symlink debian/dhcpy6d.logrotate with a patched
+    copy of etc/logrotate.d/dhcpy6d to remove the executable bit also
+    there. (Fixes another facet of #769006)
 
  -- Axel Beckert <abe@debian.org>  Fri, 07 Nov 2014 19:46:05 +0100
 
