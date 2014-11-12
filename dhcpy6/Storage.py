@@ -324,7 +324,7 @@ class Store(object):
             query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
                     hostname = '%s' OR mac LIKE '%%%s%%' OR duid = '%s'" % \
                     (self.table_hosts,\
-                     self.Transactions[transaction_id].FQDN,\
+                     self.Transactions[transaction_id].Hostname,\
                      self.Transactions[transaction_id].MAC,\
                      self.Transactions[transaction_id].DUID)
             answer = self.query(query)      
@@ -406,8 +406,8 @@ class Store(object):
         """
         # get client config that most probably seems to fit
         #self.build_config_from_db(transaction_id)
-        
-        hostname = self.Transactions[transaction_id].FQDN.split(".")[0]
+
+        hostname = self.Transactions[transaction_id].Hostname
         if hostname in self.Transactions[transaction_id].ClientConfigDB.Hosts:
             return [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
         else:
@@ -619,7 +619,7 @@ class Textfile(Store):
         """
         get host and its information by hostname
         """
-        hostname = self.Transactions[transaction_id].FQDN.split(".")[0]
+        hostname = self.Transactions[transaction_id].Hostname
         if hostname in self.Hosts:
             return [self.Hosts[hostname]]
         else:
