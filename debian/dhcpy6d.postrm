@@ -9,7 +9,7 @@ case "$1" in
     purge)
         rm -f /var/log/dhcpy6d.log* /var/lib/dhcpy6d/volatile.sqlite
         # Taken from ucf's postrm example
-        for ext in '~' '%' .bak .ucf-new .ucf-old .ucf-dist; do
+        for ext in '' '~' '%' .bak .ucf-new .ucf-old .ucf-dist; do
             rm -f "/etc/default/dhcpy6d$ext"
         done
         if which ucf >/dev/null; then
