@@ -7,7 +7,7 @@
 set -e
 
 case "$1" in
-    install|upgrade|configure)
+    configure)
 
     # Sane defaults:
 

@@ -3,6 +3,7 @@ dhcpy6d (0.4+dev-1) UNRELEASED; urgency=medium
   * New upstream snapshot
     + Removes unnecessary executable bits (see #769006) → reinstantiate
       debian/dhcpy6d.logrotate as symlink
+  * Fix postinst script to not expect preinst parameters (Closes: #768974)
 
  -- Axel Beckert <abe@debian.org>  Thu, 13 Nov 2014 17:27:18 +0100
 
