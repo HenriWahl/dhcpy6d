@@ -1,4 +1,4 @@
-dhcpy6d (0.4-2) UNRELEASED; urgency=medium
+dhcpy6d (0.4-2) unstable; urgency=medium
 
   * Handle /etc/default/dhcpy6d with ucf. (Closes: #767817)
     + Install file to /usr/share/dhcpy6d/default/dhcpy6d instead, remove
@@ -14,7 +14,7 @@ dhcpy6d (0.4-2) UNRELEASED; urgency=medium
     copy of etc/logrotate.d/dhcpy6d to remove the executable bit also
     there. (Fixes another facet of #769006)
 
- -- Axel Beckert <abe@debian.org>  Fri, 07 Nov 2014 19:46:05 +0100
+ -- Axel Beckert <abe@debian.org>  Thu, 13 Nov 2014 12:39:09 +0100
 
 dhcpy6d (0.4-1) unstable; urgency=low
 
