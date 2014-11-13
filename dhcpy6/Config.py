@@ -80,7 +80,7 @@ class Config(object):
         # lets make the water turn black... or build a shiny server DUID
         # in case someone will ever debug something here: Wireshark shows
         # year 2042 even if it is 2012 - time itself is OK
-        self.SERVERDUID = "00010001%08x%012x" % (time.time(), uuid.getnode())
+        self.SERVERDUID = GenerateDUID()
         self.NAMESERVER = ""
 
         # domain for FQDN hostnames

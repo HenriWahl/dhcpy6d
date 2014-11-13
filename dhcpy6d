@@ -1012,7 +1012,12 @@ class Transaction(object):
             name = ConvertBinary2DNS(options[39][2:])
             # only hostname needed
             self.FQDN = name.lower()
-            self.Hostname = name.split(".")[0].lower()
+            self.Hostname = name.split(".")[0].lower().strip()
+            # test if hostname is valid
+            n = re.compile("^([a-z0-9\-\_]+)*$")
+            if n.match(self.Hostname) == None:
+                self.Hostname = ""
+            del n
 
 
     def _getOptionsString(self):
