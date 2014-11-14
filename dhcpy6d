@@ -878,7 +878,7 @@ class Client(object):
                         option += " " + ColonifyIP6(a.ADDRESS)
                     optionsstring = optionsstring + " | "  + option
 
-        return optionsstring.encode("ascii")
+        return optionsstring
 
 
 class Transaction(object):
@@ -915,6 +915,9 @@ class Transaction(object):
         self.IAT1 = cfg.PREFERRED_LIFETIME        
         # dummy IAT2
         self.IAT2 = cfg.VALID_LIFETIME
+        # IA option - NA or TA -> DHCPv6 option 3 or 4, default is 3
+        # to be used in option_requests in Handler.build_response()
+        self.IA_Option = 3
         # Addresses given by client, for example for RENEW or RELEASE requests
         self.Addresses = list()
         # might be used against clients that are running wild
@@ -933,37 +936,21 @@ class Transaction(object):
         # answer type - take from class definition, one of "normal", "noaddress"y or "none"
         # defaults to "address" as this is the main purpose of dhcpy6d
         self.Answer = "normal"
+        # default DUID values
+        self.DUID = ""
+        self.DUIDType = 1
+        self.DUID_EN = 0
 
         # DUID of client
         # 1 Client Identifier Option
         if options.has_key(1):
-            duid_client = options[1]
-            duid_type = int(options[1][0:4], 16)
-            duid_hardware_type = int(options[1][4:8], 16)
-            # dummy LL address
-            duid_link_layer_address = "00:00:00:00:00:00"
-            # DUID-LLT
-            if duid_type == 1:
-                duid_time = int(options[1][8:16], 16)
-                # temp link layer address = lla
-                lla = options[1][16:]
-                duid_link_layer_address = ":".join((lla[0:2], lla[2:4], lla[4:6], lla[6:8], lla[8:10], lla[10:12]))
-
-            # DUID-EN
-            elif duid_type == 2:
-                # nothing to to with enterprise DUID at the moment
-                pass
-            # DUID-LL
-            elif duid_type == 3:
-                duid_time = int(options[1][8:16], 16)
-                # temp link layer address = lla
-                lla = options[1][8:]
-                duid_link_layer_address = ":".join((lla[0:2], lla[2:4], lla[4:6], lla[6:8], lla[8:10], lla[10:12]))
-
-            # whatever for... it is even forbidden to use the DUIDLLAddress....
-            self.DUID = duid_client
-            self.DUIDType = duid_type
-            self.DUIDLLAddress = duid_link_layer_address
+            self.DUID = options[1]
+            self.DUIDType = int(options[1][0:4], 16)
+            # DUID-EN can be retrieved from DUID
+            if self.DUIDType == 2:
+                # some HP printers seem to produce pretty bad requests, thus some cleaning is necessary
+                # e.g. "1 1 1 00020000000b0026b1f72a49" instead of "00020000000b0026b1f72a49"
+                self.DUID_EN = int(options[1].split(" ")[-1][4:12], 16)
 
         # Identity Association for Non-temporary Addresses
         # 3 Identity Association for Non-temporary Address Option
@@ -982,6 +969,26 @@ class Transaction(object):
                     # in case an address is asked for twice by one host ignore the twin
                     if not address in self.Addresses:
                         self.Addresses.append(address)
+            self.IA_Option = 3
+
+        # Identity Association for Temporary Addresses
+        # 4 Identity Association for Temporary Address Option
+        if options.has_key(4):
+            for payload in options[4]:
+                ia_id = payload[0:8]
+                ia_t1 = int(payload[8:16], 16)
+                ia_t2 = int(payload[16:24], 16)
+                self.IAID = ia_id
+                self.IAT1 = ia_t1
+                self.IAT2 = ia_t2
+
+                # addresses given by client if any
+                for a in range(len(payload[32:])/44):
+                    address = payload[32:][(a*56):(a*56)+32]
+                    # in case an address is asked for twice by one host ignore the twin
+                    if not address in self.Addresses:
+                        self.Addresses.append(address)
+            self.IA_Option = 4
 
         # Options Requested
         # 6 Option Request Option
@@ -1009,10 +1016,9 @@ class Transaction(object):
             self.DNS_N = int(bits[1])
             self.DNS_O = int(bits[2])
             self.DNS_S = int(bits[3])    
-            name = ConvertBinary2DNS(options[39][2:])
             # only hostname needed
-            self.FQDN = name.lower()
-            self.Hostname = name.split(".")[0].lower().strip()
+            self.FQDN = ConvertBinary2DNS(options[39][2:])
+            self.Hostname = self.FQDN.split(".")[0].lower()
             # test if hostname is valid
             n = re.compile("^([a-z0-9\-\_]+)*$")
             if n.match(self.Hostname) == None:
@@ -1044,7 +1050,7 @@ class Transaction(object):
                     option = o + ": " + str(self.__dict__[o])
                     optionsstring = optionsstring + " | "  + option
 
-        return optionsstring.encode("ascii")
+        return optionsstring
 
 
 class UDPMulticastIPv6(SocketServer.UnixDatagramServer):    
@@ -1124,14 +1130,20 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # clients - in RENEW and REBIND request multiple addresses of an
                     # IAID are not requested all in one option type 3 but
                     # come in several options of type 3 what leads to some confusion
-                    if option != 3:
+                    if option != 3 and option != 4:
                         options[option] = value
                     else:
                         if options.has_key(3):
                             options[3].append(value)
+                        elif  options.has_key(4):
+                            options[4].append(value)
                         else:
-                            options[3] = list()
-                            options[3].append(value)
+                            if option == 3:
+                                options[3] = list()
+                                options[3].append(value)
+                            else:
+                                options[4] = list()
+                                options[4].append(value)
 
                     # cut off bytes worked on
                     bytes_options = bytes_options[8 + length*2:]
@@ -1192,7 +1204,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 if Transactions[transaction_id].LastMessageReceivedType == 1 \
                                    and Transactions[transaction_id].RapidCommit == False:
                                     # preference option (7) is for free
-                                    self.build_response(2, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
+                                    self.build_response(2, transaction_id, [Transactions[transaction_id].IA_Option] + \
+                                                        [7] + Transactions[transaction_id].OptionsRequest)
 
                                     # store leases for addresses and lock advertised address
                                     volatilestore.store_lease(transaction_id)
@@ -1205,9 +1218,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # preference option (7) is for free
                                     # if RapidCommit was set give it back
                                     if not Transactions[transaction_id].RapidCommit:
-                                        self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
+                                        self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + \
+                                                            [7] + Transactions[transaction_id].OptionsRequest)
                                     else:
-                                        self.build_response(7, transaction_id, [3] + [7] + [14] + Transactions[transaction_id].OptionsRequest)
+                                        self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + \
+                                                            [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
                                     volatilestore.store_lease(transaction_id)
                                     if cfg.DNS_UPDATE:
@@ -1228,7 +1243,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # RENEW
                                 # if last request was a RENEW (type 5) send a REPLY (type 7) back
                                 elif Transactions[transaction_id].LastMessageReceivedType == 5:
-                                    self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
+                                    self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + [7] + \
+                                                        Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
                                     volatilestore.store_lease(transaction_id)
                                     if cfg.DNS_UPDATE:
@@ -1237,7 +1253,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # REBIND
                                 # if last request was a REBIND (type 6) send a REPLY (type 7) back
                                 elif Transactions[transaction_id].LastMessageReceivedType == 6:
-                                    self.build_response(7, transaction_id, [3] + [7] + Transactions[transaction_id].OptionsRequest)
+                                    self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + [7] + \
+                                                        Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
                                     volatilestore.store_lease(transaction_id)
 
@@ -1280,8 +1297,7 @@ class Handler(SocketServer.DatagramRequestHandler):
         except Exception,err:
             import traceback
             traceback.print_exc(file=sys.stdout)
-            log.error("handle(): " + str(err))
-            print "Caused by:", self.client_address[0]
+            log.error("handle(): %s | Caused by: %s | Transaction: %s" % (str(err), self.client_address[0], transaction_id))
             return None
 
 
@@ -1559,7 +1575,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                             
                     # sum of flags
                     nos_flags = N*4 + O*2 + S*1
-                    
+
                     response_ascii += BuildOption(39, "%02x" % (nos_flags) + ConvertDNS2Binary(hostname+"."+cfg.DOMAIN))
                 else:
                     # if no hostname given put something in and force client override
