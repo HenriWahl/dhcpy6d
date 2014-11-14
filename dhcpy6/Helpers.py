@@ -24,6 +24,7 @@ import sys
 import shlex
 import logging
 
+
 # needed for neighbor cache access
 import select
 import socket
@@ -453,41 +454,3 @@ def GetLibC():
         sys.exit(1)
     # use ctypes for libc access
     return ctypes.cdll.LoadLibrary(libc_name)
-
-
-def Log(cfg):
-    """
-        Logging - has been in dhcpy6d main file, easier to access here for GetNeighborCacheLinux
-    """
-    log = logging.getLogger("dhcpy6d")
-    if cfg.LOG:
-        formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
-        log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
-        if cfg.LOG_FILE != "":
-            os.chown(cfg.LOG_FILE, pwd.getpwnam(cfg.USER).pw_uid, grp.getgrnam(cfg.GROUP).gr_gid)
-            log_handler = logging.handlers.WatchedFileHandler(cfg.LOG_FILE)
-            log_handler.setFormatter(formatter)
-            log.addHandler(log_handler)
-        # std err console output
-        if cfg.LOG_CONSOLE:
-            log_handler = logging.StreamHandler()
-            log_handler.setFormatter(formatter)
-            log.addHandler(log_handler)
-        if cfg.LOG_SYSLOG:
-            # time should be added by syslog daemon
-            hostname = socket.gethostname().split(".")[0]
-            formatter = logging.Formatter(hostname + " %(name)s %(levelname)s %(message)s")
-            # if /socket/file is given use this as addres
-            if cfg.LOG_SYSLOG_DESTINATION.startswith("/") == True:
-                destination = cfg.LOG_SYSLOG_DESTINATION
-            # if host and port are defined use them...
-            elif cfg.LOG_SYSLOG_DESTINATION.count(":") == 1:
-                destination = tuple(cfg.LOG_SYSLOG_DESTINATION.split(":"))
-            # ...otherwise add port 514 to given host address
-            else:
-                destination = (cfg.LOG_SYSLOG_DESTINATION, 514)
-            log_handler = logging.handlers.SysLogHandler(address=destination,\
-                          facility=logging.handlers.SysLogHandler.__dict__["LOG_" + cfg.LOG_SYSLOG_FACILITY])
-            log_handler.setFormatter(formatter)
-            log.addHandler(log_handler)
-    return log
