@@ -1100,8 +1100,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # clean client IP address - might come in short notation, which
             # should be extended
-            # if sent from non-LLIP there is no interface - the request should be
-            # repeated using multicast - Code 5 of StatusCode message type 13
+            # if sent from non-LLIP there is no interface - the request is rejected at the moment
             try:
                 client_llip, interface = self.client_address[0].split("%")
                 client_llip = DecompressIP6(client_llip)
