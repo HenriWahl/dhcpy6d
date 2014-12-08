@@ -418,7 +418,7 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
                         # store neighbor caches entries
                         result[str(record.llip)] = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
                                                     mac=nda['NDA_LLADDR'],
-                                                    interface=if_name)
+                                                    interface=IF_NUMBER[nda['NDM_IFINDEX']])
             # move to next record
             answer_pos += nlmsg_len
 
