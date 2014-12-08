@@ -634,7 +634,7 @@ def CollectMACs():
     try:
         # Linux can use kernel neighbor cache
         if OS == "Linux":
-            for host in GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log).values():
+            for host in GetNeighborCacheLinux(cfg, IF_NUMBER, log).values():
                 if host.interface not in cfg.INTERFACE:
                     continue
                 if not CollectedMACs.has_key(host.llip) and host.llip.lower().startswith("fe80"):
