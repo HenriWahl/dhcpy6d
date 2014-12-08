@@ -247,7 +247,7 @@ class NeighborCacheRecord(object):
         self.timestamp = time.time()
 
 
-def GetNeighborCacheLinux(cfg, IF_NAME, IF_NUMBER, LIBC, log):
+def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
     """
         imported version of https://github.com/vokac/dhcpy6d
         https://github.com/vokac/dhcpy6d/commit/bd34d3efb18ba6016a2b3afea0b6a3fcdfb524a4
