@@ -414,13 +414,11 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
                 elif not nda.has_key('NDA_LLADDR'):
                     log.warn("can't find local hardware address (wrong entry state: %i?!)" % nda['NDM_STATE'])
                 else:
-                    if_name = IF_NUMBER[nda['NDM_IFINDEX']]
-                    if if_name in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
+                    if IF_NUMBER[nda['NDM_IFINDEX']] in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
                         # store neighbor caches entries
-                        record = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
+                        result[str(record.llip)] = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
                                                     mac=nda['NDA_LLADDR'],
                                                     interface=if_name)
-                        result[str(record.llip)] = record
             # move to next record
             answer_pos += nlmsg_len
 
