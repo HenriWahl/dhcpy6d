@@ -416,9 +416,11 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
                 else:
                     if IF_NUMBER[nda['NDM_IFINDEX']] in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
                         # store neighbor caches entries
-                        result[str(record.llip)] = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
-                                                    mac=nda['NDA_LLADDR'],
-                                                    interface=IF_NUMBER[nda['NDM_IFINDEX']])
+                        record = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
+                                                     mac=nda['NDA_LLADDR'],
+                                                     interface=IF_NUMBER[nda['NDM_IFINDEX']])
+                        result[str(record.llip)] = record
+
             # move to next record
             answer_pos += nlmsg_len
 

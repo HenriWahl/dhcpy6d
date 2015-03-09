@@ -413,8 +413,8 @@ class Config(object):
         # check interface
         for i in self.INTERFACE:
             # also accept Linux VLAN and other definitions but interface must exist
-            if LIBC.if_nametoindex(i) == 0 or not re.match("^[a-z0-9_:%-]*$", i, re.IGNORECASE):
-                ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, i))
+            if LIBC.if_nametoindex(i) == 0 or not re.match("^[a-z0-9_:.%-]*$", i, re.IGNORECASE):
+                ErrorExit("%s Interface '%s' is unknown." % (msg_prefix, i))
 
         # check multicast address
         try:
@@ -603,7 +603,7 @@ class Config(object):
             # check interface
             for i in self.CLASSES[c].INTERFACE:
                 # also accept Linux VLAN and other definitions but interface must exist
-                if LIBC.if_nametoindex(i) == 0 or not re.match("^[a-z0-9_:%-]*$", i, re.IGNORECASE):
+                if LIBC.if_nametoindex(i) == 0 or not re.match("^[a-z0-9_:.%-]*$", i, re.IGNORECASE):
                     ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, i))
 
             # check nameserver to be given to client
