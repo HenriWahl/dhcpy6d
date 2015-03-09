@@ -4,8 +4,8 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 Name:              dhcpy6d
-Version:           0.4+dev
-Release:           2%{?dist}
+Version: 0.4.1+dev
+Release:           1%{?dist}
 Summary:           DHCPv6 server daemon
 
 %if 0%{?suse_version}
