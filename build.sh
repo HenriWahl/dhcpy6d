@@ -9,7 +9,7 @@ if [ -f /etc/debian_version ]
 	then
 		echo "Building .deb package"
 		
-                debuild clean
+        debuild clean
 		debuild binary-indep
 
 elif [ -f /etc/redhat-release ]
