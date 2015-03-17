@@ -1,5 +1,10 @@
 Changelog for dhcpy6d
 
+2015-03-17 0.4.1
+
+    listen on VLAN interfaces now really works
+    some code cleaning
+
 2014-10-22 0.4
 
     listen on VLAN interfaces
