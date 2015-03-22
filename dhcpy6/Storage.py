@@ -694,24 +694,21 @@ class MySQL(Store):
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
-            return None
+            self.connected = False
+        return self.connected
         
         
     def DBQuery(self, query):
         try:
             self.cursor.execute(query)
-            self.connected = True
-        except:            
-            import traceback
-            traceback.print_exc(file=sys.stdout)
+        except Exception as e:
             # try to reestablish database connection
+            print 'Error: {}'.format(str(e))
             if not self.DBConnect():
-                self.connected = False
                 return None
             else:
                 try:
                     self.cursor.execute(query)
-                    self.connected = True
                 except:
                     import traceback
                     traceback.print_exc(file=sys.stdout)
