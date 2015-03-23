@@ -1,3 +1,10 @@
+dhcpy6d (0.4.2+dev-1) UNRELEASED; urgency=medium
+
+  * New upstream snapshot
+    + Retry query on MySQL reconnect bugfix
+
+  -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 23 Mar 2015 08:50:00 +0100
+
 dhcpy6d (0.4.1-1) unstable; urgency=medium
 
   * New upstream snapshot
