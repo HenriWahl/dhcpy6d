@@ -701,9 +701,9 @@ class MySQL(Store):
     def DBQuery(self, query):
         try:
             self.cursor.execute(query)
-        except Exception as e:
+        except Exception as err:
             # try to reestablish database connection
-            print 'Error: {}'.format(str(e))
+            print 'Error: {0}'.format(str(err))
             if not self.DBConnect():
                 return None
             else:
