@@ -821,10 +821,11 @@ class TidyUpThread(threading.Thread):
                         dbcount = 0
                 dbcount += 1
 
-                # clean collected MAC addresses after 30 seconds
+                # clean collected MAC addresses after 300 seconds
+                # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
                     for record in CollectedMACs.values():
-                        if record.timestamp + 30 < time.time():
+                        if record.timestamp + 300 < time.time():
                             if cfg.LOG_MAC_LLIP == True:
                                 log.info("Deleted MAC %s for LinkLocalIP %s" % (record.mac, ColonifyIP6(record.llip)))
                             CollectedMACs.pop(record.llip)
@@ -1077,6 +1078,9 @@ class UDPMulticastIPv6(SocketServer.UnixDatagramServer):
 
         # bind socket to server address
         self.socket.bind(self.server_address)
+
+        # attempt to avoid blocking
+        self.socket.setblocking(False)
 
         # some more requests?
         self.request_queue_size = 100
