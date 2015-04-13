@@ -39,7 +39,7 @@ elif [ -f /etc/redhat-release ]
 		rpmbuild -bb --define "_topdir $TOPDIR" $SPEC
 
 		# get rpm file
-		cp -f `find $TOPDIR/RPMS -name "$FILE-1.*noarch.rpm"` .
+		cp -f `find $TOPDIR/RPMS -name "$FILE-?.*noarch.rpm"` .
 
         # clean
         rm -rf $TOPDIR
