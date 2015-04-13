@@ -1,3 +1,12 @@
+dhcpy6d (0.4.2+dev-2) UNRELEASED; urgency=medium
+
+  * New upstream snapshot
+    + set socket to non-blocking to avoid freeze
+    + increase MAC/LLIP cache time from 30s to 300s because of laggy clients
+    + removed uselesx prefix length
+
+  -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 13 Apr 2015 15:00:00 +0100
+
 dhcpy6d (0.4.2+dev-1) UNRELEASED; urgency=medium
 
   * New upstream snapshot

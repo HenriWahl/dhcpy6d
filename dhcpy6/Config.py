@@ -184,7 +184,6 @@ class Config(object):
         
         # define a fallback default class and address scheme
         self.ADDRESSES["default"] = ConfigAddress(ia_type="na",
-                                                   prefix_length="64",
                                                    category="mac",
                                                    pattern="fdef::$mac$",
                                                    aclass="default",
@@ -198,7 +197,6 @@ class Config(object):
         # pattern and prototype are not really needed as this
         # addresses are fixed
         self.ADDRESSES["fixed"] = ConfigAddress(ia_type="na",
-                                                   prefix_length="64",
                                                    category="fixed",
                                                    pattern="fdef0000000000000000000000000001",
                                                    aclass="default",
@@ -637,12 +635,6 @@ class Config(object):
                 if not self.ADDRESSES[a].CATEGORY.strip() in ["fixed", "range", "random", "mac", "id"]:
                     ErrorExit("%s Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac' and 'id'." % (msg_prefix, self.ADDRESSES[a].CATEGORY))
 
-                # test numberness and length of prefix
-                if not self.ADDRESSES[a].PREFIX_LENGTH.strip().isdigit():
-                    ErrorExit("%s Prefix length '%s' is not a number." % (msg_prefix, self.ADDRESSES[a].PREFIX_LENGTH.strip()))
-                elif not  0 <= int(self.ADDRESSES[a].PREFIX_LENGTH) <= 128:
-                    ErrorExit("%s Prefix length '%s' is out of range." % (msg_prefix, self.ADDRESSES[a].PREFIX_LENGTH.strip()))
-
                 # test validity of pattern - has its own error output
                 self.ADDRESSES[a]._build_prototype()
                 # test existence of category specific variable in pattern
@@ -700,7 +692,6 @@ class ConfigAddress(object):
     """
     def __init__(self, address=None,
                  ia_type="na",
-                 prefix_length="64",
                  category="random",
                  pattern="2001:db8::$random64$",
                  preferred_lifetime=0,
@@ -714,7 +705,6 @@ class ConfigAddress(object):
                  dns_rev_zone="0.8.b.d.1.0.0.2.ip6.arpa",
                  dns_ttl = "0",
                  valid = True):
-        self.PREFIX_LENGTH = prefix_length
         self.CATEGORY = category
         self.PATTERN = pattern
         self.IA_TYPE = ia_type
@@ -791,7 +781,6 @@ class ClientAddress(object):
     """
     def __init__(self, address=None,
                  ia_type="na",
-                 prefix_length="64",
                  category="random",
                  preferred_lifetime=0,
                  valid_lifetime=0,
@@ -803,7 +792,6 @@ class ClientAddress(object):
                  dns_ttl = "0",
                  valid = True,
                  ):
-        self.PREFIX_LENGTH = prefix_length
         self.CATEGORY = category
         self.IA_TYPE = ia_type
         self.PREFERRED_LIFETIME = preferred_lifetime
