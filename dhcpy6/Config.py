@@ -278,8 +278,13 @@ class Config(object):
                     # global address schemes
                     if section.startswith("address_"):
                         # check if keyword is known - if not, exit
-                        if not item[0].upper() in self.ADDRESSES[section.split("address_")[1]].__dict__:
-                            ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
+                        if item[0].upper() == "PREFIX_LENGTH":
+                            # Show a warning because there are no prefix lenghts in DHCPv6
+                            sys.stderr.write("\nWARNING: Keyword '%s' in section '[%s]' is deprecated and should be removed.\n\n" \
+                                             % (item[0], section))
+                        else:
+                            if not item[0].upper() in self.ADDRESSES[section.split("address_")[1]].__dict__:
+                                ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                         self.ADDRESSES[section.split("address_")[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
                     # global classes with their addresses
