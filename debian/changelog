@@ -1,4 +1,4 @@
-dhcpy6d (0.4.2+dev-2) UNRELEASED; urgency=medium
+dhcpy6d (0.4.2~dev2-1) UNRELEASED; urgency=medium
 
   * New upstream snapshot
     + set socket to non-blocking to avoid freeze
@@ -7,7 +7,7 @@ dhcpy6d (0.4.2+dev-2) UNRELEASED; urgency=medium
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 13 Apr 2015 15:00:00 +0100
 
-dhcpy6d (0.4.2+dev-1) UNRELEASED; urgency=medium
+dhcpy6d (0.4.2~dev1-1) UNRELEASED; urgency=medium
 
   * New upstream snapshot
     + Retry query on MySQL reconnect bugfix
@@ -16,20 +16,17 @@ dhcpy6d (0.4.2+dev-1) UNRELEASED; urgency=medium
 
 dhcpy6d (0.4.1-1) unstable; urgency=medium
 
-  * New upstream snapshot
+  [ Henri Wahl ]
+  * New upstream release
     + VLAN definitions now really work
     + several code cleaned
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 17 Mar 2015 08:50:00 +0100
-
-dhcpy6d (0.4+dev-1) UNRELEASED; urgency=medium
-
-  * New upstream snapshot
     + Removes unnecessary executable bits (see #769006) → reinstantiate
       debian/dhcpy6d.logrotate as symlink
+
+  [ Axel Beckert ]
   * Fix postinst script to not expect preinst parameters (Closes: #768974)
 
- -- Axel Beckert <abe@debian.org>  Thu, 13 Nov 2014 17:27:18 +0100
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 17 Mar 2015 08:50:00 +0100
 
 dhcpy6d (0.4-2) unstable; urgency=medium
 
