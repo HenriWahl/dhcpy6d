@@ -683,29 +683,41 @@ class DB(Store):
         
     def DBConnect(self):
         """
-            Connect to database server according to database txype
+            Connect to database server according to database type
         """
         if self.cfg.STORE_CONFIG == 'mysql' or self.cfg.STORE_VOLATILE == 'mysql':
             try:
                 import MySQLdb as database
             except:
                 ErrorExit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
+            try:
+                self.connection = database.connect(host=self.cfg.STORE_DB_HOST,\
+                                                   db=self.cfg.STORE_DB_DB,\
+                                                   user=self.cfg.STORE_DB_USER,\
+                                                   passwd=self.cfg.STORE_DB_PASSWORD)
+                self.cursor = self.connection.cursor()
+                self.connected = True
+            except:
+                import traceback
+                traceback.print_exc(file=sys.stdout)
+                self.connected = False
+
         elif self.cfg.STORE_CONFIG == 'postgresql' or self.cfg.STORE_VOLATILE == 'postgresql':
             try:
                 import psycopg2 as database
             except:
                 ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
-        try:
-            self.connection = database.connect(host=self.cfg.STORE_DB_HOST,\
-                                              db=self.cfg.STORE_DB_DB,\
-                                              user=self.cfg.STORE_DB_USER,\
-                                              passwd=self.cfg.STORE_DB_PASSWORD)
-            self.cursor = self.connection.cursor()
-            self.connected = True
-        except:
-            import traceback
-            traceback.print_exc(file=sys.stdout)
-            self.connected = False
+            try:
+                self.connection = database.connect(host=self.cfg.STORE_DB_HOST,\
+                                                   database=self.cfg.STORE_DB_DB,\
+                                                   user=self.cfg.STORE_DB_USER,\
+                                                   passwd=self.cfg.STORE_DB_PASSWORD)
+                self.cursor = self.connection.cursor()
+                self.connected = True
+            except:
+                import traceback
+                traceback.print_exc(file=sys.stdout)
+                self.connected = False
         return self.connected
         
         
