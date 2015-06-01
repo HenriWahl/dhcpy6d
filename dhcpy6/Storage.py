@@ -687,11 +687,11 @@ class DB(Store):
         """
         if self.cfg.STORE_CONFIG == 'mysql' or self.cfg.STORE_VOLATILE == 'mysql':
             try:
-                import MySQLdb as database
+                import MySQLdb
             except:
                 ErrorExit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
             try:
-                self.connection = database.connect(host=self.cfg.STORE_DB_HOST,\
+                self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,\
                                                    db=self.cfg.STORE_DB_DB,\
                                                    user=self.cfg.STORE_DB_USER,\
                                                    passwd=self.cfg.STORE_DB_PASSWORD)
@@ -704,11 +704,13 @@ class DB(Store):
 
         elif self.cfg.STORE_CONFIG == 'postgresql' or self.cfg.STORE_VOLATILE == 'postgresql':
             try:
-                import psycopg2 as database
+                import psycopg2
             except:
+                import traceback
+                traceback.print_exc(file=sys.stdout)
                 ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
             try:
-                self.connection = database.connect(host=self.cfg.STORE_DB_HOST,\
+                self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
                                                    database=self.cfg.STORE_DB_DB,\
                                                    user=self.cfg.STORE_DB_USER,\
                                                    passwd=self.cfg.STORE_DB_PASSWORD)
