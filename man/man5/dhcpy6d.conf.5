@@ -117,9 +117,9 @@ The default syslog facility is "daemon" but can be changed here.
 Log discovered MAC/LLIP pairs of clients. Might be pretty verbose in larger setups and with disabled MAC/LLIP pair caching.
 
 .TP 
-.B store_config = file | sqlite | mysql | none
+.B store_config = file | sqlite | mysql | postgresql | none
 Configuration of clients can be stored in a file or in a database.
-Databases MySQL and SQLite are supported at the moment, thus possible values are "file", "sqlite" or "mysql".
+Databases MySQL, PostgreSQL and SQLite are supported at the moment, thus possible values are "file", "mysql", "postgresql"  or "sqlite".
 To disable any client configuration source it has to be "none".
 
 .TP 
@@ -134,26 +134,26 @@ For details see
 SQLite database file which contains the clients configuration.
 
 .TP 
-.B store_volatile = sqlite | mysql
-Volatile data like leases and the mapping between Link Local Addresses and MAC addresses can be stored in MySQL or SQLite database, so the possible values for store_volatile are "mysql" and "sqlite". Default is /var/lib/dhcpy6d/volatile.sqlite.
+.B store_volatile = sqlite | mysql | postgresql
+Volatile data like leases and the mapping between Link Local Addresses and MAC addresses can be stored in MySQL, PostgreSQL or SQLite database, so the possible values for store_volatile are "mysql", "postgresql" and "sqlite". Default is /var/lib/dhcpy6d/volatile.sqlite.
 
 .TP 
 .B store_sqlite_volatile = /path/to/sqlite/volatile/file
 If set store_volatile is set to "sqlite" a SQLite database file must be defined.
 
 .TP 
-.B store_mysql_host = <database-host>
+.B store_db_host = <database-host>
 .TP 
-.B store_mysql_db = <database-name>
+.B store_db_db = <database-name>
 .TP 
-.B store_mysql_user = <database-user>
+.B store_db_user = <database-user>
 .TP 
-.B store_mysql_password = <database-password>
+.B store_db_password = <database-password>
 If
 .B store_config
 and/or
 .B store_volatile
-use a MySQL database to store information it has to be set with these self\-explanatory options. The same database is used for config and volatile data.
+use a database to store information it has to be set with these self\-explanatory options. The same database is used for config and volatile data.
 
 .TP
 .B cache_mac_llip = yes | no
@@ -523,10 +523,10 @@ store_config = mysql
 store_volatile = mysql
 
 # Data used for MySQL storage.
-store_mysql_host = localhost
-store_mysql_db = dhcpy6d
-store_mysql_user = dhcpy6d
-store_mysql_password = dhcpy6d
+store_db_host = localhost
+store_db_db = dhcpy6d
+store_db_user = dhcpy6d
+store_db_password = dhcpy6d
 
 # Declare which attributes of a requesting client should be checked
 # to prove its identity. It is  possible to mix them, separated by spaces.

@@ -1,3 +1,10 @@
+dhcpy6d (0.4.2~dev4-1) UNRELEASED; urgency=medium
+
+  * New upstream snapshot
+    + added PostgreSQL support via psycopg2
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 01 Jun 2015 21:00:00 +0200
+
 dhcpy6d (0.4.2~dev3-1) UNRELEASED; urgency=medium
 
   * New upstream snapshot
