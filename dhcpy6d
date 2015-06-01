@@ -3,7 +3,7 @@
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2014 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2015 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -154,12 +154,12 @@ IF_NUMBER = dict()
 # source of configuration of hosts
 # use client configuration only if needed
 if cfg.STORE_CONFIG:
-    if cfg.STORE_CONFIG == "file":
+    if cfg.STORE_CONFIG == 'file':
         configstore = Textfile(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
-    if cfg.STORE_CONFIG == "mysql":
-        configstore = MySQL(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
-    if cfg.STORE_CONFIG == "sqlite":
-        configstore = SQLite(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs, storage_type="config")
+    if cfg.STORE_CONFIG in ('mysql', 'postgresql'):
+        configstore = DB(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+    if cfg.STORE_CONFIG == 'sqlite':
+        configstore = SQLite(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs, storage_type='config')
 else:
     # dummy configstore if no client config is needed
     configstore = Store(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
@@ -167,17 +167,17 @@ else:
     configstore.connected = True
 
 # storage for changing data like leases, LLIPs, DUIDs etc.
-if cfg.STORE_VOLATILE == "mysql":
-    volatilestore = MySQL(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs)
-if cfg.STORE_VOLATILE == "sqlite":
-    volatilestore = SQLite(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs, storage_type="volatile")
+if cfg.STORE_VOLATILE in ('mysql', 'postgresql'):
+    volatilestore = DB(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs)
+if cfg.STORE_VOLATILE == 'sqlite':
+    volatilestore = SQLite(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs, storage_type='volatile')
 
 # do not start if no database connection exists
 if not configstore.connected:
-    print "\n Configuration database is not connected!\n"
+    print '\nConfiguration database is not connected!\n'
     sys.exit(1)
 if not volatilestore.connected:
-    print "\n Database for volatile data is not connected!\n"
+    print '\nDatabase for volatile data is not connected!\n'
     sys.exit(1)
 
 

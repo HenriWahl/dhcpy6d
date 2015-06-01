@@ -2,7 +2,7 @@
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2014 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2015 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -663,9 +663,9 @@ class ClientConfigDB(object):
         self.IndexDUID = dict()
 
     
-class MySQL(Store):
+class DB(Store):
     """
-    MySQL database interface 
+    MySQL and PostgreSQL database interface
     for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
     """    
     
@@ -677,20 +677,31 @@ class MySQL(Store):
         try:
             self.DBConnect()
         except:
-            import traceback
-            traceback.print_exc(file=sys.stdout)
-       
+            ###import traceback
+            ###traceback.print_exc(file=sys.stdout)
+            pass
         
-    def DBConnect(self):         
-        import MySQLdb
-   
+    def DBConnect(self):
+        """
+            Connect to database server according to database txype
+        """
+        if self.cfg.STORE_CONFIG == 'mysql' or self.cfg.STORE_VOLATILE == 'mysql':
+            try:
+                import MySQLdb as database
+            except:
+                ErrorExit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
+        elif self.cfg.STORE_CONFIG == 'postgresql' or self.cfg.STORE_VOLATILE == 'postgresql':
+            try:
+                import psycopg2 as database
+            except:
+                ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
         try:
-            self.connection = MySQLdb.connect(host=self.cfg.STORE_MYSQL_HOST,\
-                                              db=self.cfg.STORE_MYSQL_DB,\
-                                              user=self.cfg.STORE_MYSQL_USER,\
-                                              passwd=self.cfg.STORE_MYSQL_PASSWORD)
+            self.connection = database.connect(host=self.cfg.STORE_DB_HOST,\
+                                              db=self.cfg.STORE_DB_DB,\
+                                              user=self.cfg.STORE_DB_USER,\
+                                              passwd=self.cfg.STORE_DB_PASSWORD)
             self.cursor = self.connection.cursor()
-            self.connected = True           
+            self.connected = True
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)

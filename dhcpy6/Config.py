@@ -2,7 +2,7 @@
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2014 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2015 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,10 +119,10 @@ class Config(object):
         self.STORE_FILE_CONFIG = "clients.conf"
         
         # DB data
-        self.STORE_MYSQL_HOST = "localhost"
-        self.STORE_MYSQL_DB = "dhcpy6d"
-        self.STORE_MYSQL_USER = "user"
-        self.STORE_MYSQL_PASSWORD = "password"
+        self.STORE_DB_HOST = "localhost"
+        self.STORE_DB_DB = "dhcpy6d"
+        self.STORE_DB_USER = "user"
+        self.STORE_DB_PASSWORD = "password"
         
         self.STORE_SQLITE_CONFIG = "config.sqlite"
         self.STORE_SQLITE_VOLATILE = "volatile.sqlite"
@@ -269,11 +269,20 @@ class Config(object):
             # go through all items
             for item in config.items(section):
                 if section.upper() == "DHCPY6D":
+                    # check for legacy settings - STORE_MYSQL_* will be replaced by STORE_DB_* since 0.4.2
+                    # see https://github.com/HenriWahl/dhcpy6d/issues/3
+                    if item[0].upper() in ('STORE_MYSQL_HOST', 'STORE_MYSQL_DB', 'STORE_MYSQL_USER', 'STORE_MYSQL_PASSWORD'):
+                        sys.stderr.write("\nWARNING: Keyword '%s' in section '[%s]' is deprecated and should be replaced by '%s'.\n\n" \
+                                         % (item[0], section, item[0].lower().replace('mysql', 'db')))
+                        # rename setting from *_MYSQL_* to *_DB_*
+                        object.__setattr__(self, item[0].upper().replace('MYSQL', 'DB'), str(item[1]).strip())
+
                     # check if keyword is known - if not, exit
-                    if not item[0].upper() in self.__dict__:
+                    elif not item[0].upper() in self.__dict__:
                         ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                     # ConfigParser seems to be not case sensitive so settings get normalized
-                    object.__setattr__(self, item[0].upper(), str(item[1]).strip())
+                    else:
+                        object.__setattr__(self, item[0].upper(), str(item[1]).strip())
                 else:
                     # global address schemes
                     if section.startswith("address_"):
@@ -514,12 +523,19 @@ class Config(object):
             ErrorExit("%s Information refresh time preference '%s' is pretty short." % (msg_prefix, self.INFORMATION_REFRESH_TIME))
 
         # check validity of configuration source
-        if not self.STORE_CONFIG in ["mysql", "sqlite", "file", False]:
+        if not self.STORE_CONFIG in ['mysql', 'postgresql', 'sqlite', 'file', False]:
             ErrorExit("%s Unknown config storage type '%s' is invalid." % (msg_prefix, self.STORAGE))
 
         # check which type of storage to use for leases
-        if not self.STORE_VOLATILE in ["mysql", "sqlite"]:
+        if not self.STORE_VOLATILE in ['mysql', 'postgresql', 'sqlite']:
             ErrorExit("%s Unknown volatile storage type '%s' is invalid." % (msg_prefix, self.VOLATILE))
+
+        # check if database for config and volatile is equal - if any
+        if self.STORE_CONFIG in ['mysql', 'postgresql'] and self.STORE_VOLATILE in ['mysql', 'postgresql']:
+            if not self.STORE_CONFIG == self.STORE_VOLATILE:
+                ErrorExit("%s Storage types for database access have to be equal - '%s' != '%s'." % (msg_prefix,
+                                                                                                     self.STORE_CONFIG,
+                                                                                                     self.STORE_VOLATILE, ))
 
         # check validity of config file
         if self.STORE_CONFIG == "file":

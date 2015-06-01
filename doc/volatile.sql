@@ -1,2 +1,26 @@
-CREATE TABLE "leases" ("address" VARCHAR PRIMARY KEY  NOT NULL, "active" INTEGER NOT NULL, "last_message" INTEGER NOT NULL, "preferred_lifetime" INTEGER NOT NULL, "valid_lifetime" INTEGER NOT NULL, "hostname" VARCHAR NOT NULL, "type" VARCHAR NOT NULL, "category" VARCHAR NOT NULL, "ia_type" VARCHAR NOT NULL, "class" VARCHAR NOT NULL, "mac" VARCHAR NOT NULL,"duid" VARCHAR NOT NULL, "iaid" VARCHAR NOT NULL, "last_update" DATETIME NOT NULL,"preferred_until" DATETIME NOT NULL, "valid_until" DATETIME NOT NULL);
-CREATE TABLE "macs_llips" ("mac" VARCHAR PRIMARY KEY  NOT NULL, "link_local_ip" VARCHAR NOT NULL, "last_update" DATETIME NOT NULL);
+CREATE TABLE `leases` (
+  `address` varchar(32) NOT NULL,
+  `active` tinyint(4) NOT NULL,
+  `preferred_lifetime` int(11) NOT NULL,
+  `valid_lifetime` int(11) NOT NULL,
+  `hostname` varchar(255) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `category` varchar(255) NOT NULL,
+  `ia_type` varchar(255) NOT NULL,
+  `class` varchar(255) NOT NULL,
+  `mac` varchar(17) NOT NULL,
+  `duid` varchar(255) NOT NULL,
+  `last_update` datetime NOT NULL,
+  `preferred_until` datetime NOT NULL,
+  `valid_until` datetime NOT NULL,
+  `iaid` varchar(8) DEFAULT NULL,
+  `last_message` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`address`)
+);
+
+CREATE TABLE `macs_llips` (
+  `mac` varchar(17) NOT NULL,
+  `link_local_ip` varchar(39) NOT NULL,
+  `last_update` datetime NOT NULL,
+  PRIMARY KEY (`mac`)
+);
