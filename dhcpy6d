@@ -680,9 +680,11 @@ def DNSUpdate(transaction_id, action="update"):
     """
     if Transactions[transaction_id].Client:
         # if allowed use client supplied hostname, otherwise that from config
-        if cfg.DNS_USE_CLIENT_HOSTNAME and not cfg.DNS_IGNORE_CLIENT:
+        if cfg.DNS_USE_CLIENT_HOSTNAME:
+            # hostname from transaction
             hostname = Transactions[transaction_id].Hostname
         else:
+            # hostname from client info built from configuration
             hostname = Transactions[transaction_id].Client.Hostname
         
         # if address should be updated in DNS update it
@@ -694,7 +696,8 @@ def DNSUpdate(transaction_id, action="update"):
         return True
     else:
         return False
-            
+
+
 def DNSDelete(transaction_id, address="", action="release"):
     """
         delete DNS entries on specified nameserver
@@ -1550,7 +1553,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # flags for answer
                 N, O, S = 0, 0, 0  
                 # use hostname supplied by client
-                if cfg.DNS_USE_CLIENT_HOSTNAME and not cfg.DNS_IGNORE_CLIENT:
+                if cfg.DNS_USE_CLIENT_HOSTNAME:
                     hostname = Transactions[transaction_id].Hostname
                 # use hostname from config
                 else:
