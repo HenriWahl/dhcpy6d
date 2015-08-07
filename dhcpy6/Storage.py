@@ -328,27 +328,29 @@ class Store(object):
                      self.Transactions[transaction_id].MAC,\
                      self.Transactions[transaction_id].DUID)
             answer = self.query(query)      
-            
+
             # add client config which seems to fit to transaction 
             self.Transactions[transaction_id].ClientConfigDB = ClientConfigDB()  
-            
+
             # read all sections of config file
             # a section here is a host
             # lowering MAC and DUID information in case they where upper in database
             for host in answer:
                 hostname, mac, duid, aclass, address, id = host
                 # lower some attributes to comply with values from request
-                if mac: mac = mac.lower()
+                if mac: mac = ListifyOption(mac.lower())
                 if duid: duid = duid.lower()
-                if address: address = address.lower()
+                if address: address = ListifyOption(address.lower())
+
                 self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname] = ClientConfig(hostname=hostname,\
                                                 mac=mac,\
                                                 duid=duid,\
                                                 aclass=aclass,\
                                                 address=address,\
                                                 id=id)
-                # in case of various MAC addresses split them...
-                self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC)
+
+                # in case of various addresses split them...
+                self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS)
 
                 # and put the host objects into index
                 if self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
@@ -388,8 +390,6 @@ class Store(object):
             get host and its information belonging to that DUID
         """
         # get client config that most probably seems to fit
-        #self.build_config_from_db(transaction_id)                
-        
         hosts = list()
         duid = self.Transactions[transaction_id].DUID
         
@@ -402,11 +402,8 @@ class Store(object):
         
     def get_client_config_by_hostname(self, transaction_id):
         """
-        get host and its information by hostname
+            get host and its information by hostname
         """
-        # get client config that most probably seems to fit
-        #self.build_config_from_db(transaction_id)
-
         hostname = self.Transactions[transaction_id].Hostname
         if hostname in self.Transactions[transaction_id].ClientConfigDB.Hosts:
             return [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
@@ -543,7 +540,7 @@ class Textfile(Store):
         config = ConfigParser.ConfigParser()
         config.read(self.cfg.STORE_FILE_CONFIG)          
         
-        # read al sections of config file
+        # read all sections of config file
         # a section here is a host
         for section in config.sections():
             self.Hosts[section] = ClientConfig()
@@ -570,6 +567,15 @@ class Textfile(Store):
                     
             # in case of various MAC addresses split them...
             self.Hosts[section].MAC = ListifyOption(self.Hosts[section].MAC)
+
+            # in case of various fixed addresses split them and avoid decompressing of ':'...
+            self.Hosts[section].ADDRESS = ListifyOption(self.Hosts[section].ADDRESS)
+            # Decompress IPv6-Addresses
+            self.Hosts[section].ADDRESS =  map(lambda x: DecompressIP6(x), self.Hosts[section].ADDRESS)
+
+            for address in self.Hosts[section].ADDRESS:
+                address = DecompressIP6(address)
+
             # and put the host objects into index
             if self.Hosts[section].MAC:
                 for m in self.Hosts[section].MAC:
@@ -628,14 +634,14 @@ class Textfile(Store):
         
     def get_client_config(self, hostname="", aclass="", duid="", address=[], mac=[], id=""):
         """
-        give back ClientConfig object
+            give back ClientConfig object
         """
-        return ClientConfig( hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
+        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
             
         
 class ClientConfig(object):
     """
-    static client settings object to be stuffed into Hosts dict of Textfile store
+        static client settings object to be stuffed into Hosts dict of Textfile store
     """
     def __init__(self, hostname="", aclass="default", duid="", address=None, mac=None, id=""):
         self.HOSTNAME = hostname
@@ -655,7 +661,7 @@ class ClientConfig(object):
 
 class ClientConfigDB(object):
     """
-    class for storing client config snippet from DB - used in SQLite and MySQL Storage
+        class for storing client config snippet from DB - used in SQLite and MySQL Storage
     """
     def __init__(self):
         self.Hosts = dict()

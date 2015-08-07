@@ -264,6 +264,7 @@ def BuildClient(transaction_id):
             # check all given identification criteria - if they all match each other the client is identified       
             id_attributes = list()
 
+
             # get client config that most probably seems to fit
             configstore.build_config_from_db(transaction_id)
 
@@ -439,7 +440,7 @@ def BuildClient(transaction_id):
             return client
 
         # build IA addresses from config - fixed ones and dynamic
-        if client_config != None:    
+        if client_config != None:
             # give client hostname + class
             client.Hostname = client_config.HOSTNAME
             client.Class = client_config.CLASS
