@@ -570,11 +570,10 @@ class Textfile(Store):
 
             # in case of various fixed addresses split them and avoid decompressing of ':'...
             self.Hosts[section].ADDRESS = ListifyOption(self.Hosts[section].ADDRESS)
-            # Decompress IPv6-Addresses
-            self.Hosts[section].ADDRESS =  map(lambda x: DecompressIP6(x), self.Hosts[section].ADDRESS)
 
-            for address in self.Hosts[section].ADDRESS:
-                address = DecompressIP6(address)
+            # Decompress IPv6-Addresses
+            if self.Hosts[section].ADDRESS != None:
+                self.Hosts[section].ADDRESS =  map(lambda x: DecompressIP6(x), self.Hosts[section].ADDRESS)
 
             # and put the host objects into index
             if self.Hosts[section].MAC:
