@@ -349,8 +349,8 @@ class Store(object):
                                                 address=address,\
                                                 id=id)
 
-                # in case of various addresses split them...
-                self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS)
+                #### in case of various addresses split them...
+                ###self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS)
 
                 # and put the host objects into index
                 if self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
@@ -649,6 +649,7 @@ class ClientConfig(object):
         self.MAC = mac
         # fixed addresses
         if address:
+            self.ADDRESS = list()
             addresses = ListifyOption(address)
             for a in addresses:
                 self.ADDRESS.append(DecompressIP6(a))
