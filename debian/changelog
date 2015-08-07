@@ -1,3 +1,10 @@
+dhcpy6d (0.4.2~dev6-1) UNRELEASED; urgency=medium
+
+  * New upstream snapshot
+    + fixed usage of fixed addresses in dhcpy6d-clients.conf
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 07 Aug 2015 16:15:00 +0200
+
 dhcpy6d (0.4.2~dev5-1) UNRELEASED; urgency=medium
 
   * New upstream snapshot
