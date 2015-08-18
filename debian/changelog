@@ -6,7 +6,7 @@ dhcpy6d (0.4.2-1) unstable; urgency=medium
     + show warning if deprecated prefix_length is used in address definitions
     + set socket to non-blocking to avoid freeze
     + increase MAC/LLIP cache time from 30s to 300s because of laggy clients
-    + removed uselesx prefix length
+    + removed useless prefix length
     + Retry query on MySQL reconnect bugfix
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 18 Aug 2015 16:00:00 +0200
