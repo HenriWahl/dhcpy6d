@@ -1,46 +1,15 @@
-dhcpy6d (0.4.2~dev6-1) UNRELEASED; urgency=medium
+dhcpy6d (0.4.2-1) unstable; urgency=medium
 
   * New upstream snapshot
     + fixed usage of fixed addresses in dhcpy6d-clients.conf
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 07 Aug 2015 16:15:00 +0200
-
-dhcpy6d (0.4.2~dev5-1) UNRELEASED; urgency=medium
-
-  * New upstream snapshot
     + fixed DNSUpdate() to update default class clients too
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 07 Aug 2015 13:45:00 +0200
-
-dhcpy6d (0.4.2~dev4-1) UNRELEASED; urgency=medium
-
-  * New upstream snapshot
-    + added PostgreSQL support via psycopg2
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 01 Jun 2015 21:00:00 +0200
-
-dhcpy6d (0.4.2~dev3-1) UNRELEASED; urgency=medium
-
-  * New upstream snapshot
     + show warning if deprecated prefix_length is used in address definitions
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 14 Apr 2015 08:00:00 +0100
-
-dhcpy6d (0.4.2~dev2-1) UNRELEASED; urgency=medium
-
-  * New upstream snapshot
     + set socket to non-blocking to avoid freeze
     + increase MAC/LLIP cache time from 30s to 300s because of laggy clients
     + removed uselesx prefix length
-
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 13 Apr 2015 15:00:00 +0100
-
-dhcpy6d (0.4.2~dev1-1) UNRELEASED; urgency=medium
-
-  * New upstream snapshot
     + Retry query on MySQL reconnect bugfix
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 23 Mar 2015 08:50:00 +0100
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 18 Aug 2015 16:00:00 +0200
 
 dhcpy6d (0.4.1-1) unstable; urgency=medium
 
