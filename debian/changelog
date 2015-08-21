@@ -1,3 +1,10 @@
+dhcpy6d (0.4.3~dev1-1) unstable; urgency=medium
+
+  * New upstream snapshot
+    + removed client FQDN in log file
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 21 Aug 2015 12:30:00 +0200
+
 dhcpy6d (0.4.2-1) unstable; urgency=medium
 
   * New upstream snapshot
@@ -7,7 +14,7 @@ dhcpy6d (0.4.2-1) unstable; urgency=medium
     + set socket to non-blocking to avoid freeze
     + increase MAC/LLIP cache time from 30s to 300s because of laggy clients
     + removed useless prefix length
-    + Retry query on MySQL reconnect bugfix
+    + retry query on MySQL reconnect bugfix
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 18 Aug 2015 16:00:00 +0200
 
