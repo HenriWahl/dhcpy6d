@@ -1039,7 +1039,7 @@ class Transaction(object):
         options.sort()
         for o in options:
             # ignore some attributes 
-            if not o in ["OptionsRaw", "Client", "Timestamp", "DUIDLLAddress", "IAT1", "IAT2", "ClientConfigDB"] and \
+            if not o in ['OptionsRaw', 'Client', 'Timestamp', 'DUIDLLAddress', 'IAT1', 'IAT2', 'ClientConfigDB', 'FQDN'] and \
                not self.__dict__[o] in [None, False, "", []]:
                 if o == "Addresses":
                     option = "Addresses:"
