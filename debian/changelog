@@ -8,6 +8,8 @@ dhcpy6d (0.4.3~dev1-1) unstable; urgency=medium
   * Merge adduser and usermod calls in debian/dhcpy6d.postinst. Fixes
     false positive lintian warning
     maintainer-script-should-not-use-adduser-system-without-home.
+  * Bump debhelper compatibility to 9 as recommended nowadays.
+    + Update versioned debhelper build-dependency accordingly.
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 21 Aug 2015 12:30:00 +0200
 
