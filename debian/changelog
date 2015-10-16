@@ -24,7 +24,6 @@ dhcpy6d (0.4.2-1) unstable; urgency=medium
     + removed useless prefix length
     + retry query on MySQL reconnect bugfix
 
-
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 18 Aug 2015 16:00:00 +0200
 
 dhcpy6d (0.4.1-1) unstable; urgency=medium
