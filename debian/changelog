@@ -1,7 +1,13 @@
 dhcpy6d (0.4.3~dev1-1) unstable; urgency=medium
 
+  [ Henri Wahl ]
   * New upstream snapshot
     + removed client FQDN in log file
+
+  [ Axel Beckert ]
+  * Merge adduser and usermod calls in debian/dhcpy6d.postinst. Fixes
+    false positive lintian warning
+    maintainer-script-should-not-use-adduser-system-without-home.
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 21 Aug 2015 12:30:00 +0200
 
@@ -15,6 +21,7 @@ dhcpy6d (0.4.2-1) unstable; urgency=medium
     + increase MAC/LLIP cache time from 30s to 300s because of laggy clients
     + removed useless prefix length
     + retry query on MySQL reconnect bugfix
+
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 18 Aug 2015 16:00:00 +0200
 

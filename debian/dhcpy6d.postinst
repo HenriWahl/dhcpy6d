@@ -35,16 +35,13 @@ case "$1" in
              --system \
              --ingroup $SERVER_GROUP \
              --no-create-home \
+             --home $SERVER_HOME \
+             --gecos "$SERVER_NAME" \
              --disabled-password \
              $SERVER_USER 2>/dev/null || true
      echo "..done"
     fi
-    # 4. adjust passwd entry
-    usermod -c "$SERVER_NAME" \
-           -d $SERVER_HOME   \
-           -g $SERVER_GROUP  \
-              $SERVER_USER 2> /dev/null
-    # 5. adjust file and directory permissions
+    # 4. adjust file and directory permissions
     chown -R $SERVER_USER:$SERVER_GROUP $SERVER_HOME
     chmod -R 0770 $SERVER_HOME
     if [ ! -e /var/log/dhcpy6d.log ]; then
