@@ -701,6 +701,7 @@ class DB(Store):
                                                    db=self.cfg.STORE_DB_DB,\
                                                    user=self.cfg.STORE_DB_USER,\
                                                    passwd=self.cfg.STORE_DB_PASSWORD)
+                self.connection.autocommit(True)
                 self.cursor = self.connection.cursor()
                 self.connected = True
             except:
