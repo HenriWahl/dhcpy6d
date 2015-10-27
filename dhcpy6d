@@ -523,8 +523,8 @@ def BuildClient(transaction_id):
         return client
 
     except Exception,err:
-        import traceback
         traceback.print_exc(file=sys.stdout)
+        sys.stdout.flush()
         log.error("BuildClient(): " + str(err))
         return None
 
@@ -663,8 +663,8 @@ def CollectMACs():
                             log.info("Collected MAC %s for LinkLocalIP %s" % (f[NC[OS]["mac"]], ColonifyIP6(f[NC[OS]["llip"]])))
                         volatilestore.store_mac_llip(f[NC[OS]["mac"]], f[NC[OS]["llip"]])
     except Exception,err:
-        import traceback
         traceback.print_exc(file=sys.stdout)
+        sys.stdout.flush()
         log.error("CollectMACs(): " + str(err))
 
 
@@ -778,8 +778,8 @@ class DNSQueryThread(threading.Thread):
                     update_rev.delete(dns.reversename.from_address(address), "PTR")  
                 dns.query.tcp(update_rev, cfg.DNS_UPDATE_NAMESERVER)
             except Exception,err:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 log.error("DNSUPDATE: " + str(err))
 
 
@@ -807,8 +807,8 @@ class TidyUpThread(threading.Thread):
                             Transactions.pop(Transactions[t].ID)
                     except Exception, err:
                         log.error("TidyUp: TransactionID %s has already been deleted" % (str(err)))
-                        import traceback
                         traceback.print_exc(file=sys.stdout)
+                        sys.stdout.flush()
                 
                 # if disconnected try reconnect
                 if not volatilestore.connected:
@@ -836,8 +836,8 @@ class TidyUpThread(threading.Thread):
 
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:
-            import traceback
             traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
 
 
 class Client(object):
@@ -1300,8 +1300,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                     Transactions[transaction_id].Counter += 1
 
         except Exception,err:
-            import traceback
             traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
             log.error("handle(): %s | Caused by: %s | Transaction: %s" % (str(err), self.client_address[0], transaction_id))
             return None
 
@@ -1658,8 +1658,8 @@ class Handler(SocketServer.DatagramRequestHandler):
             self.response = binascii.a2b_hex(response_ascii)
             
         except Exception, err:
-            import traceback
             traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
             log.error("Response(): " + str(err))
             print transaction_id
             print Transactions[transaction_id].Client.__dict__
