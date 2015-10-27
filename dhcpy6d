@@ -525,6 +525,7 @@ def BuildClient(transaction_id):
     except Exception,err:
         import traceback
         traceback.print_exc(file=sys.stdout)
+        sys.stdout.flush()
         log.error("BuildClient(): " + str(err))
         return None
 
