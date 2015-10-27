@@ -26,6 +26,7 @@ from Helpers import *
 import os
 import pwd
 import grp
+import traceback
 
 
 class QueryQueue(threading.Thread):
@@ -50,7 +51,6 @@ class QueryQueue(threading.Thread):
             try:
                 answer = self.store.DBQuery(query)
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
                 answer = ""
@@ -451,7 +451,6 @@ class Store(object):
                 except Exception, err:
                     #Log("ERROR: CollectMACsFromDB(): " + str(err))
                     print err
-                    import traceback
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()
                     return None
@@ -477,7 +476,6 @@ class SQLite(Store):
         try:
             self.DBConnect(storage_type)
         except:
-            import traceback
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
 
@@ -499,7 +497,6 @@ class SQLite(Store):
             self.cursor = self.connection.cursor()
             self.connected = True                       
         except:
-            import traceback
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             return None
@@ -687,7 +684,6 @@ class DB(Store):
         try:
             self.DBConnect()
         except:
-            ###import traceback
             ###traceback.print_exc(file=sys.stdout)
             pass
         
@@ -709,7 +705,6 @@ class DB(Store):
                 self.cursor = self.connection.cursor()
                 self.connected = True
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
                 self.connected = False
@@ -718,7 +713,6 @@ class DB(Store):
             try:
                 import psycopg2
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
                 ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
@@ -730,7 +724,6 @@ class DB(Store):
                 self.cursor = self.connection.cursor()
                 self.connected = True
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
                 self.connected = False
@@ -749,7 +742,6 @@ class DB(Store):
                 try:
                     self.cursor.execute(query)
                 except:
-                    import traceback
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()
                     self.connected = False
