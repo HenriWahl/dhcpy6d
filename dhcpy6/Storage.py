@@ -52,6 +52,7 @@ class QueryQueue(threading.Thread):
             except:
                 import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 answer = ""
 
             self.answerqueue.put(answer)
@@ -452,6 +453,7 @@ class Store(object):
                     print err
                     import traceback
                     traceback.print_exc(file=sys.stdout)
+                    sys.stdout.flush()
                     return None
                 
         
@@ -477,6 +479,7 @@ class SQLite(Store):
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
 
         
     def DBConnect(self, storage_type="volatile"):
@@ -498,6 +501,7 @@ class SQLite(Store):
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
             return None
         
         
@@ -707,6 +711,7 @@ class DB(Store):
             except:
                 import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 self.connected = False
 
         elif self.cfg.STORE_CONFIG == 'postgresql' or self.cfg.STORE_VOLATILE == 'postgresql':
@@ -715,6 +720,7 @@ class DB(Store):
             except:
                 import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
             try:
                 self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
@@ -726,6 +732,7 @@ class DB(Store):
             except:
                 import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 self.connected = False
         return self.connected
         
@@ -744,6 +751,7 @@ class DB(Store):
                 except:
                     import traceback
                     traceback.print_exc(file=sys.stdout)
+                    sys.stdout.flush()
                     self.connected = False
                     return None
                 
