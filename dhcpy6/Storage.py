@@ -650,7 +650,10 @@ class ClientConfig(object):
         # fixed addresses
         if address:
             self.ADDRESS = list()
-            addresses = ListifyOption(address)
+            if type(address) == list:
+                addresses = address
+            else:
+                addresses = ListifyOption(address)
             for a in addresses:
                 self.ADDRESS.append(DecompressIP6(a))
         else:
