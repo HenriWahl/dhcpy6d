@@ -540,6 +540,9 @@ def ParseAddressPattern(address, client_config, transaction_id):
     if address.CATEGORY == "mac":
         macraw = "".join(Transactions[transaction_id].MAC.split(":"))
         a = a.replace("$mac$", ":".join((macraw[0:4], macraw[4:8], macraw[8:12])))
+    elif address.CATEGORY == "fixed":
+        # No patterns for fixed address, let's bail
+        return None
     elif address.CATEGORY == "id":
         # if there is an ID build address
         if str(client_config.ID) <> "":
