@@ -26,6 +26,7 @@ from Helpers import *
 import os
 import pwd
 import grp
+import traceback
 
 
 class QueryQueue(threading.Thread):
@@ -50,8 +51,8 @@ class QueryQueue(threading.Thread):
             try:
                 answer = self.store.DBQuery(query)
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 answer = ""
 
             self.answerqueue.put(answer)
@@ -450,8 +451,8 @@ class Store(object):
                 except Exception, err:
                     #Log("ERROR: CollectMACsFromDB(): " + str(err))
                     print err
-                    import traceback
                     traceback.print_exc(file=sys.stdout)
+                    sys.stdout.flush()
                     return None
                 
         
@@ -475,8 +476,8 @@ class SQLite(Store):
         try:
             self.DBConnect(storage_type)
         except:
-            import traceback
             traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
 
         
     def DBConnect(self, storage_type="volatile"):
@@ -496,8 +497,8 @@ class SQLite(Store):
             self.cursor = self.connection.cursor()
             self.connected = True                       
         except:
-            import traceback
             traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
             return None
         
         
@@ -683,7 +684,6 @@ class DB(Store):
         try:
             self.DBConnect()
         except:
-            ###import traceback
             ###traceback.print_exc(file=sys.stdout)
             pass
         
@@ -705,16 +705,16 @@ class DB(Store):
                 self.cursor = self.connection.cursor()
                 self.connected = True
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 self.connected = False
 
         elif self.cfg.STORE_CONFIG == 'postgresql' or self.cfg.STORE_VOLATILE == 'postgresql':
             try:
                 import psycopg2
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
             try:
                 self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
@@ -724,8 +724,8 @@ class DB(Store):
                 self.cursor = self.connection.cursor()
                 self.connected = True
             except:
-                import traceback
                 traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
                 self.connected = False
         return self.connected
         
@@ -742,8 +742,8 @@ class DB(Store):
                 try:
                     self.cursor.execute(query)
                 except:
-                    import traceback
                     traceback.print_exc(file=sys.stdout)
+                    sys.stdout.flush()
                     self.connected = False
                     return None
                 
