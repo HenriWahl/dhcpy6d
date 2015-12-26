@@ -803,8 +803,8 @@ class TidyUpThread(threading.Thread):
             while True:
                 # transaction data can be deleted after transaction is finished
                 now = datetime.datetime.now()
-                timedelta = datetime.timedelta(seconds=cfg.CLEANING_INTERVAL*3)
-                for t in Transactions.copy().keys():
+                timedelta = datetime.timedelta(seconds=cfg.CLEANING_INTERVAL*10)
+                for t in Transactions.keys():
                     try:
                         if now > Transactions[t].Timestamp + timedelta:
                             Transactions.pop(Transactions[t].ID)
@@ -820,9 +820,9 @@ class TidyUpThread(threading.Thread):
                     # cleaning database once per minute should be enough
                     if dbcount > 60/cfg.CLEANING_INTERVAL:
                         # remove leases which might not be recycled like random addresses for example
-                        volatilestore.remove_leases(category="random", timestamp=datetime.datetime.now())
+                        volatilestore.remove_leases(category="random", timestamp=now)
                         # set leases free whose valid lifetime is over
-                        volatilestore.release_free_leases(datetime.datetime.now())
+                        volatilestore.release_free_leases(now)
                         # unlock advertised leases remaining
                         volatilestore.unlock_unused_advertised_leases()
                         dbcount = 0
@@ -831,11 +831,17 @@ class TidyUpThread(threading.Thread):
                 # clean collected MAC addresses after 300 seconds
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
+                    cache_timedelta = 60 * cfg.CLEANING_INTERVAL
+                    timestamp = time.time()
                     for record in CollectedMACs.values():
-                        if record.timestamp + 300 < time.time():
+                        if record.timestamp + cache_timedelta < timestamp:
                             if cfg.LOG_MAC_LLIP == True:
                                 log.info("Deleted MAC %s for LinkLocalIP %s" % (record.mac, ColonifyIP6(record.llip)))
                             CollectedMACs.pop(record.llip)
+
+                    del cache_timedelta, timestamp
+
+                del now, timedelta
 
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:
