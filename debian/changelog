@@ -1,3 +1,13 @@
+dhcpy6d (0.4.3-1) unstable; urgency=medium
+
+  * New upstream release
+    + Added autocommit to MySQL
+    + Fixed fixed addresses
+    + Some optimization in tidy-up-thread
+    + Small fixes
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 26 Dec 2015 21:30:00 +0200
+
 dhcpy6d (0.4.3~dev1-1) unstable; urgency=medium
 
   [ Henri Wahl ]
