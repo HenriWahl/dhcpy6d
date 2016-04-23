@@ -1251,8 +1251,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 elif Transactions[transaction_id].LastMessageReceivedType == 4:
                                     # the RFC 3315 is a little bit confusing regarding CONFIRM
                                     # messages so it won't hurt to simply let the client
-                                    # solicit addresses again via answering "NoBinding"
-                                    self.build_response(7, transaction_id, [13], status=3)
+                                    # solicit addresses again via answering "NotOnLink"
+                                    # thus client is forced in every case to solicit a new address which
+                                    # might as well be the old one or a new if prefix has changed
+                                    self.build_response(7, transaction_id, [13], status=4)
 
                                 # RENEW
                                 # if last request was a RENEW (type 5) send a REPLY (type 7) back
