@@ -44,11 +44,14 @@ BOOLPOOL = {"0":False, "1":True, "no":False, "yes":True, "false":False, "true":T
 # whitespace for options with more than one value
 WHITESPACE = " ,"
 
+PREFIX = ''
+
 # default usage text - to be extended
 USAGE = """
 dhcpy6d - DHCPv6 server
 
-Usage: dhcpy6d --config <file> [--user <user>] [--group <group>] [--duid <duid>] [--really-do-it <yes>|<no>]
+Usage: dhcpy6d --config <file> [--user <user>] [--group <group>] [--duid <duid>] [--prefix <prefix>] [--really-do-it <yes>|<no>]
+
        dhcpy6d --generate-duid
 
 See manpage dhcpy6d(8) for details.
@@ -68,6 +71,9 @@ class Config(object):
         """
             define defaults
         """
+        # access dynamic PREFIX
+        global PREFIX
+
         # default settings
         # Server cfg.INTERFACE + addresses
         self.INTERFACE = "eth0"
@@ -208,13 +214,14 @@ class Config(object):
         configfile = self.cli_options = self.cli_user = self.cli_group = self.cli_duid = self.cli_really_do_it = None
         # get multiple options
         try:
-            self.cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:g:u:d:Gr:",
+            self.cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], "c:u:g:d:r:p:G",
                                                                       ["config=",
                                                                        "user=",
                                                                        "group=",
                                                                        "duid=",
-                                                                       "generate-duid",
-                                                                       "really-do-it="])
+                                                                       "really-do-it=",
+                                                                       'prefix=',
+                                                                       "generate-duid"])
             for opt, arg in self.cli_options:
                 if opt in ("-c", "--config"):
                     configfile = arg
@@ -226,9 +233,13 @@ class Config(object):
                     self.cli_duid = arg
                 if opt in ("-r", "--really-do-it"):
                     self.cli_really_do_it = arg
+                if opt in ('-p', '--prefix'):
+                    PREFIX = arg
+                    self.PREFIX = PREFIX
                 if opt in ("-G", "--generate-duid"):
                     print GenerateDUID()
                     sys.exit(0)
+
         except getopt.GetoptError, err:
             print err
             print USAGE
@@ -757,6 +768,9 @@ class ConfigAddress(object):
         """
         a = self.PATTERN
 
+        # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
+        a = a.replace('$prefix$', PREFIX)
+
         # check different client address categories - to be extended!
         if self.CATEGORY in ["mac", "id", "range", "random"]:
             if self.CATEGORY == "mac":
@@ -770,9 +784,8 @@ class ConfigAddress(object):
             try:
                 # build complete "address" and ignore all the Xs (strict=False)
                 a = DecompressIP6(a, strict=False)
-            except:
-                #print "Address", self.TYPE + ": address pattern", self.PATTERN, "is not valid!"
-                ErrorExit("Address type '%s' address pattern '%s' is not valid." % (self.TYPE, self.PATTERN))
+            except Exception, err:
+                ErrorExit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
             
         self.PROTOTYPE = a
         

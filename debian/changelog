@@ -1,3 +1,11 @@
+dhcpy6d (0.4.4-1) unstable; urgency=medium
+
+  * New upstream release
+    + Reply CONFIRM requests with NotOnLink to force clients to get new address
+    + Added --prefix option to be used for dynamic prefixes
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 24 Apr 2016 21:30:00 +0200
+
 dhcpy6d (0.4.3-1) unstable; urgency=medium
 
   * New upstream release
@@ -188,8 +196,8 @@ dhcpy6d (0.1.4.1-1) unstable; urgency=low
     - fixed lease storage bug
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 18 May 2013 00:50:00 +0200
- 
- 
+
+
 dhcpy6d (0.1.4-1) unstable; urgency=low
 
   * New upstream

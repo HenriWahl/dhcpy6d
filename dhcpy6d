@@ -533,8 +533,12 @@ def ParseAddressPattern(address, client_config, transaction_id):
     """
         parse address pattern and replace variables with current values
     """
+
     # parse all pattern parts
     a = address.PATTERN
+
+    # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
+    a = a.replace('$prefix$', cfg.PREFIX)
 
     # check different client address categories - to be extended!
     if address.CATEGORY == "mac":
@@ -1690,7 +1694,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             if len(self.response) > 0:
                 self.socket.sendto(self.response, self.client_address)
         else:
-            log.error("Nothing sent - please set 'really_do_it = yes' in config file.")
+            log.error("Nothing sent - please set 'really_do_it = yes' in config file or as command line option.")
         
     
 ### MAIN ###
