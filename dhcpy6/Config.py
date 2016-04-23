@@ -44,6 +44,7 @@ BOOLPOOL = {"0":False, "1":True, "no":False, "yes":True, "false":False, "true":T
 # whitespace for options with more than one value
 WHITESPACE = " ,"
 
+# empty default prefix - if needed given by command line argument
 PREFIX = ''
 
 # default usage text - to be extended
@@ -73,6 +74,7 @@ class Config(object):
         """
         # access dynamic PREFIX
         global PREFIX
+        self.PREFIX = PREFIX
 
         # default settings
         # Server cfg.INTERFACE + addresses
@@ -767,6 +769,10 @@ class ConfigAddress(object):
             build prototype of pattern for later comparison with leases
         """
         a = self.PATTERN
+
+        # check if prefix is in address but not given on command line
+        if '$prefix$' in a and PREFIX == '':
+            ErrorExit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
 
         # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
         a = a.replace('$prefix$', PREFIX)
