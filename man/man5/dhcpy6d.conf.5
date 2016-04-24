@@ -1,4 +1,4 @@
-.TH "dhcpy6d.conf" "5" "Jul 17, 2014" "Henri Wahl" "dhcpy6d.conf"
+.TH "dhcpy6d.conf" "5" "Apr 24, 2016" "Henri Wahl" "dhcpy6d.conf"
 .SH "NAME"
 dhcpy6d.conf \- configuration file for DHCPv6 server dhcpy6d
 
@@ -227,6 +227,7 @@ Categories play an important role when defining patterns for addresses. An addre
 .TP
 .B pattern = 2001:db8::$mac$|$id$|$range$|$random$
 Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+The variable $prefix$ can be used instead of a literal prefix and uses the prefix given at calling dhcpy6d.
 
 .B $mac$
 - The MAC address from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder.
