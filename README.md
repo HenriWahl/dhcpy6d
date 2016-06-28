@@ -5,6 +5,6 @@ Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by D
 
 Supported platforms include Linux, OpenBSD, FreeBSD, NetBSD and MacOS X. At any other POSIX OS it might work too.
 
-Homepage: http://dhcpy6d.ifw-dresden.de
+Homepage: https://dhcpy6d.ifw-dresden.de/
 
-Documentation: http://dhcpy6d.ifw-dresden.de/documentation
+Documentation: https://dhcpy6d.ifw-dresden.de/documentation

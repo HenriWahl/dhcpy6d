@@ -69,8 +69,8 @@ setup(name = 'dhcpy6d',
     classifiers = CLASSIFIERS,
     author = 'Henri Wahl',
     author_email = 'h.wahl@ifw-dresden.de',
-    url = 'http://dhcpy6d.ifw-dresden.de',
-    download_url = 'http://dhcpy6d.ifw-dresden.de/download',
+    url = 'https://dhcpy6d.ifw-dresden.de/',
+    download_url = 'https://dhcpy6d.ifw-dresden.de/download',
     py_modules = ['dhcpy6.Helpers', 'dhcpy6.Constants',\
                 'dhcpy6.Config', 'dhcpy6.Storage'],
     data_files = data_files_custom,\
