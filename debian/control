@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 9~),
                python-all (>= 2.6.6-3~)
 Build-Depends-Indep: dh-python
 Homepage: http://dhcpy6d.ifw-dresden.de
-Vcs-Git: git://github.com/HenriWahl/dhcpy6d.git
+Vcs-Git: https://github.com/HenriWahl/dhcpy6d.git -b debian
 Vcs-Browser: https://github.com/HenriWahl/dhcpy6d
 Standards-Version: 3.9.6
 
