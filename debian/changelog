@@ -1,4 +1,4 @@
-dhcpy6d (0.4.3-1) UNRELEASED; urgency=medium
+dhcpy6d (0.4.3-1) unstable; urgency=low
 
   [ Henri Wahl ]
   * New upstream release
@@ -13,7 +13,7 @@ dhcpy6d (0.4.3-1) UNRELEASED; urgency=medium
   * Switch Homepage header from http:// to https://.
   * Declare compliance with Debian Policy 3.9.8. (No changes needed.)
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 26 Dec 2015 21:30:00 +0200
+ -- Axel Beckert <abe@debian.org>  Tue, 28 Jun 2016 21:12:53 +0200
 
 dhcpy6d (0.4.3~dev1-1) unstable; urgency=medium
 
