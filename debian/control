@@ -10,7 +10,7 @@ Build-Depends-Indep: dh-python
 Homepage: https://dhcpy6d.ifw-dresden.de/
 Vcs-Git: https://github.com/HenriWahl/dhcpy6d.git -b debian
 Vcs-Browser: https://github.com/HenriWahl/dhcpy6d
-Standards-Version: 3.9.6
+Standards-Version: 3.9.8
 
 Package: dhcpy6d
 Architecture: all

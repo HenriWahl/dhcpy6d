@@ -11,6 +11,7 @@ dhcpy6d (0.4.3-1) UNRELEASED; urgency=medium
   * Fix typo found by Lintian in package description.
   * Switch Vcs-Git header from git:// to https:// and add "-b debian".
   * Switch Homepage header from http:// to https://.
+  * Declare compliance with Debian Policy 3.9.8. (No changes needed.)
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 26 Dec 2015 21:30:00 +0200
 
