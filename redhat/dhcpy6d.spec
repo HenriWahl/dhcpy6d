@@ -16,7 +16,7 @@ Group:             System Environment/Daemons
 
 License:           GPLv2
 URL:               https://dhcpy6d.ifw-dresden.de/
-Source0:           https://%{name}.ifw-dresden.de/files-%{name}/%{name}-%{version}.tar.gz
+Source0:           https://%{name}.ifw-dresden.de/files-%{name}/stable/%{name}-%{version}.tar.gz
 # in order to build from tarball
 # tar -zxvf dhcpy6d-%%{version}.tar.gz -C ~/ dhcpy6d-%%{version}/redhat/init.d/dhcpy6d --strip-components=4&& rpmbuild -ta dhcpy6d-%%{version}.tar.gz&& rm -f ~/dhcpy6d
 Source1:           %{name}
