@@ -2,7 +2,7 @@
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2015 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2017 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ NLM_F_ROOT = 0x100
 NLM_F_MATCH = 0x200
 NLM_F_DUMP = (NLM_F_ROOT | NLM_F_MATCH)
 # NETLINK message is alsways the same except header seq
-MSG = struct.pack("B", socket.AF_INET6)
+MSG = struct.pack('B', socket.AF_INET6)
 # always the same length...
 MSG_HEADER_LENGTH = 17
 # ...type...
@@ -83,28 +83,28 @@ NLMSG_ALIGNTO = 4
 NLA_ALIGNTO = 4
 
 # whitespace for options with more than one value
-WHITESPACE = " ,"
+WHITESPACE = ' ,'
 
 
 def ConvertDNS2Binary(name):
-    """
+    '''
         convert domain name as described in RFC 1035, 3.1
-    """
-    binary = ""
-    domain_parts = name.split(".")
+    '''
+    binary = ''
+    domain_parts = name.split('.')
     for p in domain_parts:
-        binary += "%02x" % (len(p))     # length of Domain Name Segements
+        binary += '%02x' % (len(p))     # length of Domain Name Segements
         binary += binascii.b2a_hex(p)
     # final zero size octet following RFC 1035
-    binary += "00"
+    binary += '00'
     return binary
 
 
 def ConvertBinary2DNS(binary):
-    """
+    '''
         convert domain name from hex like in RFC 1035, 3.1
-    """
-    name = ""
+    '''
+    name = ''
     binary_parts = binary
     while len(binary_parts) > 0:
         # RFC 1035 - domain names are sequences of labels separated by length octets
@@ -113,134 +113,132 @@ def ConvertBinary2DNS(binary):
         label = binascii.a2b_hex(binary_parts[2:2+length*2])
         binary_parts = binary_parts[2+length*2:]
         name += label
-        # insert "." if this is not the last label of FQDN
+        # insert '.' if this is not the last label of FQDN
         # >2 because last byte is the zero byte terminator
         if len(binary_parts) > 2:
-            name += "."
+            name += '.'
     return str(name)
 
 
 def BuildOption(number, payload):
-    """
+    '''
         glue option with payload
-    """
+    '''
     # option number and length take 2 byte each so the string has to be 4 chars long
-    option = "%04x" % (number)          # option number
-    option += "%04x" % (len(payload)/2) # payload length, /2 because 2 chars are 1 byte
+    option = '%04x' % (number)          # option number
+    option += '%04x' % (len(payload)/2) # payload length, /2 because 2 chars are 1 byte
     option += payload  
     return option
     
     
 def CorrectMAC(mac):
-    """
+    '''
         OpenBSD shortens MAC addresses in ndp output - here they grow again
-    """
-    decompressed = map(lambda m: "%02x" % (int(m, 16)), mac.split(":")) 
-    return ":".join(decompressed)
+    '''
+    decompressed = map(lambda m: '%02x' % (int(m, 16)), mac.split(':'))
+    return ':'.join(decompressed)
 
 
 def ColonifyMAC(mac):
-    """
+    '''
         return complete MAC address with colons
-    """
-    return ":".join((mac[0:2], mac[2:4], mac[4:6],\
+    '''
+    return ':'.join((mac[0:2], mac[2:4], mac[4:6],\
                      mac[6:8], mac[8:10], mac[10:12]))
 
 
 def DecompressIP6(ip6, strict=True):
-    """
-        decompresses shortened IPv6 address and returns it as ":"-less 32 character string
+    '''
+        decompresses shortened IPv6 address and returns it as ':'-less 32 character string
         additionally allows testing for prototype address with less strict set of allowed characters
-    """
-    # if in strict mode there are no hex numbers and ":" something is wrong
+    '''
+    # if in strict mode there are no hex numbers and ':' something is wrong
     if strict == True:
         for c in ip6.lower():
-            #if not c in [":", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"]:
-            if not c in ":0123456789abcdef":
+            if not c in ':0123456789abcdef':
                 raise Exception('%s should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f' % (ip6))
                 #return None
     else:
         # used for comparison of leases with address pattern - X replace the dynamic part of the address
         for c in ip6.lower():
-            #if not c in [":", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "x"]:
-            if not c in ":0123456789abcdefx":
+            if not c in ':0123456789abcdefx':
                 raise Exception('%s should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f x' % (ip6))
                 #return None          
     # nothing to do
-    if len(ip6) == 32 and ip6.count(":") == 0:
+    if len(ip6) == 32 and ip6.count(':') == 0:
         return ip6
 
     # larger heaps of :: smell like something wrong
-    if ip6.count("::") > 1 or ip6.count(":::") >= 1:
-        raise Exception('%s has too many accumulated ":"' % (ip6))      
+    if ip6.count('::') > 1 or ip6.count(':::') >= 1:
+        raise Exception("%s has too many accumulated ':'" % (ip6))
     
-    # less than 7 ":" but no "::" also make a bad impression 
-    if ip6.count(":") < 7 and ip6.count("::") <> 1:
-        raise Exception('%s is missing some ":"' % (ip6))       
+    # less than 7 ':' but no '::' also make a bad impression
+    if ip6.count(':') < 7 and ip6.count('::') <> 1:
+        raise Exception("%s is missing some ':'" % (ip6))
     
-    # replace :: with :0000:: - the last ":" will be cut of finally 
-    while ip6.count(":") < 8 and ip6.count("::") == 1:
-        ip6 = ip6.replace("::", ":0000::")
-    # remaining ":" will be cut off
-    ip6 = ip6.replace("::", ":")
+    # replace :: with :0000:: - the last ':' will be cut of finally
+    while ip6.count(':') < 8 and ip6.count('::') == 1:
+        ip6 = ip6.replace('::', ':0000::')
+    # remaining ':' will be cut off
+    ip6 = ip6.replace('::', ':')
 
-    # ":" at the beginning have to be filled up with 0000 too
-    if ip6.startswith(":"):
-        ip6 = "0000" + ip6
+    # ':' at the beginning have to be filled up with 0000 too
+    if ip6.startswith(':'):
+        ip6 = '0000' + ip6
 
     # if a segment is shorter than 4 chars the gaps get filled with zeros
-    ip6_segments_source = ip6.split(":")
+    ip6_segments_source = ip6.split(':')
     ip6_segments_target = list()
     for s in ip6_segments_source:
         while len(s) < 4:
-            s = "0" + s
+            s = '0' + s
         if len(s) > 4:
             raise Exception
         ip6_segments_target.append(s)
 
-    # return with separator (mostly "")
-    return "".join(ip6_segments_target)
+    # return with separator (mostly '')
+    return ''.join(ip6_segments_target)
                
 
 def ColonifyIP6(address):
-    """
+    '''
         return complete IPv6 address with colons
-    """
+    '''
     if address:
-        return ":".join((address[0:4], address[4:8], address[8:12], address[12:16],\
+        return ':'.join((address[0:4], address[4:8], address[8:12], address[12:16],\
                         address[16:20], address[20:24], address[24:28], address[28:32]))
     else:
-        return "N/A"
+        return 'N/A'
 
 
-def ErrorExit(message="An error occured.", status=1):
-    """
+def ErrorExit(message='An error occured.', status=1):
+    '''
         exit with given error message
         allow prefix, especially for spitting out section of configuration errors
-    """
-    sys.stderr.write("\n%s\n\n" % (message))
+    '''
+    sys.stderr.write('\n%s\n\n' % (message))
     sys.exit(status)
     
     
 def ListifyOption(option):
-    """
+    '''
         return any comma or space separated option as list
-    """
+    '''
     if option:
         lex = shlex.shlex(option)
         lex.whitespace = WHITESPACE
-        lex.wordchars += ":.-"
+        lex.wordchars += ':.-'
         return list(lex)
     else:
         return None
 
 
 class NeighborCacheRecord(object):
-    """
+    '''
         object for neighbor cache entries to be returned by GetNeighborCacheLinux() and in CollectedMACs
         .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB
-    """
-    def __init__(self, llip="", mac="", interface=""):
+    '''
+    def __init__(self, llip='', mac='', interface=''):
         self.llip = llip
         self.mac = mac
         self.interface = interface
@@ -248,11 +246,11 @@ class NeighborCacheRecord(object):
 
 
 def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
-    """
+    '''
         imported version of https://github.com/vokac/dhcpy6d
         https://github.com/vokac/dhcpy6d/commit/bd34d3efb18ba6016a2b3afea0b6a3fcdfb524a4
         Thanks for donating!
-    """
+    '''
     # result
     result = dict()
 
@@ -267,11 +265,11 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
     seq = random.randint(0, pow(2,31))
 
     # netlink message header (struct nlmsghdr)
-    MSG_HEADER = struct.pack("IHHII", MSG_HEADER_LENGTH,
+    MSG_HEADER = struct.pack('IHHII', MSG_HEADER_LENGTH,
             MSG_HEADER_TYPE, MSG_HEADER_FLAGS, seq, pid)
 
     # NETLINK message is always the same except header seq (struct ndmsg)
-    MSG = struct.pack("B", socket.AF_INET6)
+    MSG = struct.pack('B', socket.AF_INET6)
 
     # send message with header
     s.send(MSG_HEADER + MSG)
@@ -300,59 +298,59 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
         while answer_pos < answer_len:
             curr_pos = answer_pos
             if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug("nlm[%i:]: parsing up to %i..." % (answer_pos, answer_len))
+                log.debug('nlm[%i:]: parsing up to %i...' % (answer_pos, answer_len))
 
             nlmsg_len, nlmsg_type, nlmsg_flags, nlmsg_seq, nlmsg_pid = \
-                    struct.unpack_from("<%s" % nlmsghdr_fmt, answer, answer_pos)
+                    struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)
 
             # basic safety checks for received data (imitates NLMSG_OK)
-            if nlmsg_len < struct.calcsize("<%s" % nlmsghdr_fmt):
-                log.warn("broken data from netlink (position %i, nlmsg_len %i): "\
-                         "nlmsg_len is smaler then structure size" % (answer_pos, nlmsg_len))
+            if nlmsg_len < struct.calcsize('<%s' % nlmsghdr_fmt):
+                log.warn('broken data from netlink (position %i, nlmsg_len %i): '\
+                         'nlmsg_len is smaler then structure size' % (answer_pos, nlmsg_len))
                 break
-            if answer_len-answer_pos < struct.calcsize("<%s" % nlmsghdr_fmt):
-                log.warn("broken data from netlink (position %i, length avail %i): "\
-                         "received data size is smaler then structure size" % \
+            if answer_len-answer_pos < struct.calcsize('<%s' % nlmsghdr_fmt):
+                log.warn('broken data from netlink (position %i, length avail %i): '\
+                         'received data size is smaler then structure size' % \
                          (answer_pos, answer_len-answer_pos))
                 break
             if answer_len-answer_pos < nlmsg_len:
-                log.warn("broken data from netlink (position %i, length avail %i): "\
-                         "received data size is smaller then nlmsg_len" % \
+                log.warn('broken data from netlink (position %i, length avail %i): '\
+                         'received data size is smaller then nlmsg_len' % \
                          (answer_pos, answer_len-answer_pos))
                 break
             if (pid != nlmsg_pid or seq != nlmsg_seq):
-                log.warn("broken data from netlink (position %i, length avail %i): "\
-                         "invalid seq (%s x %s) or pid (%s x %s)" % \
+                log.warn('broken data from netlink (position %i, length avail %i): '\
+                         'invalid seq (%s x %s) or pid (%s x %s)' % \
                          (answer_pos, answer_len-answer_pos, seq, nlmsg_seq, pid, nlmsg_pid))
                 break
 
             # data for this Routing/device hook record
             nlmsg_data = answer[answer_pos+nlmsg_header_len:answer_pos+nlmsg_len]
             if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug("nlm[%i:%i]%s: %s" % (answer_pos, answer_pos+nlmsg_len, \
-                          str(struct.unpack_from("<%s" % nlmsghdr_fmt, answer, answer_pos)), \
+                log.debug('nlm[%i:%i]%s: %s' % (answer_pos, answer_pos+nlmsg_len, \
+                          str(struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)), \
                           binascii.b2a_hex(nlmsg_data)))
 
             if nlmsg_type == NLMSG_DONE:
                 break
             if nlmsg_type == NLMSG_ERROR:
                 nlmsgerr_error, nlmsgerr_len, nlmsgerr_type, nlmsgerr_flags, nlmsgerr_seq, nlmsgerr_pid = \
-                        struct.unpack_from("<sIHHII", nlmsg_data)
-                log.warn("broken data from netlink (position %i, length avail %i): "\
-                         "invalid message (errno %i)" % (answer_pos, \
+                        struct.unpack_from('<sIHHII', nlmsg_data)
+                log.warn('broken data from netlink (position %i, length avail %i): '\
+                         'invalid message (errno %i)' % (answer_pos, \
                          answer_len-answer_pos, nlmsgerr_error))
                 break
             if nlmsg_type not in [ RTM_NEWNEIGH, RTM_DELNEIGH, RTM_GETNEIGH ]:
-                log.warn("broken data from netlink (position %i, length avail %i): "\
-                         "this is realy wierd, wrong message type %i" % \
+                log.warn('broken data from netlink (position %i, length avail %i): '\
+                         'this is realy wierd, wrong message type %i' % \
                          (answer_pos, answer_len-answer_pos, nlmsg_type))
                 break
 
             curr_pos = answer_pos+nlmsg_header_len
             ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type = \
-                    struct.unpack_from("<%s" % ndmsg_fmt, nlmsg_data, 0)
+                    struct.unpack_from('<%s' % ndmsg_fmt, nlmsg_data, 0)
             if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug("nlm[%i:%i]: family %s, pad1 %s, pad2 %s, ifindex %s, state %s, flags %s, type %s" % \
+                log.debug('nlm[%i:%i]: family %s, pad1 %s, pad2 %s, ifindex %s, state %s, flags %s, type %s' % \
                           (answer_pos, answer_pos+nlmsg_len, ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type))
 
             nda = {
@@ -364,15 +362,15 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
             while nlmsg_data_pos < nlmsg_data_len:
                 curr_pos = answer_pos+nlmsg_header_len+nlmsg_data_pos
                 if log.getEffectiveLevel() <= logging.DEBUG:
-                    log.debug("nla[%i:]: parsing up to %i..." % (nlmsg_data_pos, nlmsg_data_len))
+                    log.debug('nla[%i:]: parsing up to %i...' % (nlmsg_data_pos, nlmsg_data_len))
 
                 nla_len, nla_type = \
-                        struct.unpack_from("<%s" % nlattr_fmt, nlmsg_data, nlmsg_data_pos)
+                        struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)
 
                 # basic safety checks for received data (imitates RTA_OK)
-                if nla_len < struct.calcsize("<%s" % nlattr_fmt):
-                    log.debug("This is normal for last record, but we should not get here "\
-                              "(because of NLMSG_DONE); data size: %i, data[%i:%i] = %s" % \
+                if nla_len < struct.calcsize('<%s' % nlattr_fmt):
+                    log.debug('This is normal for last record, but we should not get here '\
+                              '(because of NLMSG_DONE); data size: %i, data[%i:%i] = %s' % \
                               (answer_len, answer_pos+nlmsg_header_len, \
                                answer_pos+nlmsg_len, binascii.b2a_hex(nlmsg_data)))
                     break
@@ -380,8 +378,8 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
                 # data for this Routing/device hook record attribute
                 nla_data = nlmsg_data[nlmsg_data_pos+nla_header_len:nlmsg_data_pos+nla_len]
                 if log.getEffectiveLevel() <= logging.DEBUG:
-                    log.debug("nla[%i:]%s: %s" % (nlmsg_data_pos, \
-                              str(struct.unpack_from("<%s" % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
+                    log.debug('nla[%i:]%s: %s' % (nlmsg_data_pos, \
+                              str(struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
                               binascii.b2a_hex(nla_data)))
 
                 nda_type_key = NDA.get(nla_type, str(nla_type))
@@ -390,7 +388,7 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
                 elif nda_type_key == 'NDA_LLADDR':
                     nda[nda_type_key] = ColonifyMAC(binascii.b2a_hex(nla_data))
                 elif nda_type_key == 'NDA_CACHEINFO':
-                    nda[nda_type_key] = struct.unpack_from("<IIII", nla_data)
+                    nda[nda_type_key] = struct.unpack_from('<IIII', nla_data)
                 elif nda_type_key == 'NDA_VLAN':
                     nda[nda_type_key] = binascii.b2a_hex(nla_data)
                 else:
@@ -400,12 +398,11 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
                 nlmsg_data_pos += (nla_len-nla_header_len+NLA_ALIGNTO-1) & ~(NLA_ALIGNTO-1) # alginment to 4
 
             if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug("nlm[%i:%i]: %s" % (answer_pos, answer_pos+nlmsg_len, str(nda)))
+                log.debug('nlm[%i:%i]: %s' % (answer_pos, answer_pos+nlmsg_len, str(nda)))
 
             # prepare all required data to be returned to callee
             # * only care about configured devices
             # * no need for multicast address cache entries (MAC 33:33:...)
-            #log.debug("TEST %s -> %s, state = %s, %s %s" % (nda.get('NDM_IFINDEX'), IF_NUMBER.get(nda.get('NDM_IFINDEX', '')), ndm_state, nda.get('NDA_DST'), nda.get('NDA_LLADDR')))
             if nda['NDM_STATE'] & ~(NUD_INCOMPLETE|NUD_FAILED|NUD_NOARP):
                 if not IF_NUMBER.has_key(nda['NDM_IFINDEX']):
                     log.debug("can't find device for interface index %i" % nda['NDM_IFINDEX'])
@@ -425,7 +422,7 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
             answer_pos += nlmsg_len
 
     except struct.error, e:
-        log.warn("broken data from netlink (position %i, data[%i:%i] = %s...): %s" % \
+        log.warn('broken data from netlink (position %i, data[%i:%i] = %s...): %s' % \
                  (answer_pos, curr_pos, answer_len, \
                   binascii.b2a_hex(answer[curr_pos:curr_pos+8]), str(e)))
 
@@ -436,10 +433,10 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
 
 
 def GetLibC():
-    """
+    '''
         return libC-object to be used for NIC handling in dhcpy6d and Config.py
         first get the library to connect to - OS-dependent
-    """
+    '''
     OS = platform.system()
     if OS == "Linux":
         libc_name = "libc.so.6"
