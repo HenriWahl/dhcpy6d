@@ -27,6 +27,7 @@ import os
 import pwd
 import grp
 import traceback
+import time
 
 
 class QueryQueue(threading.Thread):
@@ -99,52 +100,67 @@ class Store(object):
                     if answer != None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, class, mac, duid, iaid, last_update, preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
-                                  (self.table_leases,\
-                                   a.ADDRESS,\
-                                   1,\
-                                   self.Transactions[transaction_id].LastMessageReceivedType,\
-                                   a.PREFERRED_LIFETIME,\
-                                   a.VALID_LIFETIME,\
-                                   self.Transactions[transaction_id].Client.Hostname,\
-                                   a.TYPE,\
-                                   a.CATEGORY,\
-                                   a.IA_TYPE,\
-                                   self.Transactions[transaction_id].Client.Class,\
-                                   self.Transactions[transaction_id].MAC,\
-                                   self.Transactions[transaction_id].DUID,\
-                                   self.Transactions[transaction_id].IAID,\
-                                   datetime.datetime.now(),\
-                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
-                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)))
+                            now = time.time()
+                            query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime,\
+                                     hostname, type, category, ia_type, class, mac, duid, iaid, last_update,\
+                                     preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s',\
+                                     '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
+                                  (self.table_leases,
+                                   a.ADDRESS,
+                                   1,
+                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   a.PREFERRED_LIFETIME,
+                                   a.VALID_LIFETIME,
+                                   self.Transactions[transaction_id].Client.Hostname,
+                                   a.TYPE,
+                                   a.CATEGORY,
+                                   a.IA_TYPE,
+                                   self.Transactions[transaction_id].Client.Class,
+                                   self.Transactions[transaction_id].MAC,
+                                   self.Transactions[transaction_id].DUID,
+                                   self.Transactions[transaction_id].IAID,
+                                   now,
+                                   now + int(a.PREFERRED_LIFETIME),
+                                   now + int(a.VALID_LIFETIME))
+                                   #datetime.datetime.now(),
+                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),
+                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME))
                             answer = self.query(query)
+                            del now
                         # otherwise update it if not a random address
                         elif a.CATEGORY != 'random':
-                            query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s', valid_lifetime = '%s',\
-                                  hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
-                                  duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
-                                  valid_until = '%s'\
+                            now = time.time()
+                            query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
+                                     valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
+                                     ia_type = '%s', class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
+                                     last_update = '%s', preferred_until = '%s', valid_until = '%s'\
                                   WHERE address = '%s'" % \
-                                  (self.table_leases,\
-                                   self.Transactions[transaction_id].LastMessageReceivedType,\
-                                   a.PREFERRED_LIFETIME,\
-                                   a.VALID_LIFETIME,\
-                                   self.Transactions[transaction_id].Client.Hostname,\
-                                   a.TYPE,\
-                                   a.CATEGORY,\
-                                   a.IA_TYPE,\
-                                   self.Transactions[transaction_id].Client.Class,\
-                                   self.Transactions[transaction_id].MAC,\
-                                   self.Transactions[transaction_id].DUID,\
-                                   self.Transactions[transaction_id].IAID,\
-                                   datetime.datetime.now(),\
-                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),\
-                                   datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),\
+                                  (self.table_leases,
+                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   a.PREFERRED_LIFETIME,
+                                   a.VALID_LIFETIME,
+                                   self.Transactions[transaction_id].Client.Hostname,
+                                   a.TYPE,
+                                   a.CATEGORY,
+                                   a.IA_TYPE,
+                                   self.Transactions[transaction_id].Client.Class,
+                                   self.Transactions[transaction_id].MAC,
+                                   self.Transactions[transaction_id].DUID,
+                                   self.Transactions[transaction_id].IAID,
+                                   now,
+                                   now + int(a.PREFERRED_LIFETIME),
+                                   now + int(a.VALID_LIFETIME),
+                                   # datetime.datetime.now(),
+                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),
+                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),
                                    a.ADDRESS)
                             answer = self.query(query)
+                            del now
                         else:
                             # set last message type of random address
-                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" % (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType, a.ADDRESS)
+                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
+                                     (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType,
+                                      a.ADDRESS)
                             answer = self.query(query)
 
             return True
@@ -288,7 +304,8 @@ class Store(object):
             return None
         
     
-    def release_free_leases(self, timestamp=datetime.datetime.now()):
+    #def release_free_leases(self, timestamp=datetime.datetime.now()):
+    def release_free_leases(self, timestamp=time.time()):
         '''
             release all invalid leases via setting their active flag to False
         '''
@@ -297,7 +314,8 @@ class Store(object):
         return answer
     
     
-    def remove_leases(self, category="random", timestamp=datetime.datetime.now()):
+    #def remove_leases(self, category="random", timestamp=datetime.datetime.now()):
+    def remove_leases(self, category="random", timestamp=time.time()):
         '''
             remove all leases of a certain category like random - they will grow the database
             but be of no further use
@@ -307,12 +325,14 @@ class Store(object):
         return answer
         
 
-    def unlock_unused_advertised_leases(self, timestamp=datetime.datetime.now()):
+    #def unlock_unused_advertised_leases(self, timestamp=datetime.datetime.now()):
+    def unlock_unused_advertised_leases(self, timestamp=time.time()):
         '''
             unlock leases marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
         '''
-        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
+        #query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
+        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + 60)
         answer = self.query(query)
         return answer
 
@@ -428,10 +448,12 @@ class Store(object):
         # if known already update timestamp of MAC-link-local-ip-mapping
         if not db_entry:
             query = "INSERT INTO macs_llips (mac, link_local_ip, last_update) VALUES ('%s', '%s', '%s')" % \
-                  (mac, link_local_ip, datetime.datetime.now())
+                  (mac, link_local_ip, time.time())
+                  #(mac, link_local_ip, datetime.datetime.now())
             self.query(query)
         else:
-            query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, datetime.datetime.now(), mac)
+            #query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, datetime.datetime.now(), mac)
+            query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, time.time(), mac)
             self.query(query)
                     
                     

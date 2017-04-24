@@ -21,7 +21,6 @@
 
 import socket
 import struct
-import ctypes
 import platform
 import binascii
 import datetime
@@ -40,6 +39,7 @@ import logging
 import logging.handlers
 import pwd
 import grp
+import time
 
 # access /usr/share/pyshared on Debian
 # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715010
@@ -811,11 +811,13 @@ class TidyUpThread(threading.Thread):
             #get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                now = datetime.datetime.now()
-                timedelta = datetime.timedelta(seconds=cfg.CLEANING_INTERVAL*10)
+                #now = datetime.datetime.now()
+                now = time.time()
+                #timedelta = datetime.timedelta(seconds=cfg.CLEANING_INTERVAL*10)
                 for t in Transactions.keys():
                     try:
-                        if now > Transactions[t].Timestamp + timedelta:
+                        #if now > Transactions[t].Timestamp + timedelta:
+                        if now > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
                             Transactions.pop(Transactions[t].ID)
                     except Exception, err:
                         log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))
@@ -840,17 +842,17 @@ class TidyUpThread(threading.Thread):
                 # clean collected MAC addresses after 300 seconds
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
-                    cache_timedelta = 60 * cfg.CLEANING_INTERVAL
                     timestamp = time.time()
                     for record in CollectedMACs.values():
-                        if record.timestamp + cache_timedelta < timestamp:
+                        #if record.timestamp + cache_timedelta < timestamp:
+                        if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP == True:
                                 log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, ColonifyIP6(record.llip)))
                             CollectedMACs.pop(record.llip)
 
-                    del cache_timedelta, timestamp
+                    del timestamp
 
-                del now, timedelta
+                del now
 
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:
@@ -922,7 +924,8 @@ class Transaction(object):
         # default dummy OptionsRequest
         self.OptionsRequest = list()
         # timestamp to manage/clean transactions
-        self.Timestamp = datetime.datetime.now()
+        #self.Timestamp = datetime.datetime.now()
+        self.Timestamp = time.time()
         # dummy hostname
         self.FQDN = ''
         self.Hostname = ''
@@ -1180,7 +1183,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                         if CollectedMACs.has_key(Transactions[transaction_id].ClientLLIP):
                             Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                     else:
-                        Transactions[transaction_id].Timestamp = datetime.datetime.now()
+                        #Transactions[transaction_id].Timestamp = datetime.datetime.now()
+                        Transactions[transaction_id].Timestamp = time.time()
                         Transactions[transaction_id].LastMessageReceivedType = message_type
 
                     # log incoming messages
