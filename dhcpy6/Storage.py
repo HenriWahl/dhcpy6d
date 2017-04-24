@@ -30,11 +30,11 @@ import traceback
 
 
 class QueryQueue(threading.Thread):
-    """
+    '''
         Pump queries around
-    """
+    '''
     def __init__(self, cfg, store, queryqueue, answerqueue):
-        threading.Thread.__init__(self, name="QueryQueue")
+        threading.Thread.__init__(self, name='QueryQueue')
         self.queryqueue = queryqueue
         self.answerqueue = answerqueue
         self.store = store
@@ -42,10 +42,10 @@ class QueryQueue(threading.Thread):
         
 
     def run(self):
-        """
+        '''
             receive queries and ask the DB interface for answers which will be put into
             answer queue
-        """
+        '''
         while True:
             query = self.queryqueue.get()
             try:
@@ -53,15 +53,15 @@ class QueryQueue(threading.Thread):
             except:
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
-                answer = ""
+                answer = ''
 
             self.answerqueue.put(answer)
             
     
 class Store(object):
-    """
+    '''
         abstract class to present MySQL or SQLlite
-    """
+    '''
     def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
         self.cfg = cfg
         self.queryqueue = queryqueue
@@ -69,26 +69,26 @@ class Store(object):
         self.Transactions = Transactions
         self.CollectedMACs = CollectedMACs
         # table names used for database storage - MySQL additionally needs the database name
-        self.table_leases = "leases"
-        self.table_macs_llips = "macs_llips"
-        self.table_hosts = "hosts"
+        self.table_leases = 'leases'
+        self.table_macs_llips = 'macs_llips'
+        self.table_hosts = 'hosts'
         # flag to check if connection is OK
         self.connected = False
 
 
     def query(self, query):
-        """
+        '''
             put queries received into query queue and return the answers from answer queue
-        """
+        '''
         self.queryqueue.put(query)
         answer = self.answerqueue.get()       
         return answer
     
     
     def store_lease(self, transaction_id):
-        """
+        '''
             store lease in lease DB
-        """
+        '''
         # only if client exists
         if self.Transactions[transaction_id].Client:           
             for a in self.Transactions[transaction_id].Client.Addresses:
@@ -119,7 +119,7 @@ class Store(object):
                                    datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)))
                             answer = self.query(query)
                         # otherwise update it if not a random address
-                        elif a.CATEGORY != "random":
+                        elif a.CATEGORY != 'random':
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s', valid_lifetime = '%s',\
                                   hostname = '%s', type = '%s', category = '%s', ia_type = '%s', class = '%s', mac = '%s',\
                                   duid = '%s', iaid = '%s', last_update = '%s', preferred_until = '%s',\
@@ -152,13 +152,13 @@ class Store(object):
         return False
 
 
-    def get_range_lease_for_recycling(self, prefix="", frange="", trange="", duid="", mac=""):
-        """
+    def get_range_lease_for_recycling(self, prefix='', frange='', trange='', duid='', mac=''):
+        '''
             ask DB for last known leases of an already known host to be recycled
             this is most useful for CONFIRM-requests that will get a not-available-answer but get an
             ADVERTISE with the last known-as-good address for a client
             SOLICIT message type is 1
-        """
+        '''
         query = "SELECT address FROM %s WHERE "\
                 "category = 'range' AND "\
                 "'%s' <= address AND "\
@@ -178,10 +178,10 @@ class Store(object):
             return None
 
 
-    def get_highest_range_lease(self, prefix="", frange="", trange=""):
-        """
+    def get_highest_range_lease(self, prefix='', frange='', trange=''):
+        '''
             ask DB for highest known leases - if necessary range sensitive
-        """
+        '''
         query = "SELECT address FROM %s WHERE active = 1 AND "\
                 "category = 'range' AND "\
                 "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
@@ -194,11 +194,11 @@ class Store(object):
             return None
 
 
-    def get_oldest_inactive_range_lease(self, prefix="", frange="", trange=""):
-        """
+    def get_oldest_inactive_range_lease(self, prefix='', frange='', trange=''):
+        '''
             ask DB for oldest known inactive lease to minimize chance of collisions
             ordered by valid_until to get leases that are free as long as possible
-        """
+        '''
         query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
                 "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
                 (self.table_leases, prefix+frange, prefix+trange)
@@ -211,9 +211,9 @@ class Store(object):
 
         
     def get_host_lease(self, address):
-        """
+        '''
             get the hostname, DUID, MAC and IAID to verify a lease to delete its address in the DNS
-        """
+        '''
         query = "SELECT DISTINCT hostname, duid, mac, iaid FROM leases WHERE address='%s'" % (address)
         answer = self.query(query)       
         if answer != None and len(answer)>0:
@@ -227,18 +227,18 @@ class Store(object):
         
     
     def release_lease(self, address):
-        """
+        '''
             release a lease via setting its active flag to False
             set last_message to 8 because of RELEASE messages having this message id
-        """
+        '''
         query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
         answer = self.query(query)
 
 
-    def check_number_of_leases(self, prefix="", frange="", trange=""):
-        """
+    def check_number_of_leases(self, prefix='', frange='', trange=''):
+        '''
             check how many leases are stored - used to find out if address range has been exceeded
-        """
+        '''
         query = "SELECT COUNT(address) FROM leases WHERE address LIKE '%s%%' AND "\
                 "'%s' <= address AND address <= '%s'" % (prefix, prefix+frange, prefix+trange)
         answer = self.query(query)
@@ -250,9 +250,9 @@ class Store(object):
 
 
     def check_lease(self, address, transaction_id):
-        """
+        '''
             check state of a lease for REBIND and RENEW messages
-        """
+        '''
         # attributes to identify host and lease
         query = "SELECT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
                  AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
@@ -265,10 +265,10 @@ class Store(object):
         return answer
 
 
-    def check_advertised_lease(self, transaction_id="", category="", atype=""):
-        """
+    def check_advertised_lease(self, transaction_id='', category='', atype=''):
+        '''
             check if there are already advertised addresses for client
-        """
+        '''
         # attributes to identify host and lease
         query = "SELECT address FROM %s WHERE last_message = 1\
                  AND active = 1\
@@ -289,38 +289,38 @@ class Store(object):
         
     
     def release_free_leases(self, timestamp=datetime.datetime.now()):
-        """
+        '''
             release all invalid leases via setting their active flag to False
-        """
+        '''
         query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
         answer = self.query(query)    
         return answer
     
     
     def remove_leases(self, category="random", timestamp=datetime.datetime.now()):
-        """
+        '''
             remove all leases of a certain category like random - they will grow the database
             but be of no further use
-        """
+        '''
         query = "DELETE FROM %s WHERE active = 0 AND category = '%s' AND valid_until < '%s'" % (self.table_leases, category, timestamp)
         answer = self.query(query)    
         return answer
         
 
     def unlock_unused_advertised_leases(self, timestamp=datetime.datetime.now()):
-        """
+        '''
             unlock leases marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
-        """
+        '''
         query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
         answer = self.query(query)
         return answer
 
 
     def build_config_from_db(self, transaction_id):
-        """
+        '''
             get client config from db and build the appropriate config objects and indices
-        """
+        '''
         if self.Transactions[transaction_id].ClientConfigDB == None:
             query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
                     hostname = '%s' OR mac LIKE '%%%s%%' OR duid = '%s'" % \
@@ -362,7 +362,7 @@ class Store(object):
                             self.Transactions[transaction_id].ClientConfigDB.IndexMAC[m].append(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname])
                             
                 # add DUIDs to IndexDUID
-                if not self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID == "":
+                if not self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID == '':
                     if not self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID in self.Transactions[transaction_id].ClientConfigDB.IndexDUID:
                         self.Transactions[transaction_id].ClientConfigDB.IndexDUID[self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID] = [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
                     else:
@@ -373,9 +373,9 @@ class Store(object):
 
                                   
     def get_client_config_by_mac(self, transaction_id):
-        """
+        '''
             get host and its information belonging to that mac
-        """       
+        '''
         hosts = list()
         mac = self.Transactions[transaction_id].MAC
         
@@ -387,9 +387,9 @@ class Store(object):
         
         
     def get_client_config_by_duid(self, transaction_id):
-        """
+        '''
             get host and its information belonging to that DUID
-        """
+        '''
         # get client config that most probably seems to fit
         hosts = list()
         duid = self.Transactions[transaction_id].DUID
@@ -402,9 +402,9 @@ class Store(object):
         
         
     def get_client_config_by_hostname(self, transaction_id):
-        """
+        '''
             get host and its information by hostname
-        """
+        '''
         hostname = self.Transactions[transaction_id].Hostname
         if hostname in self.Transactions[transaction_id].ClientConfigDB.Hosts:
             return [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
@@ -412,17 +412,17 @@ class Store(object):
             return None
         
         
-    def get_client_config(self, hostname="", aclass="", duid="", address=[], mac=[], id=""):
-        """
+    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], id=''):
+        '''
             give back ClientConfig object
-        """
+        '''
         return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
         
 
     def store_mac_llip(self, mac, link_local_ip):
-        """
+        '''
             store MAC-link-local-ip-mapping
-        """
+        '''
         query = "SELECT mac FROM macs_llips WHERE mac='%s'" % (mac)
         db_entry = self.query(query)
         # if known already update timestamp of MAC-link-local-ip-mapping
@@ -436,10 +436,10 @@ class Store(object):
                     
                     
     def CollectMACsFromDB(self):
-        """
+        '''
             collect all known MACs and link local addresses from database at startup
             to reduce attempts to read neighbor cache
-        """
+        '''
         query = 'SELECT link_local_ip, mac FROM %s' % (self.table_macs_llips)
         answer = self.query(query)
         if answer:
@@ -457,18 +457,18 @@ class Store(object):
                 
         
     def DBQuery(self, query):
-        """
+        '''
             no not execute query on DB - dummy
-        """
+        '''
         # return empty tuple as dummy
         return ()
 
 
 class SQLite(Store):
-    """
+    '''
         file-based SQLite database, might be an option for single installations
-    """
-    def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs, storage_type="volatile"):
+    '''
+    def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs, storage_type='volatile'):
 
         Store.__init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs)
         self.connection = None     
@@ -480,19 +480,19 @@ class SQLite(Store):
             sys.stdout.flush()
 
         
-    def DBConnect(self, storage_type="volatile"):
-        """
-        Initialize DB connection
-        """
+    def DBConnect(self, storage_type='volatile'):
+        '''
+            Initialize DB connection
+        '''
 
         import sqlite3
         
         try:
-            if storage_type == "volatile":
+            if storage_type == 'volatile':
                 storage = self.cfg.STORE_SQLITE_VOLATILE
                 # set ownership of storage file according to settings
                 os.chown(self.cfg.STORE_SQLITE_VOLATILE, pwd.getpwnam(self.cfg.USER).pw_uid, grp.getgrnam(self.cfg.GROUP).gr_gid)
-            if storage_type == "config": storage = self.cfg.STORE_SQLITE_CONFIG
+            if storage_type == 'config': storage = self.cfg.STORE_SQLITE_CONFIG
             self.connection = sqlite3.connect(storage, check_same_thread = False)
             self.cursor = self.connection.cursor()
             self.connected = True                       
@@ -503,15 +503,15 @@ class SQLite(Store):
         
         
     def DBQuery(self, query):
-        """
-        execute query on DB
-        """
+        '''
+            execute query on DB
+        '''
         try:
             answer = self.cursor.execute(query)    
             # commit only if explicitly wanted
-            if query.startswith("INSERT"):
+            if query.startswith('INSERT'):
                 self.connection.commit()
-            if query.startswith("UPDATE"):
+            if query.startswith('UPDATE'):
                 self.connection.commit()
             self.connected = True
         except:
@@ -522,9 +522,9 @@ class SQLite(Store):
     
         
 class Textfile(Store):
-    """
-    client config in text files
-    """
+    '''
+        client config in text files
+    '''
     def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
         Store.__init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs)
         self.connection = None
@@ -547,7 +547,7 @@ class Textfile(Store):
             self.Hosts[section] = ClientConfig()
             for item in config.items(section):
                 # lowercase all MAC addresses, DUIDs and IPv6 addresses
-                if item[0].upper() in ["MAC", "DUID", "ADDRESS"]:
+                if item[0].upper() in ['MAC', 'DUID', 'ADDRESS']:
                     self.Hosts[section].__setattr__(item[0].upper(), str(item[1]).lower())
                 else:
                     self.Hosts[section].__setattr__(item[0].upper(), str(item[1]))
@@ -555,12 +555,12 @@ class Textfile(Store):
             # Test if host has ID
             if cfg.CLASSES.has_key(self.Hosts[section].CLASS):
                 for a in cfg.CLASSES[self.Hosts[section].CLASS].ADDRESSES:
-                    if cfg.ADDRESSES[a].CATEGORY == "id" and self.Hosts[section].ID == "":
+                    if cfg.ADDRESSES[a].CATEGORY == 'id' and self.Hosts[section].ID == '':
                         ErrorExit("Textfile client configuration: No ID given for client '%s'" % (self.Hosts[section].HOSTNAME))
             else:
                 ErrorExit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.Hosts[section].CLASS, self.Hosts[section].HOSTNAME))
                 
-            if self.Hosts[section].ID != "":
+            if self.Hosts[section].ID != '':
                 if self.Hosts[section].ID in self.IDs.keys():
                     ErrorExit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.Hosts[section].ID, self.Hosts[section].HOSTNAME, self.IDs[self.Hosts[section].ID]))
                 else:
@@ -585,7 +585,7 @@ class Textfile(Store):
                         self.IndexMAC[m].append(self.Hosts[section])
                         
             # add DUIDs to IndexDUID
-            if not self.Hosts[section].DUID == "":
+            if not self.Hosts[section].DUID == '':
                 if not self.Hosts[section].DUID in self.IndexDUID:
                     self.IndexDUID[self.Hosts[section].DUID] = [self.Hosts[section]]
                 else:
@@ -596,9 +596,9 @@ class Textfile(Store):
 
     
     def get_client_config_by_mac(self, transaction_id):
-        """
-        get host(s?) and its information belonging to that mac
-        """
+        '''
+            get host(s?) and its information belonging to that mac
+        '''
         hosts = list()
         mac = self.Transactions[transaction_id].MAC
         if mac in self.IndexMAC:
@@ -609,9 +609,9 @@ class Textfile(Store):
         
         
     def get_client_config_by_duid(self, transaction_id):
-        """
-        get host and its information belonging to that DUID
-        """
+        '''
+            get host and its information belonging to that DUID
+        '''
         hosts = list()
         duid = self.Transactions[transaction_id].DUID
         if duid in self.IndexDUID:
@@ -622,9 +622,9 @@ class Textfile(Store):
         
         
     def get_client_config_by_hostname(self, transaction_id):
-        """
-        get host and its information by hostname
-        """
+        '''
+            get host and its information by hostname
+        '''
         hostname = self.Transactions[transaction_id].Hostname
         if hostname in self.Hosts:
             return [self.Hosts[hostname]]
@@ -632,18 +632,18 @@ class Textfile(Store):
             return None
         
         
-    def get_client_config(self, hostname="", aclass="", duid="", address=[], mac=[], id=""):
-        """
+    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], id=''):
+        '''
             give back ClientConfig object
-        """
+        '''
         return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
             
         
 class ClientConfig(object):
-    """
+    '''
         static client settings object to be stuffed into Hosts dict of Textfile store
-    """
-    def __init__(self, hostname="", aclass="default", duid="", address=None, mac=None, id=""):
+    '''
+    def __init__(self, hostname='', aclass='default', duid='', address=None, mac=None, id=''):
         self.HOSTNAME = hostname
         # MACs
         self.MAC = mac
@@ -664,9 +664,9 @@ class ClientConfig(object):
         
 
 class ClientConfigDB(object):
-    """
+    '''
         class for storing client config snippet from DB - used in SQLite and MySQL Storage
-    """
+    '''
     def __init__(self):
         self.Hosts = dict()
         self.IndexMAC = dict()
@@ -674,10 +674,10 @@ class ClientConfigDB(object):
 
     
 class DB(Store):
-    """
-    MySQL and PostgreSQL database interface
-    for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
-    """    
+    '''
+        MySQL and PostgreSQL database interface
+        for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
+    '''
     
     def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
         Store.__init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs)
@@ -691,9 +691,9 @@ class DB(Store):
             pass
         
     def DBConnect(self):
-        """
+        '''
             Connect to database server according to database type
-        """
+        '''
         if self.cfg.STORE_CONFIG == 'mysql' or self.cfg.STORE_VOLATILE == 'mysql':
             try:
                 import MySQLdb
