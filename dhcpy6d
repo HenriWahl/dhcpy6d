@@ -156,8 +156,11 @@ IF_NUMBER = dict()
 if cfg.STORE_CONFIG:
     if cfg.STORE_CONFIG == 'file':
         configstore = Textfile(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
-    if cfg.STORE_CONFIG in ('mysql', 'postgresql'):
-        configstore = DB(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+    if cfg.STORE_CONFIG == 'mysql':
+        configstore = DBMySQL(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+    if cfg.STORE_CONFIG == 'postgresql':
+        configstore = DBPostgreSQL(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+
     if cfg.STORE_CONFIG == 'sqlite':
         configstore = SQLite(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs, storage_type='config')
 else:
@@ -167,8 +170,10 @@ else:
     configstore.connected = True
 
 # storage for changing data like leases, LLIPs, DUIDs etc.
-if cfg.STORE_VOLATILE in ('mysql', 'postgresql'):
-    volatilestore = DB(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs)
+if cfg.STORE_VOLATILE == 'mysql':
+    volatilestore = DBMySQL(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs)
+if cfg.STORE_VOLATILE == 'postgresql':
+    volatilestore = DBPostgreSQL(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs)
 if cfg.STORE_VOLATILE == 'sqlite':
     volatilestore = SQLite(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs, storage_type='volatile')
 

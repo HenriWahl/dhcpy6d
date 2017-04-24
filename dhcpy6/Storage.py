@@ -511,7 +511,7 @@ class SQLite(Store):
             # commit only if explicitly wanted
             if query.startswith('INSERT'):
                 self.connection.commit()
-            if query.startswith('UPDATE'):
+            elif query.startswith('UPDATE'):
                 self.connection.commit()
             self.connected = True
         except:
@@ -754,3 +754,53 @@ class DB(Store):
         return result
     
 
+class DBMySQL(DB):
+
+    def DBConnect(self):
+        '''
+            Connect to database server according to database type
+        '''
+        try:
+            import MySQLdb
+        except:
+            ErrorExit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
+        try:
+            self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,\
+                                               db=self.cfg.STORE_DB_DB,\
+                                               user=self.cfg.STORE_DB_USER,\
+                                               passwd=self.cfg.STORE_DB_PASSWORD)
+            self.connection.autocommit(True)
+            self.cursor = self.connection.cursor()
+            self.connected = True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
+            self.connected = False
+
+        return self.connected
+
+
+class DBPostgreSQL(DB):
+
+    def DBConnect(self):
+        '''
+            Connect to database server according to database type
+        '''
+        try:
+            import psycopg2
+        except:
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
+            ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
+        try:
+            self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
+                                               database=self.cfg.STORE_DB_DB,\
+                                               user=self.cfg.STORE_DB_USER,\
+                                               passwd=self.cfg.STORE_DB_PASSWORD)
+            self.cursor = self.connection.cursor()
+            self.connected = True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
+            self.connected = False
+        return self.connected
