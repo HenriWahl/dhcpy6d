@@ -812,7 +812,8 @@ class TidyUpThread(threading.Thread):
             while True:
                 # transaction data can be deleted after transaction is finished
                 #now = datetime.datetime.now()
-                now = time.time()
+                #now = time.time()
+                now = int(time.time())
                 #timedelta = datetime.timedelta(seconds=cfg.CLEANING_INTERVAL*10)
                 for t in Transactions.keys():
                     try:
@@ -842,7 +843,8 @@ class TidyUpThread(threading.Thread):
                 # clean collected MAC addresses after 300 seconds
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
-                    timestamp = time.time()
+                    #timestamp = time.time()
+                    timestamp = int(time.time())
                     for record in CollectedMACs.values():
                         #if record.timestamp + cache_timedelta < timestamp:
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
@@ -925,7 +927,8 @@ class Transaction(object):
         self.OptionsRequest = list()
         # timestamp to manage/clean transactions
         #self.Timestamp = datetime.datetime.now()
-        self.Timestamp = time.time()
+        #self.Timestamp = time.time()
+        self.Timestamp = int(time.time())
         # dummy hostname
         self.FQDN = ''
         self.Hostname = ''
@@ -1184,7 +1187,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                             Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                     else:
                         #Transactions[transaction_id].Timestamp = datetime.datetime.now()
-                        Transactions[transaction_id].Timestamp = time.time()
+                        #Transactions[transaction_id].Timestamp = time.time()
+                        Transactions[transaction_id].Timestamp = int(time.time())
                         Transactions[transaction_id].LastMessageReceivedType = message_type
 
                     # log incoming messages

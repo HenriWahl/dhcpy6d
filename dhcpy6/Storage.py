@@ -100,7 +100,8 @@ class Store(object):
                     if answer != None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            now = time.time()
+                            #now = time.time()
+                            now = int(time.time())
                             query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime,\
                                      hostname, type, category, ia_type, class, mac, duid, iaid, last_update,\
                                      preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s',\
@@ -129,7 +130,8 @@ class Store(object):
                             del now
                         # otherwise update it if not a random address
                         elif a.CATEGORY != 'random':
-                            now = time.time()
+                            #now = time.time()
+                            now = int(time.time())
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      ia_type = '%s', class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
@@ -247,7 +249,10 @@ class Store(object):
             release a lease via setting its active flag to False
             set last_message to 8 because of RELEASE messages having this message id
         '''
-        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
+
+        # query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
+        #query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, time.time(), address)
+        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, int(time.time()), address)
         answer = self.query(query)
 
 
@@ -305,7 +310,8 @@ class Store(object):
         
     
     #def release_free_leases(self, timestamp=datetime.datetime.now()):
-    def release_free_leases(self, timestamp=time.time()):
+    #def release_free_leases(self, timestamp=time.time()):
+    def release_free_leases(self, timestamp=int(time.time())):
         '''
             release all invalid leases via setting their active flag to False
         '''
@@ -315,7 +321,8 @@ class Store(object):
     
     
     #def remove_leases(self, category="random", timestamp=datetime.datetime.now()):
-    def remove_leases(self, category="random", timestamp=time.time()):
+    #def remove_leases(self, category="random", timestamp=time.time()):
+    def remove_leases(self, category="random", timestamp=int(time.time())):
         '''
             remove all leases of a certain category like random - they will grow the database
             but be of no further use
@@ -326,7 +333,8 @@ class Store(object):
         
 
     #def unlock_unused_advertised_leases(self, timestamp=datetime.datetime.now()):
-    def unlock_unused_advertised_leases(self, timestamp=time.time()):
+    #def unlock_unused_advertised_leases(self, timestamp=time.time()):
+    def unlock_unused_advertised_leases(self, timestamp=int(time.time())):
         '''
             unlock leases marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
@@ -448,12 +456,14 @@ class Store(object):
         # if known already update timestamp of MAC-link-local-ip-mapping
         if not db_entry:
             query = "INSERT INTO macs_llips (mac, link_local_ip, last_update) VALUES ('%s', '%s', '%s')" % \
-                  (mac, link_local_ip, time.time())
+                  (mac, link_local_ip, int(time.time()))
+                  #(mac, link_local_ip, time.time())
                   #(mac, link_local_ip, datetime.datetime.now())
             self.query(query)
         else:
             #query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, datetime.datetime.now(), mac)
-            query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, time.time(), mac)
+            #query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, time.time(), mac)
+            query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, int(time.time()), mac)
             self.query(query)
                     
                     
@@ -757,7 +767,8 @@ class DB(Store):
         
     def DBQuery(self, query):
         try:
-            self.cursor.execute(query)
+            print self.cursor.execute(query)
+            print query
         except Exception as err:
             # try to reestablish database connection
             print 'Error: {0}'.format(str(err))
@@ -771,7 +782,7 @@ class DB(Store):
                     sys.stdout.flush()
                     self.connected = False
                     return None
-                
+
         result = self.cursor.fetchall()
         return result
     
@@ -818,7 +829,8 @@ class DBPostgreSQL(DB):
             self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
                                                database=self.cfg.STORE_DB_DB,\
                                                user=self.cfg.STORE_DB_USER,\
-                                               passwd=self.cfg.STORE_DB_PASSWORD)
+                                               password=self.cfg.STORE_DB_PASSWORD)
+            self.connection.autocommit=True
             self.cursor = self.connection.cursor()
             self.connected = True
         except:
@@ -826,3 +838,29 @@ class DBPostgreSQL(DB):
             sys.stdout.flush()
             self.connected = False
         return self.connected
+
+
+    def DBQuery(self, query):
+        try:
+            self.cursor.execute(query)
+        except Exception as err:
+            # try to reestablish database connection
+            print 'Error: {0}'.format(str(err))
+            if not self.DBConnect():
+                return None
+            else:
+                try:
+                    self.cursor.execute(query)
+                except:
+                    traceback.print_exc(file=sys.stdout)
+                    sys.stdout.flush()
+                    self.connected = False
+                    return None
+        try:
+            result = self.cursor.fetchall()
+        # quite probably a psycopg2.ProgrammingError occurs here
+        # which should be caught by except psycopg2.ProgrammingError
+        # but psycopg2 is not known here
+        except Exception:
+            return None
+        return result
