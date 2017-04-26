@@ -84,8 +84,33 @@ class Store(object):
         self.queryqueue.put(query)
         answer = self.answerqueue.get()       
         return answer
-    
-    
+
+
+    def clean_query_answer(method):
+        """
+            decorate repeatedly but not everywhere used cleaning of query answer
+        """
+
+        def decoration_function(self):
+            # run decorated method
+            answer = method(self)
+            # clean answer
+            # SQLite returns list, MySQL tuple - in case someone wonders here...
+            if not (answer == [] or answer == () or answer == None):
+                return answer[0][0]
+            else:
+                return None
+        return (decoration_function)
+
+
+    @clean_query_answer
+    def get_db_version(self):
+        '''
+           get database scheme version 
+        '''
+        return self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
+
+
     def store_lease(self, transaction_id):
         '''
             store lease in lease DB
@@ -100,7 +125,6 @@ class Store(object):
                     if answer != None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            #now = time.time()
                             now = int(time.time())
                             query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime,\
                                      hostname, type, category, ia_type, class, mac, duid, iaid, last_update,\
@@ -123,14 +147,10 @@ class Store(object):
                                    now,
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME))
-                                   #datetime.datetime.now(),
-                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),
-                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME))
-                            answer = self.query(query)
+                            self.query(query)
                             del now
                         # otherwise update it if not a random address
                         elif a.CATEGORY != 'random':
-                            #now = time.time()
                             now = int(time.time())
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
@@ -156,20 +176,21 @@ class Store(object):
                                    #datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),
                                    #datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),
                                    a.ADDRESS)
-                            answer = self.query(query)
+                            self.query(query)
                             del now
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
                                      (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType,
                                       a.ADDRESS)
-                            answer = self.query(query)
+                            self.query(query)
 
             return True
         # if no client -> False
         return False
 
 
+    @clean_query_answer
     def get_range_lease_for_recycling(self, prefix='', frange='', trange='', duid='', mac=''):
         '''
             ask DB for last known leases of an already known host to be recycled
@@ -187,15 +208,10 @@ class Store(object):
                 "ORDER BY last_update DESC LIMIT 1" %\
                 (self.table_leases, prefix+frange, prefix+trange, duid, mac)
 
-        answer = self.query(query)
-
-        # SQLite returns list, MySQL tuple - in case someone wonders here...
-        if not (answer == [] or answer == () or answer == None):
-            return answer[0][0]
-        else:
-            return None
+        return self.query(query)
 
 
+    @clean_query_answer
     def get_highest_range_lease(self, prefix='', frange='', trange=''):
         '''
             ask DB for highest known leases - if necessary range sensitive
@@ -204,14 +220,10 @@ class Store(object):
                 "category = 'range' AND "\
                 "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
                 (self.table_leases, prefix+frange, prefix+trange)
-        answer = self.query(query)
-        # SQLite returns list, MySQL tuple - in case someone wonders here...
-        if not (answer == [] or answer == () or answer == None):
-            return answer[0][0]
-        else:
-            return None
+        return self.query(query)
 
 
+    @clean_query_answer
     def get_oldest_inactive_range_lease(self, prefix='', frange='', trange=''):
         '''
             ask DB for oldest known inactive lease to minimize chance of collisions
@@ -220,12 +232,7 @@ class Store(object):
         query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
                 "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
                 (self.table_leases, prefix+frange, prefix+trange)
-        answer = self.query(query)
-        # SQLite returns list, MySQL tuple - in case someone wonders here...
-        if not (answer == [] or answer == () or answer == None):
-            return answer[0][0]
-        else:
-            return None
+        return self.query(query)
 
         
     def get_host_lease(self, address):
@@ -242,32 +249,25 @@ class Store(object):
                 return (None, None, None, None)
         else:
             return (None, None, None, None)
-        
-    
+
+
     def release_lease(self, address):
         '''
             release a lease via setting its active flag to False
             set last_message to 8 because of RELEASE messages having this message id
         '''
-
-        # query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, datetime.datetime.now(), address)
-        #query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, time.time(), address)
         query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, int(time.time()), address)
-        answer = self.query(query)
+        self.query(query)
 
 
+    @clean_query_answer
     def check_number_of_leases(self, prefix='', frange='', trange=''):
         '''
             check how many leases are stored - used to find out if address range has been exceeded
         '''
         query = "SELECT COUNT(address) FROM leases WHERE address LIKE '%s%%' AND "\
                 "'%s' <= address AND address <= '%s'" % (prefix, prefix+frange, prefix+trange)
-        answer = self.query(query)
-        # SQLite returns list, MySQL tuple - in case someone wonders here...
-        if not (answer == [] or answer == () or answer == None):
-            return answer[0][0]
-        else:
-            return 0
+        return self.query(query)
 
 
     def check_lease(self, address, transaction_id):
@@ -281,11 +281,10 @@ class Store(object):
                  self.Transactions[transaction_id].MAC,\
                  self.Transactions[transaction_id].DUID,\
                  self.Transactions[transaction_id].IAID)
-                
-        answer = self.query(query)        
-        return answer
+        return self.query(query)
 
 
+    @clean_query_answer
     def check_advertised_lease(self, transaction_id='', category='', atype=''):
         '''
             check if there are already advertised addresses for client
@@ -301,48 +300,33 @@ class Store(object):
                  self.Transactions[transaction_id].IAID,\
                  category,\
                  atype)
-        answer = self.query(query)
-        # SQLite returns list, MySQL tuple - in case someone wonders here...
-        if not (answer == [] or answer == () or answer == None):
-            return answer[0][0]
-        else:
-            return None
-        
-    
-    #def release_free_leases(self, timestamp=datetime.datetime.now()):
-    #def release_free_leases(self, timestamp=time.time()):
+        return self.query(query)
+
+
     def release_free_leases(self, timestamp=int(time.time())):
         '''
             release all invalid leases via setting their active flag to False
         '''
         query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
-        answer = self.query(query)    
-        return answer
-    
-    
-    #def remove_leases(self, category="random", timestamp=datetime.datetime.now()):
-    #def remove_leases(self, category="random", timestamp=time.time()):
+        return self.query(query)
+
+
     def remove_leases(self, category="random", timestamp=int(time.time())):
         '''
             remove all leases of a certain category like random - they will grow the database
             but be of no further use
         '''
         query = "DELETE FROM %s WHERE active = 0 AND category = '%s' AND valid_until < '%s'" % (self.table_leases, category, timestamp)
-        answer = self.query(query)    
-        return answer
-        
+        return self.query(query)
 
-    #def unlock_unused_advertised_leases(self, timestamp=datetime.datetime.now()):
-    #def unlock_unused_advertised_leases(self, timestamp=time.time()):
+
     def unlock_unused_advertised_leases(self, timestamp=int(time.time())):
         '''
             unlock leases marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
         '''
-        #query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + datetime.timedelta(seconds=int(60)))
         query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + 60)
-        answer = self.query(query)
-        return answer
+        return self.query(query)
 
 
     def build_config_from_db(self, transaction_id):
@@ -457,12 +441,8 @@ class Store(object):
         if not db_entry:
             query = "INSERT INTO macs_llips (mac, link_local_ip, last_update) VALUES ('%s', '%s', '%s')" % \
                   (mac, link_local_ip, int(time.time()))
-                  #(mac, link_local_ip, time.time())
-                  #(mac, link_local_ip, datetime.datetime.now())
             self.query(query)
         else:
-            #query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, datetime.datetime.now(), mac)
-            #query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, time.time(), mac)
             query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, int(time.time()), mac)
             self.query(query)
                     
@@ -767,8 +747,7 @@ class DB(Store):
         
     def DBQuery(self, query):
         try:
-            print self.cursor.execute(query)
-            print query
+            self.cursor.execute(query)
         except Exception as err:
             # try to reestablish database connection
             print 'Error: {0}'.format(str(err))

@@ -23,7 +23,6 @@ import socket
 import struct
 import platform
 import binascii
-import datetime
 import commands
 import shlex
 import sys
@@ -200,6 +199,65 @@ def LegacyAdjustments():
         print 'Please apply manually or grant necessary permissions.\n'
         sys.exit(1)
 
+    # after 0.4.3 with working PostgreSQL support the timestamps have to be stores in epoch seconds, not datetime
+    # also after 0.4.3 there will be a third table containing meta information - for a first start it should contain
+    # a database version number
+    try:
+        try:
+            # only newer databases contain a version number - starting with 1
+            if volatilestore.get_db_version() == None:
+                # add table containing meta information like version of database scheme
+                db_operations = ['CREATE TABLE meta (item_key varchar(255) NOT NULL,\
+                                  item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))',
+                                 "INSERT INTO meta (item_key, item_value) VALUES ('version', '1')"]
+                for db_operation in db_operations:
+                    volatilestore.query(db_operation)
+                    log.info('{0} in volatile storage succeded.'.format(db_operation))
+        except:
+            print "\n{0} on volatile database failed.".format(db_operation)
+            print 'Please apply manually or grant necessary permissions.\n'
+            sys.exit(1)
+    except:
+        print '\nSomething went wrong when retrieving version from database.\n'
+        sys.exit(1)
+
+    # find out if timestamps still are in datetime format - applies only to sqlite and mysql anyway
+    if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
+        db_datetime_test = volatilestore.query('SELECT last_update FROM leases LIMIT 1')
+        if len(db_datetime_test) > 0:
+            import datetime
+            if type(db_datetime_test[0][0]) is datetime.datetime:
+                # add new columns with suffix *_new
+                db_tables = {'leases': ['last_update', 'preferred_until', 'valid_until'],
+                             'macs_llips': ['last_update']}
+                for table in db_tables:
+                    for column in db_tables[table]:
+                        volatilestore.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL'.format(table, column))
+                # get old timestamps
+                timestamps_old = volatilestore.query('SELECT address, last_update, preferred_until, valid_until FROM leases')
+                for timestamp_old in timestamps_old:
+                    address, last_update, preferred_until, valid_until = timestamp_old
+                    last_update_new = last_update.strftime('%s')
+                    preferred_until_new = preferred_until.strftime('%s')
+                    valid_until_new = valid_until.strftime('%s')
+                    volatilestore.query("UPDATE leases SET last_update_new = {0}, "
+                                                          "preferred_until_new = {1}, "
+                                                          "valid_until_new = {2} "
+                                        "WHERE address = '{3}'".format(last_update_new,
+                                                                       preferred_until_new,
+                                                                       valid_until_new,
+                                                                       address))
+                timestamps_old = volatilestore.query('SELECT mac, last_update FROM macs_llips')
+                for timestamp_old in timestamps_old:
+                    mac, last_update = timestamp_old
+                    last_update_new = last_update.strftime('%s')
+                    volatilestore.query("UPDATE macs_llips SET last_update_new = {0} "
+                                        "WHERE mac = '{1}'".format(last_update_new,
+                                                                   mac))
+                for table in db_tables:
+                    for column in db_tables[table]:
+                        volatilestore.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
+                        volatilestore.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
 
 def BuildClient(transaction_id):
     '''
@@ -399,7 +457,8 @@ def BuildClient(transaction_id):
                                                 client.Addresses.append(ia) 
                                         
                                         # de-preferred random address has to be deleted and replaced
-                                        elif a['category'] == 'random' and str(datetime.datetime.now()) > str(a['preferred_until']):                                        # create new random address if old one is depreferred
+                                        #elif a['category'] == 'random' and str(datetime.datetime.now()) > str(a['preferred_until']):                                        # create new random address if old one is depreferred
+                                        elif a['category'] == 'random' and int(time.time()) > a['preferred_until']:                                        # create new random address if old one is depreferred
                                             random_address = ParseAddressPattern(cfg.ADDRESSES[a['type']], client_config, transaction_id)
                                             # create new random address if old one is de-preferred
                                             # do not wait until it is invalid                                      
@@ -1505,7 +1564,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # assuming '0' as valid Replay Detection method
                 rdm = '%02x' % (0)
                 # Replay Detection - current time for example
-                replay_detection = '%016x' % (int(datetime.datetime.now().strftime('%s')))
+                ##replay_detection = '%016x' % (int(datetime.datetime.now().strftime('%s')))
+                replay_detection = '%016x' % (int(time.time()))
                 # Authentication Information Type
                 # first 1, later with HMAC-MD5  2
                 ai_type = '%02x' % (1)

@@ -24,3 +24,9 @@ CREATE TABLE macs_llips (
   last_update bigint NOT NULL,
   PRIMARY KEY (mac)
 );
+
+CREATE TABLE meta (
+  item_key varchar(255) NOT NULL,
+  item_value varchar(255) NOT NULL,
+  PRIMARY KEY (item)
+);
