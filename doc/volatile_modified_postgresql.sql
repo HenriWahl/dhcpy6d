@@ -31,3 +31,4 @@ CREATE TABLE meta (
   PRIMARY KEY (item)
 );
 
+INSERT INTO meta (item_key, item_value) VALUES ('version', '1');
