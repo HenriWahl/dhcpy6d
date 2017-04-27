@@ -30,3 +30,5 @@ CREATE TABLE meta (
   item_value varchar(255) NOT NULL,
   PRIMARY KEY (item)
 );
+
+INSERT INTO meta (item_key, item_value) VALUES ('version', '1');

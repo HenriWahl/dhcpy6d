@@ -19,7 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 import sys
-import datetime
 import threading
 import ConfigParser
 from Helpers import *
@@ -172,9 +171,6 @@ class Store(object):
                                    now,
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME),
-                                   # datetime.datetime.now(),
-                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.PREFERRED_LIFETIME)),
-                                   #datetime.datetime.now() + datetime.timedelta(seconds=int(a.VALID_LIFETIME)),
                                    a.ADDRESS)
                             self.query(query)
                             del now
@@ -284,7 +280,6 @@ class Store(object):
         return self.query(query)
 
 
-    @clean_query_answer
     def check_advertised_lease(self, transaction_id='', category='', atype=''):
         '''
             check if there are already advertised addresses for client
@@ -474,6 +469,87 @@ class Store(object):
         '''
         # return empty tuple as dummy
         return ()
+
+
+    def LegacyAdjustments(self):
+        '''
+            adjust some existing data to work with newer versions of dhcpy6d
+        '''
+        try:
+            if self.query('SELECT last_message FROM leases LIMIT 1') == None:
+                # row 'last_message' in tables 'leases' does not exist yet, comes with version 0.1.6
+                self.query('ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0')
+                print "Adding row 'last_message' to table 'leases' in volatile storage succeeded."
+        except:
+            print "\n'ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0' on volatile database failed."
+            print 'Please apply manually or grant necessary permissions.\n'
+            sys.exit(1)
+
+        # after 0.4.3 with working PostgreSQL support the timestamps have to be stores in epoch seconds, not datetime
+        # also after 0.4.3 there will be a third table containing meta information - for a first start it should contain
+        # a database version number
+        try:
+            try:
+                # only newer databases contain a version number - starting with 1
+                if self.get_db_version() == None:
+                    # add table containing meta information like version of database scheme
+                    db_operations = ['CREATE TABLE meta (item_key varchar(255) NOT NULL,\
+                                      item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))',
+                                     "INSERT INTO meta (item_key, item_value) VALUES ('version', '1')"]
+                    for db_operation in db_operations:
+                        self.query(db_operation)
+                        print '{0} in volatile storage succeded.'.format(db_operation)
+            except:
+                print "\n{0} on volatile database failed.".format(db_operation)
+                print 'Please apply manually or grant necessary permissions.\n'
+                sys.exit(1)
+        except:
+            print '\nSomething went wrong when retrieving version from database.\n'
+            sys.exit(1)
+
+        # find out if timestamps still are in datetime format - applies only to sqlite and mysql anyway
+        if self.cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
+            db_datetime_test = self.query('SELECT last_update FROM leases LIMIT 1')
+            if len(db_datetime_test) > 0:
+                import datetime
+                if type(db_datetime_test[0][0]) is datetime.datetime:
+                    # add new columns with suffix *_new
+                    db_tables = {'leases': ['last_update', 'preferred_until', 'valid_until'],
+                                 'macs_llips': ['last_update']}
+                    for table in db_tables:
+                        for column in db_tables[table]:
+                            self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL'.format(table, column))
+                            print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL succeeded'.format(table, column)
+                    # get old timestamps
+                    timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases')
+                    for timestamp_old in timestamps_old:
+                        address, last_update, preferred_until, valid_until = timestamp_old
+                        last_update_new = last_update.strftime('%s')
+                        preferred_until_new = preferred_until.strftime('%s')
+                        valid_until_new = valid_until.strftime('%s')
+                        self.query("UPDATE leases SET last_update_new = {0}, "
+                                                              "preferred_until_new = {1}, "
+                                                              "valid_until_new = {2} "
+                                            "WHERE address = '{3}'".format(last_update_new,
+                                                                           preferred_until_new,
+                                                                           valid_until_new,
+                                                                           address))
+                    print 'Converting timestamps of leases succeeded'
+                    timestamps_old = self.query('SELECT mac, last_update FROM macs_llips')
+                    for timestamp_old in timestamps_old:
+                        mac, last_update = timestamp_old
+                        last_update_new = last_update.strftime('%s')
+                        self.query("UPDATE macs_llips SET last_update_new = {0} "
+                                            "WHERE mac = '{1}'".format(last_update_new,
+                                                                       mac))
+                    print 'Converting timestamps of macs_llips succeeded'
+                    for table in db_tables:
+                        for column in db_tables[table]:
+                            self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
+                            self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
+                            print 'Moving column {0} of table {1} succeeded'.format(column, table)
+
+
 
 
 class SQLite(Store):
@@ -701,7 +777,8 @@ class DB(Store):
         except:
             ###traceback.print_exc(file=sys.stdout)
             pass
-        
+
+
     def DBConnect(self):
         '''
             Connect to database server according to database type
@@ -712,9 +789,9 @@ class DB(Store):
             except:
                 ErrorExit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
             try:
-                self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,\
-                                                   db=self.cfg.STORE_DB_DB,\
-                                                   user=self.cfg.STORE_DB_USER,\
+                self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,
+                                                   db=self.cfg.STORE_DB_DB,
+                                                   user=self.cfg.STORE_DB_USER,
                                                    passwd=self.cfg.STORE_DB_PASSWORD)
                 self.connection.autocommit(True)
                 self.cursor = self.connection.cursor()
@@ -732,9 +809,9 @@ class DB(Store):
                 sys.stdout.flush()
                 ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
             try:
-                self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
-                                                   database=self.cfg.STORE_DB_DB,\
-                                                   user=self.cfg.STORE_DB_USER,\
+                self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,
+                                                   database=self.cfg.STORE_DB_DB,
+                                                   user=self.cfg.STORE_DB_USER,
                                                    passwd=self.cfg.STORE_DB_PASSWORD)
                 self.cursor = self.connection.cursor()
                 self.connected = True
@@ -764,7 +841,7 @@ class DB(Store):
 
         result = self.cursor.fetchall()
         return result
-    
+
 
 class DBMySQL(DB):
 
