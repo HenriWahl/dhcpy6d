@@ -28,7 +28,7 @@ CREATE TABLE macs_llips (
 CREATE TABLE meta (
   item_key varchar(255) NOT NULL,
   item_value varchar(255) NOT NULL,
-  PRIMARY KEY (item)
+  PRIMARY KEY (item_key)
 );
 
 INSERT INTO meta (item_key, item_value) VALUES ('version', '1');
