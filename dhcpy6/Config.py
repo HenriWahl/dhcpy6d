@@ -666,8 +666,8 @@ class Config(object):
                     ErrorExit("%s Address type '%s' is not defined." % (msg_prefix, a))
 
                 # test validity of category
-                if not self.ADDRESSES[a].CATEGORY.strip() in ['fixed', 'range', 'random', 'mac', 'id']:
-                    ErrorExit("%s Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac' and 'id'." % (msg_prefix, self.ADDRESSES[a].CATEGORY))
+                if not self.ADDRESSES[a].CATEGORY.strip() in ['fixed', 'range', 'random', 'mac', 'id', 'dns']:
+                    ErrorExit("%s Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac', 'id' and 'dns'." % (msg_prefix, self.ADDRESSES[a].CATEGORY))
 
                 # test validity of pattern - has its own error output
                 self.ADDRESSES[a]._build_prototype()
@@ -694,6 +694,10 @@ class Config(object):
                     if not self.ADDRESSES[a].PATTERN.count('$random64$') == 1:
                         ErrorExit("%s Pattern '%s' contains wrong number of '$random64$' variables for category 'random'." %\
                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+
+                if self.ADDRESSES[a].CATEGORY == 'dns':
+                    if not len(self.NAMESERVER) > 0:
+                        ErrorExit("Address of category 'dns' needs a set nameserver.")
 
                 # check ia_type
                 if not self.ADDRESSES[a].IA_TYPE.strip().lower() in ['na', 'ta']:

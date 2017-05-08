@@ -335,14 +335,14 @@ def BuildClient(transaction_id):
                             if a['class'] in cfg.CLASSES and client.Class == a['class'] and\
                                Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                                 # type of address must be defined in addresses for this class
-                                # or fixed - in which case it is not class related
-                                if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] == 'fixed':
+                                # or fixed/dns - in which case it is not class related
+                                if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed', 'dns']:
     
                                     # flag for lease usage
                                     use_lease = True
                                     
-                                    # test lease validity against address prototype pattern only if not fixed                               
-                                    if a['category'] != 'fixed':
+                                    # test lease validity against address prototype pattern only if not fixed or from DNS
+                                    if not a['category'] in ['fixed', 'dns']:
                                         # test if address matches pattern
                                         for i in range(len(address)):
                                             if address[i] != cfg.ADDRESSES[a['type']].PROTOTYPE[i] and \
@@ -534,7 +534,7 @@ def ParseAddressPattern(address, client_config, transaction_id):
     if address.CATEGORY == 'mac':
         macraw = ''.join(Transactions[transaction_id].MAC.split(':'))
         a = a.replace('$mac$', ':'.join((macraw[0:4], macraw[4:8], macraw[8:12])))
-    elif address.CATEGORY == 'fixed':
+    elif address.CATEGORY in ['fixed', 'dns']:
         # No patterns for fixed address, let's bail
         return None
     elif address.CATEGORY == 'id':
