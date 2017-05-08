@@ -39,6 +39,9 @@ import logging.handlers
 import pwd
 import grp
 import time
+import dns.query
+import dns.resolver
+import dns.reversename
 
 # access /usr/share/pyshared on Debian
 # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715010
@@ -53,19 +56,22 @@ from dhcpy6.Storage import *
 # create and read config file
 cfg = Config()
 
+# if nameserver is given create resolver
+if len(cfg.NAMESERVER) > 0:
+    # default nameservers for DNS queries
+    resolver_query = dns.resolver.Resolver()
+    resolver_query.nameservers = cfg.NAMESERVER
+
 # RNDC Key for DNS updates from ISC Bind /etc/rndc.key
 if cfg.DNS_UPDATE:
     import dns.update
     import dns.tsigkeyring
-    import dns.query
-    import dns.resolver
-    import dns.reversename        
-    
+
     Keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY : cfg.DNS_RNDC_SECRET})
 
     # resolver for DNS updates
-    Resolver = dns.resolver.Resolver()
-    Resolver.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
+    resolver_update = dns.resolver.Resolver()
+    resolver_update.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
 
 # Logging
 log = logging.getLogger('dhcpy6d')
@@ -107,13 +113,13 @@ Transactions = dict()
 CollectedMACs = dict()
 
 # queues for queries
-configqueryqueue = Queue.Queue()
-configanswerqueue = Queue.Queue()
-volatilequeryqueue = Queue.Queue()
-volatileanswerqueue = Queue.Queue()
+configquery_queue = Queue.Queue()
+configanswer_queue = Queue.Queue()
+volatilequery_queue = Queue.Queue()
+volatileanswer_queue = Queue.Queue()
 
 # queue for dns actualization
-dnsqueue = Queue.Queue()
+dnsquery_queue = Queue.Queue()
 
 # save OS 
 OS = platform.system()
@@ -154,27 +160,27 @@ IF_NUMBER = dict()
 # use client configuration only if needed
 if cfg.STORE_CONFIG:
     if cfg.STORE_CONFIG == 'file':
-        configstore = Textfile(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+        configstore = Textfile(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
     if cfg.STORE_CONFIG == 'mysql':
-        configstore = DBMySQL(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+        configstore = DBMySQL(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
     if cfg.STORE_CONFIG == 'postgresql':
-        configstore = DBPostgreSQL(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+        configstore = DBPostgreSQL(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
 
     if cfg.STORE_CONFIG == 'sqlite':
-        configstore = SQLite(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs, storage_type='config')
+        configstore = SQLite(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs, storage_type='config')
 else:
     # dummy configstore if no client config is needed
-    configstore = Store(cfg, configqueryqueue, configanswerqueue, Transactions, CollectedMACs)
+    configstore = Store(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
     # 'none' store is always connected
     configstore.connected = True
 
 # storage for changing data like leases, LLIPs, DUIDs etc.
 if cfg.STORE_VOLATILE == 'mysql':
-    volatilestore = DBMySQL(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs)
+    volatilestore = DBMySQL(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs)
 if cfg.STORE_VOLATILE == 'postgresql':
-    volatilestore = DBPostgreSQL(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs)
+    volatilestore = DBPostgreSQL(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs)
 if cfg.STORE_VOLATILE == 'sqlite':
-    volatilestore = SQLite(cfg, volatilequeryqueue, volatileanswerqueue, Transactions, CollectedMACs, storage_type='volatile')
+    volatilestore = SQLite(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs, storage_type='volatile')
 
 # do not start if no database connection exists
 if not configstore.connected:
@@ -336,7 +342,7 @@ def BuildClient(transaction_id):
                                Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                                 # type of address must be defined in addresses for this class
                                 # or fixed/dns - in which case it is not class related
-                                if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed', 'dns']:
+                                if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed']:
     
                                     # flag for lease usage
                                     use_lease = True
@@ -349,9 +355,11 @@ def BuildClient(transaction_id):
                                                cfg.ADDRESSES[a['type']].PROTOTYPE[i] != 'X':
                                                 use_lease = False
                                                 break
-                                    elif not address in client_config.ADDRESS:
+                                    elif a['category'] == 'fixed' and not address in client_config.ADDRESS:
                                         use_lease = False
-    
+                                    elif a['category'] == 'dns':
+                                        use_lease = False
+
                                     # only use lease if it still matches prototype
                                     if use_lease == True:
                                         # when category is range, test if it still applies
@@ -456,7 +464,11 @@ def BuildClient(transaction_id):
                 if not client_config.CLASS == '':
                     # add all addresses which belong to that class
                     for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
-                        a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
+                        # addresses of category 'dns' will be searched in DNS
+                        if cfg.ADDRESSES[address].CATEGORY == 'dns':
+                            a = get_ip_from_dns(client.Hostname)
+                        else:
+                            a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
                         # in case range has been exceeded a will be None
                         if a:
                             ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
@@ -475,7 +487,11 @@ def BuildClient(transaction_id):
                     # use default class if no class or address is given
                     for address in cfg.CLASS['default_' + Transactions[transaction_id].Interface].ADDRESSES:
                         client.Class = 'default_' + Transactions[transaction_id].Interface
-                        a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
+                        # addresses of category 'dns' will be searched in DNS
+                        if cfg.ADDRESSES[address].CATEGORY == 'dns':
+                            a = get_ip_from_dns(client.Hostname)
+                        else:
+                            a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
                         if a:
                             ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                                          preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
@@ -496,7 +512,11 @@ def BuildClient(transaction_id):
             Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
 
             for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
-                a = ParseAddressPattern(cfg.ADDRESSES[address], client, transaction_id)
+                # addresses of category 'dns' will be searched in DNS
+                if cfg.ADDRESSES[address].CATEGORY == 'dns':
+                    a = get_ip_from_dns(client.Hostname)
+                else:
+                    a = ParseAddressPattern(cfg.ADDRESSES[address], client, transaction_id)
                 if a:
                     ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                                  preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
@@ -621,6 +641,19 @@ def ParseAddressPattern(address, client_config, transaction_id):
     return DecompressIP6(a)
 
 
+def get_ip_from_dns(hostname):
+    """
+        Get IPv6 address from DNS for address category 'dns'
+    """
+    try:
+        answer = resolver_query.query(hostname, 'AAAA')
+        return(DecompressIP6(answer.rrset.to_text().split(' ')[-1]))
+    except dns.resolver.NoAnswer:
+        return(False)
+    except dns.resolver.NoNameservers:
+        return(False)
+
+
 def CollectMACs():
     '''
         collect MAC address from clients to link local addresses with MACs
@@ -690,7 +723,7 @@ def DNSUpdate(transaction_id, action='update'):
             if a.DNS_UPDATE and hostname != '' and a.VALID == True:
                 if cfg.DNS_IGNORE_CLIENT or Transactions[transaction_id].DNS_S == 1:
                     # put query into DNS query queue
-                    dnsqueue.put((hostname, a, action))
+                    dnsquery_queue.put((hostname, a, action))
         return True
     else:
         return False
@@ -725,25 +758,25 @@ def DNSDelete(transaction_id, address='', action='release'):
                 dns_address = copy.copy(a)
                 dns_address.ADDRESS = ColonifyIP6(address)
                 # put query into DNS query queue
-                dnsqueue.put((hostname, dns_address, action))   
+                dnsquery_queue.put((hostname, dns_address, action))
             # enough    
             break
         
 
 class DNSQueryThread(threading.Thread):
     '''
-        thread for updating DNS entries of valid leases
+        thread for updating DNS entries of valid leases without blocking main thread
     '''
 
-    def __init__(self, dnsqueue):
+    def __init__(self, dnsquery_queue):
         threading.Thread.__init__(self, name='DNSQuery')
         self.setDaemon(1)
-        self.dnsqueue=dnsqueue
+        self.dnsquery_queue=dnsquery_queue
 
     def run(self):
         # wait for new queries in queue until the end of the world
         while True:
-            hostname, a, action = self.dnsqueue.get()
+            hostname, a, action = self.dnsquery_queue.get()
             # colonify address for DNS
             address = ColonifyIP6(a.ADDRESS)
             try:
@@ -759,7 +792,7 @@ class DNSQueryThread(threading.Thread):
                 # to the current hostname, if not, it will be deleted first
                 update_rev = dns.update.Update(a.DNS_REV_ZONE, keyring=Keyring)
                 try:
-                    answer = Resolver.query(dns.reversename.from_address(address), 'PTR')
+                    answer = resolver_update.query(dns.reversename.from_address(address), 'PTR')
                     for rdata in answer:
                         hostname_ns = str(rdata).split('.')[0]
                         # if ip address is related to another host delete this one
@@ -1708,10 +1741,10 @@ if __name__ == '__main__':
     server = UDPMulticastIPv6(('', 547), Handler)
 
     # start query queue watcher
-    configqueryqueuewatcher = QueryQueue(cfg, configstore, configqueryqueue, configanswerqueue)
-    configqueryqueuewatcher.start()
-    volatilequeryqueuewatcher = QueryQueue(cfg, volatilestore, volatilequeryqueue, volatileanswerqueue)
-    volatilequeryqueuewatcher.start()
+    configquery_queue_watcher = QueryQueue(cfg, configstore, configquery_queue, configanswer_queue)
+    configquery_queue_watcher.start()
+    volatilequery_queue_watcher = QueryQueue(cfg, volatilestore, volatilequery_queue, volatileanswer_queue)
+    volatilequery_queue_watcher.start()
 
     # adjust old data to match newer versions of dhcpy6d
     volatilestore.LegacyAdjustments()
@@ -1721,12 +1754,12 @@ if __name__ == '__main__':
         volatilestore.CollectMACsFromDB()
 
     # start TidyUp thread for cleaning in background
-    tidyup = TidyUpThread()
-    tidyup.start()
+    tidyup_thread = TidyUpThread()
+    tidyup_thread.start()
 
     # start DNS query queue to care for DNS in background    
-    dnsquery = DNSQueryThread(dnsqueue)
-    dnsquery.start()
+    dnsquery_thread = DNSQueryThread(dnsquery_queue)
+    dnsquery_thread.start()
 
     # set user and group
     log.info('Running as user %s (UID %s) and group %s (GID %s)' % (cfg.USER, pwd.getpwnam(cfg.USER).pw_uid, cfg.GROUP, grp.getgrnam(cfg.GROUP).gr_gid))

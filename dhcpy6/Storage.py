@@ -33,10 +33,10 @@ class QueryQueue(threading.Thread):
     '''
         Pump queries around
     '''
-    def __init__(self, cfg, store, queryqueue, answerqueue):
+    def __init__(self, cfg, store, query_queue, answer_queue):
         threading.Thread.__init__(self, name='QueryQueue')
-        self.queryqueue = queryqueue
-        self.answerqueue = answerqueue
+        self.query_queue = query_queue
+        self.answer_queue = answer_queue
         self.store = store
         self.setDaemon(1) 
         
@@ -47,7 +47,7 @@ class QueryQueue(threading.Thread):
             answer queue
         '''
         while True:
-            query = self.queryqueue.get()
+            query = self.query_queue.get()
             try:
                 answer = self.store.DBQuery(query)
             except:
@@ -55,17 +55,17 @@ class QueryQueue(threading.Thread):
                 sys.stdout.flush()
                 answer = ''
 
-            self.answerqueue.put(answer)
+            self.answer_queue.put(answer)
             
     
 class Store(object):
     '''
         abstract class to present MySQL or SQLlite
     '''
-    def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
+    def __init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs):
         self.cfg = cfg
-        self.queryqueue = queryqueue
-        self.answerqueue = answerqueue
+        self.query_queue = query_queue
+        self.answer_queue = answer_queue
         self.Transactions = Transactions
         self.CollectedMACs = CollectedMACs
         # table names used for database storage - MySQL additionally needs the database name
@@ -80,8 +80,8 @@ class Store(object):
         '''
             put queries received into query queue and return the answers from answer queue
         '''
-        self.queryqueue.put(query)
-        answer = self.answerqueue.get()       
+        self.query_queue.put(query)
+        answer = self.answer_queue.get()
         return answer
 
 
@@ -556,9 +556,9 @@ class SQLite(Store):
     '''
         file-based SQLite database, might be an option for single installations
     '''
-    def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs, storage_type='volatile'):
+    def __init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs, storage_type='volatile'):
 
-        Store.__init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs)
+        Store.__init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs)
         self.connection = None     
         
         try:
@@ -613,8 +613,8 @@ class Textfile(Store):
     '''
         client config in text files
     '''
-    def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
-        Store.__init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs)
+    def __init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs):
+        Store.__init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs)
         self.connection = None
 
         # store config information of hosts
@@ -767,16 +767,13 @@ class DB(Store):
         for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
     '''
     
-    def __init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs):
-        Store.__init__(self, cfg, queryqueue, answerqueue, Transactions, CollectedMACs)
-
+    def __init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs):
+        Store.__init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs)
         self.connection = None
-
         try:
             self.DBConnect()
-        except:
-            ###traceback.print_exc(file=sys.stdout)
-            pass
+        except Exception, err:
+            print err
 
 
     def DBConnect(self):
