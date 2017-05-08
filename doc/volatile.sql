@@ -10,9 +10,9 @@ CREATE TABLE leases (
   class varchar(255) NOT NULL,
   mac varchar(17) NOT NULL,
   duid varchar(255) NOT NULL,
-  last_update datetime NOT NULL,
-  preferred_until datetime NOT NULL,
-  valid_until datetime NOT NULL,
+  last_update bigint NOT NULL,
+  preferred_until bigint NOT NULL,
+  valid_until bigint NOT NULL,
   iaid varchar(8) DEFAULT NULL,
   last_message int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (address)
@@ -21,6 +21,14 @@ CREATE TABLE leases (
 CREATE TABLE macs_llips (
   mac varchar(17) NOT NULL,
   link_local_ip varchar(39) NOT NULL,
-  last_update datetime NOT NULL,
+  last_update bigint NOT NULL,
   PRIMARY KEY (mac)
 );
+
+CREATE TABLE meta (
+  item_key varchar(255) NOT NULL,
+  item_value varchar(255) NOT NULL,
+  PRIMARY KEY (item)
+);
+
+INSERT INTO meta (item_key, item_value) VALUES ('version', '1');
