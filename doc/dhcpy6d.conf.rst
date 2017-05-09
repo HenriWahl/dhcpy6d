@@ -1,0 +1,741 @@
+============
+dhcpy6d.conf
+============
+
+--------------------------------------------
+configuration file for DHCPv6 server dhcpy6d
+--------------------------------------------
+
+:Author: Copyright (C) 2012-2017 Henri Wahl <h.wahl@ifw-dresden.de>
+:Date:   2017-05-09
+:Version: 0.5
+:Manual section: 5
+:Copyright: This manual page is licensed under the GPL-2 license.
+
+Description
+===========
+
+This file contains the general settings for DHCPv6 server daemon dhcpy6d.
+It follows RFC 822 style parsed by Python ConfigParser module.
+It contains several sections which will be discussed in detail here.
+
+An online documentation is also available at `<https://dhcpy6d.ifw-dresden.de/documentation/config>`_. 
+
+Boolean settings can be set with *1|0*, *on|off* or *yes|no* values. 
+
+Some options allow multiple values. These have to be separated by spaces.
+
+There are 3 types of sections:
+
+**[dhcpy6d]**
+    This section contains general options like interfaces, storage and logging. Only one [dhcpy6d] section is allowed.
+
+**[address_<address_name>]**
+    There can be various *[address_<address_name>]* sections. In address sections severall address ranges and types can be defind according to you needs.
+    Addresses are organized in classes. For details read further down.
+
+**[class_<class_name>]**
+    Class definitions allow to apply different addresses, time limits et al. to different types of clients.
+
+General configuration in section [dhcpy6d]
+==========================================
+
+This section contains important general options. Values are sometimes examples and not meant to be used in production
+environments.
+
+**really_do_it = yes|no**
+    Let dhcpy6d **really do it** and respond to client requests - disabling might be of use for debugging and testing.
+
+**interface = <interface> [<interface> ...]**
+    The interfaces the server listens on is defined with keyword interface. Multiple interfaces have to be separated by spaces.
+
+**mcast = <multicast-address>**
+    The multicast address to listen at is ff02::1:2. Due to the facts that dhcpy6d at the moment works in local network segments only and to the restriction of MAC addresses only being usable there it will always have this value.
+
+**port = <port>**
+    Exactly the same applies to the port dhcpy6d listens on. Default is 547. Probably senseless to change it but who knows.
+
+**serverduid = <longlongserverduid>**
+    The server DUID should be configured with serverduid. If there is none dhcpy6d creates a new one at every startup.  Windows clients might run a little bit wild when server DUID changed. You are free to compose your own as long as it follows RFC 3315.
+    Please note that it has to be in hexadecimal format - no octals, no "-", just like in the example below.
+    The example here is a DUID-LLT (Link-layer Address Plus Time) even if it should be a DUID-TLL as timestamp comes first.
+    It is composed of *DUID-type(LLT=1)* + *Hardware-type(Ethernet=1)* + *Unixtime-in-hexadecimal* + *MAC-address* what makes a *0001* + *0001* + *11fb5dc9* + *01023472a6c5* = **0001000111fb5dc901023472a6c5**.
+
+**server_preference = <0-255>**
+    The server preference determines the priority of the server. The maximum value is 255 which means highest priority.
+ 
+**user = <user>**
+    For security reasons dhcpy6d can and should be run as non-root user.
+
+**group = <group>** For security reasons dhcpy6d can and should be run as non-root group.
+
+**nameserver = <nameserver-address> [<nameserver-address> ...]**
+    Nameservers to be replied to request option 23 are defined with nameserver. If more than one is needed they have to be separated by spaces.
+    If an address type is of category *dns* at least one nameserver has to be given here.
+
+**domain = <domaine-name>**
+    The domain to be used with FQDN hostnames for option 39.
+
+**domain_search_list = <domainname> [<domainname> ...]**
+    Domain search lists to be used with option 24t. If none is given the value of domain above is used. Multiple domains have to be separated by space or comma.
+
+**log = yes|no**
+    Enable logging.
+
+**log_console = yes|no**
+    Log to the console where **dhcpy6d** has been started.
+
+**log_file = </path/to/dhcpy6d/log/file>**
+    Defines the file used for logging. Will be created if it does not yet exist.
+
+**log_syslog = yes|no**
+    If logs should go to syslog it is set here.
+
+**log_syslog_destination = syslogserver**
+    An UDP syslog server may be used if **log_syslog_destination** points to it. Optionally a port other than default 514 can be set when adding ":<port>" to the destination.
+
+**log_syslog_facility = <log-facility>**
+    The default syslog facility is *daemon* but can be changed here.
+
+**log_mac_llip = yes|no**
+    Log discovered MAC/LLIP pairs of clients. Might be pretty verbose in larger setups and with disabled MAC/LLIP pair caching.
+
+**store_config = file|sqlite| mysql|postgresql|none**
+    Configuration of clients can be stored in a file or in a database. Databases MySQL, PostgreSQL and SQLite are supported at the moment, thus possible values are *file*, *mysql*, *postgresql*  or *sqlite*.
+    To disable any client configuration source it has to be *none*.
+
+**store_file_config = </path/to/client/conf/file>**
+    File which contains the clients configuration. Default is */etc/dhcpy6d-clients.conf*. For details see **dhcpy6d-clients.conf(5)**.
+
+**store_sqlite_config = /path/to/sqlite/config/file**
+    SQLite database file which contains the clients configuration.
+ 
+**store_volatile = sqlite|mysql|postgresql**
+    Volatile data like leases and the mapping between Link Local addresses and MAC addresses can be stored in MySQL, PostgreSQL or SQLite database, so the possible values are *mysql*, *postgresql* and *sqlite*.
+    
+**store_sqlite_volatile = /path/to/sqlite/volatile/file**
+    If set set to *sqlite* a SQLite database file must be defined. Default is */var/lib/dhcpy6d/volatile.sqlite*.
+
+**store_db_host = <database-host>**
+
+**store_db_db = <database-name>**
+
+**store_db_user = <database-user>**
+
+**store_db_password = <database-password>**
+    If **store_config** and/or **store_volatile** use a database to store information it has to be set with these self-explanatory options. The same database is used for config and volatile data.
+
+**cache_mac_llip = yes|no**
+    Cache discovered MAC/LLIP pairs in database. If enabled reduces response time and opens dhcpy6d to *possible* MAC/LLIP poisoning. If disabled might increase system load.
+
+**identification = <mac> <duid> <hostname>**
+    Clients can be set to be identified by several attributes - MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database.
+    Same MAC and different DUIDs might be interesting for clients with multiple OS.
+
+**identification_mode = match_all|match_some**
+    If more than one identification attribute has been set, the identification mode can be one of *match_all* or *match_some*. The first means that all attributes have to match to identify a client and the latter is more tolerant.
+
+**dns_update = yes|no**
+    Dynamically update DNS. This works at the moment only with Bind DNS, but might be extended to others, maybe via call of an external command.
+
+**dns_update_nameserver = <nameserver-address> [<nameserver-address> ...]**
+
+**dns_rndc_key = <rndc-key_like_in_rndc.conf>**
+
+**dns_rndc_secret = <secret_key_like_in_rndc.conf**
+    When connecting to a Bind DNS server for dynamic DNS updates its address and the necessary RNDC data must be set.
+
+**dns_ignore_client = yes|no**
+    Clients may request that they update the DNS record theirself. If their wishes shall be ignored this option has to be true.
+
+**dns_use_client_hostname = yes|no**
+    The client hostname either comes from configuration of dhcpy6d or in the client request.
+
+**preferred_lifetime = <seconds>**
+
+**valid_lifetime = <seconds>**
+
+**t1 = <seconds>**
+
+**t2 = <seconds>**
+    Preferred lifetime, valid lifetime, T1 and T2 in seconds are configured with the corresponding options.
+
+**information_refresh_time = <seconds>**
+    The lifetime of information given to clients as response to an *information-request* message.
+
+
+Address definitions in multiple [address_<address_name>] sections
+=================================================================
+
+The *<address_name>* part of an **[address_<address_name>]** section is an arbitrarily chosen identifier like *clients_global* or *invalid_clients_local*.
+There can be many address definitions which will be used by classes. Every address definition may include several properties:
+
+**category = mac|id|range|random|dns**
+    Categories play an important role when defining patterns for addresses. An address belongs to a certain category:
+
+        **mac**
+            Uses MAC address from client request as part of address
+
+        **id**
+            Uses ID given to client in configuration file or database as one octet of address, should be in range 0-FFFF
+
+        **range**
+            Generate addresses of given ranges
+
+        **random**
+            Randomly created 64 bit values used as host part in address
+            
+        **dns**
+            Ask DNS server for IPv6 address of client host
+
+**pattern = 2001:db8::$mac$|$id$|$range$|$random$**
+
+**pattern= $prefix$::$mac$|$id$|$range$|$random$**
+    Patterns allow to design the addresses according to their category. See examples section below to make it more clear. 
+
+    **$mac$**
+        The MAC address from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be stretched over 3 thus octets like 00:11:22:33:44:55 become 0011:2233:4455.
+
+    **$id$**
+        If clients get an ID in client configuration file or in client configuration database this ID will fill one octet. Thus the ID has to be in the range of 0000-FFFF.
+
+    **$range$**
+        If address is of category range the range defined with extra keyword " range " will be used here in place of one octet. This is why the range can span from 0000-FFFF. Clients will get an address out of the given range.
+
+    **$random64$**
+        A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would if privacy extensions were used. The random part will span over 4 octets.
+
+    **$prefix**
+        This placeholder can be used instead of a literal prefix and uses the prefix given at calling dhcpy6d via the *--prefix* argument like *$prefix$::$id$*.
+
+**ia_type = na|ta**
+    IA (Identity Association) types can be one of non-temporary address *na* or temporary address *ta*. Default and probably most used is *na*.
+
+**preferred_lifetime = <seconds>**
+
+**valid_lifetime = <seconds>**
+    As default preferred and valid lifetime are set in general settings, but it is configurable individually for every address setting.
+
+**dns_update = yes|no**
+
+**dns_zone = <dnszone>**
+
+**dns_rev_zone = <reverse_dnszone>**
+    If these addresses should be synchronized with Bind DNS, these three settings have to be set accordingly. The nameserver for updates is set in general settings.
+
+Default Adress
+--------------
+
+    The address scheme used for the default class *class_default* is by default named *address_default*.
+    It should be enough if *address_default* is defined, only if unknown clients should get extra nameservers etc. a *class_default* has to be set.
+
+    **[address_default]**
+        Address scheme used as default for clients which do not match any other class than *class_default*.
+
+Class definitions in multiple [class_<class_name>] sections
+-----------------------------------------------------------
+
+The *<class_name>* part of an **[class_<class_name>]** section is an arbitrarily chosen identifier like *clients* or *invalid_clients*.
+Clients can be grouped in classes. Different classes can have different properties, different address sets and different numbers of addresses. Classes also might have different name servers, time intervals, filters and interfaces.
+
+A client gets the addresses, nameserver and T1/T2 values of the class which it is configured for in client configuration database or file.
+
+**addresses = <address_name> [<address_name> ...]**
+    A class can contain as many addresses as needed. Their names have to be separated by spaces. *Name* means the *name*-part of an address section like *[address_name]*.
+
+**answer = normal|noaddress|none**
+    Normally a client will get an answer, but if for whatever reason is a need to give it an *NoAddrAvail* message back or completely ignore the client it can be set here.
+
+**nameserver = <nameserver-address> [<nameserver-address> ...]**
+    Each class can have its own nameservers. If this option is used it replaces the nameservers from general settings.
+
+**t1 = <seconds>**
+
+**t2 = <seconds>**
+    Each class can have its own **t1** and **t2** values. The ones from general settings will be overridden. Might be of use for some invalid-but-about-to-become-valid-somehow-soon class.
+
+**filter_hostname = <regular_expression>**
+
+**filter_mac = <regular_expression>**
+
+**filter_duid = <regular_expression>**
+    Filters allow to apply a class to a client not by configuration but by a matching regular expression filter. Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
+    The regular expressions are meant to by Python Regular Expressions. See `<https://docs.python.org/2/howto/regex.html>`_ and examples section below for details.
+
+**interface = <interface> [<interface> ...]**
+    It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
+    
+
+Default Class
+-------------
+
+At the moment every client which does not match any other class by client configuration or filter automatically matches the class "default".
+This class could get an address scheme too. It should be enough if 'address_default' is defined, only if unknown clients should get extra nameservers etc. a 'class_default' has to be set.
+
+**[class_default]**
+    Default class for all clients that do not match any other class. Like any other class it might contain all options that appyl to a class.
+
+**[class_default_<interface>]**
+    If dhcpy6d listens at multiple interfaces, one can define a default class for every 'interface'.
+    
+
+Examples
+========
+
+The following paragraphs contain some hopefully helpful examples:
+
+Minimal configuration
+---------------------
+
+    Here in this minimalistic example the server daemon listens on interface eth0. It does not use any client configuration source but answers requests with default addresses.
+    These are made of the pattern fd01:db8:dead:bad:beef:$mac$ and result in addresses like fd01:db8:deaf:bad:beef:1020:3040:5060 if the MAC address of the requesting client was 10:20:30:40:50:60.
+
+    |    
+    |    [dhcpy6d]
+    |    # Set to yes to really answer to clients.
+    |    really_do_it = yes
+    |
+    |    # Interface to listen to multicast ff02::1:2.
+    |    interface = eth0
+    |
+    |    # Some server DUID.
+    |    serverduid = 0001000134824528134567366121
+    |
+    |    # Do not identify and configure clients.
+    |    store_config = none
+    |
+    |    # SQLite DB for leases and LLIP-MAC-mapping.
+    |    store_volatile = sqlite
+    |    store_sqlite_volatile = /var/lib/dhcpy6d/volatile.sqlite
+    |
+    |    # Special address type which applies to all not specially.
+    |    # configured clients.
+    |    [address_default]
+    |    # Choosing MAC-based addresses.
+    |    category = mac
+    |    # ULA-type address pattern.
+    |    pattern = fd01:db8:dead:bad:beef:$mac$
+
+
+
+Configuration with valid and unknown clients
+--------------------------------------------
+
+    This example shows some more complexity. Here only valid hosts will get a random global address from 2001:db8::/64.
+    Unknown clients get a default ULA range address from fc00::/7.
+
+    |    
+    |    [dhcpy6d]
+    |    # Set to yes to really answer to clients.
+    |    really_do_it = yes
+    |     
+    |    # Interface to listen to multicast ff02::1:2.
+    |    interface = eth0
+    |
+    |    # Server DUID - if not set there will be one generated every time dhcpy6d starts.
+    |    # This might cause trouble for Windows clients because they go crazy about the
+    |    # changed server DUID.
+    |    serverduid = 0001000134824528134567366121
+    |
+    |    # Non-privileged user/group.
+    |    user = dhcpy6d
+    |    group = dhcpy6d
+    |
+    |    # Nameservers for option 23 - there can be several specified separated by spaces.
+    |    nameserver = fd00:db8::53
+    |
+    |    # Domain to be used for option 39 - host FQDN.
+    |    domain = example.com
+    |
+    |    # Domain search list for option 24 - domain search list.
+    |    # If omitted the value of option "domain" above is taken as default.
+    |    domain_search_list = example.com
+    |
+    |    # Do logging.
+    |    log = yes
+    |    # Log to console.
+    |    log_console = no
+    |    # Path to logfile.
+    |    log_file = /var/log/dhcpy6d.log
+    |
+    |    # Use SQLite for client configuration.
+    |    store_config = sqlite
+    |
+    |    # Use SQLite for volatile data.
+    |    store_volatile = sqlite
+    |
+    |    # Paths to SQLite database files.
+    |    store_sqlite_config = /var/lib/dhcpy6d/config.sqlite
+    |    store_sqlite_volatile = /var/lib/dhcpy6d/volatile.sqlite
+    |
+    |    # Declare which attributes of a requesting client should be checked
+    |    # to prove its identity. It is  possible to mix them, separated by spaces.
+    |    identification = mac
+    |
+    |    # Declare if all checked attributes have to match or is it enough if
+    |    # some do. Kind of senseless with just one attribute.
+    |    identification_mode = match_all
+    |
+    |    # These lifetimes are also used as default for addresses which
+    |    # have no extra defined lifetimes.
+    |    preferred_lifetime = 43200
+    |    valid_lifetime = 64800
+    |    t1 = 21600
+    |    t2 = 32400
+    |
+    |    # ADDRESS DEFINITION
+    |    # Addresses for proper valid clients.
+    |    [address_valid_clients]
+    |    # Better privacy for global addresses with category random.
+    |    category = random
+    |    # The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
+    |    pattern = 2001:db8::$random64$
+    |
+    |    # Default addresses for unknown invalid clients.
+    |    [address_default]
+    |    # Unknown clients will get an internal ULA range-based address.
+    |    category = range
+    |    # The keyword "range" sets the range used in pattern.
+    |    range = 1000-1fff
+    |    # This pattern results in addresses like fd00::1234.
+    |    pattern = fd00::$range$
+    |
+    |    # CLASS DEFINITION
+    |
+    |    # Class for proper valid client.
+    |    [class_valid_clients]
+    |    # At least one of the above address schemes has to be set.
+    |    addresses = valid_clients
+    |    # Valid clients get a different nameserver.
+    |    nameserver = 2001:db8::53
+    |
+    |    # Default class for unknown hosts - only necessary here because of time interval settings.
+    |    [class_default]
+    |    addresses = default
+    |    # Short interval of address refresh attempts so that a client's status
+    |    # change will be reflected in IPv6 address soon.
+    |    t1 = 600
+    |    t2 = 900
+
+Configuration with 2 network segments, servers, valid and unknown clients
+-------------------------------------------------------------------------
+
+    This example uses 2 network segments, one for servers and one for clients. Servers here only get local ULA addresses.
+    Valid clients get 2 addresses, one local ULA and one global GUA address. This feature of DHCPv6 is at the moment only
+    well supported by Windows clients. Unknown clients will get a local ULA address. Only valid clients and servers will
+    get information about nameservers.
+
+
+    |   
+    |    [dhcpy6d]
+    |    # Set to yes to really answer to clients.
+    |    really_do_it = yes
+    |
+    |    # Interfaces to listen to multicast ff02::1:2.
+    |    # eth1 - client network
+    |    # eth2 - server network
+    |    interface = eth1 eth2
+    |
+    |    # Server DUID - if not set there will be one generated every time dhcpy6d starts.
+    |    # This might cause trouble for Windows clients because they go crazy about the
+    |    # changed server DUID.
+    |    serverduid = 0001000134824528134567366121
+    |
+    |    # Non-privileged user/group.
+    |    user = dhcpy6d
+    |    group = dhcpy6d
+    |
+    |    # Domain to be used for option 39 - host FQDN.
+    |    domain = example.com
+    |
+    |    # Domain search list for option 24 - domain search list.
+    |    # If omited the value of option "domain" above is taken as default.
+    |    domain_search_list = example.com
+    |
+    |    # Do logging.
+    |    log = yes
+    |    # Log to console.
+    |    log_console = no
+    |    # Path to logfile.
+    |    log_file = /var/log/dhcpy6d.log
+    |
+    |    # Use MySQL for client configuration.
+    |    store_config = mysql
+    |
+    |    # Use MySQL for volatile data.
+    |    store_volatile = mysql
+    |
+    |    # Data used for MySQL storage.
+    |    store_db_host = localhost
+    |    store_db_db = dhcpy6d
+    |    store_db_user = dhcpy6d
+    |    store_db_password = dhcpy6d
+    |
+    |    # Declare which attributes of a requesting client should be checked
+    |    # to prove its identity. It is  possible to mix them, separated by spaces.
+    |    identification = mac
+    |
+    |    # Declare if all checked attributes have to match or is it enough if
+    |    # some do. Kind of senseless with just one attribute.
+    |    identification_mode = match_all
+    |
+    |    # These lifetimes are also used as default for addresses which
+    |    # have no extra defined lifetimes.
+    |    preferred_lifetime = 43200
+    |    valid_lifetime = 64800
+    |    t1 = 21600
+    |    t2 = 32400
+    |
+    |    # ADDRESS DEFINITION
+    |
+    |    # Global addresses for proper valid clients (GUA).
+    |    [address_valid_clients_global]
+    |    # Better privacy for global addresses with category random.
+    |    category = random
+    |    # The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
+    |    pattern = 2001:db8::$random64$
+    |
+    |    # Local addresses for proper valid clients (ULA).
+    |    [address_valid_clients_local]
+    |    # Local addresses need no privacy, so they will be based of range.
+    |    category = range
+    |    range = 2000-2FFF
+    |    # Valid clients will get local ULA addresses from fd01::/64.
+    |    pattern = fd01::$range$
+    |
+    |    # Servers in servers network will get local addresses based on IDs from client configuration.
+    |    [address_servers]
+    |    # IDs are set in client configuration database in range of 0-FFFF.
+    |    category = id
+    |    # Servers will get local ULA addresses from fd02::/64.
+    |    pattern = fd02::$id$
+    |
+    |    # Default addresses for unknown invalid clients
+    |    [address_default]
+    |    # Unknown clients will get an internal ULA range-based address.
+    |    category = range
+    |    # The keyword "range" sets the range used in pattern.
+    |    range = 1000-1FFF
+    |    # This pattern results in addresses like fd00::1234.
+    |    pattern = fd00::$range$
+    |
+    |    # CLASS DEFINITION
+    |
+    |    # Class for proper valid client.
+    |    [class_valid_clients]
+    |    # Clients only exist in network linked with eth1.
+    |    interface = eth1
+    |    # Valid clients get 2 addresses, one local ULA and one global GUA
+    |    # (only works reliably with Windows clients).
+    |    addresses = valid_clients_global valid_clients_local
+    |    # Only valid clients get a nameserver from server network.
+    |    nameserver = fd02::53
+    |
+    |    # Class for servers in network on eth2
+    |    [class_servers]
+    |    # Servers only exist in network linked with eth2.
+    |    interface = eth2
+    |    # Only local addresses for servers.
+    |    addresses = servers
+    |    # Nameserver from server network.
+    |    nameserver = fd02::53
+    |
+    |    # Default class for unknown hosts - only necessary here because of time interval settings
+    |    [class_default]
+    |    addresses = default
+    |    # Short interval of address refresh attempts so that a client's status
+    |    # change will be reflected in IPv6 address soon.
+    |    t1 = 600
+    |    t2 = 900
+
+
+Configuration with dynamic DNS Updates
+--------------------------------------
+
+    In this example the hostnames of valid clients will be registered in the Bind DNS server. The zones to be updated are configured for every address definition. Here only the global GUA addresses for valid clients will be updated in DNS.
+    The hostnames will be taken from client configuration data - the ones supplied by the clients are ignored.
+
+    |   
+    |    [dhcpy6d]
+    |    # Set to yes to really answer to clients.
+    |    really_do_it = yes
+    |
+    |    # Interface to listen to multicast ff02::1:2.
+    |    interface = eth0
+    |
+    |    # Server DUID - if not set there will be one generated every time dhcpy6d starts.
+    |    # This might cause trouble for Windows clients because they go crazy about the
+    |    # changed server DUID.
+    |    serverduid = 0001000134824528134567366121
+    |
+    |    # Non-privileged user/group.
+    |    user = dhcpy6d
+    |    group = dhcpy6d
+    |
+    |    # Nameservers for option 23 - there can be several specified separated by spaces.
+    |    nameserver = fd00:db8::53
+    |
+    |    # Domain to be used for option 39 - host FQDN.
+    |    domain = example.com
+    |
+    |    # Domain search list for option 24 - domain search list.
+    |    # If omited the value of option "domain" above is taken as default.
+    |    domain_search_list = example.com
+    |
+    |    # This works at the moment only for ISC Bind nameservers.
+    |    dns_update = yes
+    |
+    |    # RNDC key name for DNS Update.
+    |    dns_rndc_key = rndc-key
+    |
+    |    # RNDC secret - mostly some MD5-hash. Take it from
+    |    # nameservers' /etc/rndc.key.
+    |    dns_rndc_secret = 0123456789012345679
+    |
+    |    # Nameserver to talk to.
+    |    dns_update_nameserver = ::1
+    |
+    |    # Regarding RFC 4704 5. there are 3 kinds of client behaviour
+    |    # for N O S bits:
+    |    # - client wants to update DNS itself -> sends 0 0 0
+    |    # - client wants server to update DNS -> sends 0 0 1
+    |    # - client wants no server DNS update -> sends 1 0 0
+    |    # Ignore client ideas about DNS (if at all, what name to use, self-updating...)
+    |    # Here client hostname is taken from client configuration
+    |    dns_ignore_client = yes
+    |
+    |    # Do logging.
+    |    log = yes
+    |    # Log to console.
+    |    log_console = no
+    |    # Path to logfile.
+    |    log_file = /var/log/dhcpy6d.log
+    |
+    |    # Use SQLite for client configuration.
+    |    store_config = sqlite
+    |
+    |    # Use SQLite for volatile data.
+    |    store_volatile = sqlite
+    |
+    |    # Paths to SQLite database files.
+    |    store_sqlite_config = config.sqlite
+    |    store_sqlite_volatile = volatile.sqlite
+    |
+    |    # Declare which attributes of a requesting client should be checked
+    |    # to prove its identity. It is  possible to mix them, separated by spaces.
+    |    identification = mac
+    |
+    |    # ADDRESS DEFINITION
+    |
+    |    # Addresses for proper valid clients.
+    |    [address_valid_clients]
+    |    # Better privacy for global addresses with category random.
+    |    category = random
+    |    # The following pattern will result in addresses like 2001:0db8::d3f6:834a:03d5:139c.
+    |    pattern = 2001:db8::$random64$
+    |    # Update these addresses in Bind DNS
+    |    dns_update = yes
+    |    # Zone to update.
+    |    dns_zone = example.com
+    |    # Reverse zone to update
+    |    dns_rev_zone = 8.b.d.0.1.0.0.2.ip6.arpa
+    |
+    |    # Default addresses for unknown invalid clients.
+    |    [address_default]
+    |    # Unknown clients will get an internal ULA range-based address.
+    |    category = range
+    |    # The keyword "range" sets the range used in pattern.
+    |    range = 1000-1FFF
+    |    # This pattern results in addresses like fd00::1234.
+    |    pattern = fd00::$range$
+    |
+    |    # CLASS DEFINITION
+    |
+    |    # Class for proper valid client.
+    |    [class_valid_clients]
+    |    # At least one of the above address schemes has to be set.
+    |    addresses = valid_clients
+    |    # Valid clients get a different nameserver.
+    |    nameserver = 2001:db8::53
+
+
+Configuration with filter
+-------------------------
+
+    In this example the membership of a client to a class is defined by a filter for hostnames. All Windows machines have win*-names here and when requesting an address this hostname gets filtered.
+
+    |    
+    |    [dhcpy6d]
+    |    # Set to yes to really answer to clients.
+    |    really_do_it = yes
+    |    
+    |    # Interface to listen to multicast ff02::1:2.
+    |    interface = eth0
+    |    
+    |    # Server DUID - if not set there will be one generated every time dhcpy6d starts.
+    |    # This might cause trouble for Windows clients because they go crazy about the
+    |    # changed server DUID.
+    |    serverduid = 0001000134824528134567366121
+    |    
+    |    # Use no client configuration.
+    |    store_config = none
+    |    
+    |    # Use SQLite for volatile data.
+    |    store_volatile = sqlite
+    |    
+    |    # Paths to SQLite database file.
+    |    store_sqlite_volatile = volatile.sqlite
+    |    
+    |    # ADDRESS DEFINITION
+    |    
+    |    [address_local]
+    |    category = range
+    |    range = 1000-1FFF
+    |    pattern = fd00::$range$
+    |    
+    |    [address_global]
+    |    category = random
+    |    pattern = 2001:638::$random64$
+    |    
+    |    # CLASS DEFINITION
+    |    
+    |    [class_windows]
+    |    addresses = local
+    |    # Python regular expressions to be used here
+    |    filter_hostname = win.* 
+    |    [class_default]
+    |    addresses = global
+
+
+License
+=======
+
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public
+License along with this package; if not, write to the Free
+Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301 USA
+
+On Debian systems, the full text of the GNU General Public
+License version 2 can be found in the file
+*/usr/share/common-licenses/GPL-2*.
+
+
+See also
+========
+
+* dhcpy6d(8)
+* dhcpy6d-clients.conf(5)
+* `<https://dhcpy6d.ifw-dresden.de>`_
+* `<https://github.com/HenriWahl/dhcpy6d>`_
