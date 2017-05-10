@@ -5,16 +5,58 @@
 #
 #
 
-if [ -f /etc/debian_version ] 
+OS=unknown
+
+function get_os {
+    if [ -f /etc/debian_version ]
+        then
+            OS=debian
+    elif [ -f /etc/redhat-release ]
+        then
+            OS=redhat
+    fi
+}
+
+function create_manpages {
+    if ! which rst2man
+        then
+            if [ "$OS" == "redhat" ]
+                then
+                    sudo yum -y install python-docutils
+            fi
+        fi
+
+    echo "Creating manapages form RST files"
+    rst2man doc/dhcpy6d.rst man/man8/dhcpy6d.8
+    rst2man doc/dhcpy6d.conf.rst man/man5/dhcpy6d.conf.5
+    rst2man doc/dhcpy6d-clients.conf.rst man/man5/dhcpy6d-clients.conf.5
+
+}
+
+# find out where script runs at
+get_os
+
+if [ "$OS" == "debian" ]
 	then
 		echo "Building .deb package"
-		
+
+        create_manpages
+
         debuild clean
 		debuild binary-indep
 
-elif [ -f /etc/redhat-release ]
+elif [ "$OS" == "redhat" ]
 	then
 		echo "Building .rpm package"
+
+        create_manpages
+
+
+        if ! which rpmbuild
+            then
+                sudo yum -y install rpm-build
+        fi
+
 
         TOPDIR=$HOME/dhcpy6d.$$
         SPEC=redhat/dhcpy6d.spec

@@ -7,6 +7,7 @@ include doc/config.sql
 include doc/dhcpy6d-example.conf
 include doc/dhcpy6d-minimal.conf
 include doc/volatile.sql
+include doc/volatile.postgresql
 include man/man5/dhcpy6d.conf.5
 include man/man5/dhcpy6d-clients.conf.5
 include man/man8/dhcpy6d.8

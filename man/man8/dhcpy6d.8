@@ -1,25 +1,42 @@
-.TH dhcpy6d 8 "Apr 24, 2016" "" "dhcpy6d"
-
+.\" Man page generated from reStructuredText.
+.
+.TH DHCPY6D 8 "2017-05-09" "0.5" ""
 .SH NAME
-
-dhcpy6d - MAC address aware DHCPv6 server
-
+dhcpy6d \- MAC address aware DHCPv6 server
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
 .SH SYNOPSIS
-
-\fBdhcpy6d\fP
-[\fB\-c\fR \fIfile\fR]
-[\fB\-u\fR \fIuser\fR]
-[\fB\-g\fR \fIgroup\fR]
-[\fB\-p\fR \fIprefix\fR]
-[\fB\-r\fR \fIyes|no\fR]
-[\fB\-d\fR \fIduid\fR]
-[\fB\-G\fR]
-
-
+.sp
+\fBdhcpy6d\fP [\fB\-c\fP \fIfile\fP] [\fB\-u\fP \fIuser\fP] [\fB\-g\fP \fIgroup\fP] [\fB\-p\fP \fIprefix\fP] [\fB\-r\fP \fIyes|no\fP] [\fB\-d\fP \fIduid\fP] [\fB\-G\fP]
 .SH DESCRIPTION
-.B dhcpy6d
-is an open source server for DHCPv6, the DHCP protocol for IPv6.
-.PP
+.sp
+\fBdhcpy6d\fP is an open source server for DHCPv6, the DHCP protocol for IPv6.
+.sp
 Its development is driven by the need to be able to use the existing
 IPv4 infrastructure in coexistence with IPv6.  In a dualstack
 scenario, the existing DHCPv4 most probably uses MAC addresses of
@@ -28,95 +45,103 @@ DHCPv6, but also not forbidden.  Dhcpy6d is able to do so in local
 network segments and therefore offers a pragmatical method for
 parallel use of DHCPv4 and DHCPv6, because existing client management
 solutions could be used further.
-.PP
-.B dhcpy6d
-comes with the following features:
-.br
-.I \fR * identifies clients by MAC address, DUID or hostname
-.br
-.I \fR * generates addresses randomly, by MAC address, by range or by given ID
-.br
-.I \fR * filters clients by MAC, DUID or hostname
-.br
-.I \fR * assigns multiple addresses per client
-.br
-.I \fR * allows one to organize clients in different classes
-.br
-.I \fR * stores leases in MySQL or SQLite database
-.br
-.I \fR * client information can be retrieved from database or textfile
-.br
-.I \fR * dynamically updates DNS (Bind)
-.br
-.I \fR * supports rapid commit
-.br
-.I \fR * listens on multiple interfaces
-.br
-
+.sp
+\fBdhcpy6d\fP comes with the following features:
+.INDENT 0.0
+.IP \(bu 2
+identifies clients by MAC address, DUID or hostname
+.IP \(bu 2
+generates addresses randomly, by MAC address, by range or by given ID
+.IP \(bu 2
+filters clients by MAC, DUID or hostname
+.IP \(bu 2
+assigns multiple addresses per client
+.IP \(bu 2
+allows one to organize clients in different classes
+.IP \(bu 2
+stores leases in MySQL, PostgreSQL or SQLite database
+.IP \(bu 2
+client information can be retrieved from MySQL or PostgreSQL database or textfile
+.IP \(bu 2
+dynamically updates DNS (Bind)
+.IP \(bu 2
+supports rapid commit
+.IP \(bu 2
+listens on multiple interfaces
+.UNINDENT
 .SH OPTIONS
-
+.sp
 Most configuration is done via the configuration file.
-
+.INDENT 0.0
 .TP
-.BR \-c, " \-\-config=\fIconfigfile\fR
+.B \fB\-c, \-\-config=<configfile>\fP
 Set the configuration file to use. Default is /etc/dhcpy6d.conf.
 .TP
-.BR \-u, " \-\-user=\fIuser\fR
+.B \fB\-u, \-\-user=<user>\fP
 Set the unprivileged user to be used.
 .TP
-.BR \-g, " \-\-group=\fIgroup\fR
+.B \fB\-g, \-\-group=<group>\fP
 Set the unprivileged group to be used.
 .TP
-.BR \-r, " \-\-really\-do\-it=\fIyes|no\fR
+.B \fB\-r, \-\-really\-do\-it=<yes|no>\fP
 Really activate the DHCPv6 server. This is a precaution to prevent larger network trouble.
 .TP
-.BR \-d, " \-\-duid=\fIduid\fR
+.B \fB\-d, \-\-duid=<duid>\fP
 Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d.
 .TP
-.BR \-p, " \-\-prefix=\fIprefix\fR
+.B \fB\-p, \-\-prefix=<prefix>\fP
 Set the prefix which will be substituted for the $prefix$ variable in address definitions. Useful for setups where the ISP uses a changing prefix.
 .TP
-.BR \-G, " \-\-generate-duid
+.B \fB\-G, \-\-generate\-duid\fP
 Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
-
+.UNINDENT
 .SH FILES
-.nf
+.INDENT 0.0
+.IP \(bu 2
 /etc/dhcpy6d.conf
-/etc/dhcpy6d-clients.conf
+.IP \(bu 2
+/etc/dhcpy6d\-clients.conf
+.IP \(bu 2
 /var/lib/dhcpy6d/
+.IP \(bu 2
 /var/log/dhcpy6d.log
-
-
-.SH AUTHOR
-
-Copyright (C) 2012-2014 Henri Wahl <\fBh.wahl@ifw-dresden.de\fP>
-
+.UNINDENT
 .SH LICENSE
-
+.sp
 This program is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public
 License as published by the Free Software Foundation; either
 version 2 of the License, or (at your option) any later
 version.
-
+.sp
 This program is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied
 warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the GNU General Public License for more
 details.
-
+.sp
 You should have received a copy of the GNU General Public
 License along with this package; if not, write to the Free
 Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-Boston, MA  02110-1301 USA
-
+Boston, MA  02110\-1301 USA
+.sp
 On Debian systems, the full text of the GNU General Public
 License version 2 can be found in the file
-`/usr/share/common-licenses/GPL-2'.
-
+\fI/usr/share/common\-licenses/GPL\-2\fP\&.
 .SH SEE ALSO
-.nf
-.BR dhcpy6d.conf (5)
-.BR dhcpy6d-clients.conf (5)
-https://dhcpy6d.ifw-dresden.de
-https://github.com/HenriWahl/dhcpy6d
+.INDENT 0.0
+.IP \(bu 2
+dhcpy6d.conf(5)
+.IP \(bu 2
+dhcpy6d\-clients.conf(5)
+.IP \(bu 2
+\fI\%https://dhcpy6d.ifw\-dresden.de\fP
+.IP \(bu 2
+\fI\%https://github.com/HenriWahl/dhcpy6d\fP
+.UNINDENT
+.SH AUTHOR
+Copyright (C) 2012-2017 Henri Wahl <h.wahl@ifw-dresden.de>
+.SH COPYRIGHT
+This manual page is licensed under the GPL-2 license.
+.\" Generated by docutils manpage writer.
+.

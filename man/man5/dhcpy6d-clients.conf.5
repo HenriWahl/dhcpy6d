@@ -1,151 +1,170 @@
-.TH dhcpy6d-clients.conf 5 "Jul 17, 2014" "Henri Wahl" "dhcpy6d-clients.conf"
-
-.SH "NAME"
-dhcpy6d-clients.conf \- clients configuration file for DHCPv6 server dhcpy6d
-
-.SH "DESCRIPTION"
+.\" Man page generated from reStructuredText.
+.
+.TH DHCPY6D-CLIENTS.CONF 5 "2017-05-09" "0.5" ""
+.SH NAME
+dhcpy6d-clients.conf \- Clients configuration file for DHCPv6 server dhcpy6d
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH DESCRIPTION
+.sp
 This file contains all client configuration data if these options are set in
-.IR dhcpy6d.conf ":
-
-.B store_config = file
-
+\fBdhcpy6d.conf\fP:
+.INDENT 0.0
+.INDENT 3.5
+\fBstore_config = file\fP
+.UNINDENT
+.UNINDENT
+.sp
 and
-
-.B store_file_config = /path/to/dhcpy6d-clients.conf
-
-An alternative method to store client configuration is using database storage with SQLite or MySQL databases.
-Further details are available at
-.IR https://dhcpy6d.ifw\-dresden.de/documentation/config/.
-
+.INDENT 0.0
+.INDENT 3.5
+\fBstore_file_config = /path/to/dhcpy6d\-clients.conf\fP
+.UNINDENT
+.UNINDENT
+.sp
+An alternative method to store client configuration is using database storage with SQLite or MySQLor PostgreSQL databases.
+Further details are available at \fI\%https://dhcpy6d.ifw\-dresden.de/documentation/config\fP\&.
+.sp
 This file follows RFC 822 style parsed by Python ConfigParser module.
-
+.sp
 Some options allow multiple values. These have to be separated by spaces.
-
 .SH CLIENT SECTIONS
-
+.INDENT 0.0
 .TP
-.BR [host_name]
-Every client is configured in one section. It might have multiple attributes which are necessary depending on the
-configured
-.BR identification
-and general address settings from
-.IR dhcpy6d.conf ".
-
+.B \fB[host_name]\fP
+Every client is configured in one section. It might have multiple attributes which are necessary depending on the configured \fBidentification\fP and general address settings from \fIdhcpy6d.conf\fP\&.
+.UNINDENT
 .SH CLIENT ATTRIBUTES
-Every client section contains several attributes.
-.BR hostname " and " class
-are mandatory. A third one should match at least one of the identification attributes configured in
-.IR dhcpy6d.conf ".
-
-
-.SS MANDATORY CLIENT ATTRIBUTE class
-Both of the following 2 attributes are necessary.
-
+.sp
+Every client section contains several attributes. \fBhostname\fP and \fBclass\fP are mandatory. A third one should match at least one of the \fBidentification\fP attributes configured in \fIdhcpy6d.conf\fP\&.
+.sp
+Both of the following 2 attributes are necessary \- the \fBclass\fP and at least one of the others.
+.SS Mandatory client attribute  \(aqclass\(aq
+.INDENT 0.0
 .TP
-.BR class\ =\ <class>
+.B \fBclass = <class>\fP
 Every client needs a class. If a client is identified, it depends from its class, which addresses it will get.
-This relation is configured in
-.IR dhcpy6d.conf ".
-
-.SS SEMI-MANDATORY CLIENT ATTRIBUTES
-
-Depending on
-.B identification
-in
-.I dhcpy6d.conf
-clients need to have the corresponding attributes. At least one of them is needed.
-
+This relation is configured in \fIdhcpy6d.conf\fP\&.
+.UNINDENT
+.SS Semi\-mandatory client attributes
+.sp
+Depending on \fBidentification\fP in \fIdhcpy6d.conf\fP clients need to have the corresponding attributes. At least one of them is needed.
+.INDENT 0.0
 .TP
-.B mac = <mac-address>
-The MAC address of the Link Local Address of the client DHCPv6 request.
-
+.B \fBmac = <mac\-address>\fP
+The MAC address of the Link Local Address of the client DHCPv6 request, formatted like the most usual 01:02:03:04:05:06.
 .TP
-.B duid = <duid>
-The DUID of the client which comes with the DHCPv6 request message. No hex and \\ needed, just like  for example
-.BR 000100011234567890abcdef1234 .
-
+.B \fBduid = <duid>\fP
+The DUID of the client which comes with the DHCPv6 request message. No hex and \e needed, just like  for example 000100011234567890abcdef1234 .
 .TP
-.B hostname = <hostname>
-The client hostname. It will be used for dynamic DNS update.
-
-.SS EXTRA ATTRIBUTES
-
+.B \fBhostname = <hostname>\fP
+The client non\-FQDN hostname. It will be used for dynamic DNS updates.
+.UNINDENT
+.SS Extra attributes
+.sp
 These attributes do not serve for identification of a client but for appropriate address generation.
-
+.INDENT 0.0
 .TP
-.B id = <id>
-.B id
-has to be a hex number in the range 0-FFFF. The client ID from this directive will be inserted in the address pattern
-of category
-.B id
-instead of the
-.B $id$
-placeholder.
-
+.B \fBid = <id>\fP \fBid\fP
+has to be a hex number in the range 0\-FFFF. The client ID from this directive will be inserted in the \fIaddress pattern\fP of category \fBid\fP instead of the \fB$id$\fP placeholder.
 .TP
-.B address = <address> [<address> ...]
-Addresses configured here will be sent to a client in addition to the ones it gets due to its class.
-Might be useful for some extra static address definitions.
-
+.B \fBaddress = <address> [<address> ...]\fP
+Addresses configured here will be sent to a client in addition to the ones it gets due to its class. Might be useful for some extra static address definitions.
+.UNINDENT
 .SH EXAMPLES
+.sp
 The next lines contain some example client definitions:
-
 .nf
-
 [client1]
 hostname = client1
 mac = 01:01:01:01:01:01
 class = valid_client
-
+.fi
+.sp
+.nf
 [client2]
 hostname = client2
 mac = 02:02:02:02:02:02
 class = invalid_client
-
+.fi
+.sp
+.nf
 [client3]
 hostname = client3
 duid = 000100011234567890abcdef1234
 class = valid_client
 address = 2001:cb8::babe:1
-
+.fi
+.sp
+.nf
 [client4]
 hostname = client4
 mac = 04:04:04:04:04:04
 id = 1234
 class = valid_client
-
 .fi
-
-.SH AUTHOR
-
-Copyright (C) 2012-2014 Henri Wahl <\fBh.wahl@ifw-dresden.de\fP>
-
+.sp
 .SH LICENSE
-
+.sp
 This program is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public
 License as published by the Free Software Foundation; either
 version 2 of the License, or (at your option) any later
 version.
-
+.sp
 This program is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied
 warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the GNU General Public License for more
 details.
-
+.sp
 You should have received a copy of the GNU General Public
 License along with this package; if not, write to the Free
 Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-Boston, MA  02110-1301 USA
-
+Boston, MA  02110\-1301 USA
+.sp
 On Debian systems, the full text of the GNU General Public
 License version 2 can be found in the file
-`/usr/share/common-licenses/GPL-2'.
-
+\fI/usr/share/common\-licenses/GPL\-2\fP\&.
 .SH SEE ALSO
-.nf
-.BR dhcpy6d (8)
-.BR dhcpy6d.conf (5)
-https://dhcpy6d.ifw-dresden.de
-https://github.com/HenriWahl/dhcpy6d
+.INDENT 0.0
+.IP \(bu 2
+dhcpy6d(8)
+.IP \(bu 2
+dhcpy6d.conf(5)
+.IP \(bu 2
+\fI\%https://dhcpy6d.ifw\-dresden.de\fP
+.IP \(bu 2
+\fI\%https://github.com/HenriWahl/dhcpy6d\fP
+.UNINDENT
+.SH AUTHOR
+Copyright (C) 2012-2017 Henri Wahl <h.wahl@ifw-dresden.de>
+.SH COPYRIGHT
+This manual page is licensed under the GPL-2 license.
+.\" Generated by docutils manpage writer.
+.
