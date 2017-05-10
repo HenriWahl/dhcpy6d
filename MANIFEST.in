@@ -15,6 +15,5 @@ include var/lib/volatile.sqlite
 include var/log/dhcpy6d.log
 include etc/dhcpy6d.conf
 include etc/logrotate.d/dhcpy6d
-include etc/init.d/dhcpy6d
-include etc/default/dhcpy6d
-include redhat/init.d/dhcpy6d
+include lib/systemd/system/dhcpy6d.service
+

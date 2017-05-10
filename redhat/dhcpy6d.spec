@@ -27,6 +27,9 @@ BuildArch: noarch
 BuildRequires: python
 Requires: python
 
+BuildRequires: systemd
+Requires: systemd
+
 %if 0%{?suse_version}
 Requires: python-mysql
 Requires: python-dnspython
@@ -38,10 +41,14 @@ Requires: python-dns
 Requires: coreutils
 Requires: filesystem
 Requires(pre): /usr/sbin/useradd, /usr/sbin/groupadd
-Requires(post): coreutils, filesystem, /sbin/chkconfig
-Requires(preun): /sbin/service, coreutils, /sbin/chkconfig, /usr/sbin/userdel, /usr/sbin/groupdel
-Requires(postun): /sbin/service
-Requires: /etc/init.d, logrotate
+###Requires(post): coreutils, filesystem, /sbin/chkconfig
+Requires(post): coreutils, filesystem, systemd
+
+###Requires(preun): /sbin/service, coreutils, /sbin/chkconfig, /usr/sbin/userdel, /usr/sbin/groupdel
+Requires(preun): coreutils, /usr/sbin/userdel, /usr/sbin/groupdel
+###Requires(postun): /sbin/service
+###Requires: /etc/init.d, logrotate
+Requires: logrotate
 
 %description
 Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified 
@@ -59,7 +66,8 @@ CFLAGS="%{optflags}" %{__python} setup.py build
 
 %install
 %{__python} setup.py install --skip-build --prefix=%{_prefix} --install-scripts=%{_sbindir} --root=%{buildroot}
-install -p -D -m 555 %{S:1} %{buildroot}%{_sysconfdir}/init.d/%{name}
+###install -p -D -m 555 %{S:1} %{buildroot}%{_sysconfdir}/init.d/%{name}
+install -p -D -m 644 %{S:1} %{buildroot}%{_unitdir}/%{name}.service
 install -p -D -m 644 etc/logrotate.d/%{name} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
 /bin/chmod 0550 %{buildroot}%{_sbindir}/%{name}
 
@@ -80,27 +88,26 @@ fi
 /bin/chown %{dhcpy6d_uid}:%{dhcpy6d_gid} ${file}
 /bin/chmod 0640 ${file}
 
-# proper service handling http://en.opensuse.org/openSUSE:Cron_rename
-%{?fillup_and_insserv:
-%{fillup_and_insserv -y %{name}}
-}
-%{!?fillup_and_insserv:
-# undefined
-/sbin/chkconfig --add %{name}
-#/sbin/chkconfig %{name} on
-}
+#### proper service handling http://en.opensuse.org/openSUSE:Cron_rename
+###%{?fillup_and_insserv:
+###%{fillup_and_insserv -y %{name}}
+###}
+###%{!?fillup_and_insserv:
+#### undefined
+######/sbin/chkconfig --add %{name}
+####/sbin/chkconfig %{name} on
+###}
 
 %preun
 if [ "$1" = "0" ]; then
-    /sbin/service %{name} stop > /dev/null 2>&1 || :
+    /bin/systemctl %{name}.service stop > /dev/null 2>&1 || :
     /bin/rm -f /var/lib/%{name}/pid > /dev/null 2>&1 || :
     %{?stop_on_removal:
     %{stop_on_removal %{name}}
     }
     %{!?stop_on_removal:
     # undefined
-    /sbin/chkconfig %{name} off
-    /sbin/chkconfig --del %{name}
+    /bin/systemctl disable %{name}.service
     }
     # enable that only for non-root user!
     %if "%{dhcpy6d_uid}" != "root"
@@ -115,11 +122,11 @@ fi
 if [ $1 -ge 1 ]; then
     %{?restart_on_update:
     %{restart_on_update %{name}}
-    %insserv_cleanup
+    ###%insserv_cleanup
     }
     %{!?restart_on_update:
     # undefined
-    /sbin/service %{name} condrestart > /dev/null 2>&1 || :
+    /bin/systemctl start %{name}.service > /dev/null 2>&1 || :
     }
 fi
 
@@ -135,7 +142,8 @@ fi
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}.conf
 %exclude %{_localstatedir}/log/%{name}.log
-%{_sysconfdir}/init.d/%{name}
+###%{_sysconfdir}/init.d/%{name}
+%{_unitdir}/%{name}.service
 %dir %attr(0775,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
 
