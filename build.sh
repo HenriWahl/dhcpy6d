@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #
 # simple build script for dhcpy6d
@@ -20,6 +20,10 @@ function get_os {
 function create_manpages {
     if ! which rst2man
         then
+            if [ "$OS" == "debian" ]
+                then
+                    sudo apt -y install python-docutils
+            fi
             if [ "$OS" == "redhat" ]
                 then
                     sudo yum -y install python-docutils
@@ -41,6 +45,17 @@ if [ "$OS" == "debian" ]
 
         create_manpages
 
+        # install missing packages
+        if ! which debuild
+            then
+                sudo apt -y install build-essential devscripts dh-systemd
+        fi
+
+        if [ ! -d /usr/share/doc/python-all ]
+            then
+                sudo apt -y install python-all
+        fi
+
         debuild clean
 		debuild binary-indep
 
@@ -50,12 +65,11 @@ elif [ "$OS" == "redhat" ]
 
         create_manpages
 
-
+        # install missing packages
         if ! which rpmbuild
             then
                 sudo yum -y install rpm-build
         fi
-
 
         TOPDIR=$HOME/dhcpy6d.$$
         SPEC=redhat/dhcpy6d.spec

@@ -5,7 +5,8 @@ Priority: optional
 Maintainer: Axel Beckert <abe@debian.org>
 Uploaders: Henri Wahl <h.wahl@ifw-dresden.de>
 Build-Depends: debhelper (>= 9~),
-               python-all (>= 2.6.6-3~)
+               python-all (>= 2.7.9-1~),
+               dh-systemd (>= 1.5)
 Build-Depends-Indep: dh-python
 Homepage: https://dhcpy6d.ifw-dresden.de/
 Vcs-Git: git://github.com/HenriWahl/dhcpy6d.git
