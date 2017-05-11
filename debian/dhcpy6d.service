@@ -1,0 +1,12 @@
+[Unit]
+Description=DHCPv6 Server Daemon
+Documentation=man:dhcpy6d(8) man:dhcpy6d.conf(5) man:dhcpy6d-clients.conf(5)
+Wants=network-online.target
+After=network-online.target
+After=time-sync.target
+
+[Service]
+ExecStart=/usr/sbin/dhcpy6d --config /etc/dhcpy6d.conf --user dhcpy6d --group dhcpy6d
+
+[Install]
+WantedBy=multi-user.target
