@@ -63,7 +63,7 @@ Most configuration is done via the configuration file.
     Really activate the DHCPv6 server. This is a precaution to prevent larger network trouble.
 
 **-d, --duid=<duid>**
-    Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d.
+    Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d and /lib/systemd/system/dhcpy6d.service repectively.
 
 **-p, --prefix=<prefix>**
     Set the prefix which will be substituted for the $prefix$ variable in address definitions. Useful for setups where the ISP uses a changing prefix.

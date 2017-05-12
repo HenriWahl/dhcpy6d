@@ -84,10 +84,9 @@ The server preference determines the priority of the server. The maximum value i
 .TP
 .B \fBuser = <user>\fP
 For security reasons dhcpy6d can and should be run as non\-root user.
-.UNINDENT
-.sp
-\fBgroup = <group>\fP For security reasons dhcpy6d can and should be run as non\-root group.
-.INDENT 0.0
+.TP
+.B \fBgroup = <group>\fP
+For security reasons dhcpy6d can and should be run as non\-root group.
 .TP
 .B \fBnameserver = <nameserver\-address> [<nameserver\-address> ...]\fP
 Nameservers to be replied to request option 23 are defined with nameserver. If more than one is needed they have to be separated by spaces.
@@ -198,8 +197,6 @@ There can be many address definitions which will be used by classes. Every addre
 .B \fBcategory = mac|id|range|random|dns\fP
 Categories play an important role when defining patterns for addresses. An address belongs to a certain category:
 .INDENT 7.0
-.INDENT 3.5
-.INDENT 0.0
 .TP
 .B \fBmac\fP
 Uses MAC address from client request as part of address
@@ -215,8 +212,6 @@ Randomly created 64 bit values used as host part in address
 .TP
 .B \fBdns\fP
 Ask DNS server for IPv6 address of client host
-.UNINDENT
-.UNINDENT
 .UNINDENT
 .UNINDENT
 .sp
@@ -263,16 +258,13 @@ As default preferred and valid lifetime are set in general settings, but it is c
 If these addresses should be synchronized with Bind DNS, these three settings have to be set accordingly. The nameserver for updates is set in general settings.
 .UNINDENT
 .SS Default Adress
-.INDENT 0.0
-.INDENT 3.5
+.sp
 The address scheme used for the default class \fIclass_default\fP is by default named \fIaddress_default\fP\&.
 It should be enough if \fIaddress_default\fP is defined, only if unknown clients should get extra nameservers etc. a \fIclass_default\fP has to be set.
 .INDENT 0.0
 .TP
 .B \fB[address_default]\fP
 Address scheme used as default for clients which do not match any other class than \fIclass_default\fP\&.
-.UNINDENT
-.UNINDENT
 .UNINDENT
 .SS Class definitions in multiple [class_<class_name>] sections
 .sp

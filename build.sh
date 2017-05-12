@@ -78,7 +78,8 @@ elif [ "$OS" == "redhat" ]
 		mkdir -p $TOPDIR/SOURCES
 	
         # init needed in TOPDIR/SOURCES
-        cp -pf redhat/init.d/dhcpy6d $TOPDIR/SOURCES
+        ###cp -pf redhat/init.d/dhcpy6d $TOPDIR/SOURCES
+        cp -pf lib/systemd/system/dhcpy6d.service $TOPDIR/SOURCES/dhcpy6d
 
 		# use setup.py sdist build output to get package name
 		FILE=`python setup.py sdist --dist-dir $TOPDIR/SOURCES | grep "creating dhcpy6d-" | head -n1 | cut -d" " -f2`

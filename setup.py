@@ -58,7 +58,7 @@ if os.path.exists('/tmp/DHCPY6D_BUILDING_RPM'):
     scripts_custom = ''
     data_files_custom.append(('/usr/sbin', ['dhcpy6d']))	
     data_files_custom.append(('/etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
-    data_files_custom.append(('/etc/init.d', ['redhat/init.d/dhcpy6d']))
+    ###data_files_custom.append(('/etc/init.d', ['redhat/init.d/dhcpy6d']))
 else:
     scripts_custom = ['dhcpy6d']
 
