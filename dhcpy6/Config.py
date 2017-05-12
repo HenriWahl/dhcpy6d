@@ -175,7 +175,7 @@ class Config(object):
         self.AUTHENTICATION_INFORMATION = '00000000000000000000000000000000'
         
         # for debugging - if False nothing is done 
-        self.REALLY_DO_IT = 'True'
+        self.REALLY_DO_IT = 'False'
         
         # interval for TidyUp thread - time to sleep in TidyUpThread
         self.CLEANING_INTERVAL = 5
