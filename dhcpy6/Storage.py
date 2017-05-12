@@ -295,7 +295,12 @@ class Store(object):
                  self.Transactions[transaction_id].IAID,\
                  category,\
                  atype)
-        return self.query(query)
+        lease = self.query(query)
+        if len(lease) == 0:
+            lease = False 
+        else:
+            lease = lease[0][0]
+	    return lease
 
 
     def release_free_leases(self, timestamp=int(time.time())):

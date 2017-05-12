@@ -516,6 +516,7 @@ def BuildClient(transaction_id):
                 if cfg.ADDRESSES[address].CATEGORY == 'dns':
                     a = get_ip_from_dns(client.Hostname)
                 else:
+                    
                     a = ParseAddressPattern(cfg.ADDRESSES[address], client, transaction_id)
                 if a:
                     ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
@@ -543,7 +544,6 @@ def ParseAddressPattern(address, client_config, transaction_id):
     '''
         parse address pattern and replace variables with current values
     '''
-
     # parse all pattern parts
     a = address.PATTERN
 
@@ -637,7 +637,6 @@ def ParseAddressPattern(address, client_config, transaction_id):
                     else:
                         # if there is a lease it might be used
                         a = lease
-
     return DecompressIP6(a)
 
 
