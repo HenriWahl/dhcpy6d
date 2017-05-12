@@ -1,2 +1,2 @@
 # dhcpy6d is disabled by default
-#RUN=yes
+RUN=no

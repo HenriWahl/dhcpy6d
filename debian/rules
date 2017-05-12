@@ -13,6 +13,12 @@ override_dh_install:
 	dh_install
 	chmod 0644 debian/dhcpy6d/usr/share/dhcpy6d/default/dhcpy6d
 
+override_dh_systemd_enable:
+	dh_systemd_enable --no-enable
+
+override_dh_systemd_start:
+	dh_systemd_start --no-start
+
 # make -f debian/rules get-orig-source
 get-orig-source:
 	python setup.py sdist
