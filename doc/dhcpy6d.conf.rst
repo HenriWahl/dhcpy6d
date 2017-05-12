@@ -67,7 +67,8 @@ environments.
 **user = <user>**
     For security reasons dhcpy6d can and should be run as non-root user.
 
-**group = <group>** For security reasons dhcpy6d can and should be run as non-root group.
+**group = <group>**
+    For security reasons dhcpy6d can and should be run as non-root group.
 
 **nameserver = <nameserver-address> [<nameserver-address> ...]**
     Nameservers to be replied to request option 23 are defined with nameserver. If more than one is needed they have to be separated by spaces.
@@ -173,20 +174,20 @@ There can be many address definitions which will be used by classes. Every addre
 **category = mac|id|range|random|dns**
     Categories play an important role when defining patterns for addresses. An address belongs to a certain category:
 
-        **mac**
-            Uses MAC address from client request as part of address
+    **mac**
+        Uses MAC address from client request as part of address
 
-        **id**
-            Uses ID given to client in configuration file or database as one octet of address, should be in range 0-FFFF
+    **id**
+        Uses ID given to client in configuration file or database as one octet of address, should be in range 0-FFFF
 
-        **range**
-            Generate addresses of given ranges
+    **range**
+        Generate addresses of given ranges
 
-        **random**
-            Randomly created 64 bit values used as host part in address
-            
-        **dns**
-            Ask DNS server for IPv6 address of client host
+    **random**
+        Randomly created 64 bit values used as host part in address
+
+    **dns**
+        Ask DNS server for IPv6 address of client host
 
 **pattern = 2001:db8::$mac$|$id$|$range$|$random$**
 
@@ -226,11 +227,11 @@ There can be many address definitions which will be used by classes. Every addre
 Default Adress
 --------------
 
-    The address scheme used for the default class *class_default* is by default named *address_default*.
-    It should be enough if *address_default* is defined, only if unknown clients should get extra nameservers etc. a *class_default* has to be set.
+The address scheme used for the default class *class_default* is by default named *address_default*.
+It should be enough if *address_default* is defined, only if unknown clients should get extra nameservers etc. a *class_default* has to be set.
 
-    **[address_default]**
-        Address scheme used as default for clients which do not match any other class than *class_default*.
+**[address_default]**
+    Address scheme used as default for clients which do not match any other class than *class_default*.
 
 Class definitions in multiple [class_<class_name>] sections
 -----------------------------------------------------------

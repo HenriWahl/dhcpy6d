@@ -512,46 +512,127 @@ class Store(object):
             db_datetime_test = self.query('SELECT last_update FROM leases LIMIT 1')
             if len(db_datetime_test) > 0:
                 import datetime
+
+                # flag to find out which update has to be done
+                update_type = False
+
+                # MySQL
                 if type(db_datetime_test[0][0]) is datetime.datetime:
+                    update_type = 'mysql'
+
+                # SQLite
+                if type(db_datetime_test[0][0]) is unicode:
+                    if ' ' in db_datetime_test[0][0]:
+                        update_type = 'sqlite'
+
+                if update_type != False:
                     # add new columns with suffix *_new
                     db_tables = {'leases': ['last_update', 'preferred_until', 'valid_until'],
                                  'macs_llips': ['last_update']}
-                    for table in db_tables:
-                        for column in db_tables[table]:
-                            self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL'.format(table, column))
-                            print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL succeeded'.format(table, column)
-                    # get old timestamps
-                    timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases')
-                    for timestamp_old in timestamps_old:
-                        address, last_update, preferred_until, valid_until = timestamp_old
-                        last_update_new = last_update.strftime('%s')
-                        preferred_until_new = preferred_until.strftime('%s')
-                        valid_until_new = valid_until.strftime('%s')
-                        self.query("UPDATE leases SET last_update_new = {0}, "
-                                                              "preferred_until_new = {1}, "
-                                                              "valid_until_new = {2} "
-                                            "WHERE address = '{3}'".format(last_update_new,
-                                                                           preferred_until_new,
-                                                                           valid_until_new,
-                                                                           address))
-                    print 'Converting timestamps of leases succeeded'
-                    timestamps_old = self.query('SELECT mac, last_update FROM macs_llips')
-                    for timestamp_old in timestamps_old:
-                        mac, last_update = timestamp_old
-                        last_update_new = last_update.strftime('%s')
-                        self.query("UPDATE macs_llips SET last_update_new = {0} "
-                                            "WHERE mac = '{1}'".format(last_update_new,
-                                                                       mac))
-                    print 'Converting timestamps of macs_llips succeeded'
-                    for table in db_tables:
-                        for column in db_tables[table]:
-                            self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
-                            self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
-                            print 'Moving column {0} of table {1} succeeded'.format(column, table)
 
+                    if update_type == 'mysql':
+                        for table in db_tables:
+                            for column in db_tables[table]:
+                                #self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint{2}'.format(table, column, not_null[update_type]))
+                                #print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint{2} succeeded'.format(table, column, not_null[update_type])
+                                self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL'.format(table, column))
+                                print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL succeeded'.format(table, column)
+                        # get old timestamps
+                        timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases')
+                        for timestamp_old in timestamps_old:
+                            address, last_update, preferred_until, valid_until = timestamp_old
+                            # convert SQLite datetime values from unicode to Python datetime
+                            if update_type == 'sqlite':
+                                last_update = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S.%f')
+                                preferred_until = datetime.datetime.strptime(preferred_until, '%Y-%m-%d %H:%M:%S.%f')
+                                valid_until = datetime.datetime.strptime(valid_until, '%Y-%m-%d %H:%M:%S.%f')
 
+                            last_update_new = last_update.strftime('%s')
+                            preferred_until_new = preferred_until.strftime('%s')
+                            valid_until_new = valid_until.strftime('%s')
+                            self.query("UPDATE leases SET last_update_new = {0}, "
+                                                                  "preferred_until_new = {1}, "
+                                                                  "valid_until_new = {2} "
+                                                "WHERE address = '{3}'".format(last_update_new,
+                                                                               preferred_until_new,
+                                                                               valid_until_new,
+                                                                               address))
+                        print 'Converting timestamps of leases succeeded'
+                        timestamps_old = self.query('SELECT mac, last_update FROM macs_llips')
+                        for timestamp_old in timestamps_old:
+                            mac, last_update = timestamp_old
+                            last_update_new = last_update.strftime('%s')
+                            self.query("UPDATE macs_llips SET last_update_new = {0} "
+                                                "WHERE mac = '{1}'".format(last_update_new,
+                                                                           mac))
+                        print 'Converting timestamps of macs_llips succeeded'
+                        for table in db_tables:
+                            for column in db_tables[table]:
+                                self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
+                                #self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT{2}'.format(table, column, not_null[update_type]))
+                                self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
+                                print 'Moving column {0} of table {1} succeeded'.format(column, table)
 
+                    if update_type == 'sqlite':
+                        for table in db_tables:
+                            self.query('ALTER TABLE {0} RENAME TO {0}_old'.format(table))
 
+                        self.query('CREATE TABLE leases AS SELECT address,active,last_message,preferred_lifetime,'
+                                                                  'valid_lifetime,hostname,type,category,ia_type,'
+                                                                  'class,mac,duid,iaid '
+                                                                  'FROM leases_old')
+
+                        self.query('CREATE TABLE macs_llips AS SELECT mac,link_local_ip FROM macs_llips_old')
+
+                        # add timestamp columns in bigint format instead of datetime
+                        for table in db_tables:
+                            for column in db_tables[table]:
+                                self.query('ALTER TABLE {0} ADD COLUMN {1} bigint'.format(table, column))
+
+                        """
+                            for column in db_tables[table]:
+                                #self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint{2}'.format(table, column, not_null[update_type]))
+                                #print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint{2} succeeded'.format(table, column, not_null[update_type])
+                                self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint'.format(table, column))
+                                print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint succeeded'.format(table, column)
+                        """
+                        # get old timestamps
+                        timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases_old')
+                        for timestamp_old in timestamps_old:
+                            address, last_update, preferred_until, valid_until = timestamp_old
+                            # convert SQLite datetime values from unicode to Python datetime
+                            if update_type == 'sqlite':
+                                last_update = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S.%f')
+                                preferred_until = datetime.datetime.strptime(preferred_until, '%Y-%m-%d %H:%M:%S.%f')
+                                valid_until = datetime.datetime.strptime(valid_until, '%Y-%m-%d %H:%M:%S.%f')
+
+                            last_update_new = last_update.strftime('%s')
+                            preferred_until_new = preferred_until.strftime('%s')
+                            valid_until_new = valid_until.strftime('%s')
+                            self.query("UPDATE leases SET last_update = {0}, "
+                                                          "preferred_until = {1}, "
+                                                          "valid_until = {2} "
+                                                "WHERE address = '{3}'".format(last_update_new,
+                                                                               preferred_until_new,
+                                                                               valid_until_new,
+                                                                               address))
+                        print 'Converting timestamps of leases succeeded'
+                        timestamps_old = self.query('SELECT mac, last_update FROM macs_llips_old')
+                        for timestamp_old in timestamps_old:
+                            mac, last_update = timestamp_old
+                            last_update_new = last_update.strftime('%s')
+                            self.query("UPDATE macs_llips SET last_update = {0} "
+                                                "WHERE mac = '{1}'".format(last_update_new,
+                                                                           mac))
+                        print 'Converting timestamps of macs_llips succeeded'
+                        """
+                        for table in db_tables:
+                            for column in db_tables[table]:
+                                self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
+                                #self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT{2}'.format(table, column, not_null[update_type]))
+                                self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT'.format(table, column))
+                                print 'Moving column {0} of table {1} succeeded'.format(column, table)
+                        """
 class SQLite(Store):
     '''
         file-based SQLite database, might be an option for single installations

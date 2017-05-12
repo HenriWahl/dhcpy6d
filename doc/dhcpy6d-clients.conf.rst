@@ -18,11 +18,11 @@ Description
 This file contains all client configuration data if these options are set in
 **dhcpy6d.conf**:
 
-    **store_config = file** 
+**store_config = file**
 
 and
 
-    **store_file_config = /path/to/dhcpy6d-clients.conf** 
+**store_file_config = /path/to/dhcpy6d-clients.conf**
 
 An alternative method to store client configuration is using database storage with SQLite or MySQLor PostgreSQL databases.
 Further details are available at `<https://dhcpy6d.ifw-dresden.de/documentation/config>`_.
