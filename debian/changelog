@@ -1,4 +1,4 @@
-dhcpy6d (0.4.99-4) UNRELEASED; urgency=medium
+dhcpy6d (0.4.99-5) UNRELEASED; urgency=medium
 
   * New upstream release
     + Reply CONFIRM requests with NotOnLink to force clients to get new address
