@@ -1,10 +1,11 @@
-dhcpy6d (0.4.99-5) UNRELEASED; urgency=medium
+dhcpy6d (0.4.99-6) UNRELEASED; urgency=medium
 
   * New upstream release
     + Reply CONFIRM requests with NotOnLink to force clients to get new address
     + Added --prefix option to be used for dynamic prefixes
     + Allow using PostgreSQL database for volatile and config storage
     + Added category 'dns' for DNS-based IP-address retrieval
+    + System integration
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Tue, 09 May 2017 15:30:00 +0200
 
