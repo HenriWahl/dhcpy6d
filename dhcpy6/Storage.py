@@ -90,9 +90,9 @@ class Store(object):
             decorate repeatedly but not everywhere used cleaning of query answer
         """
 
-        def decoration_function(self):
+        def decoration_function(self, *args, **kwargs):
             # run decorated method
-            answer = method(self)
+            answer = method(self, *args, **kwargs)
             # clean answer
             # SQLite returns list, MySQL tuple - in case someone wonders here...
             if not (answer == [] or answer == () or answer == None):
