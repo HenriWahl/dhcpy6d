@@ -343,10 +343,8 @@ def BuildClient(transaction_id):
                                 # type of address must be defined in addresses for this class
                                 # or fixed/dns - in which case it is not class related
                                 if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed']:
-    
                                     # flag for lease usage
                                     use_lease = True
-                                    
                                     # test lease validity against address prototype pattern only if not fixed or from DNS
                                     if not a['category'] in ['fixed', 'dns']:
                                         # test if address matches pattern
@@ -392,7 +390,8 @@ def BuildClient(transaction_id):
                                         
                                         # de-preferred random address has to be deleted and replaced
                                         #elif a['category'] == 'random' and str(datetime.datetime.now()) > str(a['preferred_until']):                                        # create new random address if old one is depreferred
-                                        elif a['category'] == 'random' and int(time.time()) > a['preferred_until']:                                        # create new random address if old one is depreferred
+                                        elif a['category'] == 'random' and int(time.time()) > a['preferred_until']:
+                                            # create new random address if old one is depreferred
                                             random_address = ParseAddressPattern(cfg.ADDRESSES[a['type']], client_config, transaction_id)
                                             # create new random address if old one is de-preferred
                                             # do not wait until it is invalid                                      

@@ -237,14 +237,17 @@ class Store(object):
         '''
         query = "SELECT DISTINCT hostname, duid, mac, iaid FROM leases WHERE address='%s'" % (address)
         answer = self.query(query)       
-        if answer != None and len(answer)>0:
-            if len(answer[0]) > 0:
-                return answer[0]
+        if answer != None:
+            if len(answer)>0:
+                if len(answer[0]) > 0:
+                    return answer[0]
+                else:
+                    # calling method expects quartet of hostname, duid, mac, iad - get None if nothing there
+                    return((None, None, None, None))
             else:
-                # calling method expects quartet of hostname, duid, mac, iad - get None if nothing there
-                return (None, None, None, None)
+                return((None, None, None, None))
         else:
-            return (None, None, None, None)
+            return((None, None, None, None))
 
 
     def release_lease(self, address):

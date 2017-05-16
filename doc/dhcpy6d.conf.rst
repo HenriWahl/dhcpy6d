@@ -101,7 +101,7 @@ environments.
 **log_mac_llip = yes|no**
     Log discovered MAC/LLIP pairs of clients. Might be pretty verbose in larger setups and with disabled MAC/LLIP pair caching.
 
-**store_config = file|sqlite| mysql|postgresql|none**
+**store_config = file|sqlite|mysql|postgresql|none**
     Configuration of clients can be stored in a file or in a database. Databases MySQL, PostgreSQL and SQLite are supported at the moment, thus possible values are *file*, *mysql*, *postgresql*  or *sqlite*.
     To disable any client configuration source it has to be *none*.
 
