@@ -4,8 +4,8 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 Name:              dhcpy6d
-Version: 0.4.99
-Release:           6%{?dist}
+Version:           0.5
+Release:           1%{?dist}
 Summary:           DHCPv6 server daemon
 
 %if 0%{?suse_version}
@@ -47,12 +47,7 @@ Requires(preun): coreutils, /usr/sbin/userdel, /usr/sbin/groupdel
 Requires: logrotate
 
 %description
-Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified 
-by DUID, hostname or MAC address as in the good old IPv4 days. It allows 
-easy dualstack transition, addresses may be generated randomly, by range, 
-by arbitrary ID or MAC address. Clients can get more than one address, 
-leases and client configuration can be stored in databases and DNS can be 
-updated dynamically.
+Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by DUID, hostname or MAC address as in the good old IPv4 days. It allows easy dualstack transition, addresses may be generated randomly, by range, by DNS, by arbitrary ID or MAC address. Clients can get more than one address, leases and client configuration can be stored in databases and DNS can be updated dynamically.
 
 %prep
 %setup -q
@@ -129,6 +124,9 @@ fi
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
 
 %changelog
+* Wed May 17 2017 Henri Wahl <h.wahl@ifw-dresden.de> - 0.5-1
+- New upstream release
+
 * Sat Dec 26 2015 Henri Wahl <h.wahl@ifw-dresden.de> - 0.4.3-1
 - New upstream release
 
