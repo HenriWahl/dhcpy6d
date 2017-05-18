@@ -45,7 +45,7 @@ dhcpy6d (0.4.2-1) unstable; urgency=medium
 
   * New upstream snapshot
     + fixed usage of fixed addresses in dhcpy6d-clients.conf
-    + fixed DNSUpdate() to update default class clients too
+    + fixed dns_update() to update default class clients too
     + show warning if deprecated prefix_length is used in address definitions
     + set socket to non-blocking to avoid freeze
     + increase MAC/LLIP cache time from 30s to 300s because of laggy clients

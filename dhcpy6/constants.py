@@ -24,7 +24,7 @@ MESSAGE_TYPES = { 1:'SOLICIT', 2:'ADVERTISE', 3:'REQUEST', 4:'CONFIRM', 5:'RENEW
                 11:'INFORMATION-REQUEST', 12:'RELAY-FORW', 13:'RELAY-REPL' }
 
 # DUID               
-DUID_TYPES = { 1:'DUID-LLT', 2:'DUID-EN', 3:'DUID-LL' }
+DUID_TYPES = { 1:'DUID-LLT', 2:'DUID-EN', 3:'DUID-LL', 4:'DUID-UUID' }
 
 # see http://www.iana.org/assignments/dhcpv6-parameters/
 OPTION_REQUEST = {   1:'OPTION_CLIENTID',
@@ -38,8 +38,8 @@ OPTION_REQUEST = {   1:'OPTION_CLIENTID',
                      9:'OPTION_RELAY_MSG',
                     10:'Unassigned',
                     11:'OPTION_AUTH',
-                    12:'OPTION_UNICAST', \
-                    13:'OPTION_STATUS_CODE', \
+                    12:'OPTION_UNICAST',
+                    13:'OPTION_STATUS_CODE',
                     14:'OPTION_RAPID_COMMIT',
                     15:'OPTION_USER_CLASS',
                     16:'OPTION_VENDOR_CLASS',
@@ -81,7 +81,7 @@ OPTION_REQUEST = {   1:'OPTION_CLIENTID',
                     52:'OPTION_CAPWAP_AC_V6',
                     53:'OPTION_RELAY_ID',
                     54:'OPTION-IPv6_Address-MoS',
-                    55:'OPTION-IPv6_FQDN-MoS'\
+                    55:'OPTION-IPv6_FQDN-MoS'
                     }
                    
 STATUS_CODE = { 0:'Success',

@@ -48,10 +48,10 @@ import dns.reversename
 if platform.dist()[0].lower() == 'debian':
     sys.path[0:0] = ['/usr/share/pyshared']
 
-from dhcpy6.Helpers import *
-from dhcpy6.Constants import *
-from dhcpy6.Config import *
-from dhcpy6.Storage import *
+from dhcpy6.helpers import *
+from dhcpy6.constants import *
+from dhcpy6.config import *
+from dhcpy6.storage import *
 
 # create and read config file
 cfg = Config()
@@ -145,8 +145,8 @@ NC = { 'BSD': { 'call' : '/usr/sbin/ndp -a -n',
                    'len'  : 3}
             }
 
-# libc access via ctypes, needed for interface handling, get it by Helpers.GetLibC()
-LIBC = GetLibC()
+# libc access via ctypes, needed for interface handling, get it by Helpers.get_libc()
+LIBC = get_libc()
 
 # index IF name > number, gets filled in UDPMulticastIPv6
 IF_NAME = dict()
@@ -191,7 +191,7 @@ if not volatilestore.connected:
     sys.exit(1)
 
 
-def BuildClient(transaction_id):
+def build_client(transaction_id):
     '''
         builds client object of client config and transaction data
         checks if filters apply
@@ -362,7 +362,7 @@ def BuildClient(transaction_id):
                                     if use_lease == True:
                                         # when category is range, test if it still applies
                                         if a['category'] == 'range':
-                                            # borrowed from ParseAddressPattern to find out if lease is still in a meanwhile maybe changed range                                                
+                                            # borrowed from parse_address_pattern to find out if lease is still in a meanwhile maybe changed range
                                             frange, trange = cfg.ADDRESSES[a['type']].RANGE.split('-')
     
                                             # correct possible misconfiguration
@@ -392,7 +392,7 @@ def BuildClient(transaction_id):
                                         #elif a['category'] == 'random' and str(datetime.datetime.now()) > str(a['preferred_until']):                                        # create new random address if old one is depreferred
                                         elif a['category'] == 'random' and int(time.time()) > a['preferred_until']:
                                             # create new random address if old one is depreferred
-                                            random_address = ParseAddressPattern(cfg.ADDRESSES[a['type']], client_config, transaction_id)
+                                            random_address = parse_address_pattern(cfg.ADDRESSES[a['type']], client_config, transaction_id)
                                             # create new random address if old one is de-preferred
                                             # do not wait until it is invalid                                      
                                             if not random_address == None:
@@ -430,7 +430,7 @@ def BuildClient(transaction_id):
             # important indent here, has to match for...addresses-loop!
             # look for addresses in transaction that are invalid and add them
             # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-            for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: DecompressIP6(x.ADDRESS), client.Addresses)):
+            for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: decompress_ip6(x.ADDRESS), client.Addresses)):
                 client.Addresses.append(ClientAddress(address=a, valid=False,\
                                             preferred_lifetime=0,\
                                             valid_lifetime=0))
@@ -467,7 +467,7 @@ def BuildClient(transaction_id):
                         if cfg.ADDRESSES[address].CATEGORY == 'dns':
                             a = get_ip_from_dns(client.Hostname)
                         else:
-                            a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
+                            a = parse_address_pattern(cfg.ADDRESSES[address], client_config, transaction_id)
                         # in case range has been exceeded a will be None
                         if a:
                             ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
@@ -490,7 +490,7 @@ def BuildClient(transaction_id):
                         if cfg.ADDRESSES[address].CATEGORY == 'dns':
                             a = get_ip_from_dns(client.Hostname)
                         else:
-                            a = ParseAddressPattern(cfg.ADDRESSES[address], client_config, transaction_id)
+                            a = parse_address_pattern(cfg.ADDRESSES[address], client_config, transaction_id)
                         if a:
                             ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                                          preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
@@ -516,7 +516,7 @@ def BuildClient(transaction_id):
                     a = get_ip_from_dns(client.Hostname)
                 else:
                     
-                    a = ParseAddressPattern(cfg.ADDRESSES[address], client, transaction_id)
+                    a = parse_address_pattern(cfg.ADDRESSES[address], client, transaction_id)
                 if a:
                     ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\
                                  preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,\
@@ -535,11 +535,11 @@ def BuildClient(transaction_id):
     except Exception,err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()
-        log.error('BuildClient(): ' + str(err))
+        log.error('build_client(): ' + str(err))
         return None
 
 
-def ParseAddressPattern(address, client_config, transaction_id):
+def parse_address_pattern(address, client_config, transaction_id):
     '''
         parse address pattern and replace variables with current values
     '''
@@ -584,7 +584,7 @@ def ParseAddressPattern(address, client_config, transaction_id):
 
         # expecting range-range at the last octet, 'prefix' means the first seven octets here
         # - is just shorter than the_first_seven_octets
-        prefix = DecompressIP6(a.replace('$range$', '0000'))[:28]
+        prefix = decompress_ip6(a.replace('$range$', '0000'))[:28]
 
         # the following steps are done to find a collision-free lease in given range
         # check if address already has been advertised - important for REPLY after SOLICIT-ADVERTISE-REQUEST
@@ -636,7 +636,7 @@ def ParseAddressPattern(address, client_config, transaction_id):
                     else:
                         # if there is a lease it might be used
                         a = lease
-    return DecompressIP6(a)
+    return decompress_ip6(a)
 
 
 def get_ip_from_dns(hostname):
@@ -645,14 +645,14 @@ def get_ip_from_dns(hostname):
     """
     try:
         answer = resolver_query.query(hostname, 'AAAA')
-        return(DecompressIP6(answer.rrset.to_text().split(' ')[-1]))
+        return(decompress_ip6(answer.rrset.to_text().split(' ')[-1]))
     except dns.resolver.NoAnswer:
         return(False)
     except dns.resolver.NoNameservers:
         return(False)
 
 
-def CollectMACs():
+def collect_macs():
     '''
         collect MAC address from clients to link local addresses with MACs
         if a client has a new MAC the LLIP changes - with privacy extension enabled anyway
@@ -663,11 +663,11 @@ def CollectMACs():
     try:
         # Linux can use kernel neighbor cache
         if OS == 'Linux':
-            for host in GetNeighborCacheLinux(cfg, IF_NUMBER, log).values():
+            for host in get_neighbor_cache_linux(cfg, IF_NUMBER, log).values():
                 if not CollectedMACs.has_key(host.llip) and host.llip.lower().startswith('fe80'):
                     CollectedMACs[str(host.llip)] = host
                     if cfg.LOG_MAC_LLIP == True:
-                        log.info('Collected MAC %s for LinkLocalIP %s' % (host.mac, ColonifyIP6(host.llip)))
+                        log.info('Collected MAC %s for LinkLocalIP %s' % (host.mac, colonify_ip6(host.llip)))
                     if cfg.CACHE_MAC_LLIP == True:
                         volatilestore.store_mac_llip(host.mac, host.llip)
         else:
@@ -678,9 +678,9 @@ def CollectMACs():
                 f = shlex.split(host)
                 if f[NC[OS]['dev']] in cfg.INTERFACE and len(f) >= NC[OS]['len'] :
                     # get rid of %interface
-                    f[NC[OS]['llip']] = DecompressIP6(f[NC[OS]['llip']].split('%')[0])
+                    f[NC[OS]['llip']] = decompress_ip6(f[NC[OS]['llip']].split('%')[0])
                     # correct maybe shortened MAC
-                    f[NC[OS]['mac']] = CorrectMAC(f[NC[OS]['mac']])
+                    f[NC[OS]['mac']] = correct_mac(f[NC[OS]['mac']])
                     # put non yet existing LLIPs into dictionary - if they have MACs
                     if not CollectedMACs.has_key(f[NC[OS]['llip']]) and f[NC[OS]['llip']].lower().startswith('fe80')\
                        and ':' in f[NC[OS]['mac']]:
@@ -688,15 +688,15 @@ def CollectMACs():
                                                                                mac=f[NC[OS]['mac']],
                                                                                interface=f[NC[OS]['dev']])
                         if cfg.LOG_MAC_LLIP == True:
-                            log.info('Collected MAC %s for LinkLocalIP %s' % (f[NC[OS]['mac']], ColonifyIP6(f[NC[OS]['llip']])))
+                            log.info('Collected MAC %s for LinkLocalIP %s' % (f[NC[OS]['mac']], colonify_ip6(f[NC[OS]['llip']])))
                         volatilestore.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']])
     except Exception,err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()
-        log.error('CollectMACs(): ' + str(err))
+        log.error('collect_macs(): ' + str(err))
 
 
-def DNSUpdate(transaction_id, action='update'):
+def dns_update(transaction_id, action='update'):
     '''
         update DNS entries on specified nameserver
         at the moment this only works with Bind
@@ -727,7 +727,7 @@ def DNSUpdate(transaction_id, action='update'):
         return False
 
 
-def DNSDelete(transaction_id, address='', action='release'):
+def dns_delete(transaction_id, address='', action='release'):
     '''
         delete DNS entries on specified nameserver
         at the moment this only works with ISC Bind
@@ -754,7 +754,7 @@ def DNSDelete(transaction_id, address='', action='release'):
                 # use address from address types as template for the real
                 # address to be deleted from DNS
                 dns_address = copy.copy(a)
-                dns_address.ADDRESS = ColonifyIP6(address)
+                dns_address.ADDRESS = colonify_ip6(address)
                 # put query into DNS query queue
                 dnsquery_queue.put((hostname, dns_address, action))
             # enough    
@@ -776,7 +776,7 @@ class DNSQueryThread(threading.Thread):
         while True:
             hostname, a, action = self.dnsquery_queue.get()
             # colonify address for DNS
-            address = ColonifyIP6(a.ADDRESS)
+            address = colonify_ip6(a.ADDRESS)
             try:
                 # update AAAA record, delete old entry first
                 update = dns.update.Update(a.DNS_ZONE, keyring=Keyring)
@@ -865,7 +865,7 @@ class TidyUpThread(threading.Thread):
                         #if record.timestamp + cache_timedelta < timestamp:
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP == True:
-                                log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, ColonifyIP6(record.llip)))
+                                log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
                             CollectedMACs.pop(record.llip)
 
                     del timestamp
@@ -916,7 +916,7 @@ class Client(object):
                 else:
                     option = 'Addresses:'
                     for a in self.__dict__[o]:
-                        option += ' ' + ColonifyIP6(a.ADDRESS)
+                        option += ' ' + colonify_ip6(a.ADDRESS)
                     optionsstring = optionsstring + ' | '  + option
 
         return optionsstring
@@ -1060,7 +1060,7 @@ class Transaction(object):
             self.DNS_O = int(bits[2])
             self.DNS_S = int(bits[3])    
             # only hostname needed
-            self.FQDN = ConvertBinary2DNS(options[39][2:])
+            self.FQDN = convert_binary_to_dns(options[39][2:])
             self.Hostname = self.FQDN.split('.')[0].lower()
             # test if hostname is valid
             n = re.compile('^([a-z0-9\-\_]+)*$')
@@ -1084,10 +1084,10 @@ class Transaction(object):
                 if o == 'Addresses':
                     option = 'Addresses:'
                     for a in self.__dict__[o]:
-                        option += ' ' + ColonifyIP6(a)
+                        option += ' ' + colonify_ip6(a)
                     optionsstring = optionsstring + ' | '  + option
                 elif o == 'ClientLLIP':
-                    option = 'ClientLLIP: ' + ColonifyIP6(self.__dict__['ClientLLIP'])
+                    option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
                     optionsstring = optionsstring + ' | '  + option
                 else:
                     option = o + ': ' + str(self.__dict__[o])
@@ -1151,11 +1151,11 @@ class Handler(SocketServer.DatagramRequestHandler):
             # if sent from non-LLIP there is no interface - the request is rejected at the moment
             try:
                 client_llip, interface = self.client_address[0].split('%')
-                client_llip = DecompressIP6(client_llip)
+                client_llip = decompress_ip6(client_llip)
             except:
                 # interface is set to '' and later evaluated to trigger a statuscode message
                 client_llip, interface = self.client_address[0], ''
-                client_llip = DecompressIP6(client_llip)
+                client_llip = decompress_ip6(client_llip)
 
             # bad or too short message is thrown away
             if not len(bytes) > 8:
@@ -1215,14 +1215,14 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].DUID.isalnum():
                         # if request was not addressed to multicast do nothing but logging
                         if Transactions[transaction_id].Interface == '':
-                            log.info('TransactionID: %s | %s' % (transaction_id, 'Multicast necessary but message came from %s' % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                            log.info('TransactionID: %s | %s' % (transaction_id, 'Multicast necessary but message came from %s' % (colonify_ip6(Transactions[transaction_id].ClientLLIP))))
                             # reset transaction counter
                             Transactions[transaction_id].Counter = 0
                         else:
                             # client will get answer if its LLIP & MAC is known
                             if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
                                 # complete MAC collection - will make most sence on Linux and its native neighborcache access
-                                CollectMACs()
+                                collect_macs()
 
                                 # when still no trace of the client in neighbor cache then send silly signal back
                                 if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
@@ -1231,7 +1231,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # status code 'Success' sounds silly but works best
                                     self.build_response(7, transaction_id, [13], status=0)
                                     # complete MAC collection
-                                    CollectMACs()
+                                    collect_macs()
 
                                 # try to add client MAC address to transaction object
                                 try:
@@ -1239,7 +1239,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 except:
                                     # MAC not yet found :-(
                                     if cfg.LOG_MAC_LLIP == True:
-                                        log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (ColonifyIP6(Transactions[transaction_id].ClientLLIP))))
+                                        log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (colonify_ip6(Transactions[transaction_id].ClientLLIP))))
 
                             # if finally there is some info about the client try to answer the request
                             if Transactions[transaction_id].ClientLLIP in CollectedMACs:
@@ -1273,7 +1273,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # store leases for addresses
                                     volatilestore.store_lease(transaction_id)
                                     if cfg.DNS_UPDATE:
-                                        DNSUpdate(transaction_id)
+                                        dns_update(transaction_id)
 
                                 # CONFIRM
                                 # if last request was a CONFIRM (4) send a REPLY (type 7) back
@@ -1297,7 +1297,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # store leases for addresses
                                     volatilestore.store_lease(transaction_id)
                                     if cfg.DNS_UPDATE:
-                                        DNSUpdate(transaction_id)
+                                        dns_update(transaction_id)
 
                                 # REBIND
                                 # if last request was a REBIND (type 6) send a REPLY (type 7) back
@@ -1313,9 +1313,9 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     if cfg.DNS_UPDATE:
                                         #  build client to be able to delete it from DNS
                                         if Transactions[transaction_id].Client == None:
-                                            Transactions[transaction_id].Client = BuildClient(transaction_id)
+                                            Transactions[transaction_id].Client = build_client(transaction_id)
                                         for a in Transactions[transaction_id].Addresses:
-                                            DNSDelete(transaction_id, address=a, action='release')
+                                            dns_delete(transaction_id, address=a, action='release')
                                     for a in Transactions[transaction_id].Addresses:
                                         # free lease
                                         volatilestore.release_lease(a)
@@ -1368,9 +1368,9 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # these options are always useful
             # Option 1 client identifier
-            response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
+            response_ascii += build_option(1, Transactions[transaction_id].DUID)
             # Option 2 server identifier
-            response_ascii += BuildOption(2, cfg.SERVERDUID)
+            response_ascii += build_option(2, cfg.SERVERDUID)
 
             # list of options in answer to be logged
             options_answer = []
@@ -1382,13 +1382,13 @@ class Handler(SocketServer.DatagramRequestHandler):
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                     # collect client information
                     if Transactions[transaction_id].Client == None:
-                        Transactions[transaction_id].Client = BuildClient(transaction_id)
+                        Transactions[transaction_id].Client = build_client(transaction_id)
 
                     # check if only a short NoAddrAvail answer or none at all ist t be returned
                     if not Transactions[transaction_id].Answer == 'normal':
                         if Transactions[transaction_id].Answer == 'noaddress':
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += BuildOption(13, '%04x' % (2))
+                            response_ascii += build_option(13, '%04x' % (2))
                             # clean client addresses which not be deployed anyway
                             Transactions[transaction_id].Client.Addresses[:] = []
                             # options in answer to be logged
@@ -1406,7 +1406,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                             try:
                                 for address in Transactions[transaction_id].Client.Addresses:
                                     if address.IA_TYPE == 'na':
-                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
+                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, colonify_ip6(address.ADDRESS)))
                                         # if a transaction consists of too many requests from client -
                                         # - might be caused by going wild Windows clients -
                                         # reset all addresses with lifetime 0
@@ -1417,7 +1417,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         else:
                                             preferred_lifetime = '%08x' % (0)
                                             valid_lifetime = '%08x' % (0)
-                                        ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
+                                        ia_address = build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
                                         ia_addresses += ia_address
 
                                 if not ia_addresses == '':
@@ -1431,18 +1431,18 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         t1 = '%08x' % (int(cfg.T1))
                                         t2 = '%08x' % (int(cfg.T2))
 
-                                    ia_na = BuildOption(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
+                                    ia_na = build_option(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
                                     response_ascii += ia_na
                                 # options in answer to be logged
                                 options_answer.append(3)
                             except:
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += BuildOption(13, '%04x' % (2))
+                                response_ascii += build_option(13, '%04x' % (2))
                                 # options in answer to be logged
                                 options_answer.append(3)
                         else:
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += BuildOption(13, '%04x' % (2))
+                            response_ascii += build_option(13, '%04x' % (2))
                             # options in answer to be logged
                             options_answer.append(3)
 
@@ -1452,13 +1452,13 @@ class Handler(SocketServer.DatagramRequestHandler):
                 if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                     # collect client information
                     if Transactions[transaction_id].Client == None:
-                        Transactions[transaction_id].Client = BuildClient(transaction_id)
+                        Transactions[transaction_id].Client = build_client(transaction_id)
 
                     # check if only a short NoAddrAvail answer or none at all ist t be returned
                     if not Transactions[transaction_id].Answer == 'normal':
                         if Transactions[transaction_id].Answer == 'noaddress':
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += BuildOption(13, '%04x' % (2))
+                            response_ascii += build_option(13, '%04x' % (2))
                             # clean client addresses which not be deployed anyway
                             Transactions[transaction_id].Client.Addresses[:] = []
                             # options in answer to be logged
@@ -1476,7 +1476,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                             try:
                                 for address in Transactions[transaction_id].Client.Addresses:
                                     if address.IA_TYPE == 'ta':
-                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ColonifyIP6(address.ADDRESS)))
+                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, colonify_ip6(address.ADDRESS)))
                                         # if a transaction consists of too many requests from client -
                                         # - might be caused by going wild Windows clients -
                                         # reset all addresses with lifetime 0
@@ -1487,27 +1487,27 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         else:
                                             preferred_lifetime = '%08x' % (0)
                                             valid_lifetime = '%08x' % (0)
-                                        ia_address = BuildOption(5, ipv6_address + preferred_lifetime + valid_lifetime)
+                                        ia_address = build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
                                         ia_addresses += ia_address
                                 if not ia_addresses == '':
-                                    ia_ta = BuildOption(4, Transactions[transaction_id].IAID + ia_addresses)
+                                    ia_ta = build_option(4, Transactions[transaction_id].IAID + ia_addresses)
                                     response_ascii += ia_ta
                                 # options in answer to be logged
                                 options_answer.append(4)
                             except:
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += BuildOption(13, '%04x' % (2))
+                                response_ascii += build_option(13, '%04x' % (2))
                                 # options in answer to be logged
                                 options_answer.append(13)
                         else:
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += BuildOption(13, '%04x' % (2))
+                            response_ascii += build_option(13, '%04x' % (2))
                             # options in answer to be logged
                             options_answer.append(13)
 
             # Option 7 Server Preference
             if 7 in options_request:
-                response_ascii += BuildOption(7, '%02x' % (int(cfg.SERVER_PREFERENCE)))
+                response_ascii += build_option(7, '%02x' % (int(cfg.SERVER_PREFERENCE)))
                 # options in answer to be logged
                 options_answer.append(7)
 
@@ -1528,25 +1528,25 @@ class Handler(SocketServer.DatagramRequestHandler):
                 ai_type = '%02x' % (1)
                 authentication_information = cfg.AUTHENTICATION_INFORMATION
                 # stuffed together
-                response_ascii += BuildOption(11, protocol + algorithm + rdm + replay_detection + ai_type + authentication_information)            
+                response_ascii += build_option(11, protocol + algorithm + rdm + replay_detection + ai_type + authentication_information)
                 # options in answer to be logged
                 options_answer.append(11)
 
             # Option 12 Server Unicast Option
             if 12 in options_request:
-                response_ascii += BuildOption(12, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)))
+                response_ascii += build_option(12, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)))
                 # options in answer to be logged
                 options_answer.append(12)
 
             # Option 13 Status Code Option - statuscode is taken from dictionary
             if 13 in options_request:
-                response_ascii += BuildOption(13, '%04x' % (status))
+                response_ascii += build_option(13, '%04x' % (status))
                 # options in answer to be logged
                 options_answer.append(13)
 
             # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
             if 14 in options_request:
-                response_ascii += BuildOption(14, '')
+                response_ascii += build_option(14, '')
                 # options in answer to be logged
                 options_answer.append(14)
 
@@ -1562,7 +1562,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     else:
                         for ns in cfg.NAMESERVER:
                             nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                    response_ascii += BuildOption(23, binascii.b2a_hex(nameserver))
+                    response_ascii += build_option(23, binascii.b2a_hex(nameserver))
                     # options in answer to be logged
                     options_answer.append(23)
 
@@ -1570,8 +1570,8 @@ class Handler(SocketServer.DatagramRequestHandler):
             if 24 in options_request:
                 converted_domain_search_list = ''
                 for d in cfg.DOMAIN_SEARCH_LIST:
-                    converted_domain_search_list +=  ConvertDNS2Binary(d)
-                response_ascii += BuildOption(24, converted_domain_search_list)
+                    converted_domain_search_list +=  convert_dns_to_binary(d)
+                response_ascii += build_option(24, converted_domain_search_list)
                 # options in answer to be logged
                 options_answer.append(24)
 
@@ -1581,11 +1581,11 @@ class Handler(SocketServer.DatagramRequestHandler):
             #    for s in cfg.SNTP_SERVERS:
             #        sntp_server = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, s))
             #        sntp_servers += sntp_server
-            #    response_ascii += BuildOption(31, sntp_servers)
+            #    response_ascii += build_option(31, sntp_servers)
 
             # Option 32 Information Refresh Time
             if 32 in options_request:
-                response_ascii += BuildOption(32, '%08x' % int(cfg.INFORMATION_REFRESH_TIME))
+                response_ascii += build_option(32, '%08x' % int(cfg.INFORMATION_REFRESH_TIME))
                 # options in answer to be logged
                 options_answer.append(32)
 
@@ -1626,10 +1626,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # sum of flags
                     nos_flags = N*4 + O*2 + S*1
 
-                    response_ascii += BuildOption(39, '%02x' % (nos_flags) + ConvertDNS2Binary(hostname+'.'+cfg.DOMAIN))
+                    response_ascii += build_option(39, '%02x' % (nos_flags) + convert_dns_to_binary(hostname + '.' + cfg.DOMAIN))
                 else:
                     # if no hostname given put something in and force client override
-                    response_ascii += BuildOption(39, '%02x' % (3) + ConvertDNS2Binary('invalid-hostname'))
+                    response_ascii += build_option(39, '%02x' % (3) + convert_dns_to_binary('invalid-hostname'))
                 # options in answer to be logged
                 options_answer.append(39)
 
@@ -1653,12 +1653,12 @@ class Handler(SocketServer.DatagramRequestHandler):
     
                 # always of interest
                 # option 1 client identifier
-                response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
+                response_ascii += build_option(1, Transactions[transaction_id].DUID)
                 # option 2 server identifier
-                response_ascii += BuildOption(2, cfg.SERVERDUID)                    
+                response_ascii += build_option(2, cfg.SERVERDUID)
                     
                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                response_ascii += BuildOption(13, '%04x' % (2))
+                response_ascii += build_option(13, '%04x' % (2))
 
                 log.error('%s| TransactionID: %s | DatabaseError: %s' % (MESSAGE_TYPES[response_type], transaction_id, ' '.join(dberror)))
 
@@ -1677,18 +1677,18 @@ class Handler(SocketServer.DatagramRequestHandler):
 
                         # always of interest
                         # option 1 client identifier
-                        response_ascii += BuildOption(1, Transactions[transaction_id].DUID)
+                        response_ascii += build_option(1, Transactions[transaction_id].DUID)
                         # option 2 server identifier
-                        response_ascii += BuildOption(2, cfg.SERVERDUID)
+                        response_ascii += build_option(2, cfg.SERVERDUID)
 
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                        response_ascii += BuildOption(13, '%04x' % (2))
+                        response_ascii += build_option(13, '%04x' % (2))
                         # options in answer to be logged
                         options_answer.append(3)
 
                         # log warning message about unavailable addresses
-                        log.warning('REPLY | No addresses available | TransactionID: %s | ClientLLIP: %s'  %\
-                                    (transaction_id, ColonifyIP6(Transactions[transaction_id].ClientLLIP)))
+                        log.warning('REPLY | No addresses available | TransactionID: %s | ClientLLIP: %s' % \
+                                    (transaction_id, colonify_ip6(Transactions[transaction_id].ClientLLIP)))
 
                     elif 3 in options_request or 4 in options_request:
                         options_answer.sort()

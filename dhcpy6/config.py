@@ -33,10 +33,10 @@ import getopt
 import re
 import ctypes
 
-from Helpers import *
+from helpers import *
 
-# use ctypes for libc access in GetLibC from Helpers
-LIBC = GetLibC()
+# use ctypes for libc access in get_libc from helpers
+LIBC = get_libc()
 
 # needed for boolean options
 BOOLPOOL = {'0':False, '1':True, 'no':False, 'yes':True, 'false':False, 'true':True, False:False, True:True, 'on':True, 'off':False}
@@ -59,7 +59,7 @@ See manpage dhcpy6d(8) for details.
 '''
 
 
-def GenerateDUID():
+def generate_duid():
     return '00010001%08x%012x' % (time.time(), uuid.getnode())
 
 
@@ -88,7 +88,7 @@ class Config(object):
         # lets make the water turn black... or build a shiny server DUID
         # in case someone will ever debug something here: Wireshark shows
         # year 2042 even if it is 2012 - time itself is OK
-        self.SERVERDUID = GenerateDUID()
+        self.SERVERDUID = generate_duid()
         self.NAMESERVER = ''
 
         # domain for FQDN hostnames
@@ -239,7 +239,7 @@ class Config(object):
                     PREFIX = arg
                     self.PREFIX = PREFIX
                 if opt in ('-G', '--generate-duid'):
-                    print GenerateDUID()
+                    print generate_duid()
                     sys.exit(0)
 
         except getopt.GetoptError, err:
@@ -248,20 +248,20 @@ class Config(object):
             sys.exit(1)
 
         if configfile == None:
-           ErrorExit('No config file given - please use --config <config.file>')
+           error_exit('No config file given - please use --config <config.file>')
 
         if os.path.exists(configfile):
             if not (os.path.isfile(configfile) or
                os.path.islink(configfile)):
-                ErrorExit("Configuration file '%s' is no file or link." % (configfile))
+                error_exit("Configuration file '%s' is no file or link." % (configfile))
         else:
-            ErrorExit("Configuration file '%s' does not exist." % (configfile))
+            error_exit("Configuration file '%s' does not exist." % (configfile))
 
         # read config at once
-        self.ReadConfig(configfile)
+        self.read_config(configfile)
 
                    
-    def ReadConfig(self, configfile):
+    def read_config(self, configfile):
         '''
             read configuration from file, should work with included files too - at least this is the plan
         '''
@@ -292,7 +292,7 @@ class Config(object):
 
                     # check if keyword is known - if not, exit
                     elif not item[0].upper() in self.__dict__:
-                        ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
+                        error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                     # ConfigParser seems to be not case sensitive so settings get normalized
                     else:
                         object.__setattr__(self, item[0].upper(), str(item[1]).strip())
@@ -306,14 +306,14 @@ class Config(object):
                                              % (item[0], section))
                         else:
                             if not item[0].upper() in self.ADDRESSES[section.split('address_')[1]].__dict__:
-                                ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
+                                error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                         self.ADDRESSES[section.split('address_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
                     # global classes with their addresses
                     elif section.startswith('class_'):
                         # check if keyword is known - if not, exit
                         if not item[0].upper() in self.CLASSES[section.split('class_')[1]].__dict__:
-                            ErrorExit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
+                            error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                         if item[0].upper() == 'ADDRESSES':
                             # strip whitespace and separators of addresses
                             lex = shlex.shlex(item[1])
@@ -329,15 +329,15 @@ class Config(object):
                             lex.wordchars += ':.'
                             for interface in lex:
                                 if not interface in self.INTERFACE:
-                                    ErrorExit("Interface '%s' used in section '[%s]' of configuration file '%s' is not defined in general settings." % (interface, section, configfile))
+                                    error_exit("Interface '%s' used in section '[%s]' of configuration file '%s' is not defined in general settings." % (interface, section, configfile))
                         else:
                             self.CLASSES[section.split('class_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
         # The next paragraphs contain finetuning
-        self.IDENTIFICATION = ListifyOption(self.IDENTIFICATION)
+        self.IDENTIFICATION = listify_option(self.IDENTIFICATION)
 
         # get interfaces as list
-        self.INTERFACE = ListifyOption(self.INTERFACE)
+        self.INTERFACE = listify_option(self.INTERFACE)
 
         # create default classes for each interface - if not defined
         # derive from default 'default' class
@@ -360,11 +360,11 @@ class Config(object):
             self.DOMAIN_SEARCH_LIST = self.DOMAIN
 
         # domain search list has to be a list
-        self.DOMAIN_SEARCH_LIST = ListifyOption(self.DOMAIN_SEARCH_LIST)
+        self.DOMAIN_SEARCH_LIST = listify_option(self.DOMAIN_SEARCH_LIST)
 
         # get nameservers as list
         if len(self.NAMESERVER) > 0:
-            self.NAMESERVER = ListifyOption(self.NAMESERVER)
+            self.NAMESERVER = listify_option(self.NAMESERVER)
 
         # convert to boolean value
         self.DNS_UPDATE = BOOLPOOL[self.DNS_UPDATE.lower()]
@@ -385,9 +385,9 @@ class Config(object):
             if c.FILTER_MAC != '': self.FILTERS['mac'].append(c)
             if c.FILTER_DUID != '': self.FILTERS['duid'].append(c)
             if c.FILTER_HOSTNAME != '': self.FILTERS['hostname'].append(c)
-            if c.NAMESERVER != '': c.NAMESERVER = ListifyOption(c.NAMESERVER)
+            if c.NAMESERVER != '': c.NAMESERVER = listify_option(c.NAMESERVER)
             if c.INTERFACE != '':
-                c.INTERFACE = ListifyOption(c.INTERFACE)
+                c.INTERFACE = listify_option(c.INTERFACE)
             else:
                 # use general setting if none specified
                 c.INTERFACE = self.INTERFACE
@@ -429,153 +429,153 @@ class Config(object):
         try:
             pwd.getpwnam(self.USER)
         except:
-             ErrorExit("%s User '%s' does not exist" % (msg_prefix, self.USER))
+             error_exit("%s User '%s' does not exist" % (msg_prefix, self.USER))
         try:
             grp.getgrnam(self.GROUP)
         except:
-             ErrorExit("%s Group '%s' does not exist" % (msg_prefix, self.GROUP))
+             error_exit("%s Group '%s' does not exist" % (msg_prefix, self.GROUP))
 
         # check interface
         for i in self.INTERFACE:
             # also accept Linux VLAN and other definitions but interface must exist
             if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
-                ErrorExit("%s Interface '%s' is unknown." % (msg_prefix, i))
+                error_exit("%s Interface '%s' is unknown." % (msg_prefix, i))
 
         # check multicast address
         try:
-            DecompressIP6(self.MCAST)
+            decompress_ip6(self.MCAST)
         except Exception, err:
-            ErrorExit("%s Multicast address '%s' is invalid." % (msg_prefix, err))
+            error_exit("%s Multicast address '%s' is invalid." % (msg_prefix, err))
         if not self.MCAST.lower().startswith('ff'):
-            ErrorExit("Multicast address '%s' is invalid." % (msg_prefix))
+            error_exit("Multicast address '%s' is invalid." % (msg_prefix))
 
         # check DHCPv6 port
         if not self.PORT.isdigit():
-            ErrorExit("%s Port '%s' is invalid" % (msg_prefix, self.PORT))
+            error_exit("%s Port '%s' is invalid" % (msg_prefix, self.PORT))
         elif not  0 < int(self.PORT) <= 65535:
-            ErrorExit("%s Port '%s' is invalid" % (msg_prefix, self.PORT))
+            error_exit("%s Port '%s' is invalid" % (msg_prefix, self.PORT))
 
         # check server's address
         try:
-            DecompressIP6(self.ADDRESS)
+            decompress_ip6(self.ADDRESS)
         except Exception, err:
-            ErrorExit("%s Server address '%s' is invalid." % (msg_prefix, err))
+            error_exit("%s Server address '%s' is invalid." % (msg_prefix, err))
 
         # check server duid
         if not self.SERVERDUID.isalnum():
-            ErrorExit("%s Server DUID '%s' must be alphanumeric." % (msg_prefix, self.SERVERDUID))
+            error_exit("%s Server DUID '%s' must be alphanumeric." % (msg_prefix, self.SERVERDUID))
 
         # check nameserver to be given to client
         for nameserver in self.NAMESERVER:
             try:
-                DecompressIP6(nameserver)
+                decompress_ip6(nameserver)
             except Exception, err:
-                ErrorExit("%s Name server address '%s' is invalid." % (msg_prefix, err))
+                error_exit("%s Name server address '%s' is invalid." % (msg_prefix, err))
 
         # partly check of domain name validity
         if not re.match('^[a-z0-9.-]*$', self.DOMAIN, re.IGNORECASE):
-            ErrorExit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN))
+            error_exit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN))
 
         # partly check of domain name validity
         if not self.DOMAIN.lower()[0].isalpha() or \
            not self.DOMAIN.lower()[-1].isalpha():
-                ErrorExit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN))
+                error_exit("%s Domain name '%s' is invalid." % (msg_prefix, self.DOMAIN))
 
         # check domain search list domains
         for d in self.DOMAIN_SEARCH_LIST:
             # partly check of domain name validity
             if not re.match('^[a-z0-9.-]*$', d, re.IGNORECASE):
-                ErrorExit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
+                error_exit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
 
             # partly check of domain name validity
             if not d.lower()[0].isalpha() or \
                not d.lower()[-1].isalpha():
-                    ErrorExit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
+                    error_exit("%s Domain search list domain name '%s' is invalid." % (msg_prefix, d))
 
         # check if valid lifetime is a number
         if not self.VALID_LIFETIME.isdigit():
-            ErrorExit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.VALID_LIFETIME))
+            error_exit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.VALID_LIFETIME))
 
         # check if preferred lifetime is a number
         if not self.PREFERRED_LIFETIME.isdigit():
-            ErrorExit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.PREFERRED_LIFETIME))
+            error_exit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.PREFERRED_LIFETIME))
 
         # check if valid lifetime is longer than preferred lifetime
         if not int(self.VALID_LIFETIME) > int(self.PREFERRED_LIFETIME):
-            ErrorExit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." %\
-                      (msg_prefix, self.VALID_LIFETIME, self.PREFERRED_LIFETIME))
+            error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." % \
+                       (msg_prefix, self.VALID_LIFETIME, self.PREFERRED_LIFETIME))
 
         # check if T1 is a number
         if not self.T1.isdigit():
-            ErrorExit("%s T1 '%s' is invalid." % (msg_prefix, self.T1))
+            error_exit("%s T1 '%s' is invalid." % (msg_prefix, self.T1))
 
         # check if T2 is a number
         if not self.T2.isdigit():
-            ErrorExit("%s T2 '%s' is invalid." % (msg_prefix, self.T2))
+            error_exit("%s T2 '%s' is invalid." % (msg_prefix, self.T2))
 
         # check T2 is not smaller than T1
         if not int(self.T2) >= int(self.T1):
-            ErrorExit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." %\
-                      (msg_prefix, self.T2, self.T1))
+            error_exit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." % \
+                       (msg_prefix, self.T2, self.T1))
 
         # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
         if not (int(self.T1) <= int(self.T2) <= int(self.PREFERRED_LIFETIME) <= int(self.VALID_LIFETIME)):
-            ErrorExit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." %\
-                      (msg_prefix, self.T1, self.T2, self.PREFERRED_LIFETIME, self.VALID_LIFETIME))
+            error_exit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
+                       (msg_prefix, self.T1, self.T2, self.PREFERRED_LIFETIME, self.VALID_LIFETIME))
 
         # check server preference
         if not self.SERVER_PREFERENCE.isdigit():
-            ErrorExit("%s Server preference '%s' is invalid." % (msg_prefix, self.SERVER_PREFERENCE))
+            error_exit("%s Server preference '%s' is invalid." % (msg_prefix, self.SERVER_PREFERENCE))
         elif not  0 <= int(self.SERVER_PREFERENCE) <= 255:
-            ErrorExit("Server preference '%s' is invalid" % (self.SERVER_PREFERENCE))
+            error_exit("Server preference '%s' is invalid" % (self.SERVER_PREFERENCE))
 
         # check information refresh time
         if not self.INFORMATION_REFRESH_TIME.isdigit():
-            ErrorExit("%s Information refresh time '%s' is invalid." % (msg_prefix, self.INFORMATION_REFRESH_TIME))
+            error_exit("%s Information refresh time '%s' is invalid." % (msg_prefix, self.INFORMATION_REFRESH_TIME))
         elif not  0 < int(self.INFORMATION_REFRESH_TIME):
-            ErrorExit("%s Information refresh time preference '%s' is pretty short." % (msg_prefix, self.INFORMATION_REFRESH_TIME))
+            error_exit("%s Information refresh time preference '%s' is pretty short." % (msg_prefix, self.INFORMATION_REFRESH_TIME))
 
         # check validity of configuration source
         if not self.STORE_CONFIG in ['mysql', 'postgresql', 'sqlite', 'file', False]:
-            ErrorExit("%s Unknown config storage type '%s' is invalid." % (msg_prefix, self.STORAGE))
+            error_exit("%s Unknown config storage type '%s' is invalid." % (msg_prefix, self.STORAGE))
 
         # check which type of storage to use for leases
         if not self.STORE_VOLATILE in ['mysql', 'postgresql', 'sqlite']:
-            ErrorExit("%s Unknown volatile storage type '%s' is invalid." % (msg_prefix, self.VOLATILE))
+            error_exit("%s Unknown volatile storage type '%s' is invalid." % (msg_prefix, self.VOLATILE))
 
         # check if database for config and volatile is equal - if any
         if self.STORE_CONFIG in ['mysql', 'postgresql'] and self.STORE_VOLATILE in ['mysql', 'postgresql']:
             if not self.STORE_CONFIG == self.STORE_VOLATILE:
-                ErrorExit("%s Storage types for database access have to be equal - '%s' != '%s'." % (msg_prefix,
-                                                                                                     self.STORE_CONFIG,
-                                                                                                     self.STORE_VOLATILE, ))
+                error_exit("%s Storage types for database access have to be equal - '%s' != '%s'." % (msg_prefix,
+                                                                                                      self.STORE_CONFIG,
+                                                                                                      self.STORE_VOLATILE,))
 
         # check validity of config file
         if self.STORE_CONFIG == 'file':
             if os.path.exists(self.STORE_FILE_CONFIG):
                 if not (os.path.isfile(self.STORE_FILE_CONFIG) or
                    os.path.islink(self.STORE_FILE_CONFIG)):
-                    ErrorExit("%s Config file '%s' is no file or link." % (msg_prefix, self.STORE_FILE_CONFIG))
+                    error_exit("%s Config file '%s' is no file or link." % (msg_prefix, self.STORE_FILE_CONFIG))
             else:
-                ErrorExit("%s Config file '%s' does not exist." % (msg_prefix, self.STORE_FILE_CONFIG))
+                error_exit("%s Config file '%s' does not exist." % (msg_prefix, self.STORE_FILE_CONFIG))
 
         # check validity of config db sqlite file
         if self.STORE_CONFIG == 'sqlite':
             if os.path.exists(self.STORE_SQLITE_CONFIG):
                 if not (os.path.isfile(self.STORE_SQLITE_CONFIG) or
                    os.path.islink(self.STORE_SQLITE_CONFIG)):
-                    ErrorExit("%s SQLite file '%s' is no file or link." % (msg_prefix, self.STORE_SQLITE_CONFIG))
+                    error_exit("%s SQLite file '%s' is no file or link." % (msg_prefix, self.STORE_SQLITE_CONFIG))
             else:
-                ErrorExit("%s SQLite file '%s' does not exist." % (msg_prefix, self.STORE_SQLITE_CONFIG))
+                error_exit("%s SQLite file '%s' does not exist." % (msg_prefix, self.STORE_SQLITE_CONFIG))
 
         # check validity of volatile db sqlite file
         if self.STORE_VOLATILE == 'sqlite':
             if os.path.exists(self.STORE_SQLITE_VOLATILE):
                 if not (os.path.isfile(self.STORE_SQLITE_VOLATILE) or
                    os.path.islink(self.STORE_SQLITE_VOLATILE)):
-                    ErrorExit("%s SQLite file '%s' is no file or link." % (msg_prefix, self.STORE_SQLITE_VOLATILE))
+                    error_exit("%s SQLite file '%s' is no file or link." % (msg_prefix, self.STORE_SQLITE_VOLATILE))
             else:
-                ErrorExit("%s SQLite file '%s' does not exist." % (msg_prefix, self.STORE_SQLITE_VOLATILE))
+                error_exit("%s SQLite file '%s' does not exist." % (msg_prefix, self.STORE_SQLITE_VOLATILE))
 
         # check log validity
         if self.LOG:
@@ -583,144 +583,144 @@ class Config(object):
                 if os.path.exists(self.LOG_FILE):
                     if not (os.path.isfile(self.LOG_FILE) or
                        os.path.islink(self.LOG_FILE)):
-                        ErrorExit("%s Logfile '%s' is no file or link." % (msg_prefix, self.LOG_FILE))
+                        error_exit("%s Logfile '%s' is no file or link." % (msg_prefix, self.LOG_FILE))
                 else:
-                    ErrorExit("%s Logfile '%s' does not exist." % (msg_prefix, self.LOG_FILE))
+                    error_exit("%s Logfile '%s' does not exist." % (msg_prefix, self.LOG_FILE))
                 # check ownership of logfile
                 stat_result = os.stat(self.LOG_FILE)
                 if not stat_result.st_uid == pwd.getpwnam(self.USER).pw_uid:
-                    ErrorExit("%s User %s is not owner of logfile '%s'." % (msg_prefix, self.USER, self.LOG_FILE))
+                    error_exit("%s User %s is not owner of logfile '%s'." % (msg_prefix, self.USER, self.LOG_FILE))
                 if not stat_result.st_gid == grp.getgrnam(self.GROUP).gr_gid:
-                    ErrorExit("%s Group %s is not owner of logfile '%s'." % (msg_prefix, self.GROUP, self.LOG_FILE))
+                    error_exit("%s Group %s is not owner of logfile '%s'." % (msg_prefix, self.GROUP, self.LOG_FILE))
             else:
-                ErrorExit('%s No logfile configured.' % (msg_prefix))
+                error_exit('%s No logfile configured.' % (msg_prefix))
 
             if not self.LOG_LEVEL in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                ErrorExit("Log level '%s' is invalid" % (self.LOG_LEVEL))
+                error_exit("Log level '%s' is invalid" % (self.LOG_LEVEL))
             if self.LOG_SYSLOG:
                 if not self.LOG_SYSLOG_FACILITY in ['KERN', 'USER', 'MAIL', 'DAEMON', 'AUTH',
                                                      'LPR', 'NEWS', 'UUCP', 'CRON', 'SYSLOG',
                                                      'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3',
                                                      'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7']:
-                    ErrorExit("%s Syslog facility '%s' is invalid." % (msg_prefix, self.LOG_SYSLOG_FACILITY))
+                    error_exit("%s Syslog facility '%s' is invalid." % (msg_prefix, self.LOG_SYSLOG_FACILITY))
 
                 if self.LOG_SYSLOG_DESTINATION.startswith('/'):
                     stat_result = os.stat(self.LOG_SYSLOG_DESTINATION)
                     if not stat.S_ISSOCK(stat_result.st_mode):
-                        ErrorExit("%s Syslog destination '%s' is no socket." % (msg_prefix, self.LOG_SYSLOG_DESTINATION))
+                        error_exit("%s Syslog destination '%s' is no socket." % (msg_prefix, self.LOG_SYSLOG_DESTINATION))
                 elif self.LOG_SYSLOG_DESTINATION.count(':') > 0:
                     if self.LOG_SYSLOG_DESTINATION.count(':') > 1:
-                        ErrorExit("%s Syslog destination '%s' is no valid host:port destination." % (msg_prefix, self.LOG_SYSLOG_DESTINATION))
+                        error_exit("%s Syslog destination '%s' is no valid host:port destination." % (msg_prefix, self.LOG_SYSLOG_DESTINATION))
 
         # check authentification information
         if not self.AUTHENTICATION_INFORMATION.isalnum():
-            ErrorExit("%s Authentification information '%s' must be alphanumeric." % (msg_prefix, self.AUTHENTICATION_INFORMATION))
+            error_exit("%s Authentification information '%s' must be alphanumeric." % (msg_prefix, self.AUTHENTICATION_INFORMATION))
 
         # check validity of identification attributes
         for i in self.IDENTIFICATION:
             if not i in ['mac', 'hostname', 'duid']:
-                ErrorExit("%s Identification must consist of 'mac', 'hostname' and/or 'duid'." % (msg_prefix))
+                error_exit("%s Identification must consist of 'mac', 'hostname' and/or 'duid'." % (msg_prefix))
 
         # check validity of identification mode
         if not self.IDENTIFICATION_MODE.strip() in ['match_all', 'match_some']:
-            ErrorExit("%s Identification mode must be one of 'match_all' or 'macht_some'." % (msg_prefix))
+            error_exit("%s Identification mode must be one of 'match_all' or 'macht_some'." % (msg_prefix))
 
         # cruise through classes
         # more checks to come...
         for c in self.CLASSES:
             msg_prefix = "Class '%s':" % (c)
             if not self.CLASSES[c].ANSWER in ['normal', 'noaddress', 'none']:
-                ErrorExit("%s answer type must be one of 'normal', 'noaddress' and 'none'." % (msg_prefix))
+                error_exit("%s answer type must be one of 'normal', 'noaddress' and 'none'." % (msg_prefix))
 
             # check interface
             for i in self.CLASSES[c].INTERFACE:
                 # also accept Linux VLAN and other definitions but interface must exist
                 if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
-                    ErrorExit("%s Interface '%s' is invalid." % (msg_prefix, i))
+                    error_exit("%s Interface '%s' is invalid." % (msg_prefix, i))
 
             # check nameserver to be given to client
             for nameserver in self.CLASSES[c].NAMESERVER:
                 try:
-                    DecompressIP6(nameserver)
+                    decompress_ip6(nameserver)
                 except Exception, err:
-                    ErrorExit("%s Name server address '%s' is invalid." % (msg_prefix, err))
+                    error_exit("%s Name server address '%s' is invalid." % (msg_prefix, err))
 
             # check if T1 is a number
             if not self.CLASSES[c].T1.isdigit():
-                ErrorExit("%s T1 '%s' is invalid." % (msg_prefix, self.CLASSES[c].T1))
+                error_exit("%s T1 '%s' is invalid." % (msg_prefix, self.CLASSES[c].T1))
 
             # check if T2 is a number
             if not self.CLASSES[c].T2.isdigit():
-                ErrorExit("%s T2 '%s' is invalid." % (msg_prefix, self.CLASSES[c].T2))
+                error_exit("%s T2 '%s' is invalid." % (msg_prefix, self.CLASSES[c].T2))
 
             # check T2 is not smaller than T1
             if not int(self.CLASSES[c].T2) >= int(self.CLASSES[c].T1):
-                ErrorExit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." %\
-                          (msg_prefix, self.CLASSES[c].T2, self.CLASSES[c].T1))
+                error_exit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." % \
+                           (msg_prefix, self.CLASSES[c].T2, self.CLASSES[c].T1))
 
             # check every single address of a class
             for a in self.CLASSES[c].ADDRESSES:
                 msg_prefix = "Class '%s' Address type '%s':" % (c, a)
                 # test if used addresses are defined
                 if not a in self.ADDRESSES:
-                    ErrorExit("%s Address type '%s' is not defined." % (msg_prefix, a))
+                    error_exit("%s Address type '%s' is not defined." % (msg_prefix, a))
 
                 # test validity of category
                 if not self.ADDRESSES[a].CATEGORY.strip() in ['fixed', 'range', 'random', 'mac', 'id', 'dns']:
-                    ErrorExit("%s Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac', 'id' and 'dns'." % (msg_prefix, self.ADDRESSES[a].CATEGORY))
+                    error_exit("%s Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac', 'id' and 'dns'." % (msg_prefix, self.ADDRESSES[a].CATEGORY))
 
                 # test validity of pattern - has its own error output
                 self.ADDRESSES[a]._build_prototype()
                 # test existence of category specific variable in pattern
                 if self.ADDRESSES[a].CATEGORY == 'range':
                     if not 0 < self.ADDRESSES[a].PATTERN.count('$range$') < 2:
-                        ErrorExit("%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." %\
-                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit("%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." % \
+                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
                     elif not self.ADDRESSES[a].PATTERN.endswith('$range$'):
-                        ErrorExit("%s Pattern '%s' must end with '$range$' variable for category 'range'." %\
-                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit("%s Pattern '%s' must end with '$range$' variable for category 'range'." % \
+                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
 
                 if self.ADDRESSES[a].CATEGORY == 'mac':
                     if not 0 < self.ADDRESSES[a].PATTERN.count('$mac$') < 2:
-                        ErrorExit("%s Pattern '%s' contains wrong number of '$mac$' variables for category 'mac'." %\
-                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit("%s Pattern '%s' contains wrong number of '$mac$' variables for category 'mac'." % \
+                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
 
                 if self.ADDRESSES[a].CATEGORY == 'id':
                     if not self.ADDRESSES[a].PATTERN.count('$id$') == 1:
-                        ErrorExit("%s Pattern '%s' contains wrong number of '$id$' variables for category 'id'." %\
-                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit("%s Pattern '%s' contains wrong number of '$id$' variables for category 'id'." % \
+                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
 
                 if self.ADDRESSES[a].CATEGORY == 'random':
                     if not self.ADDRESSES[a].PATTERN.count('$random64$') == 1:
-                        ErrorExit("%s Pattern '%s' contains wrong number of '$random64$' variables for category 'random'." %\
-                                  (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit("%s Pattern '%s' contains wrong number of '$random64$' variables for category 'random'." % \
+                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
 
                 if self.ADDRESSES[a].CATEGORY == 'dns':
                     if not len(self.NAMESERVER) > 0:
-                        ErrorExit("Address of category 'dns' needs a set nameserver.")
+                        error_exit("Address of category 'dns' needs a set nameserver.")
 
                 # check ia_type
                 if not self.ADDRESSES[a].IA_TYPE.strip().lower() in ['na', 'ta']:
-                    ErrorExit("%s: IA type '%s' must be one of 'na' or 'ta'." % (msg_prefix, self.ADDRESSES[a].IA_TYPE.strip()))
+                    error_exit("%s: IA type '%s' must be one of 'na' or 'ta'." % (msg_prefix, self.ADDRESSES[a].IA_TYPE.strip()))
 
                 # check if valid lifetime is a number
                 if not self.ADDRESSES[a].VALID_LIFETIME.isdigit():
-                    ErrorExit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME))
+                    error_exit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME))
 
                 # check if preferred lifetime is a number
                 if not self.ADDRESSES[a].PREFERRED_LIFETIME.isdigit():
-                    ErrorExit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].PREFERRED_LIFETIME))
+                    error_exit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].PREFERRED_LIFETIME))
 
                 # check if valid lifetime is longer than preferred lifetime
                 if not int(self.ADDRESSES[a].VALID_LIFETIME) >= int(self.ADDRESSES[a].PREFERRED_LIFETIME):
-                    ErrorExit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." %\
-                              (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME, self.ADDRESSES[a].PREFERRED_LIFETIME))
+                    error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." % \
+                               (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME, self.ADDRESSES[a].PREFERRED_LIFETIME))
 
                 # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
                 if not (int(self.CLASSES[c].T1) <= int(self.CLASSES[c].T2) <=\
                         int(self.ADDRESSES[a].PREFERRED_LIFETIME) <= int(self.ADDRESSES[a].VALID_LIFETIME)):
-                    ErrorExit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." %\
-                              (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
+                    error_exit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
+                               (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
                                self.ADDRESSES[a].PREFERRED_LIFETIME, self.ADDRESSES[a].VALID_LIFETIME))
 
 
@@ -776,7 +776,7 @@ class ConfigAddress(object):
 
         # check if prefix is in address but not given on command line
         if '$prefix$' in a and PREFIX == '':
-            ErrorExit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
+            error_exit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
 
         # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
         a = a.replace('$prefix$', PREFIX)
@@ -793,9 +793,9 @@ class ConfigAddress(object):
                 a = a.replace('$range$', 'XXXX')
             try:
                 # build complete 'address' and ignore all the Xs (strict=False)
-                a = DecompressIP6(a, strict=False)
+                a = decompress_ip6(a, strict=False)
             except Exception, err:
-                ErrorExit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
+                error_exit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
             
         self.PROTOTYPE = a
         

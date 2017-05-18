@@ -21,7 +21,7 @@
 import sys
 import threading
 import ConfigParser
-from Helpers import *
+from helpers import *
 import os
 import pwd
 import grp
@@ -354,9 +354,9 @@ class Store(object):
             for host in answer:
                 hostname, mac, duid, aclass, address, id = host
                 # lower some attributes to comply with values from request
-                if mac: mac = ListifyOption(mac.lower())
+                if mac: mac = listify_option(mac.lower())
                 if duid: duid = duid.lower()
-                if address: address = ListifyOption(address.lower())
+                if address: address = listify_option(address.lower())
 
                 self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname] = ClientConfig(hostname=hostname,\
                                                 mac=mac,\
@@ -366,7 +366,7 @@ class Store(object):
                                                 id=id)
 
                 #### in case of various addresses split them...
-                ###self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS = ListifyOption(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS)
+                ###self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS = listify_option(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS)
 
                 # and put the host objects into index
                 if self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
@@ -733,25 +733,25 @@ class Textfile(Store):
             if cfg.CLASSES.has_key(self.Hosts[section].CLASS):
                 for a in cfg.CLASSES[self.Hosts[section].CLASS].ADDRESSES:
                     if cfg.ADDRESSES[a].CATEGORY == 'id' and self.Hosts[section].ID == '':
-                        ErrorExit("Textfile client configuration: No ID given for client '%s'" % (self.Hosts[section].HOSTNAME))
+                        error_exit("Textfile client configuration: No ID given for client '%s'" % (self.Hosts[section].HOSTNAME))
             else:
-                ErrorExit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.Hosts[section].CLASS, self.Hosts[section].HOSTNAME))
+                error_exit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.Hosts[section].CLASS, self.Hosts[section].HOSTNAME))
                 
             if self.Hosts[section].ID != '':
                 if self.Hosts[section].ID in self.IDs.keys():
-                    ErrorExit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.Hosts[section].ID, self.Hosts[section].HOSTNAME, self.IDs[self.Hosts[section].ID]))
+                    error_exit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.Hosts[section].ID, self.Hosts[section].HOSTNAME, self.IDs[self.Hosts[section].ID]))
                 else:
                     self.IDs[self.Hosts[section].ID] = self.Hosts[section].HOSTNAME
                     
             # in case of various MAC addresses split them...
-            self.Hosts[section].MAC = ListifyOption(self.Hosts[section].MAC)
+            self.Hosts[section].MAC = listify_option(self.Hosts[section].MAC)
 
             # in case of various fixed addresses split them and avoid decompressing of ':'...
-            self.Hosts[section].ADDRESS = ListifyOption(self.Hosts[section].ADDRESS)
+            self.Hosts[section].ADDRESS = listify_option(self.Hosts[section].ADDRESS)
 
             # Decompress IPv6-Addresses
             if self.Hosts[section].ADDRESS != None:
-                self.Hosts[section].ADDRESS =  map(lambda x: DecompressIP6(x), self.Hosts[section].ADDRESS)
+                self.Hosts[section].ADDRESS =  map(lambda x: decompress_ip6(x), self.Hosts[section].ADDRESS)
 
             # and put the host objects into index
             if self.Hosts[section].MAC:
@@ -830,9 +830,9 @@ class ClientConfig(object):
             if type(address) == list:
                 addresses = address
             else:
-                addresses = ListifyOption(address)
+                addresses = listify_option(address)
             for a in addresses:
-                self.ADDRESS.append(DecompressIP6(a))
+                self.ADDRESS.append(decompress_ip6(a))
         else:
             self.ADDRESS = None
         self.CLASS = aclass
@@ -873,7 +873,7 @@ class DB(Store):
             try:
                 import MySQLdb
             except:
-                ErrorExit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
+                error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
             try:
                 self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,
                                                    db=self.cfg.STORE_DB_DB,
@@ -893,7 +893,7 @@ class DB(Store):
             except:
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
-                ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
+                error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
             try:
                 self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,
                                                    database=self.cfg.STORE_DB_DB,
@@ -938,7 +938,7 @@ class DBMySQL(DB):
         try:
             import MySQLdb
         except:
-            ErrorExit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
+            error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
         try:
             self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,\
                                                db=self.cfg.STORE_DB_DB,\
@@ -966,7 +966,7 @@ class DBPostgreSQL(DB):
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            ErrorExit('ERROR: Cannot find module psycopg2. Please install to proceed.')
+            error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
         try:
             self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
                                                database=self.cfg.STORE_DB_DB,\
