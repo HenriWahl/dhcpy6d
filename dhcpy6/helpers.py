@@ -404,11 +404,11 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log):
             # * only care about configured devices
             # * no need for multicast address cache entries (MAC 33:33:...)
             if nda['NDM_STATE'] & ~(NUD_INCOMPLETE|NUD_FAILED|NUD_NOARP):
-                if not IF_NUMBER.has_key(nda['NDM_IFINDEX']):
+                if not nda['NDM_IFINDEX'] in IF_NUMBER:
                     log.debug("can't find device for interface index %i" % nda['NDM_IFINDEX'])
-                elif not nda.has_key('NDA_DST'):
+                elif not 'NDA_DST' in nda:
                     log.warn("can't find destination address (wrong entry state: %i?!)" % nda['NDM_STATE'])
-                elif not nda.has_key('NDA_LLADDR'):
+                elif not 'NDA_LLADDR' in nda:
                     log.warn("can't find local hardware address (wrong entry state: %i?!)" % nda['NDM_STATE'])
                 else:
                     if IF_NUMBER[nda['NDM_IFINDEX']] in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):

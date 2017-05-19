@@ -730,7 +730,7 @@ class Textfile(Store):
                     self.Hosts[section].__setattr__(item[0].upper(), str(item[1]))
             
             # Test if host has ID
-            if cfg.CLASSES.has_key(self.Hosts[section].CLASS):
+            if self.Hosts[section].CLASS in cfg.CLASSES:
                 for a in cfg.CLASSES[self.Hosts[section].CLASS].ADDRESSES:
                     if cfg.ADDRESSES[a].CATEGORY == 'id' and self.Hosts[section].ID == '':
                         error_exit("Textfile client configuration: No ID given for client '%s'" % (self.Hosts[section].HOSTNAME))
