@@ -391,7 +391,6 @@ def build_client(transaction_id):
                                                 client.Addresses.append(ia) 
                                         
                                         # de-preferred random address has to be deleted and replaced
-                                        #elif a['category'] == 'random' and str(datetime.datetime.now()) > str(a['preferred_until']):                                        # create new random address if old one is depreferred
                                         elif a['category'] == 'random' and int(time.time()) > a['preferred_until']:
                                             # create new random address if old one is depreferred
                                             random_address = parse_address_pattern(cfg.ADDRESSES[a['type']], client_config, transaction_id)
@@ -829,10 +828,7 @@ class TidyUpThread(threading.Thread):
             #get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                #now = datetime.datetime.now()
-                #now = time.time()
                 now = int(time.time())
-                #timedelta = datetime.timedelta(seconds=cfg.CLEANING_INTERVAL*10)
                 for t in Transactions.keys():
                     try:
                         #if now > Transactions[t].Timestamp + timedelta:
@@ -944,8 +940,6 @@ class Transaction(object):
         # default dummy OptionsRequest
         self.OptionsRequest = list()
         # timestamp to manage/clean transactions
-        #self.Timestamp = datetime.datetime.now()
-        #self.Timestamp = time.time()
         self.Timestamp = int(time.time())
         # dummy hostname
         self.FQDN = ''
@@ -1003,7 +997,6 @@ class Transaction(object):
         # 3 Identity Association for Non-temporary Address Option
         if 3 in options:
             for payload in options[3]:
-                print payload
                 self.IAID = payload[0:8]
                 self.IAT1 = int(payload[8:16], 16)
                 self.IAT2 = int(payload[16:24], 16)
@@ -1041,7 +1034,12 @@ class Transaction(object):
             while len(opts) > 0:
                 options_request.append(int(opts[0:4], 16))
                 opts = opts[4:]
-            self.OptionsRequest = options_request         
+            self.OptionsRequest = options_request
+
+        # 8 Elapsed Time
+        # RFC 3315: This time is expressed in hundredths of a second (10^-2 seconds).
+        if 8 in options:
+            self.ElapsedTime = int(options[8][0:8], 16)
 
         # 14 Rapid Commit flag
         if 14 in options:
@@ -1052,22 +1050,15 @@ class Transaction(object):
             self.VendorClassEN = int(options[16][0:8], 16)
             self.VendorClassData = binascii.unhexlify(options[16][12:])
 
-        print 'OPPPTIIOONS:', options
-
         # Identity Association for Prefix Delegation
         # 25 Identity Association for Prefix Delegation
         if 25 in options:
-            print 'PREFIX DELEGATION', len(options[25]), options[25]
             for payload in options[25]:
                 self.IAID = payload[0:8]
                 self.IAT1 = int(payload[8:16], 16)
                 self.IAT2 = int(payload[16:24], 16)
 
             self.IA_Option = 25
-
-            print self.IAID
-            print self.IAT1
-            print self.IAT2
 
         # FQDN
         # 39 FQDN Option
@@ -1195,20 +1186,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if not option in IA_OPTIONS:
                         options[option] = value
                     else:
-                        #if options.has_key(3):
-                        #    options[3].append(value)
-                        #elif  options.has_key(4):
-                        #    options[4].append(value)
                         if option in options:
                             # if options list already exists append value
                             options[option].append(value)
                         else:
-                            #if option == 3:
-                            #    options[3] = list()
-                            #    options[3].append(value)
-                            #else:
-                            #    options[4] = list()
-                            #    options[4].append(value)
                             # otherwise create list and put value in
                             options[option] = [value]
 
@@ -1224,8 +1205,6 @@ class Handler(SocketServer.DatagramRequestHandler):
                         if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                             Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                     else:
-                        #Transactions[transaction_id].Timestamp = datetime.datetime.now()
-                        #Transactions[transaction_id].Timestamp = time.time()
                         Transactions[transaction_id].Timestamp = int(time.time())
                         Transactions[transaction_id].LastMessageReceivedType = message_type
 
@@ -1406,7 +1385,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = build_client(transaction_id)
 
-                    # check if only a short NoAddrAvail answer or none at all ist t be returned
+                    # check if only a short NoAddrAvail answer or none at all is to be returned
                     if not Transactions[transaction_id].Answer == 'normal':
                         if Transactions[transaction_id].Answer == 'noaddress':
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
@@ -1439,8 +1418,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         else:
                                             preferred_lifetime = '%08x' % (0)
                                             valid_lifetime = '%08x' % (0)
-                                        ia_address = build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                        ia_addresses += ia_address
+                                        ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
 
                                 if not ia_addresses == '':
                                     #
@@ -1508,8 +1486,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         else:
                                             preferred_lifetime = '%08x' % (0)
                                             valid_lifetime = '%08x' % (0)
-                                        ia_address = build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                        ia_addresses += ia_address
+                                        ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
                                 if not ia_addresses == '':
                                     response_ascii += build_option(4, Transactions[transaction_id].IAID + ia_addresses)
                                 # options in answer to be logged
@@ -1541,7 +1518,6 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # assuming '0' as valid Replay Detection method
                 rdm = '%02x' % (0)
                 # Replay Detection - current time for example
-                ##replay_detection = '%016x' % (int(datetime.datetime.now().strftime('%s')))
                 replay_detection = '%016x' % (int(time.time()))
                 # Authentication Information Type
                 # first 1, later with HMAC-MD5  2
@@ -1604,10 +1580,8 @@ class Handler(SocketServer.DatagramRequestHandler):
             #    response_ascii += build_option(31, sntp_servers)
 
             # Option 25 Prefix Delegation
-            print options_request
             if 25 in options_request:
-                print "PPPRRRREEEFFFIIIXXXXXXXXXXXXxx"
-
+                pass
 
             # Option 32 Information Refresh Time
             if 32 in options_request:
