@@ -192,27 +192,34 @@ class Config(object):
         self.FILTERS = {'mac':[], 'duid':[], 'hostname':[]}
         
         # define a fallback default class and address scheme
-        self.ADDRESSES['default'] = ConfigAddress(ia_type='na',
-                                                  category='mac',
-                                                  pattern='fdef::$mac$',
-                                                  aclass='default',
-                                                  atype='default',
-                                                  prototype='fdef0000000000000000XXXXXXXXXXXX')
+        self.ADDRESSES['default'] = Address(ia_type='na',
+                                            category='mac',
+                                            pattern='fdef::$mac$',
+                                            aclass='default',
+                                            atype='default',
+                                            prototype='fdef0000000000000000XXXXXXXXXXXX')
 
         # define dummy address scheme for fixed addresses
         # pattern and prototype are not really needed as this
         # addresses are fixed
-        self.ADDRESSES['fixed'] = ConfigAddress(ia_type='na',
-                                                category='fixed',
-                                                pattern='fdef0000000000000000000000000001',
-                                                aclass='default',
-                                                atype='fixed',
-                                                prototype='fdef0000000000000000000000000000')
+        self.ADDRESSES['fixed'] = Address(ia_type='na',
+                                          category='fixed',
+                                          pattern='fdef::1',
+                                          aclass='default',
+                                          atype='fixed',
+                                          prototype='fdef0000000000000000000000000000')
+
+        self.PREFIXES['default'] = Prefix(pattern='fdef:$range$::',
+                                          prange='1000-1fff',
+                                          category='range',
+                                          length=32,
+                                          preferred_lifetime=0,
+                                          valid_lifetime=0)
 
         self.CLASSES['default'] = Class()
         self.CLASSES['default'].ADDRESSES.append('default')
-        
-        self.PREFIXES['default'] = ConfigPrefix()
+        self.CLASSES['default'].PREFIXES.append('default')
+
 
 
         # config file from command line
@@ -281,7 +288,9 @@ class Config(object):
             if section.startswith('class_'):
                 self.CLASSES[section.split('class_')[1]] = Class(name=section.split('class_')[1].strip())
             if section.startswith('address_'):
-                self.ADDRESSES[section.split('address_')[1].strip()] = ConfigAddress()
+                self.ADDRESSES[section.split('address_')[1].strip()] = Address()
+            if section.startswith('prefix_'):
+                self.PREFIXES[section.split('prefix_')[1].strip()] = Prefix()
 
         for section in config.sections():
             # go through all items
@@ -303,21 +312,25 @@ class Config(object):
                         object.__setattr__(self, item[0].upper(), str(item[1]).strip())
                 else:
                     # global address schemes
-                    if section.startswith('address_'):
+                    if section.lower().startswith('address_'):
                         # check if keyword is known - if not, exit
                         if item[0].upper() == 'PREFIX_LENGTH':
                             # Show a warning because there are no prefix lenghts in DHCPv6
                             sys.stderr.write("\nWARNING: Keyword '%s' in section '[%s]' is deprecated and should be removed.\n\n" \
                                              % (item[0], section))
                         else:
-                            if not item[0].upper() in self.ADDRESSES[section.split('address_')[1]].__dict__:
+                            if not item[0].upper() in self.ADDRESSES[section.lower().split('address_')[1]].__dict__:
                                 error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
-                        self.ADDRESSES[section.split('address_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
+                        self.ADDRESSES[section.lower().split('address_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
+
+                    # global prefix schemes
+                    if section.lower().startswith('prefix_'):
+                        self.PREFIXES[section.lower().split('prefix_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
                     # global classes with their addresses
-                    elif section.startswith('class_'):
+                    elif section.lower().startswith('class_'):
                         # check if keyword is known - if not, exit
-                        if not item[0].upper() in self.CLASSES[section.split('class_')[1]].__dict__:
+                        if not item[0].upper() in self.CLASSES[section.lower().split('class_')[1]].__dict__:
                             error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
                         if item[0].upper() == 'ADDRESSES':
                             # strip whitespace and separators of addresses
@@ -326,7 +339,15 @@ class Config(object):
                             lex.wordchars += ':.'
                             for address in lex:
                                 if len(address) > 0:
-                                    self.CLASSES[section.split('class_')[1]].ADDRESSES.append(address)
+                                    self.CLASSES[section.lower().split('class_')[1]].ADDRESSES.append(address)
+                        elif item[0].upper() == 'PREFIXES':
+                            # strip whitespace and separators of prefixes
+                            lex = shlex.shlex(item[1])
+                            lex.whitespace = WHITESPACE
+                            lex.wordchars += ':.'
+                            for prefix in lex:
+                                if len(prefix) > 0:
+                                    self.CLASSES[section.lower().split('class_')[1]].PREFIXES.append(prefix)
                         elif item[0].upper() == 'INTERFACE':
                             # strip whitespace and separators of interfaces
                             lex = shlex.shlex(item[1])
@@ -336,7 +357,7 @@ class Config(object):
                                 if not interface in self.INTERFACE:
                                     error_exit("Interface '%s' used in section '[%s]' of configuration file '%s' is not defined in general settings." % (interface, section, configfile))
                         else:
-                            self.CLASSES[section.split('class_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
+                            self.CLASSES[section.lower().split('class_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
         # The next paragraphs contain finetuning
         self.IDENTIFICATION = listify_option(self.IDENTIFICATION)
@@ -729,7 +750,63 @@ class Config(object):
                                self.ADDRESSES[a].PREFERRED_LIFETIME, self.ADDRESSES[a].VALID_LIFETIME))
 
 
-class ConfigAddress(object):
+class ConfigObject(object):
+    """
+        class providing methods both for addresses and prefixes
+    """
+
+    def _build_prototype(self):
+        '''
+            build prototype of pattern for later comparison with leases
+        '''
+        prototype = self.PATTERN
+
+        # check if global dynamic prefix is in address but not given on command line
+        if '$prefix$' in prototype and PREFIX == '':
+            error_exit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
+
+        # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
+        prototype = prototype.replace('$prefix$', PREFIX)
+
+        # check different client address categories - to be extended!
+        if self.CATEGORY in ['mac', 'id', 'range', 'random']:
+            if self.CATEGORY == 'mac':
+                prototype = prototype.replace('$mac$', 'XXXX:XXXX:XXXX')
+            elif self.CATEGORY == 'id':
+                prototype = prototype.replace('$id$', 'XXXX')
+            elif self.CATEGORY == 'random':
+                prototype = prototype.replace('$random64$', 'XXXX:XXXX:XXXX:XXXX')
+            elif self.CATEGORY == 'range':
+                prototype = prototype.replace('$range$', 'XXXX')
+            try:
+                # build complete 'address' and ignore all the Xs (strict=False)
+                prototype = decompress_ip6(prototype, strict=False)
+            except Exception, err:
+                error_exit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
+
+        self.PROTOTYPE = prototype
+
+
+    def matches_prototype(self, address):
+        '''
+            test if given address matches prototype and therefore this address' DNS zone
+            information might be used
+            only used for address types, not client instances
+        '''
+        match = False
+        # compare all chars of address and prototype, if they do match or
+        # prototype has placeholder X return finally True, otherwise stop
+        # at the first difference and give back False
+        for i in range(32):
+            if self.PROTOTYPE[i] == address[i] or self.PROTOTYPE[i] == 'X':
+                match = True
+            else:
+                match = False
+                break
+        return match
+
+
+class Address(ConfigObject):
     '''
         class for address definition, used for config
     '''
@@ -772,116 +849,31 @@ class ConfigAddress(object):
         self.DNS_TTL = dns_ttl
         # flag invalid addresses as invalid, valid ones as valid
         self.VALID = valid
-        
-        
-    def _build_prototype(self):
-        '''
-            build prototype of pattern for later comparison with leases
-        '''
-        a = self.PATTERN
 
-        # check if prefix is in address but not given on command line
-        if '$prefix$' in a and PREFIX == '':
-            error_exit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
 
-        # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
-        a = a.replace('$prefix$', PREFIX)
-
-        # check different client address categories - to be extended!
-        if self.CATEGORY in ['mac', 'id', 'range', 'random']:
-            if self.CATEGORY == 'mac':
-                a = a.replace('$mac$', 'XXXX:XXXX:XXXX')
-            elif self.CATEGORY == 'id':
-                a = a.replace('$id$', 'XXXX')
-            elif self.CATEGORY == 'random':
-                a = a.replace('$random64$', 'XXXX:XXXX:XXXX:XXXX')
-            elif self.CATEGORY == 'range':
-                a = a.replace('$range$', 'XXXX')
-            try:
-                # build complete 'address' and ignore all the Xs (strict=False)
-                a = decompress_ip6(a, strict=False)
-            except Exception, err:
-                error_exit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
-            
-        self.PROTOTYPE = a
-        
-    
-    def matches_prototype(self, address):
-        '''
-            test if given address matches prototype and therefore this address' DNS zone
-            information might be used
-            only used for address types, not client instances
-        '''
-        match = False
-        # compare all chars of address and prototype, if they do match or
-        # prototype has placeholder X return finally True, otherwise stop
-        # at the first difference and give back False
-        for i in range(32): 
-            if  self.PROTOTYPE[i] == address[i] or self.PROTOTYPE[i] == 'X':
-                match = True
-            else:
-                match = False
-                break
-        return match
-    
-
-class ConfigPrefix(object):
+class Prefix(ConfigObject):
     """
         class for delegated prefix definition
     """
     def __init__(self,
-                 name='',
                  prefix=None,
-                 length=0,
+                 pattern='2001:db8:$range$::',
+                 prange='1000-1fff',
+                 category='range',
+                 length=48,
                  preferred_lifetime=0,
                  valid_lifetime=0,
-                 prange='',
-                 category=''):
-        self.NAME = name
-        self.PREFIX = prefix
-        self.length = length
-        self.PREFERRED_LIFETIME = preferred_lifetime
-        self.VALID_LIFETIME = valid_lifetime
+                 ptype='default',
+                 pclass='default'):
+        self.PREFIX=prefix
+        self.PATTERN = pattern
         self.RANGE = prange.lower()
         self.CATEGORY = category
-
-
-class ClientAddress(object):
-    '''
-        class for address definition, used for clients
-    '''
-    def __init__(self,
-                 address=None,
-                 ia_type='na',
-                 category='random',
-                 preferred_lifetime=0,
-                 valid_lifetime=0,
-                 atype='default',
-                 aclass='default',
-                 dns_update=False,
-                 dns_zone='',
-                 dns_rev_zone='8.b.d.0.1.0.0.2.ip6.arpa',
-                 dns_ttl = '0',
-                 valid = True,
-                 ):
-        self.CATEGORY = category
-        self.IA_TYPE = ia_type
+        self.LENGTH = length
         self.PREFERRED_LIFETIME = preferred_lifetime
         self.VALID_LIFETIME = valid_lifetime
-        self.ADDRESS = address
-        # because 'class' is a python keyword we use 'aclass' here
-        # this property stores the class the address is used for
-        self.CLASS = aclass
-        # same with type
-        self.TYPE = atype
-        # flag for updating address in DNS or not
-        self.DNS_UPDATE = dns_update
-        # DNS zone data
-        self.DNS_ZONE = dns_zone.lower()
-        self.DNS_REV_ZONE = dns_rev_zone.lower()
-        self.DNS_TTL = dns_ttl
-        # flag invalid addresses as invalid, valid ones as valid
-        self.VALID = valid
+        self.TYPE = ptype
+        self.CLASS = pclass
 
 
 class Class(object):
@@ -891,6 +883,7 @@ class Class(object):
     def __init__(self, name=''):
         self.NAME = name
         self.ADDRESSES = list()
+        self.PREFIXES = list()
         self.NAMESERVER = ''
         self.FILTER_MAC = ''
         self.FILTER_HOSTNAME = ''

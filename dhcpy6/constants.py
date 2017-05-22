@@ -89,5 +89,6 @@ STATUS_CODE = { 0:'Success',
                 2:'No Addresses available',
                 3:'No Binding',
                 4:'Prefix not appropriate for link',
-                5:'Use Multicast'
+                5:'Use Multicast',
+                6:'No Prefix available'
                 }
