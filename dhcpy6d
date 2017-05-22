@@ -516,7 +516,6 @@ def build_client(transaction_id):
                 if cfg.ADDRESSES[address].CATEGORY == 'dns':
                     a = get_ip_from_dns(client.Hostname)
                 else:
-                    
                     a = parse_address_pattern(cfg.ADDRESSES[address], client, transaction_id)
                 if a:
                     ia = ClientAddress(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,\

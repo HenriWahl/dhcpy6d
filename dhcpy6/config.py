@@ -183,6 +183,7 @@ class Config(object):
         # Address and class schemes
         self.ADDRESSES = dict()
         self.CLASSES = dict()
+        self.PREFIXES = dict()
         
         self.IDENTIFICATION = 'mac'
         self.IDENTIFICATION_MODE = 'match_all'
@@ -192,38 +193,42 @@ class Config(object):
         
         # define a fallback default class and address scheme
         self.ADDRESSES['default'] = ConfigAddress(ia_type='na',
-                                                   category='mac',
-                                                   pattern='fdef::$mac$',
-                                                   aclass='default',
-                                                   atype='default',
-                                                   prototype='fdef0000000000000000XXXXXXXXXXXX')
-        
-        self.CLASSES['default'] = Class()
-        self.CLASSES['default'].ADDRESSES.append('default')
-        
+                                                  category='mac',
+                                                  pattern='fdef::$mac$',
+                                                  aclass='default',
+                                                  atype='default',
+                                                  prototype='fdef0000000000000000XXXXXXXXXXXX')
+
         # define dummy address scheme for fixed addresses
         # pattern and prototype are not really needed as this
         # addresses are fixed
         self.ADDRESSES['fixed'] = ConfigAddress(ia_type='na',
-                                                   category='fixed',
-                                                   pattern='fdef0000000000000000000000000001',
-                                                   aclass='default',
-                                                   atype='fixed',
-                                                   prototype='fdef0000000000000000000000000000')
+                                                category='fixed',
+                                                pattern='fdef0000000000000000000000000001',
+                                                aclass='default',
+                                                atype='fixed',
+                                                prototype='fdef0000000000000000000000000000')
+
+        self.CLASSES['default'] = Class()
+        self.CLASSES['default'].ADDRESSES.append('default')
         
+        self.PREFIXES['default'] = ConfigPrefix()
+
+
         # config file from command line
         # default config file and cli values
         configfile = self.cli_options = self.cli_user = self.cli_group = self.cli_duid = self.cli_really_do_it = None
         # get multiple options
         try:
-            self.cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:], 'c:u:g:d:r:p:G',
-                                                                      ['config=',
-                                                                       'user=',
-                                                                       'group=',
-                                                                       'duid=',
-                                                                       'really-do-it=',
-                                                                       'prefix=',
-                                                                       'generate-duid'])
+            self.cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:],
+                                                              'c:u:g:d:r:p:G',
+                                                              ['config=',
+                                                               'user=',
+                                                               'group=',
+                                                               'duid=',
+                                                               'really-do-it=',
+                                                               'prefix=',
+                                                               'generate-duid'])
             for opt, arg in self.cli_options:
                 if opt in ('-c', '--config'):
                     configfile = arg
@@ -728,7 +733,8 @@ class ConfigAddress(object):
     '''
         class for address definition, used for config
     '''
-    def __init__(self, address=None,
+    def __init__(self,
+                 address=None,
                  ia_type='na',
                  category='random',
                  pattern='2001:db8::$random64$',
@@ -737,7 +743,7 @@ class ConfigAddress(object):
                  atype='default',
                  aclass='default',
                  prototype='',
-                 range='',
+                 arange='',
                  dns_update=False,
                  dns_zone='',
                  dns_rev_zone='0.8.b.d.1.0.0.2.ip6.arpa',
@@ -749,7 +755,7 @@ class ConfigAddress(object):
         self.PREFERRED_LIFETIME = preferred_lifetime
         self.VALID_LIFETIME = valid_lifetime
         self.ADDRESS = address
-        self.RANGE = range.lower()
+        self.RANGE = arange.lower()
         # because 'class' is a python keyword we use 'aclass' here
         self.CLASS = aclass
         # same with type
@@ -819,11 +825,33 @@ class ConfigAddress(object):
         return match
     
 
+class ConfigPrefix(object):
+    """
+        class for delegated prefix definition
+    """
+    def __init__(self,
+                 name='',
+                 prefix=None,
+                 length=0,
+                 preferred_lifetime=0,
+                 valid_lifetime=0,
+                 prange='',
+                 category=''):
+        self.NAME = name
+        self.PREFIX = prefix
+        self.length = length
+        self.PREFERRED_LIFETIME = preferred_lifetime
+        self.VALID_LIFETIME = valid_lifetime
+        self.RANGE = prange.lower()
+        self.CATEGORY = category
+
+
 class ClientAddress(object):
     '''
         class for address definition, used for clients
     '''
-    def __init__(self, address=None,
+    def __init__(self,
+                 address=None,
                  ia_type='na',
                  category='random',
                  preferred_lifetime=0,
@@ -855,7 +883,7 @@ class ClientAddress(object):
         # flag invalid addresses as invalid, valid ones as valid
         self.VALID = valid
 
-            
+
 class Class(object):
     '''
         class for class definition
@@ -878,3 +906,4 @@ class Class(object):
         # of hosts should get IPv6 addresses and others not. They will get a 'NoAddrsAvail' response if this option
         # is set to 'noaddress' or no answer at all if set to 'none'
         self.ANSWER = 'normal'
+
