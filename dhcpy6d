@@ -156,6 +156,9 @@ IF_NUMBER = dict()
 # IA_NA, IA_TA and IA_PD Options referred here in handler
 IA_OPTIONS = (3, 4, 25)
 
+# empty options string test
+EMPTY_OPTIONS = [None, False, '', []]
+
 # store 
 # because of thread trouble there should not be too much db connections at once
 # so we need to use the queryqueue way - subject to change
@@ -261,7 +264,6 @@ def build_client(transaction_id):
             # check all given identification criteria - if they all match each other the client is identified       
             id_attributes = list()
 
-
             # get client config that most probably seems to fit
             configstore.build_config_from_db(transaction_id)
 
@@ -364,7 +366,7 @@ def build_client(transaction_id):
                                     if use_lease == True:
                                         # when category is range, test if it still applies
                                         if a['category'] == 'range':
-                                            # borrowed from parse_pattern to find out if lease is still in a meanwhile maybe changed range
+                                            # borrowed from parse_pattern_address to find out if lease is still in a meanwhile maybe changed range
                                             frange, trange = cfg.ADDRESSES[a['type']].RANGE.split('-')
     
                                             # correct possible misconfiguration
@@ -393,7 +395,7 @@ def build_client(transaction_id):
                                         # de-preferred random address has to be deleted and replaced
                                         elif a['category'] == 'random' and int(time.time()) > a['preferred_until']:
                                             # create new random address if old one is depreferred
-                                            random_address = parse_pattern(cfg.ADDRESSES[a['type']], client_config, transaction_id)
+                                            random_address = parse_pattern_address(cfg.ADDRESSES[a['type']], client_config, transaction_id)
                                             # create new random address if old one is de-preferred
                                             # do not wait until it is invalid                                      
                                             if not random_address == None:
@@ -471,7 +473,7 @@ def build_client(transaction_id):
                         if cfg.ADDRESSES[address].CATEGORY == 'dns':
                             a = get_ip_from_dns(client.Hostname)
                         else:
-                            a = parse_pattern(cfg.ADDRESSES[address], client_config, transaction_id)
+                            a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
                         # in case range has been exceeded a will be None
                         if a:
                             ia = Address(address=a,
@@ -488,7 +490,7 @@ def build_client(transaction_id):
                             client.Addresses.append(ia)
 
                     for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
-                        p = parse_pattern(cfg.PREFIXES[prefix], client_config, transaction_id)
+                        p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
                         # in case range has been exceeded p will be None
                         if p:
                             ia_pd = Prefix(prefix=p,
@@ -507,7 +509,7 @@ def build_client(transaction_id):
                         if cfg.ADDRESSES[address].CATEGORY == 'dns':
                             a = get_ip_from_dns(client.Hostname)
                         else:
-                            a = parse_pattern(cfg.ADDRESSES[address], client_config, transaction_id)
+                            a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
                         if a:
                             ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
                                          preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
@@ -532,7 +534,7 @@ def build_client(transaction_id):
                 if cfg.ADDRESSES[address].CATEGORY == 'dns':
                     a = get_ip_from_dns(client.Hostname)
                 else:
-                    a = parse_pattern(cfg.ADDRESSES[address], client, transaction_id)
+                    a = parse_pattern_address(cfg.ADDRESSES[address], client, transaction_id)
                 if a:
                     ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
                                  preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
@@ -555,7 +557,7 @@ def build_client(transaction_id):
         return None
 
 
-def parse_pattern(pattern, client_config, transaction_id):
+def parse_pattern_address(pattern, client_config, transaction_id):
     '''
         parse address pattern and replace variables with current values
     '''
@@ -600,7 +602,7 @@ def parse_pattern(pattern, client_config, transaction_id):
 
         # expecting range-range at the last octet, 'prefix' means the first seven octets here
         # - is just shorter than the_first_seven_octets
-        prefix = decompress_ip6(p.replace('$range$', '0000'))[:28]
+        address_prefix = decompress_ip6(p.replace('$range$', '0000'))[:28]
 
         # the following steps are done to find a collision-free lease in given range
         # check if address already has been advertised - important for REPLY after SOLICIT-ADVERTISE-REQUEST
@@ -610,7 +612,7 @@ def parse_pattern(pattern, client_config, transaction_id):
             p = advertised_address
         else:
             # check if requesting client still has an active lease that could be reused
-            lease = volatilestore.get_range_lease_for_recycling(prefix=prefix, frange=frange, trange=trange,
+            lease = volatilestore.get_range_lease_for_recycling(prefix=address_prefix, frange=frange, trange=trange,
                                                                 duid=Transactions[transaction_id].DUID,
                                                                 mac=Transactions[transaction_id].MAC)
             # the found lease has to be in range - important after changed range boundaries
@@ -619,16 +621,16 @@ def parse_pattern(pattern, client_config, transaction_id):
                               lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
             else:
                 # get highest active lease to increment address about 1
-                lease = volatilestore.get_highest_range_lease(prefix=prefix, frange=frange, trange=trange)
+                lease = volatilestore.get_highest_range_lease(prefix=address_prefix, frange=frange, trange=trange)
                 # check if highest active lease still fits into range
                 if not lease is None and frange <= lease[28:].lower() < trange:
                     # if highest lease + 1 would not fit range limit is reached
                     if lease[28:].lower() >= trange:
                         # try to get one of the inactive old leases
-                        lease = volatilestore.get_oldest_inactive_range_lease(prefix=prefix, frange=frange, trange=trange)
+                        lease = volatilestore.get_oldest_inactive_range_lease(prefix=address_prefix, frange=frange, trange=trange)
                         if lease is None:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, frange,trange))
+                            log.critical('Address space %s[%s-%s] exceeded' % (address_prefix, frange,trange))
                             return None
                         else:
                             # if lease is OK use it
@@ -638,20 +640,125 @@ def parse_pattern(pattern, client_config, transaction_id):
                         p = p.replace('$range$', str(hex(int(lease[28:], 16) + 1)).split('x')[1])
                 else:
                     # if there is no lease yet or range limit is reached try to reactivate an old inactive lease
-                    lease = volatilestore.get_oldest_inactive_range_lease(prefix=prefix, frange=frange, trange=trange)
+                    lease = volatilestore.get_oldest_inactive_range_lease(prefix=address_prefix, frange=frange, trange=trange)
                     if lease is None:
                         # if there are no leases stored yet initiate lease storage
                         # this will be done only once - the first time if there is no other lease yet
                         # so it is safe to start from frange
-                        if volatilestore.check_number_of_leases(prefix, frange, trange) <= 1:
+                        if volatilestore.check_number_of_leases(address_prefix, frange, trange) <= 1:
                             p = p.replace('$range$', frange)
                         else:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, frange,trange))
+                            log.critical('Address space %s[%s-%s] exceeded' % (address_prefix, frange,trange))
                             return None
                     else:
                         # if there is a lease it might be used
                         p = lease
+
+    return decompress_ip6(p)
+
+
+def parse_pattern_prefix(pattern, client_config, transaction_id):
+    '''
+        parse address pattern and replace variables with current values
+    '''
+    # parse all pattern parts
+    p = pattern.PATTERN
+
+    # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
+    p = p.replace('$prefix$', cfg.PREFIX)
+
+    """
+    # check different client address categories - to be extended!
+    if pattern.CATEGORY == 'mac':
+        macraw = ''.join(Transactions[transaction_id].MAC.split(':'))
+        p = p.replace('$mac$', ':'.join((macraw[0:4], macraw[4:8], macraw[8:12])))
+    elif pattern.CATEGORY in ['fixed', 'dns']:
+        # No patterns for fixed address, let's bail
+        return None
+    elif pattern.CATEGORY == 'id':
+        # if there is an ID build address
+        if str(client_config.ID) <> '':
+            p = p.replace('$id$', str(client_config.ID))
+        else:
+            return None
+    elif pattern.CATEGORY == 'random':
+        # first check if address already has been advertised
+        advertised_address = volatilestore.check_advertised_lease(transaction_id, category='random', atype=pattern.TYPE)
+        # when address already has been advertised for this client use it
+        if advertised_address:
+            p = advertised_address
+        else:
+            ra = str(hex(random.getrandbits(64)))[2:][:-1]
+            ra = ':'.join((ra[0:4], ra[4:8], ra[8:12], ra[12:16]))
+            # subject to change....
+            p = p.replace('$random64$', ra)
+    elif pattern.CATEGORY == 'range':
+    """
+    if pattern.CATEGORY == 'range':
+        frange, trange = pattern.RANGE.split('-')
+        if len(frange)<4:
+            frange ='0'*(4-len(frange)) + frange
+        if len(trange)<4:
+            trange ='0'*(4-len(trange)) + trange
+        if frange > trange:
+            frange, trange = trange, frange
+
+        # expecting range-range at the last octet, 'prefix' means the first seven octets here
+        # - is just shorter than the_first_seven_octets
+        address_prefix = decompress_ip6(p.replace('$range$', '0000'))[:28]
+
+        # the following steps are done to find a collision-free lease in given range
+        # check if address already has been advertised - important for REPLY after SOLICIT-ADVERTISE-REQUEST
+        advertised_prefix = volatilestore.check_advertised_prefix(transaction_id, category='range', ptype=pattern.TYPE)
+        # when address already has been advertised for this client use it
+        if advertised_prefix:
+            p = advertised_prefix
+        else:
+            # check if requesting client still has an active lease that could be reused
+            lease = volatilestore.get_range_lease_for_recycling(prefix=address_prefix, frange=frange, trange=trange,
+                                                                duid=Transactions[transaction_id].DUID,
+                                                                mac=Transactions[transaction_id].MAC)
+            # the found lease has to be in range - important after changed range boundaries
+            if not lease is None and frange <= lease[28:].lower() <= trange:
+                p = ':'.join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],
+                              lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
+            else:
+                # get highest active lease to increment address about 1
+                lease = volatilestore.get_highest_range_lease(prefix=address_prefix, frange=frange, trange=trange)
+                # check if highest active lease still fits into range
+                if not lease is None and frange <= lease[28:].lower() < trange:
+                    # if highest lease + 1 would not fit range limit is reached
+                    if lease[28:].lower() >= trange:
+                        # try to get one of the inactive old leases
+                        lease = volatilestore.get_oldest_inactive_range_lease(prefix=address_prefix, frange=frange, trange=trange)
+                        if lease is None:
+                            # if none is available limit is reached and nothing returned
+                            log.critical('Address space %s[%s-%s] exceeded' % (address_prefix, frange,trange))
+                            return None
+                        else:
+                            # if lease is OK use it
+                            p = lease
+                    else:
+                        # otherwise increase current maximum range limit by 1
+                        p = p.replace('$range$', str(hex(int(lease[28:], 16) + 1)).split('x')[1])
+                else:
+                    # if there is no lease yet or range limit is reached try to reactivate an old inactive lease
+                    lease = volatilestore.get_oldest_inactive_range_lease(prefix=address_prefix, frange=frange, trange=trange)
+                    if lease is None:
+                        # if there are no leases stored yet initiate lease storage
+                        # this will be done only once - the first time if there is no other lease yet
+                        # so it is safe to start from frange
+                        if volatilestore.check_number_of_leases(address_prefix, frange, trange) <= 1:
+                            p = p.replace('$range$', frange)
+                        else:
+                            # if none is available limit is reached and nothing returned
+                            log.critical('Address space %s[%s-%s] exceeded' % (address_prefix, frange,trange))
+                            return None
+                    else:
+                        # if there is a lease it might be used
+                        p = lease
+
     return decompress_ip6(p)
 
 
@@ -924,7 +1031,8 @@ class Client(object):
         options.sort()
         for o in options:
             # ignore some attributes
-            if not o in ['OptionsRaw', 'Client', 'Timestamp', 'DUIDLLAddress', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old'] and not str(self.__dict__[o]) == '':
+            if not o in ['OptionsRaw', 'Client', 'Timestamp', 'DUIDLLAddress', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old'] and \
+               not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'Addresses':
                     option = 'Addresses:'
                     for a in self.__dict__[o]:
@@ -938,8 +1046,6 @@ class Client(object):
                 else:
                     option = o + ': ' + str(self.__dict__[o])
                     optionsstring = optionsstring + ' | '  + option
-
-
         return optionsstring
 
 
@@ -979,7 +1085,10 @@ class Transaction(object):
         self.IAT2 = cfg.VALID_LIFETIME
         # IA option - NA or TA -> DHCPv6 option 3 or 4, default is 3
         # to be used in option_requests in Handler.build_response()
-        self.IA_Option = 3
+
+        ###self.IA_Option = 3
+        self.IA_Option = None
+
         # Addresses given by client, for example for RENEW or RELEASE requests
         self.Addresses = list()
         # same with prefixes
@@ -1120,12 +1229,16 @@ class Transaction(object):
         for o in options:
             # ignore some attributes 
             if not o in ['OptionsRaw', 'Client', 'Timestamp', 'DUIDLLAddress', 'IAT1', 'IAT2', 'ClientConfigDB', 'FQDN'] and \
-               not self.__dict__[o] in [None, False, '', []]:
+               not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'Addresses':
                     option = 'Addresses:'
                     for a in self.__dict__[o]:
                         option += ' ' + colonify_ip6(a)
                     optionsstring = optionsstring + ' | '  + option
+                elif o == 'Prefixes':
+                    option = 'Prefixes:'
+                    for p in self.__dict__[o]:
+                        option += ' ' + colonify_ip6(p.PREFIX)
                 elif o == 'ClientLLIP':
                     option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
                     optionsstring = optionsstring + ' | '  + option
@@ -1287,8 +1400,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(2, transaction_id, [Transactions[transaction_id].IA_Option] + \
                                                         [7] + Transactions[transaction_id].OptionsRequest)
 
+
+
                                     # store leases for addresses and lock advertised address
-                                    volatilestore.store_lease(transaction_id)
+                                    volatilestore.store_into_database(transaction_id)
 
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -1304,7 +1419,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + \
                                                             [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store_lease(transaction_id)
+                                    volatilestore.store_into_database(transaction_id)
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction_id)
 
@@ -1328,7 +1443,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store_lease(transaction_id)
+                                    volatilestore.store_into_database(transaction_id)
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction_id)
 
@@ -1338,7 +1453,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store_lease(transaction_id)
+                                    volatilestore.store_into_database(transaction_id)
 
                                 # RELEASE
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
@@ -1471,12 +1586,12 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                                 response_ascii += build_option(13, '%04x' % (2))
                                 # options in answer to be logged
-                                options_answer.append(3)
+                                options_answer.append(13)
                         else:
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                             response_ascii += build_option(13, '%04x' % (2))
                             # options in answer to be logged
-                            options_answer.append(3)
+                            options_answer.append(13)
 
             # IA_TA temporary addresses
             if 4 in options_request:
@@ -1662,8 +1777,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # temporarily fixed
                                     preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
                                     valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
-
-                                    ia_prefixes += build_option(26, ipv6_prefix + preferred_lifetime + valid_lifetime)
+                                    length = '%02x' % (int(prefix.LENGTH))
+                                    ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
 
                                 if not ia_prefixes == '':
                                     #
@@ -1677,8 +1792,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         t2 = '%08x' % (int(cfg.T2))
 
                                     response_ascii += build_option(25, Transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
+
                                 # options in answer to be logged
                                 options_answer.append(25)
+
                             except Exception:
                                 # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                                 response_ascii += build_option(13, '%04x' % (6))
@@ -1791,7 +1908,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_ascii += build_option(13, '%04x' % (2))
                         # options in answer to be logged
-                        options_answer.append(3)
+                        options_answer.append(13)
 
                         # log warning message about unavailable addresses
                         log.warning('REPLY | No addresses available | TransactionID: %s | ClientLLIP: %s' % \

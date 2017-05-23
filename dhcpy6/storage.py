@@ -70,6 +70,7 @@ class Store(object):
         self.CollectedMACs = CollectedMACs
         # table names used for database storage - MySQL additionally needs the database name
         self.table_leases = 'leases'
+        self.table_prefixes = 'prefixes'
         self.table_macs_llips = 'macs_llips'
         self.table_hosts = 'hosts'
         # flag to check if connection is OK
@@ -110,14 +111,13 @@ class Store(object):
         return self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
 
 
-    def store_lease(self, transaction_id):
+    def store_into_database(self, transaction_id):
         '''
             store lease in lease DB
         '''
         # only if client exists
         if self.Transactions[transaction_id].Client:           
             for a in self.Transactions[transaction_id].Client.Addresses:
-
                 if not a.ADDRESS is None:
                     query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
                     answer = self.query(query)
@@ -180,6 +180,71 @@ class Store(object):
                                      (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType,
                                       a.ADDRESS)
                             self.query(query)
+
+            for p in self.Transactions[transaction_id].Client.Prefixes:
+                if not p.PREFIX is None:
+                    query = "SELECT prefix FROM %s WHERE prefix = '%s'" % (self.table_prefixes, p.PREFIX)
+                    answer = self.query(query)
+                    if answer != None:
+                        # if address is not leased yet add it
+                        if len(answer) == 0:
+                            now = int(time.time())
+                            query = "INSERT INTO %s (prefix, length, active, last_message, preferred_lifetime, valid_lifetime,\
+                                     hostname, type, category, class, mac, duid, iaid, last_update,\
+                                     preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',\
+                                     '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
+                                  (self.table_prefixes,
+                                   p.PREFIX,
+                                   p.LENGTH,
+                                   1,
+                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   p.PREFERRED_LIFETIME,
+                                   p.VALID_LIFETIME,
+                                   self.Transactions[transaction_id].Client.Hostname,
+                                   p.TYPE,
+                                   p.CATEGORY,
+                                   self.Transactions[transaction_id].Client.Class,
+                                   self.Transactions[transaction_id].MAC,
+                                   self.Transactions[transaction_id].DUID,
+                                   self.Transactions[transaction_id].IAID,
+                                   now,
+                                   now + int(p.PREFERRED_LIFETIME),
+                                   now + int(p.VALID_LIFETIME))
+                            self.query(query)
+                            del now
+                        # otherwise update it if not a random address
+                        elif p.CATEGORY != 'random':
+                            now = int(time.time())
+                            query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
+                                     valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
+                                     class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
+                                     last_update = '%s', preferred_until = '%s', valid_until = '%s'\
+                                     WHERE prefix = '%s'" % \
+                                  (self.table_prefixes,
+                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   p.PREFERRED_LIFETIME,
+                                   p.VALID_LIFETIME,
+                                   self.Transactions[transaction_id].Client.Hostname,
+                                   p.TYPE,
+                                   p.CATEGORY,
+                                   self.Transactions[transaction_id].Client.Class,
+                                   self.Transactions[transaction_id].MAC,
+                                   self.Transactions[transaction_id].DUID,
+                                   self.Transactions[transaction_id].IAID,
+                                   now,
+                                   now + int(p.PREFERRED_LIFETIME),
+                                   now + int(p.VALID_LIFETIME),
+                                   p.PREFIX)
+                            self.query(query)
+                            del now
+                        else:
+                            # set last message type of random address
+                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
+                                     (self.table_prefixes, self.Transactions[transaction_id].LastMessageReceivedType,
+                                      p.PREFIX)
+                            self.query(query)
+
+
 
             return True
         # if no client -> False
@@ -276,9 +341,9 @@ class Store(object):
         # attributes to identify host and lease
         query = "SELECT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
                  AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
-                (self.table_leases, address,\
-                 self.Transactions[transaction_id].MAC,\
-                 self.Transactions[transaction_id].DUID,\
+                (self.table_leases, address,
+                 self.Transactions[transaction_id].MAC,
+                 self.Transactions[transaction_id].DUID,
                  self.Transactions[transaction_id].IAID)
         return self.query(query)
 
@@ -292,18 +357,39 @@ class Store(object):
                  AND active = 1\
                  AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                  AND category = '%s' AND type = '%s'" % \
-                (self.table_leases,\
-                 self.Transactions[transaction_id].MAC,\
-                 self.Transactions[transaction_id].DUID,\
-                 self.Transactions[transaction_id].IAID,\
-                 category,\
+                (self.table_leases,
+                 self.Transactions[transaction_id].MAC,
+                 self.Transactions[transaction_id].DUID,
+                 self.Transactions[transaction_id].IAID,
+                 category,
                  atype)
-        lease = self.query(query)
-        if len(lease) == 0:
-            lease = False 
+        result = self.query(query)
+        if len(result) == 0:
+            return(False)
         else:
-            lease = lease[0][0]
-	    return lease
+            return(result[0][0])
+
+
+    def check_advertised_prefix(self, transaction_id='', category='', ptype=''):
+        '''
+            check if there is already an advertised prefix for client
+        '''
+        # attributes to identify host and lease
+        query = "SELECT address FROM %s WHERE last_message = 1\
+                 AND active = 1\
+                 AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
+                 AND category = '%s' AND type = '%s'" % \
+                (self.table_leases,
+                 self.Transactions[transaction_id].MAC,
+                 self.Transactions[transaction_id].DUID,
+                 self.Transactions[transaction_id].IAID,
+                 category,
+                 ptype)
+        result = self.query(query)
+        if len(result) == 0:
+            return(False)
+        else:
+            return(result[0][0])
 
 
     def release_free_leases(self, timestamp=int(time.time())):
@@ -541,8 +627,6 @@ class Store(object):
                     if update_type == 'mysql':
                         for table in db_tables:
                             for column in db_tables[table]:
-                                #self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint{2}'.format(table, column, not_null[update_type]))
-                                #print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint{2} succeeded'.format(table, column, not_null[update_type])
                                 self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL'.format(table, column))
                                 print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL succeeded'.format(table, column)
                         # get old timestamps
@@ -577,7 +661,6 @@ class Store(object):
                         for table in db_tables:
                             for column in db_tables[table]:
                                 self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
-                                #self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT{2}'.format(table, column, not_null[update_type]))
                                 self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
                                 print 'Moving column {0} of table {1} succeeded'.format(column, table)
 
@@ -597,13 +680,6 @@ class Store(object):
                             for column in db_tables[table]:
                                 self.query('ALTER TABLE {0} ADD COLUMN {1} bigint'.format(table, column))
 
-                        """
-                            for column in db_tables[table]:
-                                #self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint{2}'.format(table, column, not_null[update_type]))
-                                #print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint{2} succeeded'.format(table, column, not_null[update_type])
-                                self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint'.format(table, column))
-                                print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint succeeded'.format(table, column)
-                        """
                         # get old timestamps
                         timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases_old')
                         for timestamp_old in timestamps_old:
@@ -633,14 +709,8 @@ class Store(object):
                                                 "WHERE mac = '{1}'".format(last_update_new,
                                                                            mac))
                         print 'Converting timestamps of macs_llips succeeded'
-                        """
-                        for table in db_tables:
-                            for column in db_tables[table]:
-                                self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
-                                #self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT{2}'.format(table, column, not_null[update_type]))
-                                self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT'.format(table, column))
-                                print 'Moving column {0} of table {1} succeeded'.format(column, table)
-                        """
+
+
 class SQLite(Store):
     '''
         file-based SQLite database, might be an option for single installations

@@ -213,8 +213,8 @@ class Config(object):
                                           prange='1000-1fff',
                                           category='range',
                                           length=32,
-                                          preferred_lifetime=0,
-                                          valid_lifetime=0)
+                                          preferred_lifetime=3600,
+                                          valid_lifetime=5400)
 
         self.CLASSES['default'] = Class()
         self.CLASSES['default'].ADDRESSES.append('default')
