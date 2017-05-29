@@ -7,7 +7,7 @@ dhcpy6d (0.5-1) unstable; urgency=medium
     + Added category 'dns' for DNS-based IP-address retrieval
     + Systemd integration
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 17 May 2017 12:30:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 29 May 2017 10:00:00 +0200
 
 dhcpy6d (0.4.3-1) unstable; urgency=medium
 
