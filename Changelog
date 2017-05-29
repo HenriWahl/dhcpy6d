@@ -1,5 +1,13 @@
 Changelog for dhcpy6d
 
+2017-05-29 0.5
+
+    Allow using PostgreSQL database for volatile and config storage
+    Added category 'dns' for DNS-based IP-address retrieval
+    Reply CONFIRM requests with NotOnLink to force clients to get new address
+    Added --prefix option to be used for dynamic prefixes
+    Systemd integration
+
 2016-01-05 0.4.3
 
     autocommit to MySQL
