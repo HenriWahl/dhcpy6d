@@ -273,6 +273,28 @@ class Store(object):
 
 
     @clean_query_answer
+    def get_range_prefix_for_recycling(self, prefix='', length='', frange='', trange='', duid='', mac=''):
+        '''
+            ask DB for last known prefixes of an already known host to be recycled
+            this is most useful for CONFIRM-requests that will get a not-available-answer but get an
+            ADVERTISE with the last known-as-good address for a client
+            SOLICIT message type is 1
+        '''
+        query = "SELECT prefix FROM %s WHERE "\
+                "category = 'range' AND "\
+                "'%s' <= address AND "\
+                "address <= '%s' AND "\
+                "length = '%s' AND"\
+                "duid = '%s' AND "\
+                "mac = '%s' AND "\
+                "last_message != 1 "\
+                "ORDER BY last_update DESC LIMIT 1" %\
+                (self.table_prefixes, prefix+frange, prefix+trange, length, duid, mac)
+
+        return self.query(query)
+
+
+    @clean_query_answer
     def get_highest_range_lease(self, prefix='', frange='', trange=''):
         '''
             ask DB for highest known leases - if necessary range sensitive
@@ -285,14 +307,31 @@ class Store(object):
 
 
     @clean_query_answer
-    def get_oldest_inactive_range_lease(self, prefix='', frange='', trange=''):
+    def get_highest_range_prefix(self, prefix='', length='', frange='', trange=''):
         '''
-            ask DB for oldest known inactive lease to minimize chance of collisions
+            ask DB for highest known prefix - if necessary range sensitive
+        '''
+        query = "SELECT address FROM %s WHERE active = 1 AND "\
+                "category = 'range' AND "\
+                "'%s' <= address AND address <= '%s' AND "\
+                "length = '%s' "\
+                "ORDER BY address DESC LIMIT 1" %\
+                (self.table_prefixes, prefix+frange, prefix+trange, length)
+        return self.query(query)
+
+
+    @clean_query_answer
+    def get_oldest_inactive_range_prefix(self, prefix='', length='', frange='', trange=''):
+        '''
+            ask DB for oldest known inactive prefix to minimize chance of collisions
             ordered by valid_until to get leases that are free as long as possible
         '''
-        query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
-                "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
-                (self.table_leases, prefix+frange, prefix+trange)
+        query = "SELECT address FROM %s WHERE active = 0 AND " \
+                "category = 'range' AND "\
+                "'%s' <= address AND address <= '%s' AND" \
+                "length = '%s' "\
+                "ORDER BY valid_until ASC LIMIT 1" %\
+                (self.table_leases, prefix+frange, prefix+trange, length)
         return self.query(query)
 
         
@@ -324,13 +363,32 @@ class Store(object):
         self.query(query)
 
 
+    def release_prefix(self, prefix):
+        '''
+            release a prefix via setting its active flag to False
+            set last_message to 8 because of RELEASE messages having this message id
+        '''
+        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE prefix = '%s'" % (self.table_prefixes, int(time.time()), prefix)
+        self.query(query)
+
+
     @clean_query_answer
     def check_number_of_leases(self, prefix='', frange='', trange=''):
         '''
             check how many leases are stored - used to find out if address range has been exceeded
         '''
-        query = "SELECT COUNT(address) FROM leases WHERE address LIKE '%s%%' AND "\
-                "'%s' <= address AND address <= '%s'" % (prefix, prefix+frange, prefix+trange)
+        query = "SELECT COUNT(address) FROM %s WHERE address LIKE '%s%%' AND "\
+                "'%s' <= address AND address <= '%s'" % (self.table_prefixes, prefix, prefix+frange, prefix+trange)
+        return self.query(query)
+
+
+    @clean_query_answer
+    def check_number_of_prefixes(self, prefix='', frange='', trange=''):
+        '''
+            check how many leases are stored - used to find out if address range has been exceeded
+        '''
+        query = "SELECT COUNT(prefix) FROM %s WHERE prefix LIKE '%s%%' AND "\
+                "'%s' <= prefix AND prefix <= '%s'" % (self.table_prefixes, prefix, prefix+frange, prefix+trange)
         return self.query(query)
 
 
@@ -364,10 +422,13 @@ class Store(object):
                  category,
                  atype)
         result = self.query(query)
-        if len(result) == 0:
-            return(False)
+        if result != None:
+            if len(result) == 0:
+                return(False)
+            else:
+                return(result[0][0])
         else:
-            return(result[0][0])
+            return(False)
 
 
     def check_advertised_prefix(self, transaction_id='', category='', ptype=''):
@@ -375,21 +436,24 @@ class Store(object):
             check if there is already an advertised prefix for client
         '''
         # attributes to identify host and lease
-        query = "SELECT address FROM %s WHERE last_message = 1\
+        query = "SELECT prefix, length FROM %s WHERE last_message = 1\
                  AND active = 1\
                  AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                  AND category = '%s' AND type = '%s'" % \
-                (self.table_leases,
+                (self.table_prefixes,
                  self.Transactions[transaction_id].MAC,
                  self.Transactions[transaction_id].DUID,
                  self.Transactions[transaction_id].IAID,
                  category,
                  ptype)
         result = self.query(query)
-        if len(result) == 0:
-            return(False)
+        if result != None:
+            if len(result) == 0:
+                return(False)
+            else:
+                return(result[0][0])
         else:
-            return(result[0][0])
+            return(False)
 
 
     def release_free_leases(self, timestamp=int(time.time())):
@@ -398,7 +462,6 @@ class Store(object):
         '''
         query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
         return self.query(query)
-
 
     def remove_leases(self, category="random", timestamp=int(time.time())):
         '''
@@ -415,6 +478,15 @@ class Store(object):
             let's say a client should have requested its formerly advertised address after 1 minute
         '''
         query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + 60)
+        return self.query(query)
+
+
+    def unlock_unused_advertised_prefixes(self, timestamp=int(time.time())):
+        '''
+            unlock prefixes marked as advertised but apparently never been delivered
+            let's say a client should have requested its formerly advertised address after 1 minute
+        '''
+        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_prefixes, timestamp + 60)
         return self.query(query)
 
 
@@ -739,7 +811,8 @@ class SQLite(Store):
                 storage = self.cfg.STORE_SQLITE_VOLATILE
                 # set ownership of storage file according to settings
                 os.chown(self.cfg.STORE_SQLITE_VOLATILE, pwd.getpwnam(self.cfg.USER).pw_uid, grp.getgrnam(self.cfg.GROUP).gr_gid)
-            if storage_type == 'config': storage = self.cfg.STORE_SQLITE_CONFIG
+            if storage_type == 'config':
+                storage = self.cfg.STORE_SQLITE_CONFIG
             self.connection = sqlite3.connect(storage, check_same_thread = False)
             self.cursor = self.connection.cursor()
             self.connected = True                       
