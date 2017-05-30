@@ -1484,6 +1484,9 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     for a in Transactions[transaction_id].Addresses:
                                         # free lease
                                         volatilestore.release_lease(a)
+                                    for p in Transactions[transaction_id].Prefixes:
+                                        # free prefix
+                                        volatilestore.release_prefix(p)
                                     # send status code option (type 13) with success (type 0)
                                     self.build_response(7, transaction_id, [13], status=0)
 
