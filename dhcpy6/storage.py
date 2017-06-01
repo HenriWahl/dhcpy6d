@@ -243,9 +243,6 @@ class Store(object):
                                      (self.table_prefixes, self.Transactions[transaction_id].LastMessageReceivedType,
                                       p.PREFIX)
                             self.query(query)
-
-
-
             return True
         # if no client -> False
         return False
@@ -282,15 +279,19 @@ class Store(object):
         '''
         query = "SELECT prefix FROM %s WHERE "\
                 "category = 'range' AND "\
-                "'%s' <= address AND "\
-                "address <= '%s' AND "\
-                "length = '%s' AND"\
+                "'%s' <= prefix AND "\
+                "prefix <= '%s' AND "\
+                "length = '%s' AND "\
                 "duid = '%s' AND "\
                 "mac = '%s' AND "\
                 "last_message != 1 "\
                 "ORDER BY last_update DESC LIMIT 1" %\
-                (self.table_prefixes, prefix+frange, prefix+trange, length, duid, mac)
-
+                (self.table_prefixes,
+                 prefix+frange+((128-int(length))/4)*'0',
+                 prefix+trange+((128-int(length))/4)*'0',
+                 length,
+                 duid,
+                 mac)
         return self.query(query)
 
 
@@ -302,7 +303,9 @@ class Store(object):
         query = "SELECT address FROM %s WHERE active = 1 AND "\
                 "category = 'range' AND "\
                 "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
-                (self.table_leases, prefix+frange, prefix+trange)
+                (self.table_leases,
+                 prefix+frange,
+                 prefix+trange)
         return self.query(query)
 
 
@@ -311,12 +314,29 @@ class Store(object):
         '''
             ask DB for highest known prefix - if necessary range sensitive
         '''
-        query = "SELECT address FROM %s WHERE active = 1 AND "\
+        query = "SELECT prefix FROM %s WHERE active = 1 AND "\
                 "category = 'range' AND "\
-                "'%s' <= address AND address <= '%s' AND "\
+                "'%s' <= prefix AND prefix <= '%s' AND "\
                 "length = '%s' "\
-                "ORDER BY address DESC LIMIT 1" %\
-                (self.table_prefixes, prefix+frange, prefix+trange, length)
+                "ORDER BY prefix DESC LIMIT 1" %\
+                (self.table_prefixes,
+                    prefix+frange+((128-int(length))/4)*'0',
+                    prefix+trange+((128-int(length))/4)*'0',
+                    length)
+        return self.query(query)
+
+
+    @clean_query_answer
+    def get_oldest_inactive_range_lease(self, prefix='', frange='', trange=''):
+        '''
+            ask DB for oldest known inactive lease to minimize chance of collisions
+            ordered by valid_until to get leases that are free as long as possible
+        '''
+        query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
+                "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
+                (self.table_leases,
+                 prefix+frange,
+                 prefix+trange)
         return self.query(query)
 
 
@@ -326,12 +346,15 @@ class Store(object):
             ask DB for oldest known inactive prefix to minimize chance of collisions
             ordered by valid_until to get leases that are free as long as possible
         '''
-        query = "SELECT address FROM %s WHERE active = 0 AND " \
+        query = "SELECT prefix FROM %s WHERE active = 0 AND " \
                 "category = 'range' AND "\
-                "'%s' <= address AND address <= '%s' AND" \
+                "'%s' <= prefix AND prefix <= '%s' AND" \
                 "length = '%s' "\
                 "ORDER BY valid_until ASC LIMIT 1" %\
-                (self.table_leases, prefix+frange, prefix+trange, length)
+                (self.table_leases,
+                 prefix+frange+((128-int(length))/4)*'0',
+                 prefix+trange+((128-int(length))/4)*'0',
+                 length)
         return self.query(query)
 
         
@@ -378,7 +401,10 @@ class Store(object):
             check how many leases are stored - used to find out if address range has been exceeded
         '''
         query = "SELECT COUNT(address) FROM %s WHERE address LIKE '%s%%' AND "\
-                "'%s' <= address AND address <= '%s'" % (self.table_prefixes, prefix, prefix+frange, prefix+trange)
+                "'%s' <= address AND address <= '%s'" % (self.table_prefixes,
+                                                         prefix,
+                                                         prefix+frange,
+                                                         prefix+trange)
         return self.query(query)
 
 
@@ -388,7 +414,10 @@ class Store(object):
             check how many leases are stored - used to find out if address range has been exceeded
         '''
         query = "SELECT COUNT(prefix) FROM %s WHERE prefix LIKE '%s%%' AND "\
-                "'%s' <= prefix AND prefix <= '%s'" % (self.table_prefixes, prefix, prefix+frange, prefix+trange)
+                "'%s' <= prefix AND prefix <= '%s'" % (self.table_prefixes,
+                                                       prefix,
+                                                       prefix+frange+((128-int(length))/4)*'0',
+                                                       prefix+trange+((128-int(length))/4)*'0')
         return self.query(query)
 
 
