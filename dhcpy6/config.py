@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-import sys 
+import sys
 import ConfigParser
 import stat
 import os.path
@@ -65,7 +65,7 @@ def generate_duid():
 
 class Config(object):
     '''
-      general settings  
+      general settings
     '''
 
     def __init__(self):
@@ -106,7 +106,7 @@ class Config(object):
         self.T1 = '2700'
         # T2 REBIND
         self.T2 = '4050'
-        
+
         # Server Preference
         self.SERVER_PREFERENCE = '255'
 
@@ -116,7 +116,7 @@ class Config(object):
         # INFORMATION REFRESH TIME option 32 for option 11 (INFORMATION REQUEST)
         # see RFC http://tools.ietf.org/html/rfc4242
         self.INFORMATION_REFRESH_TIME = '6000'
-        
+
         # config type
         # one of file, mysql, sqlite or none
         self.STORE_CONFIG = 'none'
@@ -125,13 +125,13 @@ class Config(object):
 
         # file for client information
         self.STORE_FILE_CONFIG = 'clients.conf'
-        
+
         # DB data
         self.STORE_DB_HOST = 'localhost'
         self.STORE_DB_DB = 'dhcpy6d'
         self.STORE_DB_USER = 'user'
         self.STORE_DB_PASSWORD = 'password'
-        
+
         self.STORE_SQLITE_CONFIG = 'config.sqlite'
         self.STORE_SQLITE_VOLATILE = 'volatile.sqlite'
 
@@ -144,10 +144,10 @@ class Config(object):
         self.DNS_TTL = 86400
         self.DNS_RNDC_KEY = 'rndc-key'
         self.DNS_RNDC_SECRET = '0000000000000000000000000000000000000000000000000000000000000'
-        # DNS RFC 4704 client DNS wishes          
+        # DNS RFC 4704 client DNS wishes
         # use client supplied hostname
         self.DNS_USE_CLIENT_HOSTNAME = 'False'
-        # ignore client ideas about DNS (if at all, what name to use, self-updating...) 
+        # ignore client ideas about DNS (if at all, what name to use, self-updating...)
         self.DNS_IGNORE_CLIENT = 'True'
 
         # Log ot not
@@ -170,27 +170,27 @@ class Config(object):
 
         # Log newly found MAC addresses - if CACHE_MAC_LLIP is false this might be way too much
         self.LOG_MAC_LLIP = 'False'
-        
+
         # some 128 bits
         self.AUTHENTICATION_INFORMATION = '00000000000000000000000000000000'
-        
-        # for debugging - if False nothing is done 
+
+        # for debugging - if False nothing is done
         self.REALLY_DO_IT = 'False'
-        
+
         # interval for TidyUp thread - time to sleep in TidyUpThread
         self.CLEANING_INTERVAL = 5
-        
+
         # Address and class schemes
         self.ADDRESSES = dict()
         self.CLASSES = dict()
         self.PREFIXES = dict()
-        
+
         self.IDENTIFICATION = 'mac'
         self.IDENTIFICATION_MODE = 'match_all'
-        
+
         # regexp filters for hostnames etc.
         self.FILTERS = {'mac':[], 'duid':[], 'hostname':[]}
-        
+
         # define a fallback default class and address scheme
         self.ADDRESSES['default'] = Address(ia_type='na',
                                             category='mac',
@@ -272,7 +272,7 @@ class Config(object):
         # read config at once
         self.read_config(configfile)
 
-                   
+
     def read_config(self, configfile):
         '''
             read configuration from file, should work with included files too - at least this is the plan
@@ -348,6 +348,14 @@ class Config(object):
                             for prefix in lex:
                                 if len(prefix) > 0:
                                     self.CLASSES[section.lower().split('class_')[1]].PREFIXES.append(prefix)
+                        elif item[0].upper() == 'ADVERTISE':
+                            # strip whitespace and separators of advertised IAs
+                            lex = shlex.shlex(item[1])
+                            lex.whitespace = WHITESPACE
+                            lex.wordchars += ':.'
+                            for advertise in lex:
+                                if len(advertise) > 0:
+                                    self.CLASSES[section.lower().split('class_')[1]].ADVERTISE.append(advertise)
                         elif item[0].upper() == 'INTERFACE':
                             # strip whitespace and separators of interfaces
                             lex = shlex.shlex(item[1])
@@ -417,10 +425,12 @@ class Config(object):
             else:
                 # use general setting if none specified
                 c.INTERFACE = self.INTERFACE
-
             # use default T1 and T2 if not defined
             if c.T1 == 0: c.T1 = self.T1
             if c.T2 == 0: c.T2 = self.T2
+            # check advertised IA types - if empty default to ['addresses']
+            if len(c.ADVERTISE) == 0:
+                c.ADVERTISE = ['addresses']
 
         # set type properties for addresses
         for a in self.ADDRESSES:
@@ -664,6 +674,9 @@ class Config(object):
                 if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                     error_exit("%s Interface '%s' is invalid." % (msg_prefix, i))
 
+            # check advertised IA types
+            # .... to come
+
             # check nameserver to be given to client
             for nameserver in self.CLASSES[c].NAMESERVER:
                 try:
@@ -899,4 +912,6 @@ class Class(object):
         # of hosts should get IPv6 addresses and others not. They will get a 'NoAddrsAvail' response if this option
         # is set to 'noaddress' or no answer at all if set to 'none'
         self.ANSWER = 'normal'
-
+        # which IA_* should this class supply - addresses, prefixes or both?
+        # shouldn't be an empty list because the class would not make sense at all
+        self.ADVERTISE = list()
