@@ -106,9 +106,8 @@ class Store(object):
     @clean_query_answer
     def get_db_version(self):
         '''
-           get database scheme version 
         '''
-        return self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
+        return(self.query("SELECT item_value FROM meta WHERE item_key = 'version'"))
 
 
     def store_into_database(self, transaction_id):
@@ -811,6 +810,55 @@ class Store(object):
                                                                            mac))
                         print 'Converting timestamps of macs_llips succeeded'
 
+        # Extend volatile database to handle prefixes - comes with database version 2
+        if int(self.get_db_version()) < 2:
+            if self.cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
+                self.query('CREATE TABLE prefixes (\
+                              prefix varchar(32) NOT NULL,\
+                              length tinyint(4) NOT NULL,\
+                              active tinyint(4) NOT NULL,\
+                              preferred_lifetime int(11) NOT NULL,\
+                              valid_lifetime int(11) NOT NULL,\
+                              hostname varchar(255) NOT NULL,\
+                              type varchar(255) NOT NULL,\
+                              category varchar(255) NOT NULL,\
+                              class varchar(255) NOT NULL,\
+                              mac varchar(17) NOT NULL,\
+                              duid varchar(255) NOT NULL,\
+                              last_update bigint NOT NULL,\
+                              preferred_until bigint NOT NULL,\
+                              valid_until bigint NOT NULL,\
+                              iaid varchar(8) DEFAULT NULL,\
+                              last_message int(11) NOT NULL DEFAULT 0,\
+                              PRIMARY KEY (prefix)\
+                            )')
+
+            elif self.cfg.STORE_VOLATILE == 'postgresql':
+                self.query('CREATE TABLE prefixes (\
+                              prefix varchar(32) NOT NULL,\
+                              length smallint NOT NULL,\
+                              active smallint NOT NULL,\
+                              preferred_lifetime int NOT NULL,\
+                              valid_lifetime int NOT NULL,\
+                              hostname varchar(255) NOT NULL,\
+                              type varchar(255) NOT NULL,\
+                              category varchar(255) NOT NULL,\
+                              class varchar(255) NOT NULL,\
+                              mac varchar(17) NOT NULL,\
+                              duid varchar(255) NOT NULL,\
+                              last_update bigint NOT NULL,\
+                              preferred_until bigint NOT NULL,\
+                              valid_until bigint NOT NULL,\
+                              iaid varchar(8) DEFAULT NULL,\
+                              last_message int NOT NULL DEFAULT 0,\
+                              PRIMARY KEY (prefix)\
+                            )')
+
+            # increase version to 2
+            self.query("UPDATE meta SET item_value='2' WHERE item_key='version'")
+
+            # All OK
+            print "Adding table 'prefixes' succeeded"
 
 class SQLite(Store):
     '''

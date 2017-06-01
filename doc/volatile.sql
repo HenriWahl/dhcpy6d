@@ -51,4 +51,4 @@ CREATE TABLE meta (
   PRIMARY KEY (item_key)
 );
 
-INSERT INTO meta (item_key, item_value) VALUES ('version', '1');
+INSERT INTO meta (item_key, item_value) VALUES ('version', '2');
