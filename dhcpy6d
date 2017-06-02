@@ -1786,19 +1786,17 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     length = '%02x' % (int(prefix.LENGTH))
                                     ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
 
-                                if not ia_prefixes == '':
-                                    #
-                                    # todo: default clients sometimes seem to have class ''
-                                    #
-                                    if Transactions[transaction_id].Client.Class != '':
-                                        t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
-                                        t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
-                                    else:
-                                        t1 = '%08x' % (int(cfg.T1))
-                                        t2 = '%08x' % (int(cfg.T2))
-
-                                    response_ascii += build_option(25, Transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
+                                if Transactions[transaction_id].Client.Class != '':
+                                    t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
+                                    t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
                                 else:
+                                    t1 = '%08x' % (int(cfg.T1))
+                                    t2 = '%08x' % (int(cfg.T2))
+
+                                # even if there anre no prefixes server has to deliver an empty PD
+                                response_ascii += build_option(25, Transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
+                                # if no prefixes available a NoPrefixAvail status code has to be sent
+                                if ia_prefixes == '':
                                     # if class advertises no prefixes tell client
                                     # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                                     response_ascii += build_option(13, '%04x' % (6))
