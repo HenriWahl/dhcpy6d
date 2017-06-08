@@ -38,8 +38,8 @@ class QueryQueue(threading.Thread):
         self.query_queue = query_queue
         self.answer_queue = answer_queue
         self.store = store
-        self.setDaemon(1) 
-        
+        self.setDaemon(1)
+
 
     def run(self):
         '''
@@ -56,8 +56,8 @@ class QueryQueue(threading.Thread):
                 answer = ''
 
             self.answer_queue.put(answer)
-            
-    
+
+
 class Store(object):
     '''
         abstract class to present MySQL or SQLlite
@@ -115,7 +115,7 @@ class Store(object):
             store lease in lease DB
         '''
         # only if client exists
-        if self.Transactions[transaction_id].Client:           
+        if self.Transactions[transaction_id].Client:
             for a in self.Transactions[transaction_id].Client.Addresses:
                 if not a.ADDRESS is None:
                     query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
@@ -356,13 +356,13 @@ class Store(object):
                  length)
         return self.query(query)
 
-        
+
     def get_host_lease(self, address):
         '''
             get the hostname, DUID, MAC and IAID to verify a lease to delete its address in the DNS
         '''
         query = "SELECT DISTINCT hostname, duid, mac, iaid FROM leases WHERE address='%s'" % (address)
-        answer = self.query(query)       
+        answer = self.query(query)
         if answer != None:
             if len(answer)>0:
                 if len(answer[0]) > 0:
@@ -428,6 +428,22 @@ class Store(object):
         query = "SELECT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
                  AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
                 (self.table_leases, address,
+                 self.Transactions[transaction_id].MAC,
+                 self.Transactions[transaction_id].DUID,
+                 self.Transactions[transaction_id].IAID)
+        return self.query(query)
+
+
+    def check_prefix(self, prefix, length, transaction_id):
+        '''
+            check state of a prefix for REBIND and RENEW messages
+        '''
+        # attributes to identify host and lease
+        query = "SELECT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
+                 AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
+                (self.table_prefixes,
+                 prefix,
+                 length,
                  self.Transactions[transaction_id].MAC,
                  self.Transactions[transaction_id].DUID,
                  self.Transactions[transaction_id].IAID)
@@ -529,10 +545,10 @@ class Store(object):
                      self.Transactions[transaction_id].Hostname,\
                      self.Transactions[transaction_id].MAC,\
                      self.Transactions[transaction_id].DUID)
-            answer = self.query(query)      
+            answer = self.query(query)
 
-            # add client config which seems to fit to transaction 
-            self.Transactions[transaction_id].ClientConfigDB = ClientConfigDB()  
+            # add client config which seems to fit to transaction
+            self.Transactions[transaction_id].ClientConfigDB = ClientConfigDB()
 
             # read all sections of config file
             # a section here is a host
@@ -561,7 +577,7 @@ class Store(object):
                             self.Transactions[transaction_id].ClientConfigDB.IndexMAC[m] = [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
                         else:
                             self.Transactions[transaction_id].ClientConfigDB.IndexMAC[m].append(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname])
-                            
+
                 # add DUIDs to IndexDUID
                 if not self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID == '':
                     if not self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID in self.Transactions[transaction_id].ClientConfigDB.IndexDUID:
@@ -572,21 +588,21 @@ class Store(object):
                 # some cleaning
                 del host, mac, duid, address, aclass, id
 
-                                  
+
     def get_client_config_by_mac(self, transaction_id):
         '''
             get host and its information belonging to that mac
         '''
         hosts = list()
         mac = self.Transactions[transaction_id].MAC
-        
+
         if mac in self.Transactions[transaction_id].ClientConfigDB.IndexMAC:
             hosts.extend(self.Transactions[transaction_id].ClientConfigDB.IndexMAC[mac])
             return hosts
         else:
             return None
-        
-        
+
+
     def get_client_config_by_duid(self, transaction_id):
         '''
             get host and its information belonging to that DUID
@@ -594,14 +610,14 @@ class Store(object):
         # get client config that most probably seems to fit
         hosts = list()
         duid = self.Transactions[transaction_id].DUID
-        
+
         if duid in self.Transactions[transaction_id].ClientConfigDB.IndexDUID:
             hosts.extend(self.Transactions[transaction_id].ClientConfigDB.IndexDUID[duid])
             return hosts
         else:
             return None
-        
-        
+
+
     def get_client_config_by_hostname(self, transaction_id):
         '''
             get host and its information by hostname
@@ -611,14 +627,14 @@ class Store(object):
             return [self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
         else:
             return None
-        
-        
+
+
     def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], id=''):
         '''
             give back ClientConfig object
         '''
         return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
-        
+
 
     def store_mac_llip(self, mac, link_local_ip):
         '''
@@ -634,8 +650,8 @@ class Store(object):
         else:
             query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, int(time.time()), mac)
             self.query(query)
-                    
-                    
+
+
     def CollectMACsFromDB(self):
         '''
             collect all known MACs and link local addresses from database at startup
@@ -644,7 +660,7 @@ class Store(object):
         query = 'SELECT link_local_ip, mac FROM %s' % (self.table_macs_llips)
         answer = self.query(query)
         if answer:
-            for m in answer:               
+            for m in answer:
                 try:
                     # m[0] is LLIP, m[1] is the matching MAC
                     # interface is ignored and timestamp comes with instance of NeighborCacheRecord()
@@ -655,8 +671,8 @@ class Store(object):
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()
                     return None
-                
-        
+
+
     def DBQuery(self, query):
         '''
             no not execute query on DB - dummy
@@ -867,22 +883,22 @@ class SQLite(Store):
     def __init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs, storage_type='volatile'):
 
         Store.__init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs)
-        self.connection = None     
-        
+        self.connection = None
+
         try:
             self.DBConnect(storage_type)
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
 
-        
+
     def DBConnect(self, storage_type='volatile'):
         '''
             Initialize DB connection
         '''
 
         import sqlite3
-        
+
         try:
             if storage_type == 'volatile':
                 storage = self.cfg.STORE_SQLITE_VOLATILE
@@ -892,19 +908,19 @@ class SQLite(Store):
                 storage = self.cfg.STORE_SQLITE_CONFIG
             self.connection = sqlite3.connect(storage, check_same_thread = False)
             self.cursor = self.connection.cursor()
-            self.connected = True                       
+            self.connected = True
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             return None
-        
-        
+
+
     def DBQuery(self, query):
         '''
             execute query on DB
         '''
         try:
-            answer = self.cursor.execute(query)    
+            answer = self.cursor.execute(query)
             # commit only if explicitly wanted
             if query.startswith('INSERT'):
                 self.connection.commit()
@@ -916,8 +932,8 @@ class SQLite(Store):
             return None
 
         return answer.fetchall()
-    
-        
+
+
 class Textfile(Store):
     '''
         client config in text files
@@ -930,14 +946,14 @@ class Textfile(Store):
         self.Hosts = dict()
         self.IndexMAC = dict()
         self.IndexDUID = dict()
-        
+
         # store IDs for ID-based hosts to check if there are duplicates
         self.IDs = dict()
-        
-        # instantiate a Configparser 
+
+        # instantiate a Configparser
         config = ConfigParser.ConfigParser()
-        config.read(self.cfg.STORE_FILE_CONFIG)          
-        
+        config.read(self.cfg.STORE_FILE_CONFIG)
+
         # read all sections of config file
         # a section here is a host
         for section in config.sections():
@@ -948,7 +964,7 @@ class Textfile(Store):
                     self.Hosts[section].__setattr__(item[0].upper(), str(item[1]).lower())
                 else:
                     self.Hosts[section].__setattr__(item[0].upper(), str(item[1]))
-            
+
             # Test if host has ID
             if self.Hosts[section].CLASS in cfg.CLASSES:
                 for a in cfg.CLASSES[self.Hosts[section].CLASS].ADDRESSES:
@@ -956,13 +972,13 @@ class Textfile(Store):
                         error_exit("Textfile client configuration: No ID given for client '%s'" % (self.Hosts[section].HOSTNAME))
             else:
                 error_exit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.Hosts[section].CLASS, self.Hosts[section].HOSTNAME))
-                
+
             if self.Hosts[section].ID != '':
                 if self.Hosts[section].ID in self.IDs.keys():
                     error_exit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.Hosts[section].ID, self.Hosts[section].HOSTNAME, self.IDs[self.Hosts[section].ID]))
                 else:
                     self.IDs[self.Hosts[section].ID] = self.Hosts[section].HOSTNAME
-                    
+
             # in case of various MAC addresses split them...
             self.Hosts[section].MAC = listify_option(self.Hosts[section].MAC)
 
@@ -980,18 +996,18 @@ class Textfile(Store):
                         self.IndexMAC[m] = [self.Hosts[section]]
                     else:
                         self.IndexMAC[m].append(self.Hosts[section])
-                        
+
             # add DUIDs to IndexDUID
             if not self.Hosts[section].DUID == '':
                 if not self.Hosts[section].DUID in self.IndexDUID:
                     self.IndexDUID[self.Hosts[section].DUID] = [self.Hosts[section]]
                 else:
                     self.IndexDUID[self.Hosts[section].DUID].append(self.Hosts[section])
-        
+
         # not very meaningful in case of databaseless textfile config but for completeness
         self.connected = True
 
-    
+
     def get_client_config_by_mac(self, transaction_id):
         '''
             get host(s?) and its information belonging to that mac
@@ -1003,8 +1019,8 @@ class Textfile(Store):
             return hosts
         else:
             return None
-        
-        
+
+
     def get_client_config_by_duid(self, transaction_id):
         '''
             get host and its information belonging to that DUID
@@ -1016,8 +1032,8 @@ class Textfile(Store):
             return hosts
         else:
             return None
-        
-        
+
+
     def get_client_config_by_hostname(self, transaction_id):
         '''
             get host and its information by hostname
@@ -1027,15 +1043,15 @@ class Textfile(Store):
             return [self.Hosts[hostname]]
         else:
             return None
-        
-        
+
+
     def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], id=''):
         '''
             give back ClientConfig object
         '''
         return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
-            
-        
+
+
 class ClientConfig(object):
     '''
         static client settings object to be stuffed into Hosts dict of Textfile store
@@ -1058,7 +1074,7 @@ class ClientConfig(object):
         self.CLASS = aclass
         self.ID = id
         self.DUID = duid
-        
+
 
 class ClientConfigDB(object):
     '''
@@ -1069,13 +1085,13 @@ class ClientConfigDB(object):
         self.IndexMAC = dict()
         self.IndexDUID = dict()
 
-    
+
 class DB(Store):
     '''
         MySQL and PostgreSQL database interface
         for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
     '''
-    
+
     def __init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs):
         Store.__init__(self, cfg, query_queue, answer_queue, Transactions, CollectedMACs)
         self.connection = None
@@ -1126,8 +1142,8 @@ class DB(Store):
                 sys.stdout.flush()
                 self.connected = False
         return self.connected
-        
-        
+
+
     def DBQuery(self, query):
         try:
             self.cursor.execute(query)
