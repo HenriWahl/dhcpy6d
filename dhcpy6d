@@ -444,7 +444,7 @@ def build_client(transaction_id):
             if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
                 for prefix in Transactions[transaction_id].Prefixes:
                     # split prefix of prefix from length, separated by /
-                    prefix_prefix, prefix_length = prefix.split('/')
+                    prefix_prefix, prefix_length = split_prefix(prefix)
 
                     # check_prefix returns hostname, prefix, length, type, category, class, preferred_until of leased address
                     answer = volatilestore.check_prefix(prefix_prefix, prefix_length, transaction_id)
@@ -515,13 +515,14 @@ def build_client(transaction_id):
                 # important indent here, has to match for...addresses-loop!
                 # look for addresses in transaction that are invalid and add them
                 # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(x.PREFIX.split('/')[0]), client.Prefixes)):
-                    prefix, length = p.split('/')
+                for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
+                    prefix, length = split_prefix(p)
                     client.Prefixes.append(Prefix(prefix=prefix,
                                                   length=length,
                                                   valid=False,
                                                   preferred_lifetime=0,
                                                   valid_lifetime=0))
+                    del(prefix, length)
 
             return client
 
@@ -1287,10 +1288,11 @@ class Transaction(object):
                 for p in range(len(payload[32:])/50):
                     prefix = payload[50:][(p*58):(p*58)+32]
                     length = int(payload[48:][(p*58):(p*58)+2], 16)
+                    prefix_combined = compress_prefix(prefix, length)
                     # in case a prefix is asked for twice by one host ignore the twin
-                    if not (prefix, length) in self.Prefixes:
-                        self.Prefixes.append('{0}/{1}'.format(prefix, length))
-
+                    if not prefix_combined in self.Prefixes:
+                        self.Prefixes.append(prefix_combined)
+                    del(prefix, length, prefix_combined)
             self.IA_Option = 25
 
         # FQDN
@@ -1330,8 +1332,8 @@ class Transaction(object):
                 elif o == 'Prefixes':
                     option = 'Prefixes:'
                     for p in self.__dict__[o]:
-                        prefix, length = p.split('/')
-                        option += ' {0}/{1}'.format(colonify_ip6(prefix), length)
+                        prefix, length = split_prefix(p)
+                        option += compress_prefix(colonify_ip6(prefix), length)
                 elif o == 'ClientLLIP':
                     option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
                     optionsstring = optionsstring + ' | '  + option
@@ -1846,13 +1848,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
                                                                                     colonify_ip6(prefix.PREFIX)))
                                     if prefix.VALID == True:
-
-
                                         preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
                                         valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
-
-
-                                        
                                     else:
                                         preferred_lifetime = '%08x' % (0)
                                         valid_lifetime = '%08x' % (0)

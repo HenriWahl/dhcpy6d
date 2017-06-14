@@ -927,5 +927,5 @@ class Class(object):
         # is set to 'noaddress' or no answer at all if set to 'none'
         self.ANSWER = 'normal'
         # which IA_* should this class supply - addresses, prefixes or both?
-        # shouldn't be an empty list because the class would not make sense at all
+        # shouldn't be an empty list because in this case the class would not make sense at all
         self.ADVERTISE = list()

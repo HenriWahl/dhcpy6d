@@ -211,6 +211,20 @@ def colonify_ip6(address):
         return 'N/A'
 
 
+def compress_prefix(prefix, length):
+    '''
+        add prefix and length to 'prefix/length' string
+    '''
+    return '{0}/{1}'.format(prefix, length)
+
+
+def split_prefix(prefix):
+    '''
+        split prefix and length from 'prefix/length' notation
+    '''
+    return(prefix.split('/'))
+
+
 def error_exit(message='An error occured.', status=1):
     '''
         exit with given error message
