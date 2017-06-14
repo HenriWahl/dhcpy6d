@@ -156,6 +156,12 @@ IF_NUMBER = dict()
 # IA_NA, IA_TA and IA_PD Options referred here in handler
 IA_OPTIONS = (3, 4, 25)
 
+# used by build_client() to check if address has to be evaluated
+IA_ADDRESS_OPTIONS = (3, 4)
+
+# options to be ignored when logging
+IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'DUIDLLAddress', 'DUIDType', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old']
+
 # empty options string test
 EMPTY_OPTIONS = [None, False, '', []]
 
@@ -316,8 +322,8 @@ def build_client(transaction_id):
 
         # If client gave some addresses for RENEW or REBIND consider them
         if Transactions[transaction_id].LastMessageReceivedType in (5, 6) and\
-           not (len(Transactions[transaction_id].Addresses) == 0 and\
-                len(Transactions[transaction_id].Prefixes) == 0):
+            not (len(Transactions[transaction_id].Addresses) == 0 and\
+                 len(Transactions[transaction_id].Prefixes) == 0):
             if not client_config == None:
                 # give client hostname
                 client.Hostname = client_config.HOSTNAME
@@ -331,7 +337,8 @@ def build_client(transaction_id):
                 # apply answer type of client to transaction - useful if no answer or no address available is configured
                 Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
 
-            if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
+            if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+               Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
                 for address in Transactions[transaction_id].Addresses:
                     # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
                     answer = volatilestore.check_lease(address, transaction_id)
@@ -437,11 +444,13 @@ def build_client(transaction_id):
                 # look for addresses in transaction that are invalid and add them
                 # to client addresses with flag invalid and a RFC-compliant lifetime of 0
                 for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: decompress_ip6(x.ADDRESS), client.Addresses)):
-                    client.Addresses.append(Address(address=a, valid=False,
+                    client.Addresses.append(Address(address=a,
+                                                    valid=False,
                                                     preferred_lifetime=0,
                                                     valid_lifetime=0))
 
-            if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
+            if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+               Transactions[transaction_id].IA_Option == 25:
                 for prefix in Transactions[transaction_id].Prefixes:
                     # split prefix of prefix from length, separated by /
                     prefix_prefix, prefix_length = split_prefix(prefix)
@@ -513,16 +522,16 @@ def build_client(transaction_id):
                                                     client.Prefixes.append(ia)
 
                 # important indent here, has to match for...addresses-loop!
-                # look for addresses in transaction that are invalid and add them
-                # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
-                    prefix, length = split_prefix(p)
-                    client.Prefixes.append(Prefix(prefix=prefix,
-                                                  length=length,
-                                                  valid=False,
-                                                  preferred_lifetime=0,
-                                                  valid_lifetime=0))
-                    del(prefix, length)
+                # look for prefixes in transaction that are invalid and add them
+                # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
+                ###for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
+                ###    prefix, length = split_prefix(p)
+                ###    client.Prefixes.append(Prefix(prefix=prefix,
+                ###                                  length=length,
+                ###                                  valid=False,
+                ###                                  preferred_lifetime=0,
+                ###                                  valid_lifetime=0))
+                ###    del(prefix, length)
 
             return client
 
@@ -536,7 +545,9 @@ def build_client(transaction_id):
             # continue only if request interface matches class interfaces
             if Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                 # if fixed addresses are given build them
-                if not client_config.ADDRESS == None and 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
+                if not client_config.ADDRESS == None and \
+                   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
                     for address in client_config.ADDRESS:
                         if len(address) > 0:
                             # fixed addresses are assumed to be non-temporary
@@ -554,7 +565,8 @@ def build_client(transaction_id):
                             client.Addresses.append(ia)
 
                 if not client_config.CLASS == '':
-                    if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
+                    if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                       Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
                         # add all addresses which belong to that class
                         for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
                             # addresses of category 'dns' will be searched in DNS
@@ -577,7 +589,8 @@ def build_client(transaction_id):
                                              dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                                 client.Addresses.append(ia)
 
-                    if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
+                    if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                       Transactions[transaction_id].IA_Option == 25:
                         for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
                             p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
                             # in case range has been exceeded p will be None
@@ -592,7 +605,8 @@ def build_client(transaction_id):
                                 client.Prefixes.append(ia_pd)
 
                 if client_config.ADDRESS == client_config.CLASS == '' and \
-                   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
+                   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
                     # use default class if no class or address is given
                     for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
                         client.Class = 'default_' + Transactions[transaction_id].Interface
@@ -619,7 +633,8 @@ def build_client(transaction_id):
             client.Class = 'default_' + Transactions[transaction_id].Interface
             # apply answer type of client to transaction - useful if no answer or no address available is configured
             Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
-            if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
+            if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+               Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
                 for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
                     # addresses of category 'dns' will be searched in DNS
                     if cfg.ADDRESSES[address].CATEGORY == 'dns':
@@ -1118,7 +1133,7 @@ class Client(object):
         options.sort()
         for o in options:
             # ignore some attributes
-            if not o in ['OptionsRaw', 'Client', 'Timestamp', 'DUIDLLAddress', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old'] and \
+            if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'Addresses':
                     option = 'Addresses:'
@@ -1128,7 +1143,6 @@ class Client(object):
                 elif o == 'Prefixes':
                     option = 'Prefixes:'
                     for p in self.__dict__[o]:
-                        #option += ' ' + colonify_ip6(p.PREFIX)
                         option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
                     optionsstring = optionsstring + ' | '  + option
                 else:
@@ -1168,16 +1182,12 @@ class Transaction(object):
         # dummy IAID
         self.IAID = '00000000'
         # dummy IAT1
-        #self.IAT1 = cfg.PREFERRED_LIFETIME
         self.IAT1 = cfg.T1
         # dummy IAT2
-        #self.IAT2 = cfg.VALID_LIFETIME
         self.IAT2 = cfg.T2
-        # IA option - NA or TA -> DHCPv6 option 3 or 4, default is 3
+        # IA option - NA, TA pr PD -> DHCPv6 option 3, 4 or 25
         # to be used in option_requests in Handler.build_response()
-        ###self.IA_Option = 3
         self.IA_Option = None
-
         # Addresses given by client, for example for RENEW or RELEASE requests
         self.Addresses = list()
         # same with prefixes
@@ -1322,7 +1332,7 @@ class Transaction(object):
         options.sort()
         for o in options:
             # ignore some attributes
-            if not o in ['OptionsRaw', 'Client', 'Timestamp', 'DUIDLLAddress', 'IAT1', 'IAT2', 'ClientConfigDB', 'FQDN'] and \
+            if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'Addresses':
                     option = 'Addresses:'

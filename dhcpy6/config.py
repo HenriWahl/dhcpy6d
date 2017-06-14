@@ -929,3 +929,5 @@ class Class(object):
         # which IA_* should this class supply - addresses, prefixes or both?
         # shouldn't be an empty list because in this case the class would not make sense at all
         self.ADVERTISE = list()
+        # if set true the class uses only fixed addresses of clients set in config
+        self.USE_ONLY_FIXED_ADDRESS = False
