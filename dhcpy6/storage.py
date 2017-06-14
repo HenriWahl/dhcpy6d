@@ -408,7 +408,7 @@ class Store(object):
 
 
     @clean_query_answer
-    def check_number_of_prefixes(self, prefix='', frange='', trange=''):
+    def check_number_of_prefixes(self, prefix='', length='', frange='', trange=''):
         '''
             check how many leases are stored - used to find out if address range has been exceeded
         '''

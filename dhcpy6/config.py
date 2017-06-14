@@ -448,6 +448,18 @@ class Config(object):
             if self.ADDRESSES[a].DNS_ZONE == '': self.ADDRESSES[a].DNS_ZONE = self.DOMAIN
             if self.ADDRESSES[a].DNS_TTL == '0': self.ADDRESSES[a].DNS_TTL = self.DNS_TTL
 
+        # set type properties for prefixes
+        for p in self.PREFIXES:
+            # name for address, important for leases db
+            self.PREFIXES[p].TYPE = p
+            if self.PREFIXES[p].VALID_LIFETIME == 0: self.PREFIXES[p].VALID_LIFETIME = self.VALID_LIFETIME
+            if self.PREFIXES[p].PREFERRED_LIFETIME == 0: self.PREFIXES[p].PREFERRED_LIFETIME = self.PREFERRED_LIFETIME
+            # normalize ranges
+            self.PREFIXES[p].RANGE = self.PREFIXES[p].RANGE.lower()
+            # add prototype for later fast validity comparison of rebinding leases
+            # also use as proof of validity of address patterns
+            self.PREFIXES[p]._build_prototype()
+
         # check if some options are set by cli options
         if not self.cli_user == None:
             self.USER = self.cli_user
@@ -877,7 +889,8 @@ class Prefix(ConfigObject):
                  preferred_lifetime=0,
                  valid_lifetime=0,
                  ptype='default',
-                 pclass='default'):
+                 pclass='default',
+                 valid=True):
         self.PREFIX=prefix
         self.PATTERN = pattern
         self.RANGE = prange.lower()
@@ -887,6 +900,7 @@ class Prefix(ConfigObject):
         self.VALID_LIFETIME = valid_lifetime
         self.TYPE = ptype
         self.CLASS = pclass
+        self.VALID = valid
 
 
 class Class(object):

@@ -314,16 +314,10 @@ def build_client(transaction_id):
             else:
                 client_config = None
 
-
-        print Transactions[transaction_id].LastMessageReceivedType, len(Transactions[transaction_id].Addresses), len(Transactions[transaction_id].Prefixes)
-
         # If client gave some addresses for RENEW or REBIND consider them
         if Transactions[transaction_id].LastMessageReceivedType in (5, 6) and\
            not (len(Transactions[transaction_id].Addresses) == 0 and\
                 len(Transactions[transaction_id].Prefixes) == 0):
-
-            print "RENEW REBIND"
-
             if not client_config == None:
                 # give client hostname
                 client.Hostname = client_config.HOSTNAME
@@ -338,15 +332,9 @@ def build_client(transaction_id):
                 Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
 
             if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
-
-                print "ADDREWSSES"
-
                 for address in Transactions[transaction_id].Addresses:
                     # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
                     answer = volatilestore.check_lease(address, transaction_id)
-
-                    print answer
-
                     if answer:
                         if len(answer) > 0:
                             for item in answer:
@@ -357,10 +345,6 @@ def build_client(transaction_id):
                                     client.Class = 'default_' + Transactions[transaction_id].Interface
                                 # check if address type of lease still exists in configuration
                                 # and if request interface matches that of class
-
-                                print a['type'] in cfg.CLASSES[a['class']].ADDRESSES
-
-
                                 if a['class'] in cfg.CLASSES and client.Class == a['class'] and\
                                    Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                                     # type of address must be defined in addresses for this class
@@ -458,49 +442,48 @@ def build_client(transaction_id):
                                                     valid_lifetime=0))
 
             if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE:
-
-                print Transactions[transaction_id].Prefixes
-
-
                 for prefix in Transactions[transaction_id].Prefixes:
+                    # split prefix of prefix from length, separated by /
+                    prefix_prefix, prefix_length = prefix.split('/')
+
                     # check_prefix returns hostname, prefix, length, type, category, class, preferred_until of leased address
-                    answer = volatilestore.check_prefix(prefix, transaction_id)
+                    answer = volatilestore.check_prefix(prefix_prefix, prefix_length, transaction_id)
                     if answer:
                         if len(answer) > 0:
                             for item in answer:
-                                a = dict(zip(('hostname', 'address', 'type', 'category', 'ia_type', 'class', 'preferred_until'), item))
+                                p = dict(zip(('hostname', 'prefix', 'length', 'type', 'category', 'class', 'preferred_until'), item))
                                 # if lease exists but no configured client set class to default
                                 if client_config == None:
                                     client.Hostname = Transactions[transaction_id].Hostname
                                     client.Class = 'default_' + Transactions[transaction_id].Interface
                                 # check if address type of lease still exists in configuration
                                 # and if request interface matches that of class
-                                if a['class'] in cfg.CLASSES and client.Class == a['class'] and\
+                                if p['class'] in cfg.CLASSES and client.Class == p['class'] and\
                                    Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                                     # type of address must be defined in addresses for this class
                                     # or fixed/dns - in which case it is not class related
-                                    if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed']:
+                                    if p['type'] in cfg.CLASSES[p['class']].PREFIXES:
                                         # flag for lease usage
                                         use_lease = True
                                         # test lease validity against address prototype pattern only if not fixed or from DNS
-                                        if not a['category'] in ['fixed', 'dns']:
+                                        if not p['category'] in ['fixed', 'dns']:
                                             # test if address matches pattern
-                                            for i in range(len(address)):
-                                                if address[i] != cfg.ADDRESSES[a['type']].PROTOTYPE[i] and \
-                                                   cfg.ADDRESSES[a['type']].PROTOTYPE[i] != 'X':
+                                            for i in range(len(prefix_prefix)):
+                                                if prefix_prefix[i] != cfg.PREFIXES[p['type']].PROTOTYPE[i] and \
+                                                   cfg.PREFIXES[p['type']].PROTOTYPE[i] != 'X':
                                                     use_lease = False
                                                     break
-                                        elif a['category'] == 'fixed' and not address in client_config.ADDRESS:
+                                        elif a['category'] == 'fixed' and not prefix_prefix in client_config.PREFIX:
                                             use_lease = False
                                         elif a['category'] == 'dns':
                                             use_lease = False
 
-                                        # only use lease if it still matches prototype
+                                        # only use prefix if it still matches prototype
                                         if use_lease == True:
                                             # when category is range, test if it still applies
-                                            if a['category'] == 'range':
-                                                # borrowed from parse_pattern_address to find out if lease is still in a meanwhile maybe changed range
-                                                frange, trange = cfg.ADDRESSES[a['type']].RANGE.split('-')
+                                            if p['category'] == 'range':
+                                                # borrowed from parse_pattern_prefix to find out if lease is still in a meanwhile maybe changed range
+                                                frange, trange = cfg.PREFIXES[p['type']].RANGE.split('-')
 
                                                 # correct possible misconfiguration
                                                 if len(frange)<4:
@@ -509,22 +492,36 @@ def build_client(transaction_id):
                                                     trange ='0'*(4-len(trange)) + trange
                                                 if frange > trange:
                                                     frange, trange = trange, frange
-                                                # if lease is still inside range boundaries use it
-                                                if frange <= address[28:].lower() < trange:
-                                                    # build IA partly of leases db, partly of config db
-                                                    ia = Address(address=a['address'],
-                                                                 atype=a['type'],
-                                                                 preferred_lifetime=cfg.ADDRESSES[a['type']].PREFERRED_LIFETIME,
-                                                                 valid_lifetime=cfg.ADDRESSES[a['type']].VALID_LIFETIME,
-                                                                 category=a['category'],
-                                                                 ia_type=a['ia_type'],
-                                                                 aclass=a['class'],
-                                                                 dns_update=cfg.ADDRESSES[a['type']].DNS_UPDATE,
-                                                                 dns_zone=cfg.ADDRESSES[a['type']].DNS_ZONE,
-                                                                 dns_rev_zone=cfg.ADDRESSES[a['type']].DNS_REV_ZONE,
-                                                                 dns_ttl=cfg.ADDRESSES[a['type']].DNS_TTL)
-                                                    client.Addresses.append(ia)
 
+                                                # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
+                                                # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
+                                                # as first character of range part of prefix - assuming steps of width 4
+                                                prefix_range_index = int(cfg.PREFIXES[p['type']].LENGTH) / 4 - 4
+                                                # prefix itself has a prefix - the first part of the prefix pattern
+                                                prefix_prefix = decompress_ip6(p['prefix'].replace('$range$', '0000'))[:prefix_range_index + 4]
+
+                                                # if lease is still inside range boundaries use it
+                                                if frange <= prefix_prefix[prefix_range_index:prefix_range_index + 4].lower() < trange:
+                                                    # build IA partly of leases db, partly of config db
+                                                    ia = Prefix(prefix=p['prefix'],
+                                                                length=p['length'],
+                                                                ptype=p['type'],
+                                                                preferred_lifetime=cfg.PREFIXES[p['type']].PREFERRED_LIFETIME,
+                                                                valid_lifetime=cfg.PREFIXES[p['type']].VALID_LIFETIME,
+                                                                category=p['category'],
+                                                                pclass=p['class'])
+                                                    client.Prefixes.append(ia)
+
+                # important indent here, has to match for...addresses-loop!
+                # look for addresses in transaction that are invalid and add them
+                # to client addresses with flag invalid and a RFC-compliant lifetime of 0
+                for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(x.PREFIX.split('/')[0]), client.Prefixes)):
+                    prefix, length = p.split('/')
+                    client.Prefixes.append(Prefix(prefix=prefix,
+                                                  length=length,
+                                                  valid=False,
+                                                  preferred_lifetime=0,
+                                                  valid_lifetime=0))
 
             return client
 
@@ -776,7 +773,6 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
         # as first character of range part of prefix - assuming steps of width 4
         prefix_range_index = int(pattern.LENGTH)/4-4
         # prefix itself has a prefix - the first part of the prefix pattern
-        ###prefix_prefix = decompress_ip6(p.replace('$range$', '0000'))[:(int(pattern.LENGTH)/4-4)]
         prefix_prefix = decompress_ip6(p.replace('$range$', '0000'))[:prefix_range_index]
 
         # the following steps are done to find a collision-free lease in given range
@@ -815,7 +811,6 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
                                                                                     length=pattern.LENGTH,
                                                                                     frange=frange,
                                                                                     trange=trange)
-
                             if prefix is None:
                                 # if none is available limit is reached and nothing returned
                                 log.critical('Prefix address space %s[%s-%s] exceeded' % (prefix_prefix, frange,trange))
@@ -836,7 +831,10 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
                         # if there are no leases stored yet initiate lease storage
                         # this will be done only once - the first time if there is no other lease yet
                         # so it is safe to start from frange
-                        if volatilestore.check_number_of_prefixes(prefix_prefix, frange, trange) <= 1:
+                        if volatilestore.check_number_of_prefixes(prefix=prefix_prefix,
+                                                                  length=pattern.LENGTH,
+                                                                  frange=frange,
+                                                                  trange=trange) <= 1:
                             p = p.replace('$range$', frange)
                         else:
                             # if none is available limit is reached and nothing returned
@@ -1034,7 +1032,7 @@ class TidyUpThread(threading.Thread):
             # counter for database cleaning interval
             dbcount = 0
 
-            #get and delete invalid leases
+            # get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
                 now = int(time.time())
@@ -1291,7 +1289,7 @@ class Transaction(object):
                     length = int(payload[48:][(p*58):(p*58)+2], 16)
                     # in case a prefix is asked for twice by one host ignore the twin
                     if not (prefix, length) in self.Prefixes:
-                        self.Prefixes.append((prefix, length))
+                        self.Prefixes.append('{0}/{1}'.format(prefix, length))
 
             self.IA_Option = 25
 
@@ -1332,7 +1330,8 @@ class Transaction(object):
                 elif o == 'Prefixes':
                     option = 'Prefixes:'
                     for p in self.__dict__[o]:
-                        option += ' ' + colonify_ip6(p.PREFIX)
+                        prefix, length = p.split('/')
+                        option += ' {0}/{1}'.format(colonify_ip6(prefix), length)
                 elif o == 'ClientLLIP':
                     option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
                     optionsstring = optionsstring + ' | '  + option
@@ -1846,9 +1845,17 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 for prefix in Transactions[transaction_id].Client.Prefixes:
                                     ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
                                                                                     colonify_ip6(prefix.PREFIX)))
-                                    # temporarily fixed
-                                    preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
-                                    valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
+                                    if prefix.VALID == True:
+
+
+                                        preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
+                                        valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
+
+
+                                        
+                                    else:
+                                        preferred_lifetime = '%08x' % (0)
+                                        valid_lifetime = '%08x' % (0)
                                     length = '%02x' % (int(prefix.LENGTH))
                                     ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
 
