@@ -367,8 +367,9 @@ def build_client(transaction_id):
                                                    cfg.ADDRESSES[a['type']].PROTOTYPE[i] != 'X':
                                                     use_lease = False
                                                     break
-                                        elif a['category'] == 'fixed' and not address in client_config.ADDRESS:
-                                            use_lease = False
+                                        elif a['category'] == 'fixed' and not client_config.ADDRESS == None:
+                                            if not address in client_config.ADDRESS:
+                                                use_lease = False
                                         elif a['category'] == 'dns':
                                             use_lease = False
 
@@ -521,17 +522,17 @@ def build_client(transaction_id):
                                                                 pclass=p['class'])
                                                     client.Prefixes.append(ia)
 
-                # important indent here, has to match for...addresses-loop!
+                # important indent here, has to match for...prefixes-loop!
                 # look for prefixes in transaction that are invalid and add them
                 # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
-                ###for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
-                ###    prefix, length = split_prefix(p)
-                ###    client.Prefixes.append(Prefix(prefix=prefix,
-                ###                                  length=length,
-                ###                                  valid=False,
-                ###                                  preferred_lifetime=0,
-                ###                                  valid_lifetime=0))
-                ###    del(prefix, length)
+                for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
+                    prefix, length = split_prefix(p)
+                    client.Prefixes.append(Prefix(prefix=prefix,
+                                                  length=length,
+                                                  valid=False,
+                                                  preferred_lifetime=0,
+                                                  valid_lifetime=0))
+                    del(prefix, length)
 
             return client
 
@@ -677,7 +678,7 @@ def parse_pattern_address(pattern, client_config, transaction_id):
         macraw = ''.join(Transactions[transaction_id].MAC.split(':'))
         p = p.replace('$mac$', ':'.join((macraw[0:4], macraw[4:8], macraw[8:12])))
     elif pattern.CATEGORY in ['fixed', 'dns']:
-        # No patterns for fixed address, let's bail
+        # No patterns for fixed address, let's bail out
         return None
     elif pattern.CATEGORY == 'id':
         # if there is an ID build address
@@ -1523,6 +1524,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                                                             [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
                                     volatilestore.store_into_database(transaction_id)
+
+                                    # run external script for setting a route to the delegated prefix
+
+
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction_id)
 

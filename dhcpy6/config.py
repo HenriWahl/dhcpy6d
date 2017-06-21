@@ -890,7 +890,9 @@ class Prefix(ConfigObject):
                  valid_lifetime=0,
                  ptype='default',
                  pclass='default',
-                 valid=True):
+                 valid=True,
+                 call_up='',
+                 call_down=''):
         self.PREFIX=prefix
         self.PATTERN = pattern
         self.RANGE = prange.lower()
@@ -901,6 +903,8 @@ class Prefix(ConfigObject):
         self.TYPE = ptype
         self.CLASS = pclass
         self.VALID = valid
+        self.CALL_UP = call_up
+        self.CALL_DOWN = call_down
 
 
 class Class(object):
@@ -930,5 +934,3 @@ class Class(object):
         # shouldn't be an empty list because in this case the class would not make sense at all
         # as default only addresses will be advertised
         self.ADVERTISE = ['addresses']
-        # if set true the class uses only fixed addresses of clients set in config
-        self.USE_ONLY_FIXED_ADDRESS = False
