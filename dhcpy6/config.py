@@ -891,8 +891,7 @@ class Prefix(ConfigObject):
                  ptype='default',
                  pclass='default',
                  valid=True,
-                 call_up='',
-                 call_down=''):
+                 route_link_local=True):
         self.PREFIX=prefix
         self.PATTERN = pattern
         self.RANGE = prange.lower()
@@ -903,8 +902,7 @@ class Prefix(ConfigObject):
         self.TYPE = ptype
         self.CLASS = pclass
         self.VALID = valid
-        self.CALL_UP = call_up
-        self.CALL_DOWN = call_down
+        self.ROUTE_LINK_LOCAL = route_link_local
 
 
 class Class(object):
@@ -932,5 +930,7 @@ class Class(object):
         self.ANSWER = 'normal'
         # which IA_* should this class supply - addresses, prefixes or both?
         # shouldn't be an empty list because in this case the class would not make sense at all
-        # as default only addresses will be advertised
-        self.ADVERTISE = ['addresses']
+        # as default both will be advertised
+        self.ADVERTISE = ['addresses', 'prefixes']
+        self.CALL_UP = ''
+        self.CALL_DOWN = ''

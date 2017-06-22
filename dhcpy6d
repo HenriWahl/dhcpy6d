@@ -24,6 +24,7 @@ import struct
 import platform
 import binascii
 import commands
+import subprocess
 import shlex
 import sys
 import time
@@ -132,7 +133,6 @@ if 'BSD' in OS:
 # len is minimal length a line has to have to be evaluable
 #
 # update: has been different to Linux which now access neighbor cache natively
-#         left here as-is just in case there will be other OS one day
 NC = { 'BSD': { 'call' : '/usr/sbin/ndp -a -n',
                 'dev'  : 2,
                 'llip' : 0,
@@ -986,6 +986,31 @@ def dns_delete(transaction_id, address='', action='release'):
             break
 
 
+def call_route_up(transaction_id):
+    '''
+        called when route has to be set - calls itself any external script or something like that
+    '''
+    # only do anything if class of client has something defined to be called
+
+    if cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP != '':
+        # collect possible prefixes, lengths and router ip addresses in list
+        routes = list()
+        for prefix in Transactions[transaction_id].Client.Prefixes:
+            # use LinkLocal Address of client if wanted
+            if prefix.ROUTE_LINK_LOCAL == True:
+                ip = Transactions[transaction_id].ClientLLIP
+            else:
+                if len(Transactions[transaction_id].Client.Addresses) == 1:
+                    ip = Transactions[transaction_id].Client.Addresses[0]
+                else:
+                    ip = None
+                    log.error('call_route_up: client needs exactly 1 address to be used as router to delegated prefix')
+            if ip != None:
+                routes.append(Route(prefix.PREFIX, prefix.LENGTH, ip))
+
+        # call executables here
+
+
 class DNSQueryThread(threading.Thread):
     '''
         thread for updating DNS entries of valid leases without blocking main thread
@@ -1112,8 +1137,6 @@ class Client(object):
         self.Prefixes = list()
         # DUID
         self.DUID = ''
-        # current link-local IP
-        self.LLIP = ''
         # Hostname
         self.Hostname = ''
         # Class/role of client
@@ -1150,6 +1173,16 @@ class Client(object):
                     option = o + ': ' + str(self.__dict__[o])
                     optionsstring = optionsstring + ' | '  + option
         return optionsstring
+
+
+class Route(object):
+    '''
+        store data of a route which should be given to an external application
+    '''
+    def __init__(self, prefix, length, ip):
+        self.prefix = prefix
+        self.length = length
+        self.ip = ip
 
 
 class Transaction(object):
@@ -1526,7 +1559,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     volatilestore.store_into_database(transaction_id)
 
                                     # run external script for setting a route to the delegated prefix
-
+                                    call_route_up(transaction_id)
 
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction_id)
