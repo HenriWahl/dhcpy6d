@@ -1090,7 +1090,6 @@ class TidyUpThread(threading.Thread):
                 now = int(time.time())
                 for t in Transactions.keys():
                     try:
-                        #if now > Transactions[t].Timestamp + timedelta:
                         if now > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
                             Transactions.pop(Transactions[t].ID)
                     except Exception, err:
@@ -1117,10 +1116,8 @@ class TidyUpThread(threading.Thread):
                 # clean collected MAC addresses after 300 seconds
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
-                    #timestamp = time.time()
                     timestamp = int(time.time())
                     for record in CollectedMACs.values():
-                        #if record.timestamp + cache_timedelta < timestamp:
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP == True:
                                 log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
