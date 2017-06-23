@@ -122,6 +122,10 @@ volatileanswer_queue = Queue.Queue()
 # queue for dns actualization
 dnsquery_queue = Queue.Queue()
 
+# queue for executing some script to modify routes after delegating prefixes
+route_queue = Queue.Queue()
+
+
 # save OS
 OS = platform.system()
 if 'BSD' in OS:
@@ -946,7 +950,7 @@ def dns_update(transaction_id, action='update'):
             if a.DNS_UPDATE and hostname != '' and a.VALID == True:
                 if cfg.DNS_IGNORE_CLIENT or Transactions[transaction_id].DNS_S == 1:
                     # put query into DNS query queue
-                    dnsquery_queue.put((hostname, a, action))
+                    dnsquery_queue.put((action, hostname, a))
         return True
     else:
         return False
@@ -981,34 +985,40 @@ def dns_delete(transaction_id, address='', action='release'):
                 dns_address = copy.copy(a)
                 dns_address.ADDRESS = colonify_ip6(address)
                 # put query into DNS query queue
-                dnsquery_queue.put((hostname, dns_address, action))
+                dnsquery_queue.put((action, hostname, dns_address))
             # enough
             break
 
 
-def call_route_up(transaction_id):
+def modify_route(transaction_id, mode):
     '''
         called when route has to be set - calls itself any external script or something like that
     '''
     # only do anything if class of client has something defined to be called
-
     if cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP != '':
         # collect possible prefixes, lengths and router ip addresses in list
         routes = list()
         for prefix in Transactions[transaction_id].Client.Prefixes:
             # use LinkLocal Address of client if wanted
             if prefix.ROUTE_LINK_LOCAL == True:
-                ip = Transactions[transaction_id].ClientLLIP
+                router = Transactions[transaction_id].ClientLLIP
             else:
                 if len(Transactions[transaction_id].Client.Addresses) == 1:
-                    ip = Transactions[transaction_id].Client.Addresses[0]
+                    router = Transactions[transaction_id].Client.Addresses[0]
                 else:
-                    ip = None
-                    log.error('call_route_up: client needs exactly 1 address to be used as router to delegated prefix')
-            if ip != None:
-                routes.append(Route(prefix.PREFIX, prefix.LENGTH, ip))
+                    router = None
+                    log.error('modify_route: client needs exactly 1 address to be used as router to delegated prefix')
+            if router != None:
+                routes.append(Route(prefix.PREFIX, prefix.LENGTH, router))
+
+        if mode == 'up':
+            call = cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP
+        elif mode == 'down':
+            call = cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_DOWN
 
         # call executables here
+        for route in routes:
+            route_queue.put((call, route.prefix, route.length, route.router))
 
 
 class DNSQueryThread(threading.Thread):
@@ -1024,7 +1034,7 @@ class DNSQueryThread(threading.Thread):
     def run(self):
         # wait for new queries in queue until the end of the world
         while True:
-            hostname, a, action = self.dnsquery_queue.get()
+            action, hostname, a = self.dnsquery_queue.get()
             # colonify address for DNS
             address = colonify_ip6(a.ADDRESS)
             try:
@@ -1126,6 +1136,30 @@ class TidyUpThread(threading.Thread):
             sys.stdout.flush()
 
 
+class RouteThread(threading.Thread):
+    '''
+        thread for updating routes without blocking main thread
+    '''
+
+    def __init__(self, route_queue):
+        threading.Thread.__init__(self, name='Route')
+        self.setDaemon(1)
+        self.route_queue=route_queue
+
+
+    def run(self):
+        '''
+            wait for new queries in queue until the end of the world
+        '''
+        while True:
+            call, prefix, length, router = self.route_queue.get()
+            call_real = call.replace('$prefix$', colonify_ip6(prefix)).\
+                             replace('$length$', length).\
+                             replace('$router$', colonify_ip6(router))
+            # subprocess needs list as argument which it gets by split()
+            subprocess.call(call_real.split(' '))
+            log.info("Called '{0}' to modify route".format(call_real))
+
 class Client(object):
     '''
         client object, generated from configuration database or on the fly
@@ -1178,11 +1212,12 @@ class Client(object):
 class Route(object):
     '''
         store data of a route which should be given to an external application
+        router is here the prefix requesting host
     '''
-    def __init__(self, prefix, length, ip):
+    def __init__(self, prefix, length, router):
         self.prefix = prefix
         self.length = length
-        self.ip = ip
+        self.router = router
 
 
 class Transaction(object):
@@ -1559,7 +1594,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     volatilestore.store_into_database(transaction_id)
 
                                     # run external script for setting a route to the delegated prefix
-                                    call_route_up(transaction_id)
+                                    if Transactions[transaction_id].IA_Option == 25:
+                                        modify_route(transaction_id, 'up')
 
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction_id)
@@ -1611,6 +1647,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     for p in Transactions[transaction_id].Prefixes:
                                         # free prefix
                                         volatilestore.release_prefix(p)
+                                        # delete route to formely requesting client
+                                        modify_route(transaction_id, 'down')
                                     # send status code option (type 13) with success (type 0)
                                     self.build_response(7, transaction_id, [13], status=0)
 
@@ -2117,6 +2155,10 @@ if __name__ == '__main__':
     # start DNS query queue to care for DNS in background
     dnsquery_thread = DNSQueryThread(dnsquery_queue)
     dnsquery_thread.start()
+
+    # start route queue to care for routes in background
+    route_thread = RouteThread(route_queue)
+    route_thread.start()
 
     # set user and group
     log.info('Running as user %s (UID %s) and group %s (GID %s)' % (cfg.USER, pwd.getpwnam(cfg.USER).pw_uid, cfg.GROUP, grp.getgrnam(cfg.GROUP).gr_gid))
