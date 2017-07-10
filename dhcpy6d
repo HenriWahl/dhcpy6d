@@ -1157,6 +1157,7 @@ class RouteThread(threading.Thread):
             subprocess.call(call_real.split(' '))
             log.info("Called '{0}' to modify route".format(call_real))
 
+
 class Client(object):
     '''
         client object, generated from configuration database or on the fly

@@ -178,16 +178,25 @@ There can be many address definitions which will be used by classes. Every addre
         Uses MAC address from client request as part of address
 
     **id**
-        Uses ID given to client in configuration file or database as one octet of address, should be in range 0-FFFF
+        Uses ID given to client in configuration file or database as one octet of address, should be in range 0-ffff
 
     **range**
-        Generate addresses of given ranges
+        Generate addresses of given range like 0-ffff
 
     **random**
         Randomly created 64 bit values used as host part in address
 
     **dns**
         Ask DNS server for IPv6 address of client host
+
+**range = <from>-<to>**
+    Sets range for addresses of category *range*.
+
+    **from**
+        Starting hex number of range, minimum is 0
+
+    **to**
+        Maximum hex limit of range, highest is ffff.
 
 **pattern = 2001:db8::$mac$|$id$|$range$|$random$**
 
@@ -198,10 +207,10 @@ There can be many address definitions which will be used by classes. Every addre
         The MAC address from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be stretched over 3 thus octets like 00:11:22:33:44:55 become 0011:2233:4455.
 
     **$id$**
-        If clients get an ID in client configuration file or in client configuration database this ID will fill one octet. Thus the ID has to be in the range of 0000-FFFF.
+        If clients get an ID in client configuration file or in client configuration database this ID will fill one octet. Thus the ID has to be in the range of 0000-ffff.
 
     **$range$**
-        If address is of category range the range defined with extra keyword " range " will be used here in place of one octet. This is why the range can span from 0000-FFFF. Clients will get an address out of the given range.
+        If address is of category range the range defined with extra keyword *range* will be used here in place of one octet.This is why the range can span from 0000-ffff. Clients will get an address out of the given range.
 
     **$random64$**
         A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would if privacy extensions were used. The random part will span over 4 octets.
@@ -224,8 +233,8 @@ There can be many address definitions which will be used by classes. Every addre
 **dns_rev_zone = <reverse_dnszone>**
     If these addresses should be synchronized with Bind DNS, these three settings have to be set accordingly. The nameserver for updates is set in general settings.
 
-Default Adress
---------------
+Default Address
+---------------
 
 The address scheme used for the default class *class_default* is by default named *address_default*.
 It should be enough if *address_default* is defined, only if unknown clients should get extra nameservers etc. a *class_default* has to be set.
@@ -233,8 +242,45 @@ It should be enough if *address_default* is defined, only if unknown clients sho
 **[address_default]**
     Address scheme used as default for clients which do not match any other class than *class_default*.
 
+
+Prefix definitions in multiple [prefix_<prefix_name>] sections
+==============================================================
+
+The *<prefix_name>* part of an **[prefix_<prefix_name>]** section is an arbitrarily chosen identifier like *customers*.
+A prefix definition may contain several properties:
+
+**category = range**
+    Like addresses prefix have a category. Right now only *range* seems to make sense, similar to ranges in addresses being like 0-ffff.
+
+**range = <from>-<to>**
+    Sets range for prefix of category *range*.
+
+    **from**
+        Starting hex number of range, minimum is 0
+
+    **to**
+        Maximum hex limit of range, highest is ffff.
+
+**pattern = 2001:db8:$range$::**
+
+**pattern= $prefix$:$range$::**
+    Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+
+    **$range$**
+        If address is of category range the range defined with extra keyword *range* will be used here in place of one octet.
+        This is why the range can span from 0000-ffff. Clients will get an address out of the given range.
+
+**length = <prefix_length>**
+    Length of prefix given out to clients.
+
+**preferred_lifetime = <seconds>**
+
+**valid_lifetime = <seconds>**
+    As default preferred and valid lifetime are set in general settings, but it is configurable individually for every prefixk setting.
+
+
 Class definitions in multiple [class_<class_name>] sections
------------------------------------------------------------
+===========================================================
 
 The *<class_name>* part of an **[class_<class_name>]** section is an arbitrarily chosen identifier like *clients* or *invalid_clients*.
 Clients can be grouped in classes. Different classes can have different properties, different address sets and different numbers of addresses. Classes also might have different name servers, time intervals, filters and interfaces.
@@ -243,6 +289,10 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 
 **addresses = <address_name> [<address_name> ...]**
     A class can contain as many addresses as needed. Their names have to be separated by spaces. *Name* means the *name*-part of an address section like *[address_name]*.
+    If a class does not contain any addresses clients won't get any address except they have one fixed defined in client configuration file or database.
+
+**prefixes = <prefix_name> [<address_name> ...]**
+    A class can contain prefixes - even most probably only one prefix will be usefull. *Name* means the *name*-part of a prefiy section.
 
 **answer = normal|noaddress|none**
     Normally a client will get an answer, but if for whatever reason is a need to give it an *NoAddrAvail* message back or completely ignore the client it can be set here.
@@ -265,7 +315,33 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 
 **interface = <interface> [<interface> ...]**
     It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
+
+**advertise = addresses|prefixes**
+    A class per default allows to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either *addresses* or *prefixes*.
     
+**call_up = <executable> [$prefix$] [$length$] [$router$]**
+    When a route is requested and accepted the custom *executable* will called and the optional but senseful variables will be filled with their appropriate values.
+
+    **$prefix$**
+        Contains the prefix advertised to the client.
+
+    **$length$**
+        The prefix length.
+
+    **$router$**
+        The host which routes into the advertised prefix - of course the requesting client IPv6.
+
+**call_down = <executable> [$prefix$] [$length$] [$router$]**
+    When a route is released the custom *executable* will called and the optional but senseful variables will be filled with their appropriate values.
+
+    **$prefix$**
+        Contains the prefix advertised to the client.
+
+    **$length$**
+        The prefix length.
+
+    **$router$**
+        The host which routes into the advertised prefix - of course the requesting client IPv6.
 
 Default Class
 -------------
@@ -278,7 +354,7 @@ This class could get an address scheme too. It should be enough if 'address_defa
 
 **[class_default_<interface>]**
     If dhcpy6d listens at multiple interfaces, one can define a default class for every 'interface'.
-    
+
 
 Examples
 ========
