@@ -21,6 +21,7 @@
 import sys
 import ConfigParser
 import stat
+import os
 import os.path
 import uuid
 import time
@@ -212,9 +213,7 @@ class Config(object):
         self.PREFIXES['default'] = Prefix(pattern='fdef:$range$::',
                                           prange='1000-1fff',
                                           category='range',
-                                          length=32,
-                                          preferred_lifetime=3600,
-                                          valid_lifetime=5400)
+                                          length=32)
 
         self.CLASSES['default'] = Class()
         self.CLASSES['default'].ADDRESSES.append('default')
@@ -320,11 +319,15 @@ class Config(object):
                                              % (item[0], section))
                         else:
                             if not item[0].upper() in self.ADDRESSES[section.lower().split('address_')[1]].__dict__:
-                                error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." % (item[0], section, configfile))
+                                error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." %
+                                           (item[0], section, configfile))
                         self.ADDRESSES[section.lower().split('address_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
                     # global prefix schemes
                     if section.lower().startswith('prefix_'):
+                        if not item[0].upper() in self.PREFIXES[section.lower().split('prefix_')[1]].__dict__:
+                            error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." %
+                                       (item[0], section, configfile))
                         self.PREFIXES[section.lower().split('prefix_')[1]].__setattr__(item[0].upper(), str(item[1]).strip())
 
                     # global classes with their addresses
@@ -430,7 +433,7 @@ class Config(object):
             if c.T2 == 0: c.T2 = self.T2
             # check advertised IA types - if empty default to ['addresses']
             if len(c.ADVERTISE) == 0:
-                c.ADVERTISE = ['addresses']
+                c.ADVERTISE = ['addresses', 'prefixes']
 
         # set type properties for addresses
         for a in self.ADDRESSES:
@@ -687,7 +690,9 @@ class Config(object):
                     error_exit("%s Interface '%s' is invalid." % (msg_prefix, i))
 
             # check advertised IA types
-            # .... to come
+            for i in self.CLASSES[c].ADVERTISE:
+                if not i in ['addresses', 'prefixes']:
+                    error_exit("Only 'addresses' and 'prefixes' can be advertised.")
 
             # check nameserver to be given to client
             for nameserver in self.CLASSES[c].NAMESERVER:
@@ -773,6 +778,48 @@ class Config(object):
                     error_exit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
                                (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
                                self.ADDRESSES[a].PREFERRED_LIFETIME, self.ADDRESSES[a].VALID_LIFETIME))
+
+            # check every single prefix of a class
+            for p in self.CLASSES[c].PREFIXES:
+                msg_prefix = "Class '%s' PREFIX type '%s':" % (c, p)
+                # test if used addresses are defined
+                if not p in self.PREFIXES:
+                    error_exit("%s Prefix type '%s' is not defined." % (msg_prefix, p))
+
+                # test validity of category
+                if not self.PREFIXES[p].CATEGORY.strip() in ['range']:
+                    error_exit("%s Category '%s' is invalid. Category must be 'range' right now." % (msg_prefix, self.PREFIXES[p].CATEGORY))
+
+                # test validity of pattern - has its own error output
+                self.PREFIXES[p]._build_prototype()
+                # test existence of category specific variable in pattern
+                if self.PREFIXES[p].CATEGORY == 'range':
+                    if not 0 < self.PREFIXES[p].PATTERN.count('$range$') < 2:
+                        error_exit("%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." % \
+                                   (msg_prefix, self.PREFIXES[p].PATTERN.strip()))
+                    elif self.PREFIXES[p].PATTERN.endswith('$range$'):
+                        error_exit("%s Pattern '%s' must not end with '$range$' variable for category 'range'." % \
+                                   (msg_prefix, self.PREFIXES[p].PATTERN.strip()))
+
+                # check if valid lifetime is a number
+                if not self.PREFIXES[p].VALID_LIFETIME.isdigit():
+                    error_exit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.PREFIXES[p].VALID_LIFETIME))
+
+                # check if preferred lifetime is a number
+                if not self.PREFIXES[p].PREFERRED_LIFETIME.isdigit():
+                    error_exit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.PREFIXES[p].PREFERRED_LIFETIME))
+
+                # check if valid lifetime is longer than preferred lifetime
+                if not int(self.PREFIXES[p].VALID_LIFETIME) >= int(self.PREFIXES[p].PREFERRED_LIFETIME):
+                    error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." % \
+                               (msg_prefix, self.PREFIXES[p].VALID_LIFETIME, self.PREFIXES[p].PREFERRED_LIFETIME))
+
+                # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
+                if not (int(self.CLASSES[c].T1) <= int(self.CLASSES[c].T2) <=
+                        int(self.PREFIXES[p].PREFERRED_LIFETIME) <= int(self.PREFIXES[p].VALID_LIFETIME)):
+                    error_exit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
+                               (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
+                               self.PREFIXES[p].PREFERRED_LIFETIME, self.PREFIXES[p].VALID_LIFETIME))
 
 
 class ConfigObject(object):
