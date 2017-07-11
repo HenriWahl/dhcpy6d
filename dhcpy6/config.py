@@ -212,8 +212,7 @@ class Config(object):
 
         self.PREFIXES['default'] = Prefix(pattern='fdef:$range$::',
                                           prange='1000-1fff',
-                                          category='range',
-                                          length=32)
+                                          category='range')
 
         self.CLASSES['default'] = Class()
         self.CLASSES['default'].ADDRESSES.append('default')
@@ -821,6 +820,12 @@ class Config(object):
                                (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
                                self.PREFIXES[p].PREFERRED_LIFETIME, self.PREFIXES[p].VALID_LIFETIME))
 
+                # check if prefix is a valid number
+                if not self.PREFIXES[p].LENGTH.isdigit():
+                    error_exit("%s Prefix length '%s' is invalid." % (msg_prefix, self.PREFIXES[p].LENGTH))
+                if not 0 <= int(self.PREFIXES[p].LENGTH) <= 128:
+                    error_exit("%s Prefix length '%s' must be in range 0-128." % (msg_prefix, self.PREFIXES[p].LENGTH))
+
 
 class ConfigObject(object):
     """
@@ -932,14 +937,13 @@ class Prefix(ConfigObject):
                  pattern='2001:db8:$range$::',
                  prange='1000-1fff',
                  category='range',
-                 length=48,
+                 length='48',
                  preferred_lifetime=0,
                  valid_lifetime=0,
                  ptype='default',
                  pclass='default',
-                 valid=True,
-                 route_link_local=True):
-        self.PREFIX=prefix
+                 valid=True):
+        self.PREFIX = prefix
         self.PATTERN = pattern
         self.RANGE = prange.lower()
         self.CATEGORY = category
@@ -949,7 +953,6 @@ class Prefix(ConfigObject):
         self.TYPE = ptype
         self.CLASS = pclass
         self.VALID = valid
-        self.ROUTE_LINK_LOCAL = route_link_local
 
 
 class Class(object):
