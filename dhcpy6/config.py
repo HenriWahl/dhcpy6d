@@ -258,7 +258,7 @@ class Config(object):
             sys.exit(1)
 
         if configfile == None:
-           error_exit('No config file given - please use --config <config.file>')
+            error_exit('No config file given - please use --config <config.file>')
 
         if os.path.exists(configfile):
             if not (os.path.isfile(configfile) or
@@ -442,13 +442,13 @@ class Config(object):
             if self.ADDRESSES[a].PREFERRED_LIFETIME == 0: self.ADDRESSES[a].PREFERRED_LIFETIME = self.PREFERRED_LIFETIME
             # normalize ranges
             self.ADDRESSES[a].RANGE = self.ADDRESSES[a].RANGE.lower()
-            # add prototype for later fast validity comparison of rebinding leases
-            # also use as proof of validity of address patterns
-            self.ADDRESSES[a]._build_prototype()
             # convert boolean string to boolean value
             self.ADDRESSES[a].DNS_UPDATE = BOOLPOOL[self.ADDRESSES[a].DNS_UPDATE]
             if self.ADDRESSES[a].DNS_ZONE == '': self.ADDRESSES[a].DNS_ZONE = self.DOMAIN
             if self.ADDRESSES[a].DNS_TTL == '0': self.ADDRESSES[a].DNS_TTL = self.DNS_TTL
+            # add prototype for later fast validity comparison of rebinding leases
+            # also use as proof of validity of address patterns
+            self.ADDRESSES[a]._build_prototype()
 
         # set type properties for prefixes
         for p in self.PREFIXES:
@@ -458,6 +458,8 @@ class Config(object):
             if self.PREFIXES[p].PREFERRED_LIFETIME == 0: self.PREFIXES[p].PREFERRED_LIFETIME = self.PREFERRED_LIFETIME
             # normalize ranges
             self.PREFIXES[p].RANGE = self.PREFIXES[p].RANGE.lower()
+            # route via Link Local Address
+            self.PREFIXES[p].ROUTE_LINK_LOCAL = BOOLPOOL[self.PREFIXES[p].ROUTE_LINK_LOCAL]
             # add prototype for later fast validity comparison of rebinding leases
             # also use as proof of validity of address patterns
             self.PREFIXES[p]._build_prototype()
@@ -470,7 +472,7 @@ class Config(object):
         if not self.cli_duid == None:
             self.SERVERDUID = self.cli_duid
         if not self.cli_really_do_it == None:
-            self.REALLY_DO_IT =  BOOLPOOL[self.cli_really_do_it.lower()]
+            self.REALLY_DO_IT = BOOLPOOL[self.cli_really_do_it.lower()]
 
         # check config
         msg_prefix = 'General configuration:'
@@ -479,11 +481,11 @@ class Config(object):
         try:
             pwd.getpwnam(self.USER)
         except:
-             error_exit("%s User '%s' does not exist" % (msg_prefix, self.USER))
+            error_exit("%s User '%s' does not exist" % (msg_prefix, self.USER))
         try:
             grp.getgrnam(self.GROUP)
         except:
-             error_exit("%s Group '%s' does not exist" % (msg_prefix, self.GROUP))
+            error_exit("%s Group '%s' does not exist" % (msg_prefix, self.GROUP))
 
         # check interface
         for i in self.INTERFACE:
@@ -502,7 +504,7 @@ class Config(object):
         # check DHCPv6 port
         if not self.PORT.isdigit():
             error_exit("%s Port '%s' is invalid" % (msg_prefix, self.PORT))
-        elif not  0 < int(self.PORT) <= 65535:
+        elif not 0 < int(self.PORT) <= 65535:
             error_exit("%s Port '%s' is invalid" % (msg_prefix, self.PORT))
 
         # check server's address
@@ -552,7 +554,7 @@ class Config(object):
 
         # check if valid lifetime is longer than preferred lifetime
         if not int(self.VALID_LIFETIME) > int(self.PREFERRED_LIFETIME):
-            error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." % \
+            error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." %
                        (msg_prefix, self.VALID_LIFETIME, self.PREFERRED_LIFETIME))
 
         # check if T1 is a number
@@ -565,24 +567,24 @@ class Config(object):
 
         # check T2 is not smaller than T1
         if not int(self.T2) >= int(self.T1):
-            error_exit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." % \
+            error_exit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." %
                        (msg_prefix, self.T2, self.T1))
 
         # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
         if not (int(self.T1) <= int(self.T2) <= int(self.PREFERRED_LIFETIME) <= int(self.VALID_LIFETIME)):
-            error_exit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
+            error_exit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." %
                        (msg_prefix, self.T1, self.T2, self.PREFERRED_LIFETIME, self.VALID_LIFETIME))
 
         # check server preference
         if not self.SERVER_PREFERENCE.isdigit():
             error_exit("%s Server preference '%s' is invalid." % (msg_prefix, self.SERVER_PREFERENCE))
-        elif not  0 <= int(self.SERVER_PREFERENCE) <= 255:
+        elif not 0 <= int(self.SERVER_PREFERENCE) <= 255:
             error_exit("Server preference '%s' is invalid" % (self.SERVER_PREFERENCE))
 
         # check information refresh time
         if not self.INFORMATION_REFRESH_TIME.isdigit():
             error_exit("%s Information refresh time '%s' is invalid." % (msg_prefix, self.INFORMATION_REFRESH_TIME))
-        elif not  0 < int(self.INFORMATION_REFRESH_TIME):
+        elif not 0 < int(self.INFORMATION_REFRESH_TIME):
             error_exit("%s Information refresh time preference '%s' is pretty short." % (msg_prefix, self.INFORMATION_REFRESH_TIME))
 
         # check validity of configuration source
@@ -901,8 +903,8 @@ class Address(ConfigObject):
                  dns_update=False,
                  dns_zone='',
                  dns_rev_zone='0.8.b.d.1.0.0.2.ip6.arpa',
-                 dns_ttl = '0',
-                 valid = True):
+                 dns_ttl='0',
+                 valid=True):
         self.CATEGORY = category
         self.PATTERN = pattern
         self.IA_TYPE = ia_type
@@ -942,7 +944,8 @@ class Prefix(ConfigObject):
                  valid_lifetime=0,
                  ptype='default',
                  pclass='default',
-                 valid=True):
+                 valid=True,
+                 route_link_local=False):
         self.PREFIX = prefix
         self.PATTERN = pattern
         self.RANGE = prange.lower()
@@ -953,6 +956,7 @@ class Prefix(ConfigObject):
         self.TYPE = ptype
         self.CLASS = pclass
         self.VALID = valid
+        self.ROUTE_LINK_LOCAL = route_link_local
 
 
 class Class(object):

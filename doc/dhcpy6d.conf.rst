@@ -278,6 +278,10 @@ A prefix definition may contain several properties:
 **valid_lifetime = <seconds>**
     As default preferred and valid lifetime are set in general settings, but it is configurable individually for every prefixk setting.
 
+**route_link_lokal = yes|no**
+    As default Link Local Address of requesting client is not used as router address for external call.
+    Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
+    Alternatively the client Link Local Address might be used by enabling this option.
 
 Class definitions in multiple [class_<class_name>] sections
 ===========================================================

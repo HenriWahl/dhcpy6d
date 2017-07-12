@@ -202,16 +202,27 @@ Categories play an important role when defining patterns for addresses. An addre
 Uses MAC address from client request as part of address
 .TP
 .B \fBid\fP
-Uses ID given to client in configuration file or database as one octet of address, should be in range 0\-FFFF
+Uses ID given to client in configuration file or database as one octet of address, should be in range 0\-ffff
 .TP
 .B \fBrange\fP
-Generate addresses of given ranges
+Generate addresses of given range like 0\-ffff
 .TP
 .B \fBrandom\fP
 Randomly created 64 bit values used as host part in address
 .TP
 .B \fBdns\fP
 Ask DNS server for IPv6 address of client host
+.UNINDENT
+.TP
+.B \fBrange = <from>\-<to>\fP
+Sets range for addresses of category \fIrange\fP\&.
+.INDENT 7.0
+.TP
+.B \fBfrom\fP
+Starting hex number of range, minimum is 0
+.TP
+.B \fBto\fP
+Maximum hex limit of range, highest is ffff.
 .UNINDENT
 .UNINDENT
 .sp
@@ -226,10 +237,10 @@ Patterns allow to design the addresses according to their category. See examples
 The MAC address from the DHCPv6 request\(aqs Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be stretched over 3 thus octets like 00:11:22:33:44:55 become 0011:2233:4455.
 .TP
 .B \fB$id$\fP
-If clients get an ID in client configuration file or in client configuration database this ID will fill one octet. Thus the ID has to be in the range of 0000\-FFFF.
+If clients get an ID in client configuration file or in client configuration database this ID will fill one octet. Thus the ID has to be in the range of 0000\-ffff.
 .TP
 .B \fB$range$\fP
-If address is of category range the range defined with extra keyword " range " will be used here in place of one octet. This is why the range can span from 0000\-FFFF. Clients will get an address out of the given range.
+If address is of category range the range defined with extra keyword \fIrange\fP will be used here in place of one octet.This is why the range can span from 0000\-ffff. Clients will get an address out of the given range.
 .TP
 .B \fB$random64$\fP
 A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would if privacy extensions were used. The random part will span over 4 octets.
@@ -257,7 +268,7 @@ As default preferred and valid lifetime are set in general settings, but it is c
 .B \fBdns_rev_zone = <reverse_dnszone>\fP
 If these addresses should be synchronized with Bind DNS, these three settings have to be set accordingly. The nameserver for updates is set in general settings.
 .UNINDENT
-.SS Default Adress
+.SS Default Address
 .sp
 The address scheme used for the default class \fIclass_default\fP is by default named \fIaddress_default\fP\&.
 It should be enough if \fIaddress_default\fP is defined, only if unknown clients should get extra nameservers etc. a \fIclass_default\fP has to be set.
@@ -266,7 +277,50 @@ It should be enough if \fIaddress_default\fP is defined, only if unknown clients
 .B \fB[address_default]\fP
 Address scheme used as default for clients which do not match any other class than \fIclass_default\fP\&.
 .UNINDENT
-.SS Class definitions in multiple [class_<class_name>] sections
+.SH PREFIX DEFINITIONS IN MULTIPLE [PREFIX_<PREFIX_NAME>] SECTIONS
+.sp
+The \fI<prefix_name>\fP part of an \fB[prefix_<prefix_name>]\fP section is an arbitrarily chosen identifier like \fIcustomers\fP\&.
+A prefix definition may contain several properties:
+.INDENT 0.0
+.TP
+.B \fBcategory = range\fP
+Like addresses prefix have a category. Right now only \fIrange\fP seems to make sense, similar to ranges in addresses being like 0\-ffff.
+.TP
+.B \fBrange = <from>\-<to>\fP
+Sets range for prefix of category \fIrange\fP\&.
+.INDENT 7.0
+.TP
+.B \fBfrom\fP
+Starting hex number of range, minimum is 0
+.TP
+.B \fBto\fP
+Maximum hex limit of range, highest is ffff.
+.UNINDENT
+.UNINDENT
+.sp
+\fBpattern = 2001:db8:$range$::\fP
+.INDENT 0.0
+.TP
+.B \fBpattern= $prefix$:$range$::\fP
+Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+.INDENT 7.0
+.TP
+.B \fB$range$\fP
+If address is of category range the range defined with extra keyword \fIrange\fP will be used here in place of one octet.
+This is why the range can span from 0000\-ffff. Clients will get an address out of the given range.
+.UNINDENT
+.TP
+.B \fBlength = <prefix_length>\fP
+Length of prefix given out to clients.
+.UNINDENT
+.sp
+\fBpreferred_lifetime = <seconds>\fP
+.INDENT 0.0
+.TP
+.B \fBvalid_lifetime = <seconds>\fP
+As default preferred and valid lifetime are set in general settings, but it is configurable individually for every prefixk setting.
+.UNINDENT
+.SH CLASS DEFINITIONS IN MULTIPLE [CLASS_<CLASS_NAME>] SECTIONS
 .sp
 The \fI<class_name>\fP part of an \fB[class_<class_name>]\fP section is an arbitrarily chosen identifier like \fIclients\fP or \fIinvalid_clients\fP\&.
 Clients can be grouped in classes. Different classes can have different properties, different address sets and different numbers of addresses. Classes also might have different name servers, time intervals, filters and interfaces.
@@ -276,6 +330,10 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 .TP
 .B \fBaddresses = <address_name> [<address_name> ...]\fP
 A class can contain as many addresses as needed. Their names have to be separated by spaces. \fIName\fP means the \fIname\fP\-part of an address section like \fI[address_name]\fP\&.
+If a class does not contain any addresses clients won\(aqt get any address except they have one fixed defined in client configuration file or database.
+.TP
+.B \fBprefixes = <prefix_name> [<address_name> ...]\fP
+A class can contain prefixes \- even most probably only one prefix will be usefull. \fIName\fP means the \fIname\fP\-part of a prefiy section.
 .TP
 .B \fBanswer = normal|noaddress|none\fP
 Normally a client will get an answer, but if for whatever reason is a need to give it an \fINoAddrAvail\fP message back or completely ignore the client it can be set here.
@@ -302,6 +360,37 @@ The regular expressions are meant to by Python Regular Expressions. See \fI\%htt
 .TP
 .B \fBinterface = <interface> [<interface> ...]\fP
 It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
+.TP
+.B \fBadvertise = addresses|prefixes\fP
+A class per default allows to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either \fIaddresses\fP or \fIprefixes\fP\&.
+.TP
+.B \fBcall_up = <executable> [$prefix$] [$length$] [$router$]\fP
+When a route is requested and accepted the custom \fIexecutable\fP will called and the optional but senseful variables will be filled with their appropriate values.
+.INDENT 7.0
+.TP
+.B \fB$prefix$\fP
+Contains the prefix advertised to the client.
+.TP
+.B \fB$length$\fP
+The prefix length.
+.TP
+.B \fB$router$\fP
+The host which routes into the advertised prefix \- of course the requesting client IPv6.
+.UNINDENT
+.TP
+.B \fBcall_down = <executable> [$prefix$] [$length$] [$router$]\fP
+When a route is released the custom \fIexecutable\fP will called and the optional but senseful variables will be filled with their appropriate values.
+.INDENT 7.0
+.TP
+.B \fB$prefix$\fP
+Contains the prefix advertised to the client.
+.TP
+.B \fB$length$\fP
+The prefix length.
+.TP
+.B \fB$router$\fP
+The host which routes into the advertised prefix \- of course the requesting client IPv6.
+.UNINDENT
 .UNINDENT
 .SS Default Class
 .sp

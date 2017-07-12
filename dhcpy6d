@@ -523,7 +523,8 @@ def build_client(transaction_id):
                                                                 preferred_lifetime=cfg.PREFIXES[p['type']].PREFERRED_LIFETIME,
                                                                 valid_lifetime=cfg.PREFIXES[p['type']].VALID_LIFETIME,
                                                                 category=p['category'],
-                                                                pclass=p['class'])
+                                                                pclass=p['class'],
+                                                                route_link_local=cfg.PREFIXES[p['type']].ROUTE_LINK_LOCAL)
                                                     client.Prefixes.append(ia)
 
                 # important indent here, has to match for...prefixes-loop!
@@ -550,9 +551,10 @@ def build_client(transaction_id):
             # continue only if request interface matches class interfaces
             if Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                 # if fixed addresses are given build them
-                if not client_config.ADDRESS == None and \
-                   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                ###if not client_config.ADDRESS == None and \
+                ###   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                if not client_config.ADDRESS == None:
                     for address in client_config.ADDRESS:
                         if len(address) > 0:
                             # fixed addresses are assumed to be non-temporary
@@ -570,48 +572,52 @@ def build_client(transaction_id):
                             client.Addresses.append(ia)
 
                 if not client_config.CLASS == '':
-                    if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                       Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
-                        # add all addresses which belong to that class
-                        for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
-                            # addresses of category 'dns' will be searched in DNS
-                            if cfg.ADDRESSES[address].CATEGORY == 'dns':
-                                a = get_ip_from_dns(client.Hostname)
-                            else:
-                                a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
-                            # in case range has been exceeded a will be None
-                            if a:
-                                ia = Address(address=a,
-                                             ia_type=cfg.ADDRESSES[address].IA_TYPE,
-                                             preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
-                                             valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
-                                             category=cfg.ADDRESSES[address].CATEGORY,
-                                             aclass=cfg.ADDRESSES[address].CLASS,
-                                             atype=cfg.ADDRESSES[address].TYPE,
-                                             dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
-                                             dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
-                                             dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
-                                             dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                                client.Addresses.append(ia)
+                    ###if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                    ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
 
-                    if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                       Transactions[transaction_id].IA_Option == 25:
-                        for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
-                            p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
-                            # in case range has been exceeded p will be None
-                            if p:
-                                ia_pd = Prefix(prefix=p,
-                                               length=cfg.PREFIXES[prefix].LENGTH,
-                                               preferred_lifetime=cfg.PREFIXES[prefix].PREFERRED_LIFETIME,
-                                               valid_lifetime=cfg.PREFIXES[prefix].VALID_LIFETIME,
-                                               category=cfg.PREFIXES[prefix].CATEGORY,
-                                               pclass=cfg.PREFIXES[prefix].CLASS,
-                                               ptype=cfg.PREFIXES[prefix].TYPE)
-                                client.Prefixes.append(ia_pd)
+                    # add all addresses which belong to that class
+                    for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
+                        # addresses of category 'dns' will be searched in DNS
+                        if cfg.ADDRESSES[address].CATEGORY == 'dns':
+                            a = get_ip_from_dns(client.Hostname)
+                        else:
+                            a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
+                        # in case range has been exceeded a will be None
+                        if a:
+                            ia = Address(address=a,
+                                         ia_type=cfg.ADDRESSES[address].IA_TYPE,
+                                         preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
+                                         valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
+                                         category=cfg.ADDRESSES[address].CATEGORY,
+                                         aclass=cfg.ADDRESSES[address].CLASS,
+                                         atype=cfg.ADDRESSES[address].TYPE,
+                                         dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
+                                         dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
+                                         dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
+                                         dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
+                            client.Addresses.append(ia)
 
-                if client_config.ADDRESS == client_config.CLASS == '' and \
-                   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                    ###if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                    ###   Transactions[transaction_id].IA_Option == 25:
+
+                    for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
+                        p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
+                        # in case range has been exceeded p will be None
+                        if p:
+                            ia_pd = Prefix(prefix=p,
+                                           length=cfg.PREFIXES[prefix].LENGTH,
+                                           preferred_lifetime=cfg.PREFIXES[prefix].PREFERRED_LIFETIME,
+                                           valid_lifetime=cfg.PREFIXES[prefix].VALID_LIFETIME,
+                                           category=cfg.PREFIXES[prefix].CATEGORY,
+                                           pclass=cfg.PREFIXES[prefix].CLASS,
+                                           ptype=cfg.PREFIXES[prefix].TYPE,
+                                           route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
+                            client.Prefixes.append(ia_pd)
+
+                ###if client_config.ADDRESS == client_config.CLASS == '' and \
+                ###   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                if client_config.ADDRESS == client_config.CLASS == '':
                     # use default class if no class or address is given
                     for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
                         client.Class = 'default_' + Transactions[transaction_id].Interface
@@ -638,26 +644,27 @@ def build_client(transaction_id):
             client.Class = 'default_' + Transactions[transaction_id].Interface
             # apply answer type of client to transaction - useful if no answer or no address available is configured
             Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
-            if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-               Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
-                for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
-                    # addresses of category 'dns' will be searched in DNS
-                    if cfg.ADDRESSES[address].CATEGORY == 'dns':
-                        a = get_ip_from_dns(client.Hostname)
-                    else:
-                        a = parse_pattern_address(cfg.ADDRESSES[address], client, transaction_id)
-                    if a:
-                        ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
-                                     preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
-                                     valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
-                                     category=cfg.ADDRESSES[address].CATEGORY,
-                                     aclass=cfg.ADDRESSES[address].CLASS,
-                                     atype=cfg.ADDRESSES[address].TYPE,
-                                     dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
-                                     dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
-                                     dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
-                                     dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                        client.Addresses.append(ia)
+            ###if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+            ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+
+            for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
+                # addresses of category 'dns' will be searched in DNS
+                if cfg.ADDRESSES[address].CATEGORY == 'dns':
+                    a = get_ip_from_dns(client.Hostname)
+                else:
+                    a = parse_pattern_address(cfg.ADDRESSES[address], client, transaction_id)
+                if a:
+                    ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
+                                 preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
+                                 valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
+                                 category=cfg.ADDRESSES[address].CATEGORY,
+                                 aclass=cfg.ADDRESSES[address].CLASS,
+                                 atype=cfg.ADDRESSES[address].TYPE,
+                                 dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
+                                 dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
+                                 dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
+                                 dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
+                    client.Addresses.append(ia)
         return client
 
     except Exception,err:
@@ -1004,7 +1011,7 @@ def modify_route(transaction_id, mode):
                 router = Transactions[transaction_id].ClientLLIP
             else:
                 if len(Transactions[transaction_id].Client.Addresses) == 1:
-                    router = Transactions[transaction_id].Client.Addresses[0]
+                    router = Transactions[transaction_id].Client.Addresses[0].ADDRESS
                 else:
                     router = None
                     log.error('modify_route: client needs exactly 1 address to be used as router to delegated prefix')
@@ -1252,7 +1259,7 @@ class Transaction(object):
         self.IAT1 = cfg.T1
         # dummy IAT2
         self.IAT2 = cfg.T2
-        # IA option - NA, TA pr PD -> DHCPv6 option 3, 4 or 25
+        # IA option - NA, TA or PD -> DHCPv6 option 3, 4 or 25
         # to be used in option_requests in Handler.build_response()
         self.IA_Option = None
         # Addresses given by client, for example for RENEW or RELEASE requests
@@ -1401,7 +1408,9 @@ class Transaction(object):
             # ignore some attributes
             if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
-                if o == 'Addresses':
+                if o == 'Addresses' and\
+                        ('3' in self.OptionsRequest or\
+                         '4' in self.OptionsRequest):
                     option = 'Addresses:'
                     for a in self.__dict__[o]:
                         option += ' ' + colonify_ip6(a)
@@ -1712,66 +1721,68 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = build_client(transaction_id)
 
-                    # check if only a short NoAddrAvail answer or none at all is to be returned
-                    if not Transactions[transaction_id].Answer == 'normal':
-                        if Transactions[transaction_id].Answer == 'noaddress':
-                            # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += build_option(13, '%04x' % (2))
-                            # clean client addresses which not be deployed anyway
-                            Transactions[transaction_id].Client.Addresses[:] = []
-                            # options in answer to be logged
-                            options_answer.append(13)
-                        else:
-                            # clean response as there is nothing to respond in case of answer = none
-                            self.response = ''
-                            return None
-                    else:
-                        # if client could not be built because of database problems send
-                        # status message back
-                        if Transactions[transaction_id].Client:
-                            # embed option 5 into option 3 - several if necessary
-                            ia_addresses = ''
-                            try:
-                                for address in Transactions[transaction_id].Client.Addresses:
-                                    if address.IA_TYPE == 'na':
-                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
-                                                                                         colonify_ip6(address.ADDRESS)))
-                                        # if a transaction consists of too many requests from client -
-                                        # - might be caused by going wild Windows clients -
-                                        # reset all addresses with lifetime 0
-                                        # lets start with maximal transaction count of 10
-                                        if Transactions[transaction_id].Counter < 10:
-                                            preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
-                                            valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
-                                        else:
-                                            preferred_lifetime = '%08x' % (0)
-                                            valid_lifetime = '%08x' % (0)
-                                        ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
-
-                                if not ia_addresses == '':
-                                    #
-                                    # todo: default clients sometimes seem to have class ''
-                                    #
-                                    if Transactions[transaction_id].Client.Class != '':
-                                        t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
-                                        t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
-                                    else:
-                                        t1 = '%08x' % (int(cfg.T1))
-                                        t2 = '%08x' % (int(cfg.T2))
-
-                                    response_ascii += build_option(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
+                    if 'addresses' in cfg.CLASSES[Transactions[transaction_id].Client.Class].ADVERTISE and \
+                        Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                        # check if only a short NoAddrAvail answer or none at all is to be returned
+                        if not Transactions[transaction_id].Answer == 'normal':
+                            if Transactions[transaction_id].Answer == 'noaddress':
+                                # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
+                                response_ascii += build_option(13, '%04x' % (2))
+                                # clean client addresses which not be deployed anyway
+                                Transactions[transaction_id].Client.Addresses[:] = []
                                 # options in answer to be logged
-                                options_answer.append(3)
-                            except:
+                                options_answer.append(13)
+                            else:
+                                # clean response as there is nothing to respond in case of answer = none
+                                self.response = ''
+                                return None
+                        else:
+                            # if client could not be built because of database problems send
+                            # status message back
+                            if Transactions[transaction_id].Client:
+                                # embed option 5 into option 3 - several if necessary
+                                ia_addresses = ''
+                                try:
+                                    for address in Transactions[transaction_id].Client.Addresses:
+                                        if address.IA_TYPE == 'na':
+                                            ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
+                                                                                             colonify_ip6(address.ADDRESS)))
+                                            # if a transaction consists of too many requests from client -
+                                            # - might be caused by going wild Windows clients -
+                                            # reset all addresses with lifetime 0
+                                            # lets start with maximal transaction count of 10
+                                            if Transactions[transaction_id].Counter < 10:
+                                                preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
+                                                valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
+                                            else:
+                                                preferred_lifetime = '%08x' % (0)
+                                                valid_lifetime = '%08x' % (0)
+                                            ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
+
+                                    if not ia_addresses == '':
+                                        #
+                                        # todo: default clients sometimes seem to have class ''
+                                        #
+                                        if Transactions[transaction_id].Client.Class != '':
+                                            t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
+                                            t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
+                                        else:
+                                            t1 = '%08x' % (int(cfg.T1))
+                                            t2 = '%08x' % (int(cfg.T2))
+
+                                        response_ascii += build_option(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
+                                    # options in answer to be logged
+                                    options_answer.append(3)
+                                except:
+                                    # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
+                                    response_ascii += build_option(13, '%04x' % (2))
+                                    # options in answer to be logged
+                                    options_answer.append(13)
+                            else:
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                                 response_ascii += build_option(13, '%04x' % (2))
                                 # options in answer to be logged
                                 options_answer.append(13)
-                        else:
-                            # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += build_option(13, '%04x' % (2))
-                            # options in answer to be logged
-                            options_answer.append(13)
 
             # IA_TA temporary addresses
             if 4 in options_request:
@@ -1781,55 +1792,57 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = build_client(transaction_id)
 
-                    # check if only a short NoAddrAvail answer or none at all ist t be returned
-                    if not Transactions[transaction_id].Answer == 'normal':
-                        if Transactions[transaction_id].Answer == 'noaddress':
-                            # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += build_option(13, '%04x' % (2))
-                            # clean client addresses which not be deployed anyway
-                            Transactions[transaction_id].Client.Addresses[:] = []
-                            # options in answer to be logged
-                            options_answer.append(13)
-                        else:
-                            # clean response as there is nothing to respond in case of answer = none
-                            self.response = ''
-                            return None
-                    else:
-                        # if client could not be built because of database problems send
-                        # status message back
-                        if Transactions[transaction_id].Client:
-                            # embed option 5 into option 4 - several if necessary
-                            ia_addresses = ''
-                            try:
-                                for address in Transactions[transaction_id].Client.Addresses:
-                                    if address.IA_TYPE == 'ta':
-                                        ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
-                                                                                         colonify_ip6(address.ADDRESS)))
-                                        # if a transaction consists of too many requests from client -
-                                        # - might be caused by going wild Windows clients -
-                                        # reset all addresses with lifetime 0
-                                        # lets start with maximal transaction count of 10
-                                        if Transactions[transaction_id].Counter < 10:
-                                            preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
-                                            valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
-                                        else:
-                                            preferred_lifetime = '%08x' % (0)
-                                            valid_lifetime = '%08x' % (0)
-                                        ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                if not ia_addresses == '':
-                                    response_ascii += build_option(4, Transactions[transaction_id].IAID + ia_addresses)
+                    if 'addresses' in cfg.CLASSES[Transactions[transaction_id].Client.Class].ADVERTISE and \
+                        Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                        # check if only a short NoAddrAvail answer or none at all ist t be returned
+                        if not Transactions[transaction_id].Answer == 'normal':
+                            if Transactions[transaction_id].Answer == 'noaddress':
+                                # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
+                                response_ascii += build_option(13, '%04x' % (2))
+                                # clean client addresses which not be deployed anyway
+                                Transactions[transaction_id].Client.Addresses[:] = []
                                 # options in answer to be logged
-                                options_answer.append(4)
-                            except:
+                                options_answer.append(13)
+                            else:
+                                # clean response as there is nothing to respond in case of answer = none
+                                self.response = ''
+                                return None
+                        else:
+                            # if client could not be built because of database problems send
+                            # status message back
+                            if Transactions[transaction_id].Client:
+                                # embed option 5 into option 4 - several if necessary
+                                ia_addresses = ''
+                                try:
+                                    for address in Transactions[transaction_id].Client.Addresses:
+                                        if address.IA_TYPE == 'ta':
+                                            ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
+                                                                                             colonify_ip6(address.ADDRESS)))
+                                            # if a transaction consists of too many requests from client -
+                                            # - might be caused by going wild Windows clients -
+                                            # reset all addresses with lifetime 0
+                                            # lets start with maximal transaction count of 10
+                                            if Transactions[transaction_id].Counter < 10:
+                                                preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
+                                                valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
+                                            else:
+                                                preferred_lifetime = '%08x' % (0)
+                                                valid_lifetime = '%08x' % (0)
+                                            ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
+                                    if not ia_addresses == '':
+                                        response_ascii += build_option(4, Transactions[transaction_id].IAID + ia_addresses)
+                                    # options in answer to be logged
+                                    options_answer.append(4)
+                                except:
+                                    # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
+                                    response_ascii += build_option(13, '%04x' % (2))
+                                    # options in answer to be logged
+                                    options_answer.append(13)
+                            else:
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                                 response_ascii += build_option(13, '%04x' % (2))
                                 # options in answer to be logged
                                 options_answer.append(13)
-                        else:
-                            # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += build_option(13, '%04x' % (2))
-                            # options in answer to be logged
-                            options_answer.append(13)
 
             # Option 7 Server Preference
             if 7 in options_request:
@@ -1908,66 +1921,68 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = build_client(transaction_id)
 
-                    # check if only a short NoPrefixAvail answer or none at all is to be returned
-                    if not Transactions[transaction_id].Answer == 'normal':
-                        if Transactions[transaction_id].Answer == 'noprefix':
-                            # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                            response_ascii += build_option(13, '%04x' % (6))
-                            # clean client prefixes which not be deployed anyway
-                            Transactions[transaction_id].Client.Prefixes[:] = []
-                            # options in answer to be logged
-                            options_answer.append(13)
+                    # Only if prefixes are provided
+                    if 'prefixes' in cfg.CLASSES[Transactions[transaction_id].Client.Class].ADVERTISE:
+                        # check if only a short NoPrefixAvail answer or none at all is to be returned
+                        if not Transactions[transaction_id].Answer == 'normal':
+                            if Transactions[transaction_id].Answer == 'noprefix':
+                                # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
+                                response_ascii += build_option(13, '%04x' % (6))
+                                # clean client prefixes which not be deployed anyway
+                                Transactions[transaction_id].Client.Prefixes[:] = []
+                                # options in answer to be logged
+                                options_answer.append(13)
+                            else:
+                                # clean response as there is nothing to respond in case of answer = none
+                                self.response = ''
+                                return None
                         else:
-                            # clean response as there is nothing to respond in case of answer = none
-                            self.response = ''
-                            return None
-                    else:
-                        # if client could not be built because of database problems send
-                        # status message back
-                        if Transactions[transaction_id].Client:
-                            # embed option 26 into option 25 - several if necessary
-                            ia_prefixes = ''
-                            try:
-                                for prefix in Transactions[transaction_id].Client.Prefixes:
-                                    ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
-                                                                                    colonify_ip6(prefix.PREFIX)))
-                                    if prefix.VALID == True:
-                                        preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
-                                        valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
+                            # if client could not be built because of database problems send
+                            # status message back
+                            if Transactions[transaction_id].Client:
+                                # embed option 26 into option 25 - several if necessary
+                                ia_prefixes = ''
+                                try:
+                                    for prefix in Transactions[transaction_id].Client.Prefixes:
+                                        ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
+                                                                                        colonify_ip6(prefix.PREFIX)))
+                                        if prefix.VALID == True:
+                                            preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
+                                            valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
+                                        else:
+                                            preferred_lifetime = '%08x' % (0)
+                                            valid_lifetime = '%08x' % (0)
+                                        length = '%02x' % (int(prefix.LENGTH))
+                                        ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
+
+                                    if Transactions[transaction_id].Client.Class != '':
+                                        t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
+                                        t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
                                     else:
-                                        preferred_lifetime = '%08x' % (0)
-                                        valid_lifetime = '%08x' % (0)
-                                    length = '%02x' % (int(prefix.LENGTH))
-                                    ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
+                                        t1 = '%08x' % (int(cfg.T1))
+                                        t2 = '%08x' % (int(cfg.T2))
 
-                                if Transactions[transaction_id].Client.Class != '':
-                                    t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
-                                    t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
-                                else:
-                                    t1 = '%08x' % (int(cfg.T1))
-                                    t2 = '%08x' % (int(cfg.T2))
+                                    # even if there anre no prefixes server has to deliver an empty PD
+                                    response_ascii += build_option(25, Transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
+                                    # if no prefixes available a NoPrefixAvail status code has to be sent
+                                    if ia_prefixes == '':
+                                        # if class advertises no prefixes tell client
+                                        # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
+                                        response_ascii += build_option(13, '%04x' % (6))
+                                    # options in answer to be logged
+                                    options_answer.append(25)
 
-                                # even if there anre no prefixes server has to deliver an empty PD
-                                response_ascii += build_option(25, Transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
-                                # if no prefixes available a NoPrefixAvail status code has to be sent
-                                if ia_prefixes == '':
-                                    # if class advertises no prefixes tell client
+                                except Exception, err:
+                                    print err
                                     # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                                     response_ascii += build_option(13, '%04x' % (6))
-                                # options in answer to be logged
-                                options_answer.append(25)
-
-                            except Exception, err:
-                                print err
+                                    # options in answer to be logged
+                                    options_answer.append(25)
+                            else:
                                 # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                                 response_ascii += build_option(13, '%04x' % (6))
                                 # options in answer to be logged
                                 options_answer.append(25)
-                        else:
-                            # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                            response_ascii += build_option(13, '%04x' % (6))
-                            # options in answer to be logged
-                            options_answer.append(25)
 
             # Option 31 OPTION_SNTP_SERVERS
             #if 31 in options_request and cfg.SNTP_SERVERS != '':
