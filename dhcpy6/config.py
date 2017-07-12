@@ -355,6 +355,7 @@ class Config(object):
                             lex = shlex.shlex(item[1])
                             lex.whitespace = WHITESPACE
                             lex.wordchars += ':.'
+                            self.CLASSES[section.lower().split('class_')[1]].ADVERTISE[:] = []
                             for advertise in lex:
                                 if len(advertise) > 0:
                                     self.CLASSES[section.lower().split('class_')[1]].ADVERTISE.append(advertise)

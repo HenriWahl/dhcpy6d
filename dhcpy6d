@@ -160,9 +160,6 @@ IF_NUMBER = dict()
 # IA_NA, IA_TA and IA_PD Options referred here in handler
 IA_OPTIONS = (3, 4, 25)
 
-# used by build_client() to check if address has to be evaluated
-IA_ADDRESS_OPTIONS = (3, 4)
-
 # options to be ignored when logging
 IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'DUIDLLAddress', 'DUIDType', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old']
 
@@ -342,7 +339,7 @@ def build_client(transaction_id):
                 Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
 
             if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-               Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                (3 or 4) in Transactions[transaction_id].IA_Options:
                 for address in Transactions[transaction_id].Addresses:
                     # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
                     answer = volatilestore.check_lease(address, transaction_id)
@@ -455,7 +452,7 @@ def build_client(transaction_id):
                                                     valid_lifetime=0))
 
             if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-               Transactions[transaction_id].IA_Option == 25:
+               25 in Transactions[transaction_id].IA_Options:
                 for prefix in Transactions[transaction_id].Prefixes:
                     # split prefix of prefix from length, separated by /
                     prefix_prefix, prefix_length = split_prefix(prefix)
@@ -1199,15 +1196,17 @@ class Client(object):
             if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'Addresses':
-                    option = 'Addresses:'
-                    for a in self.__dict__[o]:
-                        option += ' ' + colonify_ip6(a.ADDRESS)
-                    optionsstring = optionsstring + ' | '  + option
+                    if 'addresses' in cfg.CLASSES[self.Class].ADVERTISE:
+                        option = 'Addresses:'
+                        for a in self.__dict__[o]:
+                            option += ' ' + colonify_ip6(a.ADDRESS)
+                        optionsstring = optionsstring + ' | '  + option
                 elif o == 'Prefixes':
-                    option = 'Prefixes:'
-                    for p in self.__dict__[o]:
-                        option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
-                    optionsstring = optionsstring + ' | '  + option
+                    if 'prefixes' in cfg.CLASSES[self.Class].ADVERTISE:
+                        option = 'Prefixes:'
+                        for p in self.__dict__[o]:
+                            option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
+                        optionsstring = optionsstring + ' | '  + option
                 else:
                     option = o + ': ' + str(self.__dict__[o])
                     optionsstring = optionsstring + ' | '  + option
@@ -1261,7 +1260,10 @@ class Transaction(object):
         self.IAT2 = cfg.T2
         # IA option - NA, TA or PD -> DHCPv6 option 3, 4 or 25
         # to be used in option_requests in Handler.build_response()
-        self.IA_Option = None
+        ###self.IA_Option = None
+
+        self.IA_Options = list()
+
         # Addresses given by client, for example for RENEW or RELEASE requests
         self.Addresses = list()
         # same with prefixes
@@ -1314,7 +1316,8 @@ class Transaction(object):
                     # in case an address is asked for twice by one host ignore the twin
                     if not address in self.Addresses:
                         self.Addresses.append(address)
-            self.IA_Option = 3
+            ###self.IA_Option = 3
+            self.IA_Options.append(4)
 
         # Identity Association for Temporary Addresses
         # 4 Identity Association for Temporary Address Option
@@ -1330,7 +1333,8 @@ class Transaction(object):
                     # in case an address is asked for twice by one host ignore the twin
                     if not address in self.Addresses:
                         self.Addresses.append(address)
-            self.IA_Option = 4
+            ###self.IA_Option = 4
+            self.IA_Options.append(4)
 
         # Options Requested
         # 6 Option Request Option
@@ -1377,7 +1381,8 @@ class Transaction(object):
                     if not prefix_combined in self.Prefixes:
                         self.Prefixes.append(prefix_combined)
                     del(prefix, length, prefix_combined)
-            self.IA_Option = 25
+            ###self.IA_Option = 25
+            self.IA_Options.append(25)
 
         # FQDN
         # 39 FQDN Option
@@ -1408,18 +1413,18 @@ class Transaction(object):
             # ignore some attributes
             if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
-                if o == 'Addresses' and\
-                        ('3' in self.OptionsRequest or\
-                         '4' in self.OptionsRequest):
-                    option = 'Addresses:'
-                    for a in self.__dict__[o]:
-                        option += ' ' + colonify_ip6(a)
-                    optionsstring = optionsstring + ' | '  + option
+                if o == 'Addresses':
+                    if (3 or 4) in self.IA_Options:
+                        option = 'Addresses:'
+                        for a in self.__dict__[o]:
+                            option += ' ' + colonify_ip6(a)
+                        optionsstring = optionsstring + ' | '  + option
                 elif o == 'Prefixes':
-                    option = 'Prefixes:'
-                    for p in self.__dict__[o]:
-                        prefix, length = split_prefix(p)
-                        option += compress_prefix(colonify_ip6(prefix), length)
+                    if 25 in self.IA_Options:
+                        option = 'Prefixes:'
+                        for p in self.__dict__[o]:
+                            prefix, length = split_prefix(p)
+                            option += compress_prefix(colonify_ip6(prefix), length)
                 elif o == 'ClientLLIP':
                     option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
                     optionsstring = optionsstring + ' | '  + option
@@ -1578,7 +1583,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 if Transactions[transaction_id].LastMessageReceivedType == 1 \
                                    and Transactions[transaction_id].RapidCommit == False:
                                     # preference option (7) is for free
-                                    self.build_response(2, transaction_id, [Transactions[transaction_id].IA_Option] + \
+                                    self.build_response(2, transaction_id, Transactions[transaction_id].IA_Options + \
                                                         [7] + Transactions[transaction_id].OptionsRequest)
 
                                     # store leases for addresses and lock advertised address
@@ -1592,16 +1597,16 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # preference option (7) is for free
                                     # if RapidCommit was set give it back
                                     if not Transactions[transaction_id].RapidCommit:
-                                        self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + \
+                                        self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + \
                                                             [7] + Transactions[transaction_id].OptionsRequest)
                                     else:
-                                        self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + \
+                                        self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + \
                                                             [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
                                     volatilestore.store_into_database(transaction_id)
 
                                     # run external script for setting a route to the delegated prefix
-                                    if Transactions[transaction_id].IA_Option == 25:
+                                    if 25 in Transactions[transaction_id].IA_Options:
                                         modify_route(transaction_id, 'up')
 
                                     if cfg.DNS_UPDATE:
@@ -1624,7 +1629,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # RENEW
                                 # if last request was a RENEW (type 5) send a REPLY (type 7) back
                                 elif Transactions[transaction_id].LastMessageReceivedType == 5:
-                                    self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + [7] + \
+                                    self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
                                     volatilestore.store_into_database(transaction_id)
@@ -1634,7 +1639,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # REBIND
                                 # if last request was a REBIND (type 6) send a REPLY (type 7) back
                                 elif Transactions[transaction_id].LastMessageReceivedType == 6:
-                                    self.build_response(7, transaction_id, [Transactions[transaction_id].IA_Option] + [7] + \
+                                    self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
                                     volatilestore.store_into_database(transaction_id)
@@ -1722,7 +1727,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         Transactions[transaction_id].Client = build_client(transaction_id)
 
                     if 'addresses' in cfg.CLASSES[Transactions[transaction_id].Client.Class].ADVERTISE and \
-                        Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                                    (3 or 4) in Transactions[transaction_id].IA_Options:
                         # check if only a short NoAddrAvail answer or none at all is to be returned
                         if not Transactions[transaction_id].Answer == 'normal':
                             if Transactions[transaction_id].Answer == 'noaddress':
@@ -1793,7 +1798,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         Transactions[transaction_id].Client = build_client(transaction_id)
 
                     if 'addresses' in cfg.CLASSES[Transactions[transaction_id].Client.Class].ADVERTISE and \
-                        Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                        (3 or 4) in Transactions[transaction_id].IA_Options:
                         # check if only a short NoAddrAvail answer or none at all ist t be returned
                         if not Transactions[transaction_id].Answer == 'normal':
                             if Transactions[transaction_id].Answer == 'noaddress':
@@ -2104,6 +2109,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         options_answer.sort()
                         log.info('%s | TransactionID: %s | Options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, Transactions[transaction_id].Client._get_options_string()))
                     else:
+                        print options_request
                         log.info('what else should I do?')
                 else:
                     options_answer.sort()
