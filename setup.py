@@ -71,8 +71,8 @@ setup(name = 'dhcpy6d',
     author_email = 'h.wahl@ifw-dresden.de',
     url = 'https://dhcpy6d.ifw-dresden.de/',
     download_url = 'https://dhcpy6d.ifw-dresden.de/download',
-    py_modules = ['dhcpy6.Helpers', 'dhcpy6.Constants',
-                'dhcpy6.Config', 'dhcpy6.Storage'],
+    py_modules = ['dhcpy6.helpers', 'dhcpy6.constants',
+                'dhcpy6.config', 'dhcpy6.storage'],
     data_files = data_files_custom,
     scripts = scripts_custom
     )

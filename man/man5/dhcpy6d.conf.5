@@ -319,6 +319,11 @@ Length of prefix given out to clients.
 .TP
 .B \fBvalid_lifetime = <seconds>\fP
 As default preferred and valid lifetime are set in general settings, but it is configurable individually for every prefixk setting.
+.TP
+.B \fBroute_link_lokal = yes|no\fP
+As default Link Local Address of requesting client is not used as router address for external call.
+Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
+Alternatively the client Link Local Address might be used by enabling this option.
 .UNINDENT
 .SH CLASS DEFINITIONS IN MULTIPLE [CLASS_<CLASS_NAME>] SECTIONS
 .sp
