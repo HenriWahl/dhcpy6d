@@ -1091,7 +1091,7 @@ class TidyUpThread(threading.Thread):
             dbcount = 0
 
             # get and delete invalid leases
-            while True:https://onefe.ifw-dresden.de/VM.terminate_hard
+            while True:
                 # transaction data can be deleted after transaction is finished
                 now = int(time.time())
                 for t in Transactions.keys():
