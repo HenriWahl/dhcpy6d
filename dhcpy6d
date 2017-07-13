@@ -998,31 +998,33 @@ def modify_route(transaction_id, mode):
     '''
         called when route has to be set - calls itself any external script or something like that
     '''
-    # only do anything if class of client has something defined to be called
-    if cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP != '':
-        # collect possible prefixes, lengths and router ip addresses in list
-        routes = list()
-        for prefix in Transactions[transaction_id].Client.Prefixes:
-            # use LinkLocal Address of client if wanted
-            if prefix.ROUTE_LINK_LOCAL == True:
-                router = Transactions[transaction_id].ClientLLIP
-            else:
-                if len(Transactions[transaction_id].Client.Addresses) == 1:
-                    router = Transactions[transaction_id].Client.Addresses[0].ADDRESS
+    # check if client is already set - otherwise crashes
+    if Transactions[transaction_id].Client != None:
+        # only do anything if class of client has something defined to be called
+        if cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP != '':
+            # collect possible prefixes, lengths and router ip addresses in list
+            routes = list()
+            for prefix in Transactions[transaction_id].Client.Prefixes:
+                # use LinkLocal Address of client if wanted
+                if prefix.ROUTE_LINK_LOCAL == True:
+                    router = Transactions[transaction_id].ClientLLIP
                 else:
-                    router = None
-                    log.error('modify_route: client needs exactly 1 address to be used as router to delegated prefix')
-            if router != None:
-                routes.append(Route(prefix.PREFIX, prefix.LENGTH, router))
+                    if len(Transactions[transaction_id].Client.Addresses) == 1:
+                        router = Transactions[transaction_id].Client.Addresses[0].ADDRESS
+                    else:
+                        router = None
+                        log.error('modify_route: client needs exactly 1 address to be used as router to delegated prefix')
+                if router != None:
+                    routes.append(Route(prefix.PREFIX, prefix.LENGTH, router))
 
-        if mode == 'up':
-            call = cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP
-        elif mode == 'down':
-            call = cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_DOWN
+            if mode == 'up':
+                call = cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP
+            elif mode == 'down':
+                call = cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_DOWN
 
-        # call executables here
-        for route in routes:
-            route_queue.put((call, route.prefix, route.length, route.router))
+            # call executables here
+            for route in routes:
+                route_queue.put((call, route.prefix, route.length, route.router))
 
 
 class DNSQueryThread(threading.Thread):
