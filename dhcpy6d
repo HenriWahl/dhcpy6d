@@ -569,8 +569,8 @@ def build_client(transaction_id):
                             client.Addresses.append(ia)
 
                 if not client_config.CLASS == '':
-                    ###if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                    ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
+                    #if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                    #        (3 or 4) in Transactions[transaction_id].IA_Options:
 
                     # add all addresses which belong to that class
                     for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
@@ -594,22 +594,22 @@ def build_client(transaction_id):
                                          dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                             client.Addresses.append(ia)
 
-                    ###if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                    ###   Transactions[transaction_id].IA_Option == 25:
+                    if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+                       25 in Transactions[transaction_id].IA_Options:
 
-                    for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
-                        p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
-                        # in case range has been exceeded p will be None
-                        if p:
-                            ia_pd = Prefix(prefix=p,
-                                           length=cfg.PREFIXES[prefix].LENGTH,
-                                           preferred_lifetime=cfg.PREFIXES[prefix].PREFERRED_LIFETIME,
-                                           valid_lifetime=cfg.PREFIXES[prefix].VALID_LIFETIME,
-                                           category=cfg.PREFIXES[prefix].CATEGORY,
-                                           pclass=cfg.PREFIXES[prefix].CLASS,
-                                           ptype=cfg.PREFIXES[prefix].TYPE,
-                                           route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
-                            client.Prefixes.append(ia_pd)
+                        for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
+                            p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
+                            # in case range has been exceeded p will be None
+                            if p:
+                                ia_pd = Prefix(prefix=p,
+                                               length=cfg.PREFIXES[prefix].LENGTH,
+                                               preferred_lifetime=cfg.PREFIXES[prefix].PREFERRED_LIFETIME,
+                                               valid_lifetime=cfg.PREFIXES[prefix].VALID_LIFETIME,
+                                               category=cfg.PREFIXES[prefix].CATEGORY,
+                                               pclass=cfg.PREFIXES[prefix].CLASS,
+                                               ptype=cfg.PREFIXES[prefix].TYPE,
+                                               route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
+                                client.Prefixes.append(ia_pd)
 
                 ###if client_config.ADDRESS == client_config.CLASS == '' and \
                 ###   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
@@ -1317,7 +1317,7 @@ class Transaction(object):
                     if not address in self.Addresses:
                         self.Addresses.append(address)
             ###self.IA_Option = 3
-            self.IA_Options.append(4)
+            self.IA_Options.append(3)
 
         # Identity Association for Temporary Addresses
         # 4 Identity Association for Temporary Address Option
