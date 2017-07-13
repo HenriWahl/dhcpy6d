@@ -338,7 +338,7 @@ def build_client(transaction_id):
                 # apply answer type of client to transaction - useful if no answer or no address available is configured
                 Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
 
-            if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+            if 'addresses' in cfg.CLASSES[client.Class].ADVERTISE and \
                 (3 or 4) in Transactions[transaction_id].IA_Options:
                 for address in Transactions[transaction_id].Addresses:
                     # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
@@ -451,7 +451,7 @@ def build_client(transaction_id):
                                                     preferred_lifetime=0,
                                                     valid_lifetime=0))
 
-            if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+            if 'prefixes' in cfg.CLASSES[client.Class].ADVERTISE and \
                25 in Transactions[transaction_id].IA_Options:
                 for prefix in Transactions[transaction_id].Prefixes:
                     # split prefix of prefix from length, separated by /
