@@ -400,7 +400,7 @@ class Store(object):
             check how many leases are stored - used to find out if address range has been exceeded
         '''
         query = "SELECT COUNT(address) FROM %s WHERE address LIKE '%s%%' AND "\
-                "'%s' <= address AND address <= '%s'" % (self.table_prefixes,
+                "'%s' <= address AND address <= '%s'" % (self.table_leases,
                                                          prefix,
                                                          prefix+frange,
                                                          prefix+trange)
