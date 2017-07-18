@@ -185,6 +185,9 @@ There can be many address definitions which will be used by classes. Every addre
 
     **random**
         Randomly created 64 bit values used as host part in address
+        
+    **fixed**
+        Use addresses from client configuration only.
 
     **dns**
         Ask DNS server for IPv6 address of client host
