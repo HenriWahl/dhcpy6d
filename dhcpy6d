@@ -671,42 +671,42 @@ def build_client(transaction_id):
         return None
 
 
-def parse_pattern_address(pattern, client_config, transaction_id):
+def parse_pattern_address(address, client_config, transaction_id):
     '''
         parse address pattern and replace variables with current values
     '''
     # parse all pattern parts
-    p = pattern.PATTERN
+    a = address.PATTERN
 
     # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
-    p = p.replace('$prefix$', cfg.PREFIX)
+    a = a.replace('$prefix$', cfg.PREFIX)
 
     # check different client address categories - to be extended!
-    if pattern.CATEGORY == 'mac':
+    if address.CATEGORY == 'mac':
         macraw = ''.join(Transactions[transaction_id].MAC.split(':'))
-        p = p.replace('$mac$', ':'.join((macraw[0:4], macraw[4:8], macraw[8:12])))
-    elif pattern.CATEGORY in ['fixed', 'dns']:
-        # No patterns for fixed address, let's bail out
+        a = a.replace('$mac$', ':'.join((macraw[0:4], macraw[4:8], macraw[8:12])))
+    elif address.CATEGORY in ['fixed', 'dns']:
+        # No patterns for fixed address, let's bail
         return None
-    elif pattern.CATEGORY == 'id':
+    elif address.CATEGORY == 'id':
         # if there is an ID build address
         if str(client_config.ID) <> '':
-            p = p.replace('$id$', str(client_config.ID))
+            a = a.replace('$id$', str(client_config.ID))
         else:
             return None
-    elif pattern.CATEGORY == 'random':
+    elif address.CATEGORY == 'random':
         # first check if address already has been advertised
-        advertised_address = volatilestore.check_advertised_lease(transaction_id, category='random', atype=pattern.TYPE)
+        advertised_address = volatilestore.check_advertised_lease(transaction_id, category='random', atype=address.TYPE)
         # when address already has been advertised for this client use it
         if advertised_address:
-            p = advertised_address
+            a = advertised_address
         else:
             ra = str(hex(random.getrandbits(64)))[2:][:-1]
             ra = ':'.join((ra[0:4], ra[4:8], ra[8:12], ra[12:16]))
             # subject to change....
-            p = p.replace('$random64$', ra)
-    elif pattern.CATEGORY == 'range':
-        frange, trange = pattern.RANGE.split('-')
+            a = a.replace('$random64$', ra)
+    elif address.CATEGORY == 'range':
+        frange, trange = address.RANGE.split('-')
         if len(frange)<4:
             frange ='0'*(4-len(frange)) + frange
         if len(trange)<4:
@@ -714,64 +714,63 @@ def parse_pattern_address(pattern, client_config, transaction_id):
         if frange > trange:
             frange, trange = trange, frange
 
-        # expecting frange-trange at the last octet, 'prefix' means the first seven octets here
+        # expecting range-range at the last octet, 'prefix' means the first seven octets here
         # - is just shorter than the_first_seven_octets
-        address_prefix = decompress_ip6(p.replace('$range$', '0000'))[:28]
+        prefix = decompress_ip6(a.replace('$range$', '0000'))[:28]
 
         # the following steps are done to find a collision-free lease in given range
         # check if address already has been advertised - important for REPLY after SOLICIT-ADVERTISE-REQUEST
-        advertised_address = volatilestore.check_advertised_lease(transaction_id, category='range', atype=pattern.TYPE)
+        advertised_address = volatilestore.check_advertised_lease(transaction_id, category='range', atype=address.TYPE)
         # when address already has been advertised for this client use it
         if advertised_address:
-            p = advertised_address
+            a = advertised_address
         else:
             # check if requesting client still has an active lease that could be reused
-            lease = volatilestore.get_range_lease_for_recycling(prefix=address_prefix, frange=frange, trange=trange,
-                                                                duid=Transactions[transaction_id].DUID,
+            lease = volatilestore.get_range_lease_for_recycling(prefix=prefix, frange=frange, trange=trange,\
+                                                                duid=Transactions[transaction_id].DUID,\
                                                                 mac=Transactions[transaction_id].MAC)
             # the found lease has to be in range - important after changed range boundaries
-            if not lease is None:
-                if frange <= lease[28:].lower() <= trange:
-                    p = ':'.join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],
-                                  lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
+            if not lease is None and frange <= lease[28:].lower() <= trange:
+                a = ':'.join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
+                              lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
             else:
                 # get highest active lease to increment address about 1
-                lease = volatilestore.get_highest_range_lease(prefix=address_prefix, frange=frange, trange=trange)
+                lease = volatilestore.get_highest_range_lease(prefix=prefix, frange=frange, trange=trange)
                 # check if highest active lease still fits into range
-                if not lease is None:
-                    if frange <= lease[28:].lower() < trange:
-                        # if highest lease + 1 would not fit range limit is reached
-                        if lease[28:].lower() >= trange:
-                            # try to get one of the inactive old leases
-                            lease = volatilestore.get_oldest_inactive_range_lease(prefix=address_prefix, frange=frange, trange=trange)
-                            if lease is None:
-                                # if none is available limit is reached and nothing returned
-                                log.critical('Address space %s[%s-%s] exceeded' % (address_prefix, frange,trange))
-                                return None
-                            else:
-                                # if lease is OK use it
-                                p = lease
+                if not lease is None and frange <= lease[28:].lower() < trange:
+                    # if highest lease + 1 would not fit range limit is reached
+                    if lease[28:].lower() >= trange:
+                        # try to get one of the inactive old leases
+                        lease = volatilestore.get_oldest_inactive_range_lease(prefix=prefix, frange=frange, trange=trange)
+                        if lease is None:
+                            # if none is available limit is reached and nothing returned
+                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, frange,trange))
+                            return None
                         else:
-                            # otherwise increase current maximum range limit by 1
-                            p = p.replace('$range$', str(hex(int(lease[28:], 16) + 1)).split('x')[1])
+                            # if lease is OK use it
+                            a = lease
+                    else:
+                        # otherwise increase current maximum range limit by 1
+                        a = a.replace('$range$', str(hex(int(lease[28:], 16) + 1)).split('x')[1])
                 else:
                     # if there is no lease yet or range limit is reached try to reactivate an old inactive lease
-                    lease = volatilestore.get_oldest_inactive_range_lease(prefix=address_prefix, frange=frange, trange=trange)
+                    lease = volatilestore.get_oldest_inactive_range_lease(prefix=prefix, frange=frange, trange=trange)
                     if lease is None:
                         # if there are no leases stored yet initiate lease storage
                         # this will be done only once - the first time if there is no other lease yet
                         # so it is safe to start from frange
-                        if volatilestore.check_number_of_leases(address_prefix, frange, trange) <= 1:
-                            p = p.replace('$range$', frange)
+                        if volatilestore.check_number_of_leases(prefix, frange, trange) <= 1:
+                            a = a.replace('$range$', frange)
                         else:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Address space %s[%s-%s] exceeded' % (address_prefix, frange,trange))
+                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, frange,trange))
                             return None
                     else:
                         # if there is a lease it might be used
-                        p = lease
+                        a = lease
 
-    return decompress_ip6(p)
+    return decompress_ip6(a)
+
 
 
 def parse_pattern_prefix(pattern, client_config, transaction_id):

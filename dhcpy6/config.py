@@ -218,8 +218,6 @@ class Config(object):
         self.CLASSES['default'].ADDRESSES.append('default')
         self.CLASSES['default'].PREFIXES.append('default')
 
-
-
         # config file from command line
         # default config file and cli values
         configfile = self.cli_options = self.cli_user = self.cli_group = self.cli_duid = self.cli_really_do_it = None
