@@ -548,9 +548,6 @@ def build_client(transaction_id):
             # continue only if request interface matches class interfaces
             if Transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
                 # if fixed addresses are given build them
-                ###if not client_config.ADDRESS == None and \
-                ###   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
                 if not client_config.ADDRESS == None:
                     for address in client_config.ADDRESS:
                         if len(address) > 0:
@@ -569,9 +566,6 @@ def build_client(transaction_id):
                             client.Addresses.append(ia)
 
                 if not client_config.CLASS == '':
-                    #if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                    #        (3 or 4) in Transactions[transaction_id].IA_Options:
-
                     # add all addresses which belong to that class
                     for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
                         # addresses of category 'dns' will be searched in DNS
@@ -611,9 +605,6 @@ def build_client(transaction_id):
                                                route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
                                 client.Prefixes.append(ia_pd)
 
-                ###if client_config.ADDRESS == client_config.CLASS == '' and \
-                ###   'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
                 if client_config.ADDRESS == client_config.CLASS == '':
                     # use default class if no class or address is given
                     for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
@@ -641,8 +632,6 @@ def build_client(transaction_id):
             client.Class = 'default_' + Transactions[transaction_id].Interface
             # apply answer type of client to transaction - useful if no answer or no address available is configured
             Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
-            ###if 'addresses' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-            ###   Transactions[transaction_id].IA_Option in IA_ADDRESS_OPTIONS:
 
             for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
                 # addresses of category 'dns' will be searched in DNS

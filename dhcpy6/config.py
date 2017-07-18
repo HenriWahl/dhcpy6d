@@ -729,6 +729,9 @@ class Config(object):
                 self.ADDRESSES[a]._build_prototype()
                 # test existence of category specific variable in pattern
                 if self.ADDRESSES[a].CATEGORY == 'range':
+                    if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.ADDRESSES[a].RANGE, re.IGNORECASE):
+                        error_exit("%s Range '%s' is not valid." % \
+                                   (msg_prefix, self.ADDRESSES[a].RANGE))
                     if not 0 < self.ADDRESSES[a].PATTERN.count('$range$') < 2:
                         error_exit("%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." % \
                                    (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
@@ -794,6 +797,9 @@ class Config(object):
                 self.PREFIXES[p]._build_prototype()
                 # test existence of category specific variable in pattern
                 if self.PREFIXES[p].CATEGORY == 'range':
+                    if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.PREFIXES[p].RANGE, re.IGNORECASE):
+                        error_exit("%s Range '%s' is not valid." % \
+                                   (msg_prefix, self.PREFIXES[p].RANGE))
                     if not 0 < self.PREFIXES[p].PATTERN.count('$range$') < 2:
                         error_exit("%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." % \
                                    (msg_prefix, self.PREFIXES[p].PATTERN.strip()))
