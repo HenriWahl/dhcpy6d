@@ -62,7 +62,7 @@ else:
     scripts_custom = ['dhcpy6d']
 
 setup(name = 'dhcpy6d',
-    version = '0.5',
+    version = '0.5.99',
     license = 'GNU GPL v2',
     description = 'DHCPv6 server daemon',
     long_description = 'Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by DUID, hostname or MAC address as in the good old IPv4 days. It allows easy dualstack transition, addresses may be generated randomly, by range, by DNS, by arbitrary ID or MAC address. Clients can get more than one address, leases and client configuration can be stored in databases and DNS can be updated dynamically.',
@@ -71,8 +71,8 @@ setup(name = 'dhcpy6d',
     author_email = 'h.wahl@ifw-dresden.de',
     url = 'https://dhcpy6d.ifw-dresden.de/',
     download_url = 'https://dhcpy6d.ifw-dresden.de/download',
-    py_modules = ['dhcpy6.Helpers', 'dhcpy6.Constants',
-                'dhcpy6.Config', 'dhcpy6.Storage'],
+    py_modules = ['dhcpy6.helpers', 'dhcpy6.constants',
+                'dhcpy6.config', 'dhcpy6.storage'],
     data_files = data_files_custom,
     scripts = scripts_custom
     )

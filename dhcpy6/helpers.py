@@ -34,7 +34,7 @@ import ctypes
 import platform
 import time
 
-# used for NETLINK in GetNeighborCacheLinux() access by Github/vokac
+# used for NETLINK in get_neighbor_cache_linux() access by Github/vokac
 RTM_NEWNEIGH = 28
 RTM_DELNEIGH = 29
 RTM_GETNEIGH = 30
@@ -86,7 +86,7 @@ NLA_ALIGNTO = 4
 WHITESPACE = ' ,'
 
 
-def ConvertDNS2Binary(name):
+def convert_dns_to_binary(name):
     '''
         convert domain name as described in RFC 1035, 3.1
     '''
@@ -100,7 +100,7 @@ def ConvertDNS2Binary(name):
     return binary
 
 
-def ConvertBinary2DNS(binary):
+def convert_binary_to_dns(binary):
     '''
         convert domain name from hex like in RFC 1035, 3.1
     '''
@@ -120,7 +120,7 @@ def ConvertBinary2DNS(binary):
     return str(name)
 
 
-def BuildOption(number, payload):
+def build_option(number, payload):
     '''
         glue option with payload
     '''
@@ -131,7 +131,7 @@ def BuildOption(number, payload):
     return option
     
     
-def CorrectMAC(mac):
+def correct_mac(mac):
     '''
         OpenBSD shortens MAC addresses in ndp output - here they grow again
     '''
@@ -139,7 +139,7 @@ def CorrectMAC(mac):
     return ':'.join(decompressed)
 
 
-def ColonifyMAC(mac):
+def colonify_mac(mac):
     '''
         return complete MAC address with colons
     '''
@@ -147,7 +147,7 @@ def ColonifyMAC(mac):
                      mac[6:8], mac[8:10], mac[10:12]))
 
 
-def DecompressIP6(ip6, strict=True):
+def decompress_ip6(ip6, strict=True):
     '''
         decompresses shortened IPv6 address and returns it as ':'-less 32 character string
         additionally allows testing for prototype address with less strict set of allowed characters
@@ -200,7 +200,7 @@ def DecompressIP6(ip6, strict=True):
     return ''.join(ip6_segments_target)
                
 
-def ColonifyIP6(address):
+def colonify_ip6(address):
     '''
         return complete IPv6 address with colons
     '''
@@ -211,7 +211,21 @@ def ColonifyIP6(address):
         return 'N/A'
 
 
-def ErrorExit(message='An error occured.', status=1):
+def compress_prefix(prefix, length):
+    '''
+        add prefix and length to 'prefix/length' string
+    '''
+    return '{0}/{1}'.format(prefix, length)
+
+
+def split_prefix(prefix):
+    '''
+        split prefix and length from 'prefix/length' notation
+    '''
+    return(prefix.split('/'))
+
+
+def error_exit(message='An error occured.', status=1):
     '''
         exit with given error message
         allow prefix, especially for spitting out section of configuration errors
@@ -220,7 +234,7 @@ def ErrorExit(message='An error occured.', status=1):
     sys.exit(status)
     
     
-def ListifyOption(option):
+def listify_option(option):
     '''
         return any comma or space separated option as list
     '''
@@ -235,7 +249,7 @@ def ListifyOption(option):
 
 class NeighborCacheRecord(object):
     '''
-        object for neighbor cache entries to be returned by GetNeighborCacheLinux() and in CollectedMACs
+        object for neighbor cache entries to be returned by get_neighbor_cache_linux() and in CollectedMACs
         .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB
     '''
     def __init__(self, llip='', mac='', interface=''):
@@ -245,7 +259,7 @@ class NeighborCacheRecord(object):
         self.timestamp = time.time()
 
 
-def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
+def get_neighbor_cache_linux(cfg, IF_NUMBER, log):
     '''
         imported version of https://github.com/vokac/dhcpy6d
         https://github.com/vokac/dhcpy6d/commit/bd34d3efb18ba6016a2b3afea0b6a3fcdfb524a4
@@ -384,9 +398,9 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
 
                 nda_type_key = NDA.get(nla_type, str(nla_type))
                 if nda_type_key == 'NDA_DST':
-                    nda[nda_type_key] = ColonifyIP6(binascii.b2a_hex(nla_data))
+                    nda[nda_type_key] = colonify_ip6(binascii.b2a_hex(nla_data))
                 elif nda_type_key == 'NDA_LLADDR':
-                    nda[nda_type_key] = ColonifyMAC(binascii.b2a_hex(nla_data))
+                    nda[nda_type_key] = colonify_mac(binascii.b2a_hex(nla_data))
                 elif nda_type_key == 'NDA_CACHEINFO':
                     nda[nda_type_key] = struct.unpack_from('<IIII', nla_data)
                 elif nda_type_key == 'NDA_VLAN':
@@ -404,16 +418,16 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
             # * only care about configured devices
             # * no need for multicast address cache entries (MAC 33:33:...)
             if nda['NDM_STATE'] & ~(NUD_INCOMPLETE|NUD_FAILED|NUD_NOARP):
-                if not IF_NUMBER.has_key(nda['NDM_IFINDEX']):
+                if not nda['NDM_IFINDEX'] in IF_NUMBER:
                     log.debug("can't find device for interface index %i" % nda['NDM_IFINDEX'])
-                elif not nda.has_key('NDA_DST'):
+                elif not 'NDA_DST' in nda:
                     log.warn("can't find destination address (wrong entry state: %i?!)" % nda['NDM_STATE'])
-                elif not nda.has_key('NDA_LLADDR'):
+                elif not 'NDA_LLADDR' in nda:
                     log.warn("can't find local hardware address (wrong entry state: %i?!)" % nda['NDM_STATE'])
                 else:
                     if IF_NUMBER[nda['NDM_IFINDEX']] in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
                         # store neighbor caches entries
-                        record = NeighborCacheRecord(llip=DecompressIP6(nda['NDA_DST']),
+                        record = NeighborCacheRecord(llip=decompress_ip6(nda['NDA_DST']),
                                                      mac=nda['NDA_LLADDR'],
                                                      interface=IF_NUMBER[nda['NDM_IFINDEX']])
                         result[str(record.llip)] = record
@@ -432,7 +446,7 @@ def GetNeighborCacheLinux(cfg, IF_NUMBER, log):
     return result
 
 
-def GetLibC():
+def get_libc():
     '''
         return libC-object to be used for NIC handling in dhcpy6d and Config.py
         first get the library to connect to - OS-dependent
