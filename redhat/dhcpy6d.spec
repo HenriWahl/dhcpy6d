@@ -5,7 +5,7 @@
 
 Name:              dhcpy6d
 Version: 0.5.99
-Release:           2%{?dist}
+Release:           4%{?dist}
 Summary:           DHCPv6 server daemon
 
 %if 0%{?suse_version}
@@ -124,7 +124,7 @@ fi
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
 
 %changelog
-* Wed May 17 2017 Henri Wahl <h.wahl@ifw-dresden.de> - 0.5-1
+* Mon May 29 2017 Henri Wahl <h.wahl@ifw-dresden.de> - 0.5-1
 - New upstream release
 
 * Sat Dec 26 2015 Henri Wahl <h.wahl@ifw-dresden.de> - 0.4.3-1
