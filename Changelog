@@ -1,5 +1,10 @@
 Changelog for dhcpy6d
 
+2017-09-29 0.6
+
+    Prefix delegation (PD)
+    fixes
+
 2017-05-29 0.5
 
     Allow using PostgreSQL database for volatile and config storage
