@@ -224,13 +224,14 @@ class Config(object):
         # get multiple options
         try:
             self.cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:],
-                                                              'c:u:g:d:r:p:G',
+                                                              'c:u:g:d:r:p:m:G',
                                                               ['config=',
                                                                'user=',
                                                                'group=',
                                                                'duid=',
                                                                'really-do-it=',
                                                                'prefix=',
+                                                               'message=',
                                                                'generate-duid'])
             for opt, arg in self.cli_options:
                 if opt in ('-c', '--config'):
@@ -246,6 +247,9 @@ class Config(object):
                 if opt in ('-p', '--prefix'):
                     PREFIX = arg
                     self.PREFIX = PREFIX
+                if opt in ('-m', '--message'):
+                    send_control_message(arg)
+                    sys.exit(0)
                 if opt in ('-G', '--generate-duid'):
                     print generate_duid()
                     sys.exit(0)
