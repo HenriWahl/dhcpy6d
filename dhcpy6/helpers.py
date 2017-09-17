@@ -465,3 +465,11 @@ def get_libc():
         sys.exit(1)
     # use ctypes for libc access
     return ctypes.cdll.LoadLibrary(libc_name)
+
+
+def send_control_message(message):
+    '''
+        Send a control message to the locally running dhcpy6d daemon
+    '''
+    socket_control = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+    socket_control.sendto(message, ('::1', 546))

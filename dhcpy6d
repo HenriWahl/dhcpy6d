@@ -1471,9 +1471,13 @@ class Handler(SocketServer.DatagramRequestHandler):
         # empty dummy response
         self.response = ''
 
+        # default is no control request
+        self.is_control_message = False
+
         try:
             # convert raw message into ascii-bytes
-            bytes = binascii.b2a_hex(self.request[0])
+            #bytes = binascii.b2a_hex(self.request[0])
+            bytes = binascii.hexlify(self.request[0])
 
             # clean client IP address - might come in short notation, which
             # should be extended
@@ -1486,9 +1490,26 @@ class Handler(SocketServer.DatagramRequestHandler):
                 client_llip, interface = self.client_address[0], ''
                 client_llip = decompress_ip6(client_llip)
 
+                # local connection is a control message
+                if client_llip == '00000000000000000000000000000001':
+                    self.is_control_message = True
+
             # bad or too short message is thrown away
             if not len(bytes) > 8:
                 pass
+            elif self.is_control_message:
+                control_message = binascii.unhexlify(bytes)
+                control_message_fragments = control_message.split(' ')
+                # clean message
+                control_message_clean= list()
+                for count in range(len(control_message_fragments)):
+                    if control_message_fragments[count] != '':
+                        control_message_clean.append(control_message_fragments[count])
+                command = control_message_clean[0]
+                arguments = control_message_clean[1:]
+                # change dynamic prefix
+                if command == 'prefix' and len(arguments) == 1:
+                    cfg.PREFIX = arguments[0]
             else:
                 message_type = int(bytes[0:2], 16)
                 transaction_id = bytes[2:8]
