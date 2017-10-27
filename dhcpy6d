@@ -125,7 +125,6 @@ dnsquery_queue = Queue.Queue()
 # queue for executing some script to modify routes after delegating prefixes
 route_queue = Queue.Queue()
 
-
 # save OS
 OS = platform.system()
 if 'BSD' in OS:
@@ -202,6 +201,11 @@ if not volatilestore.connected:
     print '\nDatabase for volatile data is not connected!\n'
     sys.exit(1)
 
+# if global dynamic prefix was not given take it from database
+if cfg.PREFIX == '0000:':
+    cfg.PREFIX = volatilestore.get_dynamic_prefix()
+
+# --------------------------
 
 def build_client(transaction_id):
     '''
@@ -1371,7 +1375,6 @@ class Transaction(object):
                     if not prefix_combined in self.Prefixes:
                         self.Prefixes.append(prefix_combined)
                     del(prefix, length, prefix_combined)
-            ###self.IA_Option = 25
             self.IA_Options.append(25)
 
         # FQDN
@@ -1510,6 +1513,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # change dynamic prefix
                 if command == 'prefix' and len(arguments) == 1:
                     cfg.PREFIX = arguments[0]
+                    volatilestore.store_dynamic_prefix(cfg.PREFIX)
+                log.info('Control message "%s" received' % ' '.join(control_message_clean))
             else:
                 message_type = int(bytes[0:2], 16)
                 transaction_id = bytes[2:8]

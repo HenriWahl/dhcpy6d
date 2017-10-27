@@ -643,12 +643,39 @@ class Store(object):
         query = "SELECT mac FROM macs_llips WHERE mac='%s'" % (mac)
         db_entry = self.query(query)
         # if known already update timestamp of MAC-link-local-ip-mapping
-        if not db_entry:
+        if not db_entry or db_entry == []:
             query = "INSERT INTO macs_llips (mac, link_local_ip, last_update) VALUES ('%s', '%s', '%s')" % \
                   (mac, link_local_ip, int(time.time()))
             self.query(query)
         else:
             query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, int(time.time()), mac)
+            self.query(query)
+
+
+    def get_dynamic_prefix(self):
+        query = "SELECT item_key FROM meta WHERE item_key = 'dynamic_prefix'"
+        return self.query(query)
+
+
+    def store_dynamic_prefix(self, prefix):
+        '''
+            store dynamic prefix to be persistent after restart of dhcpy6d
+        '''
+
+        query = "SELECT item_key FROM meta WHERE item_key = 'dynamic_prefix'"
+
+        print query
+
+        db_entry = self.query(query)
+
+        print db_entry
+
+        # if already existing just update dynamic prefix
+        if not db_entry or db_entry == []:
+            query = "INSERT INTO meta (item_key, item_value) VALUES ('%s', '%s')" % ('dynamic_prefix', prefix)
+            self.query(query)
+        else:
+            query = "UPDATE meta SET dynamic_prefix" % (prefix)
             self.query(query)
 
 

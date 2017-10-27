@@ -46,7 +46,7 @@ BOOLPOOL = {'0':False, '1':True, 'no':False, 'yes':True, 'false':False, 'true':T
 WHITESPACE = ' ,'
 
 # empty default prefix - if needed given by command line argument
-PREFIX = ''
+PREFIX = '0000:'
 
 # default usage text - to be extended
 USAGE = '''
@@ -849,7 +849,7 @@ class ConfigObject(object):
         '''
         prototype = self.PATTERN
 
-        # check if global dynamic prefix is in address but not given on command line
+        # check if global dynamic prefix is in address but not having any value
         if '$prefix$' in prototype and PREFIX == '':
             error_exit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
 
