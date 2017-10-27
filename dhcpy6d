@@ -201,11 +201,6 @@ if not volatilestore.connected:
     print '\nDatabase for volatile data is not connected!\n'
     sys.exit(1)
 
-# if global dynamic prefix was not given take it from database
-if cfg.PREFIX == '0000:':
-    cfg.PREFIX = volatilestore.get_dynamic_prefix()
-
-# --------------------------
 
 def build_client(transaction_id):
     '''
@@ -2175,6 +2170,10 @@ if __name__ == '__main__':
     configquery_queue_watcher.start()
     volatilequery_queue_watcher = QueryQueue(cfg, volatilestore, volatilequery_queue, volatileanswer_queue)
     volatilequery_queue_watcher.start()
+
+    # if global dynamic prefix was not given take it from database
+    if cfg.PREFIX == '0000:':
+        cfg.PREFIX = volatilestore.get_dynamic_prefix()
 
     # adjust old data to match newer versions of dhcpy6d
     volatilestore.LegacyAdjustments()

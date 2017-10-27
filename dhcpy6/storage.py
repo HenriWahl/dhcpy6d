@@ -651,9 +651,9 @@ class Store(object):
             query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, int(time.time()), mac)
             self.query(query)
 
-
+    @clean_query_answer
     def get_dynamic_prefix(self):
-        query = "SELECT item_key FROM meta WHERE item_key = 'dynamic_prefix'"
+        query = "SELECT item_value FROM meta WHERE item_key = 'dynamic_prefix'"
         return self.query(query)
 
 
@@ -661,21 +661,15 @@ class Store(object):
         '''
             store dynamic prefix to be persistent after restart of dhcpy6d
         '''
-
-        query = "SELECT item_key FROM meta WHERE item_key = 'dynamic_prefix'"
-
-        print query
-
+        query = "SELECT item_value FROM meta WHERE item_key = 'dynamic_prefix'"
         db_entry = self.query(query)
-
-        print db_entry
 
         # if already existing just update dynamic prefix
         if not db_entry or db_entry == []:
             query = "INSERT INTO meta (item_key, item_value) VALUES ('%s', '%s')" % ('dynamic_prefix', prefix)
             self.query(query)
         else:
-            query = "UPDATE meta SET dynamic_prefix" % (prefix)
+            query = "UPDATE meta SET dynamic_prefix = '%s'" % (prefix)
             self.query(query)
 
 
@@ -954,8 +948,9 @@ class SQLite(Store):
             elif query.startswith('UPDATE'):
                 self.connection.commit()
             self.connected = True
-        except:
+        except Exception, err:
             self.connected = False
+            print err
             return None
 
         return answer.fetchall()
