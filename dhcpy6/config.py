@@ -451,7 +451,7 @@ class Config(object):
             if self.ADDRESSES[a].DNS_TTL == '0': self.ADDRESSES[a].DNS_TTL = self.DNS_TTL
             # add prototype for later fast validity comparison of rebinding leases
             # also use as proof of validity of address patterns
-            self.ADDRESSES[a]._build_prototype()
+            self.ADDRESSES[a].build_prototype()
 
         # set type properties for prefixes
         for p in self.PREFIXES:
@@ -465,7 +465,7 @@ class Config(object):
             self.PREFIXES[p].ROUTE_LINK_LOCAL = BOOLPOOL[self.PREFIXES[p].ROUTE_LINK_LOCAL]
             # add prototype for later fast validity comparison of rebinding leases
             # also use as proof of validity of address patterns
-            self.PREFIXES[p]._build_prototype()
+            self.PREFIXES[p].build_prototype()
 
         # check if some options are set by cli options
         if not self.cli_user == None:
@@ -730,7 +730,7 @@ class Config(object):
                     error_exit("%s Category '%s' is invalid. Category must be one of 'fixed', 'range', 'random', 'mac', 'id' and 'dns'." % (msg_prefix, self.ADDRESSES[a].CATEGORY))
 
                 # test validity of pattern - has its own error output
-                self.ADDRESSES[a]._build_prototype()
+                self.ADDRESSES[a].build_prototype()
                 # test existence of category specific variable in pattern
                 if self.ADDRESSES[a].CATEGORY == 'range':
                     if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.ADDRESSES[a].RANGE, re.IGNORECASE):
@@ -798,7 +798,7 @@ class Config(object):
                     error_exit("%s Category '%s' is invalid. Category must be 'range' right now." % (msg_prefix, self.PREFIXES[p].CATEGORY))
 
                 # test validity of pattern - has its own error output
-                self.PREFIXES[p]._build_prototype()
+                self.PREFIXES[p].build_prototype()
                 # test existence of category specific variable in pattern
                 if self.PREFIXES[p].CATEGORY == 'range':
                     if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.PREFIXES[p].RANGE, re.IGNORECASE):
@@ -843,18 +843,16 @@ class ConfigObject(object):
         class providing methods both for addresses and prefixes
     """
 
-    def _build_prototype(self):
+    def build_prototype(self):
         '''
             build prototype of pattern for later comparison with leases
         '''
         prototype = self.PATTERN
 
-        # check if global dynamic prefix is in address but not having any value
-        ###if '$prefix$' in prototype and PREFIX == '':
-        ###    error_exit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
-
-        # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
-        prototype = prototype.replace('$prefix$', PREFIX)
+        # inject prefix later so jump out here now
+        if '$prefix$' in prototype:
+            self.PROTOTYPE = prototype
+            return
 
         # check different client address categories - to be extended!
         if self.CATEGORY in ['mac', 'id', 'range', 'random']:
@@ -873,6 +871,14 @@ class ConfigObject(object):
                 error_exit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
 
         self.PROTOTYPE = prototype
+
+
+    def inject_dynamic_prefix_into_prototype(self):
+        '''
+            called from main to put then known dynamic prefix into protoype
+        '''
+        self.PROTOTYPE = self.PROTOTYPE.replace('$prefix$', PREFIX)
+        self.build_prototype()
 
 
     def matches_prototype(self, address):

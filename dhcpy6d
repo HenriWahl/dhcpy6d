@@ -899,6 +899,8 @@ def collect_macs():
                 if f[NC[OS]['dev']] in cfg.INTERFACE and len(f) >= NC[OS]['len'] :
                     # get rid of %interface
                     f[NC[OS]['llip']] = decompress_ip6(f[NC[OS]['llip']].split('%')[0])
+                    if f[NC[OS]['mac']] == '(incomplete)':
+                        continue
                     # correct maybe shortened MAC
                     f[NC[OS]['mac']] = correct_mac(f[NC[OS]['mac']])
                     # put non yet existing LLIPs into dictionary - if they have MACs
@@ -2168,9 +2170,11 @@ if __name__ == '__main__':
     volatilequery_queue_watcher = QueryQueue(cfg, volatilestore, volatilequery_queue, volatileanswer_queue)
     volatilequery_queue_watcher.start()
 
-    # if global dynamic prefix was not given take it from database
-    if cfg.PREFIX == ':':
+    # if global dynamic prefix was not given take it from database - only possible after database initialisation
+    if cfg.PREFIX == '':
         cfg.PREFIX = volatilestore.get_dynamic_prefix()
+    for p in cfg.PREFIXES.values():
+        p.inject_dynamic_prefix_into_prototype()
 
     # adjust old data to match newer versions of dhcpy6d
     volatilestore.LegacyAdjustments()

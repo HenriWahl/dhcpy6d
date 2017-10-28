@@ -157,13 +157,11 @@ def decompress_ip6(ip6, strict=True):
         for c in ip6.lower():
             if not c in ':0123456789abcdef':
                 raise Exception('%s should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f' % (ip6))
-                #return None
     else:
         # used for comparison of leases with address pattern - X replace the dynamic part of the address
         for c in ip6.lower():
             if not c in ':0123456789abcdefx':
                 raise Exception('%s should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f x' % (ip6))
-                #return None          
     # nothing to do
     if len(ip6) == 32 and ip6.count(':') == 0:
         return ip6

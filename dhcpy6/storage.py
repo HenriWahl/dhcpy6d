@@ -425,12 +425,13 @@ class Store(object):
             check state of a lease for REBIND and RENEW messages
         '''
         # attributes to identify host and lease
-        query = "SELECT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
+        query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
                  AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
                 (self.table_leases, address,
                  self.Transactions[transaction_id].MAC,
                  self.Transactions[transaction_id].DUID,
                  self.Transactions[transaction_id].IAID)
+
         return self.query(query)
 
 
@@ -439,7 +440,7 @@ class Store(object):
             check state of a prefix for REBIND and RENEW messages
         '''
         # attributes to identify host and lease
-        query = "SELECT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
+        query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
                  AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
                 (self.table_prefixes,
                  prefix,
