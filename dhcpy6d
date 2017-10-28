@@ -1115,11 +1115,8 @@ class TidyUpThread(threading.Thread):
                             if cfg.LOG_MAC_LLIP == True:
                                 log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
                             CollectedMACs.pop(record.llip)
-
                     del timestamp
-
                 del now
-
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:
             traceback.print_exc(file=sys.stdout)
@@ -2172,7 +2169,7 @@ if __name__ == '__main__':
     volatilequery_queue_watcher.start()
 
     # if global dynamic prefix was not given take it from database
-    if cfg.PREFIX == '0000:':
+    if cfg.PREFIX == ':':
         cfg.PREFIX = volatilestore.get_dynamic_prefix()
 
     # adjust old data to match newer versions of dhcpy6d

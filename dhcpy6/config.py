@@ -46,7 +46,7 @@ BOOLPOOL = {'0':False, '1':True, 'no':False, 'yes':True, 'false':False, 'true':T
 WHITESPACE = ' ,'
 
 # empty default prefix - if needed given by command line argument
-PREFIX = '0000:'
+PREFIX = ''
 
 # default usage text - to be extended
 USAGE = '''
@@ -850,8 +850,8 @@ class ConfigObject(object):
         prototype = self.PATTERN
 
         # check if global dynamic prefix is in address but not having any value
-        if '$prefix$' in prototype and PREFIX == '':
-            error_exit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
+        ###if '$prefix$' in prototype and PREFIX == '':
+        ###    error_exit("Prefix configured in '%s' address pattern but is empty." % (self.PATTERN))
 
         # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
         prototype = prototype.replace('$prefix$', PREFIX)

@@ -1,3 +1,9 @@
+dhcpy6d (0.6.99) stable; urgency=medium
+
+  * New upstream release
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 28 Oct 2017 11:30:00 +0200
+
 dhcpy6d (0.6-1) stable; urgency=medium
 
   * New upstream release
