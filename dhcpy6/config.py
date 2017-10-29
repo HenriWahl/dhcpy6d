@@ -877,8 +877,9 @@ class ConfigObject(object):
         '''
             called from main to put then known dynamic prefix into protoype
         '''
-        self.PROTOTYPE = self.PROTOTYPE.replace('$prefix$', PREFIX)
-        self.build_prototype()
+        if '$prefix$' in self.PROTOTYPE:
+            self.PROTOTYPE = self.PROTOTYPE.replace('$prefix$', PREFIX)
+            self.build_prototype()
 
 
     def matches_prototype(self, address):
