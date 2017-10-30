@@ -667,7 +667,8 @@ def parse_pattern_address(address, client_config, transaction_id):
     a = address.PATTERN
 
     # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
-    a = a.replace('$prefix$', cfg.PREFIX)
+    if not cfg.PREFIX == None:
+        a = a.replace('$prefix$', cfg.PREFIX)
 
     # check different client address categories - to be extended!
     if address.CATEGORY == 'mac':
