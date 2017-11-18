@@ -670,7 +670,7 @@ class Store(object):
             query = "INSERT INTO meta (item_key, item_value) VALUES ('%s', '%s')" % ('dynamic_prefix', prefix)
             self.query(query)
         else:
-            query = "UPDATE meta SET dynamic_prefix = '%s'" % (prefix)
+            query = "UPDATE meta SET item_value = '%s' WHERE item_key = 'dynamic_prefix'" % (prefix)
             self.query(query)
 
 
