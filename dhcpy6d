@@ -1305,7 +1305,6 @@ class Transaction(object):
                     # in case an address is asked for twice by one host ignore the twin
                     if not address in self.Addresses:
                         self.Addresses.append(address)
-            ###self.IA_Option = 3
             self.IA_Options.append(3)
 
         # Identity Association for Temporary Addresses
@@ -1322,7 +1321,6 @@ class Transaction(object):
                     # in case an address is asked for twice by one host ignore the twin
                     if not address in self.Addresses:
                         self.Addresses.append(address)
-            ###self.IA_Option = 4
             self.IA_Options.append(4)
 
         # Options Requested
@@ -2174,8 +2172,12 @@ if __name__ == '__main__':
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':
         cfg.PREFIX = volatilestore.get_dynamic_prefix()
-    for p in cfg.PREFIXES.values():
-        p.inject_dynamic_prefix_into_prototype()
+
+    # apply dynamic prefix to addresses and prefixes
+    for a in cfg.ADDRESSES:
+        cfg.ADDRESSES[a].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
+    for p in cfg.PREFIXES:
+        cfg.PREFIXES[p].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
 
     # adjust old data to match newer versions of dhcpy6d
     volatilestore.LegacyAdjustments()

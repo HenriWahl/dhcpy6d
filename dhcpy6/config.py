@@ -843,11 +843,16 @@ class ConfigObject(object):
         class providing methods both for addresses and prefixes
     """
 
-    def build_prototype(self):
+    def build_prototype(self, pattern=None):
         '''
             build prototype of pattern for later comparison with leases
         '''
-        prototype = self.PATTERN
+
+        # if called with de-$prefix$-ed pattern use it
+        if pattern == None:
+            prototype = self.PATTERN
+        else:
+            prototype = pattern
 
         # inject prefix later so jump out here now
         if '$prefix$' in prototype:
@@ -873,13 +878,13 @@ class ConfigObject(object):
         self.PROTOTYPE = prototype
 
 
-    def inject_dynamic_prefix_into_prototype(self):
+    def inject_dynamic_prefix_into_prototype(self, dynamic_prefix):
         '''
             called from main to put then known dynamic prefix into protoype
         '''
-        if '$prefix$' in self.PROTOTYPE:
-            self.PROTOTYPE = self.PROTOTYPE.replace('$prefix$', PREFIX)
-            self.build_prototype()
+        if '$prefix$' in self.PATTERN:
+            prefix_pattern = self.PATTERN.replace('$prefix$', dynamic_prefix)
+            self.build_prototype(prefix_pattern)
 
 
     def matches_prototype(self, address):
