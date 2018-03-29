@@ -591,6 +591,7 @@ def build_client(transaction_id):
                        25 in Transactions[transaction_id].IA_Options:
 
                         for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
+                            print prefix
                             p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
                             # in case range has been exceeded p will be None
                             if p:
@@ -2172,6 +2173,8 @@ if __name__ == '__main__':
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':
         cfg.PREFIX = volatilestore.get_dynamic_prefix()
+    if cfg.PREFIX == None:
+        cfg.PREFIX = ''
 
     # apply dynamic prefix to addresses and prefixes
     for a in cfg.ADDRESSES:
