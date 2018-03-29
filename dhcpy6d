@@ -1492,7 +1492,6 @@ class Handler(SocketServer.DatagramRequestHandler):
 
         try:
             # convert raw message into ascii-bytes
-            #bytes = binascii.b2a_hex(self.request[0])
             bytes = binascii.hexlify(self.request[0])
 
             # clean client IP address - might come in short notation, which
@@ -1507,7 +1506,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                 client_llip = decompress_ip6(client_llip)
 
                 # local connection is a control message
-                if client_llip == '00000000000000000000000000000001' and interface in LOOPBACK_INTERFACES:
+                if client_llip == '00000000000000000000000000000001' and interface == '':
                     self.is_control_message = True
 
             # bad or too short message is thrown away
@@ -1523,11 +1522,17 @@ class Handler(SocketServer.DatagramRequestHandler):
                         control_message_clean.append(control_message_fragments[count])
                 command = control_message_clean[0]
                 arguments = control_message_clean[1:]
+
+                print control_message_clean
+
                 # change dynamic prefix
                 if command == 'prefix' and len(arguments) == 1:
                     cfg.PREFIX = arguments[0]
                     volatilestore.store_dynamic_prefix(cfg.PREFIX)
                 log.info('Control message "%s" received' % ' '.join(control_message_clean))
+
+
+
             else:
                 message_type = int(bytes[0:2], 16)
                 transaction_id = bytes[2:8]
