@@ -165,9 +165,6 @@ IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'D
 # empty options string test
 EMPTY_OPTIONS = [None, False, '', []]
 
-# Unix loopback interfaces to detect local control message
-LOOPBACK_INTERFACES = ['lo', 'lo0']
-
 # store
 # because of thread trouble there should not be too much db connections at once
 # so we need to use the queryqueue way - subject to change
