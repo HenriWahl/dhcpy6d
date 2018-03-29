@@ -83,6 +83,7 @@ class Store(object):
         '''
         self.query_queue.put(query)
         answer = self.answer_queue.get()
+
         return answer
 
 
@@ -291,6 +292,7 @@ class Store(object):
                  length,
                  duid,
                  mac)
+
         return self.query(query)
 
 
@@ -316,8 +318,7 @@ class Store(object):
         query = "SELECT prefix FROM %s WHERE active = 1 AND "\
                 "category = 'range' AND "\
                 "'%s' <= prefix AND prefix <= '%s' AND "\
-                "length = '%s' "\
-                "ORDER BY prefix DESC LIMIT 1" %\
+                "length = '%s' ORDER BY prefix DESC LIMIT 1" %\
                 (self.table_prefixes,
                     prefix+frange+((128-int(length))/4)*'0',
                     prefix+trange+((128-int(length))/4)*'0',
@@ -347,10 +348,10 @@ class Store(object):
         '''
         query = "SELECT prefix FROM %s WHERE active = 0 AND " \
                 "category = 'range' AND "\
-                "'%s' <= prefix AND prefix <= '%s' AND" \
+                "'%s' <= prefix AND prefix <= '%s' AND " \
                 "length = '%s' "\
                 "ORDER BY valid_until ASC LIMIT 1" %\
-                (self.table_leases,
+                (self.table_prefixes,
                  prefix+frange+((128-int(length))/4)*'0',
                  prefix+trange+((128-int(length))/4)*'0',
                  length)

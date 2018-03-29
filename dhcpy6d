@@ -165,6 +165,9 @@ IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'D
 # empty options string test
 EMPTY_OPTIONS = [None, False, '', []]
 
+# Unix loopback interfaces to detect local control message
+LOOPBACK_INTERFACES = ['lo', 'lo0']
+
 # store
 # because of thread trouble there should not be too much db connections at once
 # so we need to use the queryqueue way - subject to change
@@ -590,7 +593,6 @@ def build_client(transaction_id):
                     if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
                        25 in Transactions[transaction_id].IA_Options:
                         for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
-                            print prefix
                             p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
                             # in case range has been exceeded p will be None
                             if p:
@@ -656,7 +658,6 @@ def build_client(transaction_id):
             if 'prefixes' in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADVERTISE and \
                 25 in Transactions[transaction_id].IA_Options:
                 for prefix in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].PREFIXES:
-                    print prefix
                     p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
                     # in case range has been exceeded p will be None
                     if p:
@@ -1506,7 +1507,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                 client_llip = decompress_ip6(client_llip)
 
                 # local connection is a control message
-                if client_llip == '00000000000000000000000000000001':
+                if client_llip == '00000000000000000000000000000001' and interface in LOOPBACK_INTERFACES:
                     self.is_control_message = True
 
             # bad or too short message is thrown away
