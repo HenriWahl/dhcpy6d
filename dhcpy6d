@@ -589,7 +589,6 @@ def build_client(transaction_id):
 
                     if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
                        25 in Transactions[transaction_id].IA_Options:
-
                         for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
                             print prefix
                             p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
@@ -633,24 +632,44 @@ def build_client(transaction_id):
             # apply answer type of client to transaction - useful if no answer or no address available is configured
             Transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
 
-            for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
-                # addresses of category 'dns' will be searched in DNS
-                if cfg.ADDRESSES[address].CATEGORY == 'dns':
-                    a = get_ip_from_dns(client.Hostname)
-                else:
-                    a = parse_pattern_address(cfg.ADDRESSES[address], client, transaction_id)
-                if a:
-                    ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
-                                 preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
-                                 valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
-                                 category=cfg.ADDRESSES[address].CATEGORY,
-                                 aclass=cfg.ADDRESSES[address].CLASS,
-                                 atype=cfg.ADDRESSES[address].TYPE,
-                                 dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
-                                 dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
-                                 dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
-                                 dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                    client.Addresses.append(ia)
+            if 'addresses' in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADVERTISE and \
+                (3 or 4) in Transactions[transaction_id].IA_Options:
+                for address in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADDRESSES:
+                    # addresses of category 'dns' will be searched in DNS
+                    if cfg.ADDRESSES[address].CATEGORY == 'dns':
+                        a = get_ip_from_dns(client.Hostname)
+                    else:
+                        a = parse_pattern_address(cfg.ADDRESSES[address], client, transaction_id)
+                    if a:
+                        ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
+                                     preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
+                                     valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
+                                     category=cfg.ADDRESSES[address].CATEGORY,
+                                     aclass=cfg.ADDRESSES[address].CLASS,
+                                     atype=cfg.ADDRESSES[address].TYPE,
+                                     dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
+                                     dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
+                                     dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
+                                     dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
+                        client.Addresses.append(ia)
+
+            if 'prefixes' in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].ADVERTISE and \
+                25 in Transactions[transaction_id].IA_Options:
+                for prefix in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].PREFIXES:
+                    print prefix
+                    p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
+                    # in case range has been exceeded p will be None
+                    if p:
+                        ia_pd = Prefix(prefix=p,
+                                       length=cfg.PREFIXES[prefix].LENGTH,
+                                       preferred_lifetime=cfg.PREFIXES[prefix].PREFERRED_LIFETIME,
+                                       valid_lifetime=cfg.PREFIXES[prefix].VALID_LIFETIME,
+                                       category=cfg.PREFIXES[prefix].CATEGORY,
+                                       pclass=cfg.PREFIXES[prefix].CLASS,
+                                       ptype=cfg.PREFIXES[prefix].TYPE,
+                                       route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
+                        client.Prefixes.append(ia_pd)
+
         return client
 
     except Exception,err:
@@ -760,7 +779,6 @@ def parse_pattern_address(address, client_config, transaction_id):
                         a = lease
 
     return decompress_ip6(a)
-
 
 
 def parse_pattern_prefix(pattern, client_config, transaction_id):
@@ -2156,7 +2174,6 @@ class Handler(SocketServer.DatagramRequestHandler):
 ### MAIN ###
 
 if __name__ == '__main__':
-
     log.info('Starting dhcpy6d daemon...')
     log.info('Server DUID: %s' % (cfg.SERVERDUID))
 
