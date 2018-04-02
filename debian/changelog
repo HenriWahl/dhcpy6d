@@ -1,8 +1,10 @@
-dhcpy6d (0.6.99) stable; urgency=medium
+dhcpy6d (0.7 stable; urgency=medium
 
   * New upstream release
+    + allow to inject prefix - e.g. changed prefix from ISP
+    + fixes for prefix delegation
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Sat, 28 Oct 2017 11:30:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 02 Apr 2018 20:30:00 +0200
 
 dhcpy6d (0.6-1) stable; urgency=medium
 
