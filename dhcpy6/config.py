@@ -54,6 +54,8 @@ dhcpy6d - DHCPv6 server
 
 Usage: dhcpy6d --config <file> [--user <user>] [--group <group>] [--duid <duid>] [--prefix <prefix>] [--really-do-it <yes>|<no>]
 
+       dhcpy6d --message '<message>'
+       
        dhcpy6d --generate-duid
 
 See manpage dhcpy6d(8) for details.

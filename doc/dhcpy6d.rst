@@ -71,6 +71,9 @@ Most configuration is done via the configuration file.
 **-G, --generate-duid**
     Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
 
+**-m, --message '<message>'**
+    Send message to running dhcpy6d server
+
 Files
 =====
 
