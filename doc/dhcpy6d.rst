@@ -6,9 +6,9 @@ dhcpy6d
 MAC address aware DHCPv6 server
 ----------------------------------------------------------------
 
-:Author: Copyright (C) 2012-2017 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   2017-08-11
-:Version: 0.6
+:Author: Copyright (C) 2012-2018 Henri Wahl <h.wahl@ifw-dresden.de>
+:Date:   2018-04-02
+:Version: 0.7
 :Manual section: 8
 :Copyright: This manual page is licensed under the GPL-2 license.
 
