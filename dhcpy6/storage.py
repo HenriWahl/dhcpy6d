@@ -426,12 +426,19 @@ class Store(object):
             check state of a lease for REBIND and RENEW messages
         '''
         # attributes to identify host and lease
-        query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
-                 AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
-                (self.table_leases, address,
-                 self.Transactions[transaction_id].MAC,
-                 self.Transactions[transaction_id].DUID,
-                 self.Transactions[transaction_id].IAID)
+        if self.cfg.IGNORE_IAID:
+            query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
+                     AND address = '%s' AND mac = '%s' AND duid = '%s'" % \
+                    (self.table_leases, address,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID)
+        else:
+            query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
+                     AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
+                    (self.table_leases, address,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID,
+                     self.Transactions[transaction_id].IAID)
 
         return self.query(query)
 
@@ -441,14 +448,23 @@ class Store(object):
             check state of a prefix for REBIND and RENEW messages
         '''
         # attributes to identify host and lease
-        query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
-                 AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
-                (self.table_prefixes,
-                 prefix,
-                 length,
-                 self.Transactions[transaction_id].MAC,
-                 self.Transactions[transaction_id].DUID,
-                 self.Transactions[transaction_id].IAID)
+        if self.cfg.IGNORE_IAID:
+            query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
+                     AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s'" % \
+                    (self.table_prefixes,
+                     prefix,
+                     length,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID)
+        else:
+            query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
+                     AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
+                    (self.table_prefixes,
+                     prefix,
+                     length,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID,
+                     self.Transactions[transaction_id].IAID)
         return self.query(query)
 
 
@@ -457,16 +473,27 @@ class Store(object):
             check if there are already advertised addresses for client
         '''
         # attributes to identify host and lease
-        query = "SELECT address FROM %s WHERE last_message = 1\
-                 AND active = 1\
-                 AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
-                 AND category = '%s' AND type = '%s'" % \
-                (self.table_leases,
-                 self.Transactions[transaction_id].MAC,
-                 self.Transactions[transaction_id].DUID,
-                 self.Transactions[transaction_id].IAID,
-                 category,
-                 atype)
+        if self.cfg.IGNORE_IAID:
+            query = "SELECT address FROM %s WHERE last_message = 1\
+                     AND active = 1\
+                     AND mac = '%s' AND duid = '%s'\
+                     AND category = '%s' AND type = '%s'" % \
+                    (self.table_leases,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID,
+                     category,
+                     atype)
+        else:
+            query = "SELECT address FROM %s WHERE last_message = 1\
+                     AND active = 1\
+                     AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
+                     AND category = '%s' AND type = '%s'" % \
+                    (self.table_leases,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID,
+                     self.Transactions[transaction_id].IAID,
+                     category,
+                     atype)
         result = self.query(query)
         if result != None:
             if len(result) == 0:
@@ -482,16 +509,27 @@ class Store(object):
             check if there is already an advertised prefix for client
         '''
         # attributes to identify host and lease
-        query = "SELECT prefix, length FROM %s WHERE last_message = 1\
-                 AND active = 1\
-                 AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
-                 AND category = '%s' AND type = '%s'" % \
-                (self.table_prefixes,
-                 self.Transactions[transaction_id].MAC,
-                 self.Transactions[transaction_id].DUID,
-                 self.Transactions[transaction_id].IAID,
-                 category,
-                 ptype)
+        if self.cfg.IGNORE_IAID:
+            query = "SELECT prefix, length FROM %s WHERE last_message = 1\
+                     AND active = 1\
+                     AND mac = '%s' AND duid = '%s'\
+                     AND category = '%s' AND type = '%s'" % \
+                    (self.table_prefixes,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID,
+                     category,
+                     ptype)
+        else:
+            query = "SELECT prefix, length FROM %s WHERE last_message = 1\
+                     AND active = 1\
+                     AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
+                     AND category = '%s' AND type = '%s'" % \
+                    (self.table_prefixes,
+                     self.Transactions[transaction_id].MAC,
+                     self.Transactions[transaction_id].DUID,
+                     self.Transactions[transaction_id].IAID,
+                     category,
+                     ptype)
         result = self.query(query)
         if result != None:
             if len(result) == 0:

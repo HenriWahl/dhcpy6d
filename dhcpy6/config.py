@@ -171,7 +171,7 @@ class Config(object):
         else:
             self.LOG_SYSLOG_DESTINATION = '/var/run/log'
 
-        # Log newly found MAC addresses - if CACHE_MAC_LLIP is false this might be way too much
+        # log newly found MAC addresses - if CACHE_MAC_LLIP is false this might be way too much
         self.LOG_MAC_LLIP = 'False'
 
         # some 128 bits
@@ -183,13 +183,17 @@ class Config(object):
         # interval for TidyUp thread - time to sleep in TidyUpThread
         self.CLEANING_INTERVAL = 5
 
-        # Address and class schemes
+        # sddress and class schemes
         self.ADDRESSES = dict()
         self.CLASSES = dict()
         self.PREFIXES = dict()
 
+        # how to identify clients
         self.IDENTIFICATION = 'mac'
         self.IDENTIFICATION_MODE = 'match_all'
+
+        # allow to ignore IAIDs which play no big role at all for server
+        self.IGNORE_IAID = 'False'
 
         # regexp filters for hostnames etc.
         self.FILTERS = {'mac':[], 'duid':[], 'hostname':[]}
@@ -417,7 +421,8 @@ class Config(object):
         self.LOG_LEVEL = self.LOG_LEVEL.upper()
         self.LOG_SYSLOG = BOOLPOOL[self.LOG_SYSLOG.lower()]
         self.CACHE_MAC_LLIP = BOOLPOOL[self.CACHE_MAC_LLIP.lower()]
-        self.LOG_MAC_LLIP= BOOLPOOL[self.LOG_MAC_LLIP.lower()]
+        self.LOG_MAC_LLIP = BOOLPOOL[self.LOG_MAC_LLIP.lower()]
+        self.IGNORE_IAID = BOOLPOOL[self.IGNORE_IAID.lower()]
 
         self.LOG_SYSLOG_FACILITY = self.LOG_SYSLOG_FACILITY.upper()
 
