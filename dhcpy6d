@@ -1532,8 +1532,6 @@ class Handler(SocketServer.DatagramRequestHandler):
                     volatilestore.store_dynamic_prefix(cfg.PREFIX)
                 log.info('Control message "%s" received' % ' '.join(control_message_clean))
 
-
-
             else:
                 message_type = int(bytes[0:2], 16)
                 transaction_id = bytes[2:8]
@@ -1694,7 +1692,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     for p in Transactions[transaction_id].Prefixes:
                                         # free prefix
                                         volatilestore.release_prefix(p)
-                                        # delete route to formely requesting client
+                                        # delete route to formerly requesting client
                                         modify_route(transaction_id, 'down')
                                     # send status code option (type 13) with success (type 0)
                                     self.build_response(7, transaction_id, [13], status=0)
