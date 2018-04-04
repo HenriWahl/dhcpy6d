@@ -164,6 +164,9 @@ environments.
 **information_refresh_time = <seconds>**
     The lifetime of information given to clients as response to an *information-request* message.
 
+**ignore_iaid = yes|no**
+    Ignore IAID when looking for leases in database. Might be of use in case some clients are chaninging their IAD for some unknown reason.
+
 
 Address definitions in multiple [address_<address_name>] sections
 =================================================================

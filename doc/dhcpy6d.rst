@@ -71,8 +71,8 @@ Most configuration is done via the configuration file.
 **-G, --generate-duid**
     Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
 
-**-m, --message '<message>'**
-    Send message to running dhcpy6d server
+**-m, --message "<message>"**
+    Send message to running dhcpy6d server. At the moment the only valid message is *"prefix <prefix>"*. The value of *<prefix>* will be used instantly where *$prefix$* is to be replaced as placeholder in address definitions. This might be of use for dynamic prefixes by ISPs, for example: *dhcpy6d -m "prefix 2001:db8"*.
 
 Files
 =====
