@@ -825,6 +825,10 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
                 if frange <= prefix[prefix_range_index:prefix_range_index+4].lower() <= trange:
                     p = ':'.join((prefix[0:4], prefix[4:8], prefix[8:12], prefix[12:16],
                                   prefix[16:20], prefix[20:24], prefix[24:28], prefix[28:32]))
+                else:
+                    # if prefixes are exceeded or something went wrong with from/to ranges return none
+                    log.critical('Prefix address space %s[%s-%s] exceeded or something is wrong with from/to ranges' % (prefix_prefix, frange, trange))
+                    return None
             else:
                 # get highest active lease to increment address about 1
                 prefix = volatilestore.get_highest_range_prefix(prefix=prefix_prefix,
