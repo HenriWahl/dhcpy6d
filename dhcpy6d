@@ -1012,7 +1012,8 @@ def modify_route(transaction_id, mode):
     # check if client is already set - otherwise crashes
     if Transactions[transaction_id].Client != None:
         # only do anything if class of client has something defined to be called
-        if cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP != '':
+        if (mode == 'up' and cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_UP != '') or \
+           (mode == 'down' and cfg.CLASSES[Transactions[transaction_id].Client.Class].CALL_DOWN != ''):
             # collect possible prefixes, lengths and router ip addresses in list
             routes = list()
             for prefix in Transactions[transaction_id].Client.Prefixes:
@@ -1165,6 +1166,9 @@ class RouteThread(threading.Thread):
         '''
         while True:
             call, prefix, length, router = self.route_queue.get()
+
+            print "modify route"
+
             call_real = call.replace('$prefix$', colonify_ip6(prefix)).\
                              replace('$length$', length).\
                              replace('$router$', colonify_ip6(router))
@@ -1681,18 +1685,18 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 # RELEASE
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
                                 elif Transactions[transaction_id].LastMessageReceivedType == 8:
+                                    #  build client to be able to delete it from DNS
+                                    if Transactions[transaction_id].Client == None:
+                                        Transactions[transaction_id].Client = build_client(transaction_id)
                                     if cfg.DNS_UPDATE:
-                                        #  build client to be able to delete it from DNS
-                                        if Transactions[transaction_id].Client == None:
-                                            Transactions[transaction_id].Client = build_client(transaction_id)
                                         for a in Transactions[transaction_id].Addresses:
                                             dns_delete(transaction_id, address=a, action='release')
                                     for a in Transactions[transaction_id].Addresses:
                                         # free lease
                                         volatilestore.release_lease(a)
                                     for p in Transactions[transaction_id].Prefixes:
-                                        # free prefix
-                                        volatilestore.release_prefix(p)
+                                        # free prefix - without length
+                                        volatilestore.release_prefix(p.split('/')[0])
                                         # delete route to formerly requesting client
                                         modify_route(transaction_id, 'down')
                                     # send status code option (type 13) with success (type 0)
