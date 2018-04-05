@@ -2143,7 +2143,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         log.warning('REPLY | No addresses or prefixes available | TransactionID: %s | ClientLLIP: %s' % \
                                     (transaction_id, colonify_ip6(Transactions[transaction_id].ClientLLIP)))
 
-                    elif 3 in options_request or 4 in options_request or 25 in options_request:
+                    elif 3 in options_request or 4 in options_request or 13 in options_request or 25 in options_request:
                         options_answer.sort()
                         log.info('%s | TransactionID: %s | Options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, Transactions[transaction_id].Client._get_options_string()))
                     else:
