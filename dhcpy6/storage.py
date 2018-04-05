@@ -547,6 +547,15 @@ class Store(object):
         query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
         return self.query(query)
 
+
+    def release_free_prefixes(self, timestamp=int(time.time())):
+        '''
+            release all invalid prefixes via setting their active flag to False
+        '''
+        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_prefixes, timestamp)
+        return self.query(query)
+
+
     def remove_leases(self, category="random", timestamp=int(time.time())):
         '''
             remove all leases of a certain category like random - they will grow the database

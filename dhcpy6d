@@ -1122,8 +1122,9 @@ class TidyUpThread(threading.Thread):
                     if dbcount > 60/cfg.CLEANING_INTERVAL:
                         # remove leases which might not be recycled like random addresses for example
                         volatilestore.remove_leases(category='random', timestamp=now)
-                        # set leases free whose valid lifetime is over
+                        # set leases and prefixes free whose valid lifetime is over
                         volatilestore.release_free_leases(now)
+                        volatilestore.release_free_prefixes(now)
                         # unlock advertised leases and prefixes remaining
                         volatilestore.unlock_unused_advertised_leases()
                         volatilestore.unlock_unused_advertised_prefixes()
