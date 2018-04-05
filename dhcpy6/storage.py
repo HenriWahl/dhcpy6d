@@ -111,7 +111,7 @@ class Store(object):
         return(self.query("SELECT item_value FROM meta WHERE item_key = 'version'"))
 
 
-    def store_into_database(self, transaction_id):
+    def store_lease(self, transaction_id):
         '''
             store lease in lease DB
         '''
@@ -945,6 +945,31 @@ class Store(object):
 
             # All OK
             print "Adding table 'prefixes' succeeded"
+
+        # Extend volatile database to handle routes - comes with database version 3
+        if int(self.get_db_version()) < 3:
+            if self.cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
+                self.query('CREATE TABLE prefixes (\
+                              prefix varchar(32) NOT NULL,\
+                              length tinyint(4) NOT NULL,\
+                              router varchar(32) NOT NULL,\
+                              PRIMARY KEY (prefix)\
+                            )')
+
+            elif self.cfg.STORE_VOLATILE == 'postgresql':
+                self.query('CREATE TABLE prefixes (\
+                              prefix varchar(32) NOT NULL,\
+                              length smallint NOT NULL,\
+                              router varchar(32) NOT NULL,\
+                              PRIMARY KEY (prefix)\
+                            )')
+
+            # increase version to 3
+            self.query("UPDATE meta SET item_value='3' WHERE item_key='version'")
+
+            # All OK
+            print "Adding table 'routes' succeeded"
+
 
 class SQLite(Store):
     '''

@@ -1166,9 +1166,6 @@ class RouteThread(threading.Thread):
         '''
         while True:
             call, prefix, length, router = self.route_queue.get()
-
-            print "modify route"
-
             call_real = call.replace('$prefix$', colonify_ip6(prefix)).\
                              replace('$length$', length).\
                              replace('$router$', colonify_ip6(router))
@@ -1625,7 +1622,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                                         [7] + Transactions[transaction_id].OptionsRequest)
 
                                     # store leases for addresses and lock advertised address
-                                    volatilestore.store_into_database(transaction_id)
+                                    volatilestore.store_lease(transaction_id)
 
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -1641,7 +1638,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + \
                                                             [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store_into_database(transaction_id)
+                                    volatilestore.store_lease(transaction_id)
 
                                     # run external script for setting a route to the delegated prefix
                                     if 25 in Transactions[transaction_id].IA_Options:
@@ -1670,7 +1667,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store_into_database(transaction_id)
+                                    volatilestore.store_lease(transaction_id)
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction_id)
 
@@ -1680,7 +1677,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store_into_database(transaction_id)
+                                    volatilestore.store_lease(transaction_id)
 
                                 # RELEASE
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
