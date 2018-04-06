@@ -1946,6 +1946,8 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # Option 23 DNS recursive name server
             if 23 in options_request:
+                # should not be necessary to check if Transactions[transaction_id].Client exists but there are
+                # crazy clients out in the wild which might become silent this way
                 if Transactions[transaction_id].Client:
                     if len(cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER) > 0:
                         nameserver = ''
@@ -2101,6 +2103,28 @@ class Handler(SocketServer.DatagramRequestHandler):
                     response_ascii += build_option(39, '%02x' % (3) + convert_dns_to_binary('invalid-hostname'))
                 # options in answer to be logged
                 options_answer.append(39)
+
+            # Option 56 NTP server
+            # if 56 in options_request:
+                # if Transactions[transaction_id].Client:
+                #     if len(cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER) > 0:
+                #         nameserver = ''
+                #         for ns in cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER:
+                #             nameserver += socket.inet_pton(socket.AF_INET6, ns)
+                #     response_ascii += build_option(56, binascii.b2a_hex(nameserver))
+                #     # options in answer to be logged
+                #     options_answer.append(56)
+
+                # elif len(cfg.NTP_SERVER) > 0:
+                #     # in case several nameservers are given convert them all and add them
+                #     nameserver = ''
+                #     for ns in cfg.NAMESERVER:
+                #         nameserver += socket.inet_pton(socket.AF_INET6, ns)
+                #     response_ascii += build_option(23, binascii.b2a_hex(nameserver))
+                #     # options in answer to be logged
+                #     options_answer.append(23)
+
+
 
             # if databases are not connected send error to client
             if not (configstore.connected == volatilestore.connected == True):

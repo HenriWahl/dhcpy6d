@@ -114,7 +114,15 @@ class Config(object):
         self.SERVER_PREFERENCE = '255'
 
         # SNTP SERVERS Option 31
-        self.SNTP_SERVERS = [ self.ADDRESS ]
+        # Unused!
+        #self.SNTP_SERVERS = [ self.ADDRESS ]
+
+        # NTP server Option 56
+        self.NTP_SERVER = ''
+        # Auxiliary options, derived from self.NTP_SERVER
+        self.NTP_SERVER_SRV = []
+        self.NTP_SERVER_MC = []
+        self.NTP_SERVER_FQDN = []
 
         # INFORMATION REFRESH TIME option 32 for option 11 (INFORMATION REQUEST)
         # see RFC http://tools.ietf.org/html/rfc4242
@@ -411,6 +419,10 @@ class Config(object):
         if len(self.NAMESERVER) > 0:
             self.NAMESERVER = listify_option(self.NAMESERVER)
 
+        # get NTP servers as list
+        if len(self.NTP_SERVER) > 0:
+            self.NTP_SERVER = listify_option(self.NTP_SERVER)
+
         # convert to boolean value
         self.DNS_UPDATE = BOOLPOOL[self.DNS_UPDATE.lower()]
         self.DNS_USE_CLIENT_HOSTNAME = BOOLPOOL[self.DNS_USE_CLIENT_HOSTNAME.lower()]
@@ -432,6 +444,7 @@ class Config(object):
             if c.FILTER_DUID != '': self.FILTERS['duid'].append(c)
             if c.FILTER_HOSTNAME != '': self.FILTERS['hostname'].append(c)
             if c.NAMESERVER != '': c.NAMESERVER = listify_option(c.NAMESERVER)
+            if c.NTP_SERVER != '': c.NTP_SERVER = listify_option(c.NTP_SERVER)
             if c.INTERFACE != '':
                 c.INTERFACE = listify_option(c.INTERFACE)
             else:
@@ -533,6 +546,22 @@ class Config(object):
                 decompress_ip6(nameserver)
             except Exception, err:
                 error_exit("%s Name server address '%s' is invalid." % (msg_prefix, err))
+
+        # split NTP server types into possible 3 (address, multicast, FQDN)
+        # more details about this madness are available at https://tools.ietf.org/html/rfc5908
+        for ntp_server in self.NTP_SERVER:
+            try:
+                decompress_ip6(ntp_server)
+                # if decompressing worked it must be an address
+                if ntp_server.lower().startswith('ff'):
+                    self.NTP_SERVER_MC.append(ntp_server.lower())
+                else:
+                    self.NTP_SERVER_SRV.append(ntp_server.lower())
+            except Exception, err:
+                if re.match('^[a-z0-9.-]*$', ntp_server, re.IGNORECASE):
+                    self.NTP_SERVER_FQDN.append(ntp_server.lower())
+                else:
+                    error_exit("%s NTP server address '%s' is invalid." % (msg_prefix, ntp_server))
 
         # partly check of domain name validity
         if not re.match('^[a-z0-9.-]*$', self.DOMAIN, re.IGNORECASE):
@@ -711,6 +740,22 @@ class Config(object):
                     decompress_ip6(nameserver)
                 except Exception, err:
                     error_exit("%s Name server address '%s' is invalid." % (msg_prefix, err))
+
+            # split NTP server types into possible 3 (address, multicast, FQDN)
+            # more details about this madness are available at https://tools.ietf.org/html/rfc5908
+            for ntp_server in self.CLASSES[c].NTP_SERVER:
+                try:
+                    decompress_ip6(ntp_server)
+                    # if decompressing worked it must be an address
+                    if ntp_server.lower().startswith('ff'):
+                        self.CLASSES[c].NTP_SERVER_MC.append(ntp_server.lower())
+                    else:
+                        self.CLASSES[c].NTP_SERVER_SRV.append(ntp_server.lower())
+                except Exception, err:
+                    if re.match('^[a-z0-9.-]*$', ntp_server, re.IGNORECASE):
+                        self.CLASSES[c].NTP_SERVER_FQDN.append(ntp_server.lower())
+                    else:
+                        error_exit("%s NTP server address '%s' is invalid." % (msg_prefix, ntp_server))
 
             # check if T1 is a number
             if not self.CLASSES[c].T1.isdigit():
@@ -996,6 +1041,7 @@ class Class(object):
         self.ADDRESSES = list()
         self.PREFIXES = list()
         self.NAMESERVER = ''
+        self.NTP_SERVER = ''
         self.FILTER_MAC = ''
         self.FILTER_HOSTNAME = ''
         self.FILTER_DUID = ''
