@@ -74,11 +74,11 @@ environments.
     Nameservers to be replied to request option 23 are defined with nameserver. If more than one is needed they have to be separated by spaces.
     If an address type is of category *dns* at least one nameserver has to be given here.
 
-**domain = <domaine-name>**
+**domain = <domain-name>**
     The domain to be used with FQDN hostnames for option 39.
 
-**domain_search_list = <domainname> [<domainname> ...]**
-    Domain search lists to be used with option 24t. If none is given the value of domain above is used. Multiple domains have to be separated by space or comma.
+**domain_search_list = <domain-name> [<domain-name> ...]**
+    Domain search lists to be used with option 24. If none is given the value of domain above is used. Multiple domains have to be separated by space or comma.
 
 **log = yes|no**
     Enable logging.

@@ -1945,17 +1945,21 @@ class Handler(SocketServer.DatagramRequestHandler):
                 options_answer.append(14)
 
             # Option 23 DNS recursive name server
-            if 23 in options_request and Transactions[transaction_id].Client:
-                if len(cfg.NAMESERVER) > 0 or cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER:
-                    # in case several nameservers are given convert them all and add them
-                    nameserver = ''
-                    # if the class has its own nameserver use them, otherwise the general ones
-                    if cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER:
+            if 23 in options_request:
+                if Transactions[transaction_id].Client:
+                    if len(cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER) > 0:
+                        nameserver = ''
                         for ns in cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER:
                             nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                    else:
-                        for ns in cfg.NAMESERVER:
-                            nameserver += socket.inet_pton(socket.AF_INET6, ns)
+                    response_ascii += build_option(23, binascii.b2a_hex(nameserver))
+                    # options in answer to be logged
+                    options_answer.append(23)
+
+                elif len(cfg.NAMESERVER) > 0:
+                    # in case several nameservers are given convert them all and add them
+                    nameserver = ''
+                    for ns in cfg.NAMESERVER:
+                        nameserver += socket.inet_pton(socket.AF_INET6, ns)
                     response_ascii += build_option(23, binascii.b2a_hex(nameserver))
                     # options in answer to be logged
                     options_answer.append(23)
@@ -1964,7 +1968,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             if 24 in options_request:
                 converted_domain_search_list = ''
                 for d in cfg.DOMAIN_SEARCH_LIST:
-                    converted_domain_search_list +=  convert_dns_to_binary(d)
+                    converted_domain_search_list += convert_dns_to_binary(d)
                 response_ascii += build_option(24, converted_domain_search_list)
                 # options in answer to be logged
                 options_answer.append(24)
