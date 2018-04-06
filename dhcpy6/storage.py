@@ -397,8 +397,6 @@ class Store(object):
         '''
         query = "SELECT {0}.prefix FROM {0} INNER JOIN routes ON {0}.prefix = {1}.prefix WHERE {0}.active = 0".format(self.table_prefixes, self.table_routes)
         prefixes = self.query(query)
-        print prefixes
-        print query
         inactive_prefixes = list()
         for p in prefixes:
             inactive_prefixes.append(p[0])
