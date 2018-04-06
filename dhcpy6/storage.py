@@ -252,7 +252,7 @@ class Store(object):
     @clean_query_answer
     def store_route(self, prefix, length, router):
         '''
-            Store route in database to keep track of routes and be able to delete them later
+            store route in database to keep track of routes and be able to delete them later
         '''
         query = "SELECT prefix FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
         if len(self.query(query)) == 0:
@@ -576,6 +576,14 @@ class Store(object):
             but be of no further use
         '''
         query = "DELETE FROM %s WHERE active = 0 AND category = '%s' AND valid_until < '%s'" % (self.table_leases, category, timestamp)
+        return self.query(query)
+
+
+    def remove_route(self, prefix):
+        '''
+            remove a route which is not used anymore
+        '''
+        query = "DELETE FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
         return self.query(query)
 
 
@@ -1036,6 +1044,8 @@ class SQLite(Store):
             if query.startswith('INSERT'):
                 self.connection.commit()
             elif query.startswith('UPDATE'):
+                self.connection.commit()
+            elif query.startswith('DELETE'):
                 self.connection.commit()
             self.connected = True
         except Exception, err:

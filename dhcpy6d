@@ -1036,10 +1036,11 @@ def modify_route(transaction_id, mode):
 
             # call executables here
             for route in routes:
-                route_queue.put((call, route.prefix, route.length, route.router))
-                if mode == 'up':
-                    volatilestore.store_route(route.prefix, route.length, route.router)
-
+                route_queue.put((mode, call, route.prefix, route.length, route.router))
+                # if mode == 'up':
+                #     volatilestore.store_route(route.prefix, route.length, route.router)
+                # if mode == 'down':
+                #     volatilestore.remove_route(route.prefix)
 
 
 class DNSQueryThread(threading.Thread):
@@ -1168,13 +1169,21 @@ class RouteThread(threading.Thread):
             wait for new queries in queue until the end of the world
         '''
         while True:
-            call, prefix, length, router = self.route_queue.get()
+            mode, call, prefix, length, router = self.route_queue.get()
             call_real = call.replace('$prefix$', colonify_ip6(prefix)).\
                              replace('$length$', length).\
                              replace('$router$', colonify_ip6(router))
             # subprocess needs list as argument which it gets by split()
-            subprocess.call(call_real.split(' '))
-            log.info("Called '{0}' to modify route".format(call_real))
+            try:
+                result = subprocess.call(call_real.split(' '))
+            except Exception, err:
+                result = err
+            if result == 0:
+                if mode == 'up':
+                    volatilestore.store_route(prefix, length, router)
+                if mode == 'down':
+                    volatilestore.remove_route(prefix)
+            log.info("Called '{0}' to modify route - result: {1}".format(call_real, result))
 
 
 class Client(object):
@@ -1528,8 +1537,6 @@ class Handler(SocketServer.DatagramRequestHandler):
                         control_message_clean.append(control_message_fragments[count])
                 command = control_message_clean[0]
                 arguments = control_message_clean[1:]
-
-                print control_message_clean
 
                 # change dynamic prefix
                 if command == 'prefix' and len(arguments) == 1:
