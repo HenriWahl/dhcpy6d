@@ -376,7 +376,7 @@ class Store(object):
         '''
             get the hostname, DUID, MAC and IAID to verify a lease to delete its address in the DNS
         '''
-        query = "SELECT DISTINCT hostname, duid, mac, iaid FROM leases WHERE address='%s'" % (address)
+        query = "SELECT DISTINCT hostname, duid, mac, iaid FROM {0}} WHERE address='{1}'".format(self.table_leases, address)
         answer = self.query(query)
         if answer != None:
             if len(answer)>0:
@@ -391,6 +391,21 @@ class Store(object):
             return((None, None, None, None))
 
 
+    def get_inactive_prefixes(self):
+        '''
+            get unused prefixes to be able to delete their routes
+        '''
+        query = "SELECT {0}.prefix FROM {0} INNER JOIN routes ON {0}.prefix = {1}.prefix WHERE {0}.active = 0".format(self.table_prefixes, self.table_routes)
+        prefixes = self.query(query)
+        print prefixes
+        print query
+        inactive_prefixes = list()
+        for p in prefixes:
+            inactive_prefixes.append(p[0])
+        return inactive_prefixes
+
+
+    @clean_query_answer
     def release_lease(self, address):
         '''
             release a lease via setting its active flag to False
@@ -400,6 +415,7 @@ class Store(object):
         self.query(query)
 
 
+    @clean_query_answer
     def release_prefix(self, prefix):
         '''
             release a prefix via setting its active flag to False

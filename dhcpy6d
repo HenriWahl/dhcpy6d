@@ -1133,6 +1133,9 @@ class TidyUpThread(threading.Thread):
                         # unlock advertised leases and prefixes remaining
                         volatilestore.unlock_unused_advertised_leases()
                         volatilestore.unlock_unused_advertised_prefixes()
+                        # remove routes with inactive prefixes
+                        for prefix in volatilestore.get_inactive_prefixes():
+                            volatilestore.remove_route(prefix)
                         dbcount = 0
                 dbcount += 1
 
@@ -1151,6 +1154,9 @@ class TidyUpThread(threading.Thread):
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
+
+    def remove_routes(self):
+        pass
 
 
 class RouteThread(threading.Thread):
