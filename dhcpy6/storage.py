@@ -73,6 +73,7 @@ class Store(object):
         self.table_prefixes = 'prefixes'
         self.table_macs_llips = 'macs_llips'
         self.table_hosts = 'hosts'
+        self.table_routes = 'routes'
         # flag to check if connection is OK
         self.connected = False
 
@@ -111,7 +112,7 @@ class Store(object):
         return(self.query("SELECT item_value FROM meta WHERE item_key = 'version'"))
 
 
-    def store_lease(self, transaction_id):
+    def store(self, transaction_id):
         '''
             store lease in lease DB
         '''
@@ -249,6 +250,21 @@ class Store(object):
 
 
     @clean_query_answer
+    def store_route(self, prefix, length, router):
+        '''
+            Store route in database to keep track of routes and be able to delete them later
+        '''
+        query = "SELECT prefix FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
+        if len(self.query(query)) == 0:
+            query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, int(time.time()))
+            return self.query(query)
+        elif len(self.query(query)) == 1:
+            query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
+            return self.query(query)
+        return None
+
+
+    @clean_query_answer
     def get_range_lease_for_recycling(self, prefix='', frange='', trange='', duid='', mac=''):
         '''
             ask DB for last known leases of an already known host to be recycled
@@ -265,7 +281,6 @@ class Store(object):
                 "last_message != 1 "\
                 "ORDER BY last_update DESC LIMIT 1" %\
                 (self.table_leases, prefix+frange, prefix+trange, duid, mac)
-
         return self.query(query)
 
 
@@ -292,7 +307,6 @@ class Store(object):
                  length,
                  duid,
                  mac)
-
         return self.query(query)
 
 
@@ -949,18 +963,20 @@ class Store(object):
         # Extend volatile database to handle routes - comes with database version 3
         if int(self.get_db_version()) < 3:
             if self.cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
-                self.query('CREATE TABLE prefixes (\
+                self.query('CREATE TABLE routes (\
                               prefix varchar(32) NOT NULL,\
                               length tinyint(4) NOT NULL,\
                               router varchar(32) NOT NULL,\
+                              last_update bigint NOT NULL,\
                               PRIMARY KEY (prefix)\
                             )')
 
             elif self.cfg.STORE_VOLATILE == 'postgresql':
-                self.query('CREATE TABLE prefixes (\
+                self.query('CREATE TABLE routes (\
                               prefix varchar(32) NOT NULL,\
                               length smallint NOT NULL,\
                               router varchar(32) NOT NULL,\
+                              last_update bigint NOT NULL,\
                               PRIMARY KEY (prefix)\
                             )')
 
