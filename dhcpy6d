@@ -1528,9 +1528,11 @@ class Handler(SocketServer.DatagramRequestHandler):
         # default is no control request
         self.is_control_message = False
 
+        # avoid further processing if client is known to be bad
         if self.client_address[0] in requests_blacklist:
             return False
 
+        # add client to requests tracker if not known, otherwise raise counter
         if self.client_address[0] not in requests:
             requests[self.client_address[0]] = Request(self.client_address[0])
         else:

@@ -167,6 +167,10 @@ environments.
 **ignore_iaid = yes|no**
     Ignore IAID when looking for leases in database. Might be of use in case some clients are chaninging their IAD for some unknown reason.
 
+**request_limit_time = <seconds>**
+**request_limit_count = <max_number_of_requests>**
+    Requests can be limited to avoid server to be flooded by buggy clients. Set number of request during a certain time in seconds.
+
 **ntp_server = <ntp_server> [<ntp_server> ...]**
     NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56.
 
