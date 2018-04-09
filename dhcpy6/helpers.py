@@ -85,6 +85,9 @@ NLA_ALIGNTO = 4
 # whitespace for options with more than one value
 WHITESPACE = ' ,'
 
+# needed for NTP server option 56 and its suboptions
+NTP_SERVER_TYPES = {'SRV': 1, 'MC': 2, 'FQDN': 3}
+
 
 def convert_dns_to_binary(name):
     '''

@@ -255,13 +255,16 @@ class Store(object):
             store route in database to keep track of routes and be able to delete them later
         '''
         query = "SELECT prefix FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
-        if len(self.query(query)) == 0:
-            query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, int(time.time()))
-            return self.query(query)
-        elif len(self.query(query)) == 1:
-            query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
-            return self.query(query)
-        return None
+        if self.query is not None:
+            if len(self.query(query)) == 0:
+                query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, int(time.time()))
+                return self.query(query)
+            elif len(self.query(query)) == 1:
+                query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
+                return self.query(query)
+            return None
+        else:
+            return None
 
 
     @clean_query_answer

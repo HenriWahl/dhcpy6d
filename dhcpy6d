@@ -2047,12 +2047,12 @@ class Handler(SocketServer.DatagramRequestHandler):
                                 options_answer.append(25)
 
             # Option 31 OPTION_SNTP_SERVERS
-            #if 31 in options_request and cfg.SNTP_SERVERS != '':
-            #    sntp_servers = ''
-            #    for s in cfg.SNTP_SERVERS:
-            #        sntp_server = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, s))
-            #        sntp_servers += sntp_server
-            #    response_ascii += build_option(31, sntp_servers)
+            if 31 in options_request and cfg.SNTP_SERVERS != '':
+                sntp_servers = ''
+                for s in cfg.SNTP_SERVERS:
+                    sntp_server = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, s))
+                    sntp_servers += sntp_server
+                response_ascii += build_option(31, sntp_servers)
 
             # Option 32 Information Refresh Time
             if 32 in options_request:
@@ -2105,7 +2105,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                 options_answer.append(39)
 
             # Option 56 NTP server
-            # if 56 in options_request:
+            # https://tools.ietf.org/html/rfc5908
+            if 56 in options_request:
+
+                ntp_server_options = ''
+
                 # if Transactions[transaction_id].Client:
                 #     if len(cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER) > 0:
                 #         nameserver = ''
@@ -2114,17 +2118,20 @@ class Handler(SocketServer.DatagramRequestHandler):
                 #     response_ascii += build_option(56, binascii.b2a_hex(nameserver))
                 #     # options in answer to be logged
                 #     options_answer.append(56)
-
-                # elif len(cfg.NTP_SERVER) > 0:
-                #     # in case several nameservers are given convert them all and add them
-                #     nameserver = ''
-                #     for ns in cfg.NAMESERVER:
-                #         nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                #     response_ascii += build_option(23, binascii.b2a_hex(nameserver))
-                #     # options in answer to be logged
-                #     options_answer.append(23)
-
-
+                if len(cfg.NTP_SERVER) > 0:
+                    for ntp_server_type in cfg.NTP_SERVER_dict.keys():
+                        # ntp_server_suboption
+                        for ntp_server in cfg.NTP_SERVER_dict(ntp_server_type):
+                            if ntp_server_type == 'ADDR':
+                                ntp_server_suboption = build_option(1, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.NTP_SERVER_dict[ntp_server])))
+                            elif ntp_server_type == 'MC':
+                                ntp_server_suboption = build_option(2, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.NTP_SERVER_dict[ntp_server])))
+                            elif ntp_server_type == 'FQDN':
+                                ntp_server_suboption = build_option(3, convert_dns_to_binary(cfg.NTP_SERVER_dict[ntp_server]))
+                            ntp_server_options += ntp_server_suboption
+                    response_ascii += build_option(56, ntp_server_options)
+                    # options in answer to be logged
+                    options_answer.append(56)
 
             # if databases are not connected send error to client
             if not (configstore.connected == volatilestore.connected == True):
