@@ -728,6 +728,10 @@ class Config(object):
 
         # Make integers of number strings to avoid later repeated conversion
         # more to come...
+        self.PREFERRED_LIFETIME = int(self.PREFERRED_LIFETIME)
+        self.VALID_LIFETIME = int(self.VALID_LIFETIME)
+        self.T1 = int(self.T1)
+        self.T2 = int(self.T2)
         self.REQUEST_LIMIT_TIME = int(self.REQUEST_LIMIT_TIME)
         self.REQUEST_LIMIT_COUNT = int(self.REQUEST_LIMIT_COUNT)
 
@@ -785,6 +789,10 @@ class Config(object):
                 error_exit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." % \
                            (msg_prefix, self.CLASSES[c].T2, self.CLASSES[c].T1))
 
+            # convert some strings to integer
+            self.CLASSES[c].T1 = int(self.CLASSES[c].T1)
+            self.CLASSES[c].T2 = int(self.CLASSES[c].T2)
+
             # check every single address of a class
             for a in self.CLASSES[c].ADDRESSES:
                 msg_prefix = "Class '%s' Address type '%s':" % (c, a)
@@ -834,12 +842,16 @@ class Config(object):
                     error_exit("%s: IA type '%s' must be one of 'na' or 'ta'." % (msg_prefix, self.ADDRESSES[a].IA_TYPE.strip()))
 
                 # check if valid lifetime is a number
-                if not self.ADDRESSES[a].VALID_LIFETIME.isdigit():
-                    error_exit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME))
+                # addresses might already be converted to integer so better check here
+                if not type(self.ADDRESSES[a].VALID_LIFETIME) == int:
+                    if not self.ADDRESSES[a].VALID_LIFETIME.isdigit():
+                        error_exit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME))
 
                 # check if preferred lifetime is a number
-                if not self.ADDRESSES[a].PREFERRED_LIFETIME.isdigit():
-                    error_exit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].PREFERRED_LIFETIME))
+                # addresses might already be converted to integer so better check here
+                if not type(self.ADDRESSES[a].PREFERRED_LIFETIME) == int:
+                    if not self.ADDRESSES[a].PREFERRED_LIFETIME.isdigit():
+                        error_exit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.ADDRESSES[a].PREFERRED_LIFETIME))
 
                 # check if valid lifetime is longer than preferred lifetime
                 if not int(self.ADDRESSES[a].VALID_LIFETIME) >= int(self.ADDRESSES[a].PREFERRED_LIFETIME):
@@ -852,6 +864,10 @@ class Config(object):
                     error_exit("%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
                                (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
                                self.ADDRESSES[a].PREFERRED_LIFETIME, self.ADDRESSES[a].VALID_LIFETIME))
+
+                # convert some strings to integer
+                self.ADDRESSES[a].PREFERRED_LIFETIME = int(self.ADDRESSES[a].PREFERRED_LIFETIME)
+                self.ADDRESSES[a].VALID_LIFETIME = int(self.ADDRESSES[a].VALID_LIFETIME)
 
             # check every single prefix of a class
             for p in self.CLASSES[c].PREFIXES:
@@ -879,12 +895,16 @@ class Config(object):
                                    (msg_prefix, self.PREFIXES[p].PATTERN.strip()))
 
                 # check if valid lifetime is a number
-                if not self.PREFIXES[p].VALID_LIFETIME.isdigit():
-                    error_exit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.PREFIXES[p].VALID_LIFETIME))
+                # addresses might already be converted to integer so better check here
+                if not type(self.PREFIXES[p].VALID_LIFETIME) == int:
+                    if not self.PREFIXES[p].VALID_LIFETIME.isdigit():
+                        error_exit("%s Valid lifetime '%s' is invalid." % (msg_prefix, self.PREFIXES[p].VALID_LIFETIME))
 
                 # check if preferred lifetime is a number
-                if not self.PREFIXES[p].PREFERRED_LIFETIME.isdigit():
-                    error_exit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.PREFIXES[p].PREFERRED_LIFETIME))
+                # addresses might already be converted to integer so better check here
+                if not type(self.PREFIXES[p].PREFERRED_LIFETIME) == int:
+                    if not self.PREFIXES[p].PREFERRED_LIFETIME.isdigit():
+                        error_exit("%s Preferred lifetime '%s' is invalid." % (msg_prefix, self.PREFIXES[p].PREFERRED_LIFETIME))
 
                 # check if valid lifetime is longer than preferred lifetime
                 if not int(self.PREFIXES[p].VALID_LIFETIME) >= int(self.PREFIXES[p].PREFERRED_LIFETIME):
@@ -899,10 +919,16 @@ class Config(object):
                                self.PREFIXES[p].PREFERRED_LIFETIME, self.PREFIXES[p].VALID_LIFETIME))
 
                 # check if prefix is a valid number
-                if not self.PREFIXES[p].LENGTH.isdigit():
-                    error_exit("%s Prefix length '%s' is invalid." % (msg_prefix, self.PREFIXES[p].LENGTH))
+                if not type(self.PREFIXES[p].LENGTH) == int:
+                    if not self.PREFIXES[p].LENGTH.isdigit():
+                        error_exit("%s Prefix length '%s' is invalid." % (msg_prefix, self.PREFIXES[p].LENGTH))
                 if not 0 <= int(self.PREFIXES[p].LENGTH) <= 128:
                     error_exit("%s Prefix length '%s' must be in range 0-128." % (msg_prefix, self.PREFIXES[p].LENGTH))
+
+                # convert some strings to integer
+                self.PREFIXES[p].PREFERRED_LIFETIME = int(self.PREFIXES[p].PREFERRED_LIFETIME)
+                self.PREFIXES[p].VALID_LIFETIME = int(self.PREFIXES[p].VALID_LIFETIME)
+                self.PREFIXES[p].LENGTH = int(self.PREFIXES[p].LENGTH)
 
 
 class ConfigObject(object):
