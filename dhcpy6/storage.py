@@ -177,7 +177,7 @@ class Store(object):
                             del now
                         else:
                             # set last message type of random address
-                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
+                            query = "UPDATE %s SET last_message = '%s', active = 1 WHERE address = '%s'" %\
                                      (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType,
                                       a.ADDRESS)
                             self.query(query)
@@ -240,7 +240,7 @@ class Store(object):
                             del now
                         else:
                             # set last message type of random address
-                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
+                            query = "UPDATE %s SET last_message = '%s', active = 1 WHERE address = '%s'" %\
                                      (self.table_prefixes, self.Transactions[transaction_id].LastMessageReceivedType,
                                       p.PREFIX)
                             self.query(query)
@@ -257,10 +257,10 @@ class Store(object):
         query = "SELECT prefix FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
         if self.query is not None:
             if len(self.query(query)) == 0:
-                query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, int(time.time()))
+                query = "INSERT INTO {0} VALUES ('{1}', '{2}', '{3}', '{4}')".format(self.table_routes, prefix, length, router, int(time.time()))
                 return self.query(query)
             elif len(self.query(query)) == 1:
-                query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
+                query = "UPDATE {0} SET prefix = '{1}', length = '{2}', router = '{3}', last_update = '{4}' WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
                 return self.query(query)
             return None
         else:
