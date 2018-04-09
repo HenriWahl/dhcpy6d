@@ -510,7 +510,7 @@ def build_client(transaction_id):
                                                 # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
                                                 # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
                                                 # as first character of range part of prefix - assuming steps of width 4
-                                                prefix_range_index = int(cfg.PREFIXES[p['type']].LENGTH) / 4 - 4
+                                                prefix_range_index = cfg.PREFIXES[p['type']].LENGTH / 4 - 4
                                                 # prefix itself has a prefix - the first part of the prefix pattern
                                                 prefix_prefix = decompress_ip6(p['prefix'].replace('$range$', '0000'))[:prefix_range_index + 4]
 
@@ -805,7 +805,7 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
         # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
         # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
         # as first character of range part of prefix - assuming steps of width 4
-        prefix_range_index = int(pattern.LENGTH)/4-4
+        prefix_range_index = pattern.LENGTH/4-4
         # prefix itself has a prefix - the first part of the prefix pattern
         prefix_prefix = decompress_ip6(p.replace('$range$', '0000'))[:prefix_range_index]
 
@@ -1835,8 +1835,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                             # reset all addresses with lifetime 0
                                             # lets start with maximal transaction count of 10
                                             if Transactions[transaction_id].Counter < 10:
-                                                preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
-                                                valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
+                                                preferred_lifetime = '%08x' % (address.PREFERRED_LIFETIME)
+                                                valid_lifetime = '%08x' % (address.VALID_LIFETIME)
                                             else:
                                                 preferred_lifetime = '%08x' % (0)
                                                 valid_lifetime = '%08x' % (0)
@@ -1847,11 +1847,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         # todo: default clients sometimes seem to have class ''
                                         #
                                         if Transactions[transaction_id].Client.Class != '':
-                                            t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
-                                            t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
+                                            t1 = '%08x' % (cfg.CLASSES[Transactions[transaction_id].Client.Class].T1)
+                                            t2 = '%08x' % (cfg.CLASSES[Transactions[transaction_id].Client.Class].T2)
                                         else:
-                                            t1 = '%08x' % (int(cfg.T1))
-                                            t2 = '%08x' % (int(cfg.T2))
+                                            t1 = '%08x' % (cfg.T1)
+                                            t2 = '%08x' % (cfg.T2)
 
                                         response_ascii += build_option(3, Transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
                                     # options in answer to be logged
@@ -1906,8 +1906,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                             # reset all addresses with lifetime 0
                                             # lets start with maximal transaction count of 10
                                             if Transactions[transaction_id].Counter < 10:
-                                                preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
-                                                valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
+                                                preferred_lifetime = '%08x' % (address.PREFERRED_LIFETIME)
+                                                valid_lifetime = '%08x' % (address.VALID_LIFETIME)
                                             else:
                                                 preferred_lifetime = '%08x' % (0)
                                                 valid_lifetime = '%08x' % (0)
@@ -1929,7 +1929,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # Option 7 Server Preference
             if 7 in options_request:
-                response_ascii += build_option(7, '%02x' % (int(cfg.SERVER_PREFERENCE)))
+                response_ascii += build_option(7, '%02x' % (cfg.SERVER_PREFERENCE))
                 # options in answer to be logged
                 options_answer.append(7)
 
@@ -2036,20 +2036,20 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
                                                                                         colonify_ip6(prefix.PREFIX)))
                                         if prefix.VALID == True:
-                                            preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
-                                            valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
+                                            preferred_lifetime = '%08x' % (prefix.PREFERRED_LIFETIME)
+                                            valid_lifetime = '%08x' % (prefix.VALID_LIFETIME)
                                         else:
                                             preferred_lifetime = '%08x' % (0)
                                             valid_lifetime = '%08x' % (0)
-                                        length = '%02x' % (int(prefix.LENGTH))
+                                        length = '%02x' % (prefix.LENGTH)
                                         ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
 
                                     if Transactions[transaction_id].Client.Class != '':
-                                        t1 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T1))
-                                        t2 = '%08x' % (int(cfg.CLASSES[Transactions[transaction_id].Client.Class].T2))
+                                        t1 = '%08x' % (cfg.CLASSES[Transactions[transaction_id].Client.Class].T1)
+                                        t2 = '%08x' % (cfg.CLASSES[Transactions[transaction_id].Client.Class].T2)
                                     else:
-                                        t1 = '%08x' % (int(cfg.T1))
-                                        t2 = '%08x' % (int(cfg.T2))
+                                        t1 = '%08x' % (cfg.T1)
+                                        t2 = '%08x' % (cfg.T2)
 
                                     # even if there anre no prefixes server has to deliver an empty PD
                                     response_ascii += build_option(25, Transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
@@ -2083,7 +2083,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
             # Option 32 Information Refresh Time
             if 32 in options_request:
-                response_ascii += build_option(32, '%08x' % int(cfg.INFORMATION_REFRESH_TIME))
+                response_ascii += build_option(32, '%08x' % (cfg.INFORMATION_REFRESH_TIME))
                 # options in answer to be logged
                 options_answer.append(32)
 

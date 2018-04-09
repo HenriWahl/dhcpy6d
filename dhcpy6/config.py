@@ -728,6 +728,8 @@ class Config(object):
 
         # Make integers of number strings to avoid later repeated conversion
         # more to come...
+        self.SERVER_PREFERENCE = int(self.SERVER_PREFERENCE)
+        self.INFORMATION_REFRESH_TIME = int(self.INFORMATION_REFRESH_TIME)
         self.PREFERRED_LIFETIME = int(self.PREFERRED_LIFETIME)
         self.VALID_LIFETIME = int(self.VALID_LIFETIME)
         self.T1 = int(self.T1)
