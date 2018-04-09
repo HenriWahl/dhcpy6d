@@ -125,6 +125,10 @@ dnsquery_queue = Queue.Queue()
 # queue for executing some script to modify routes after delegating prefixes
 route_queue = Queue.Queue()
 
+# attempt to log connections and count them to find out which clients do silly crazy brute force
+requests = dict()
+requests_blacklist = dict()
+
 # save OS
 OS = platform.system()
 if 'BSD' in OS:
@@ -1037,10 +1041,6 @@ def modify_route(transaction_id, mode):
             # call executables here
             for route in routes:
                 route_queue.put((mode, call, route.prefix, route.length, route.router))
-                # if mode == 'up':
-                #     volatilestore.store_route(route.prefix, route.length, route.router)
-                # if mode == 'down':
-                #     volatilestore.remove_route(route.prefix)
 
 
 class DNSQueryThread(threading.Thread):
@@ -1136,6 +1136,13 @@ class TidyUpThread(threading.Thread):
                         # remove routes with inactive prefixes
                         for prefix in volatilestore.get_inactive_prefixes():
                             volatilestore.remove_route(prefix)
+                        # check for brute force clients and put them into blacklist if necessary
+                        for client in requests.keys():
+                            if now > requests[client].timestamp + cfg.REQUEST_LIMIT_TIME:
+                                if requests[client].count > cfg.REQUEST_LIMIT_COUNT:
+                                    requests_blacklist[client] = requests.pop(client)
+                                else:
+                                    requests.pop(client)
                         dbcount = 0
                 dbcount += 1
 
@@ -1252,6 +1259,16 @@ class Route(object):
         self.prefix = prefix
         self.length = length
         self.router = router
+
+
+class Request(object):
+    '''
+        to be stored in requests dictionary to log client requests to be able to find brute force clients
+    '''
+    def __init__(self, client):
+        self.client = client
+        self.count = 1
+        self.timestamp = int(time.time())
 
 
 class Transaction(object):
@@ -1510,6 +1527,14 @@ class Handler(SocketServer.DatagramRequestHandler):
 
         # default is no control request
         self.is_control_message = False
+
+        if self.client_address[0] in requests_blacklist:
+            return False
+
+        if self.client_address[0] not in requests:
+            requests[self.client_address[0]] = Request(self.client_address[0])
+        else:
+            requests[self.client_address[0]].count += 1
 
         try:
             # convert raw message into ascii-bytes

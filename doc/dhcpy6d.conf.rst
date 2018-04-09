@@ -167,6 +167,9 @@ environments.
 **ignore_iaid = yes|no**
     Ignore IAID when looking for leases in database. Might be of use in case some clients are chaninging their IAD for some unknown reason.
 
+**ntp_server = <ntp_server> [<ntp_server> ...]**
+    NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56.
+
 
 Address definitions in multiple [address_<address_name>] sections
 =================================================================

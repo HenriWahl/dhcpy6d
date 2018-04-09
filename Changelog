@@ -2,6 +2,7 @@ Changelog for dhcpy6d
 
 2018-04-02 0.7
 
+    added ntp_server option
     allow to inject prefix - e.g. changed prefix from ISP
     fixes for prefix delegation
 

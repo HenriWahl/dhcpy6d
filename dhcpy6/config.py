@@ -201,6 +201,10 @@ class Config(object):
         # allow to ignore IAIDs which play no big role at all for server
         self.IGNORE_IAID = 'False'
 
+        # allow setting request rate limits to put clients onto blacklist
+        self.REQUEST_LIMIT_TIME = '60'
+        self.REQUEST_LIMIT_COUNT = '20'
+
         # regexp filters for hostnames etc.
         self.FILTERS = {'mac':[], 'duid':[], 'hostname':[]}
 
@@ -713,6 +717,19 @@ class Config(object):
         # check validity of identification mode
         if not self.IDENTIFICATION_MODE.strip() in ['match_all', 'match_some']:
             error_exit("%s Identification mode must be one of 'match_all' or 'macht_some'." % (msg_prefix))
+
+        # check if request rate limit seconds are a number
+        if not self.REQUEST_LIMIT_TIME.isdigit():
+            error_exit("%s Request limit time '%s' is invalid." % (msg_prefix, self.REQUEST_LIMIT_TIME))
+
+        # check if request rate limit count are a number
+        if not self.REQUEST_LIMIT_COUNT.isdigit():
+            error_exit("%s Request limit count '%s' is invalid." % (msg_prefix, self.REQUEST_LIMIT_COUNT))
+
+        # Make integers of number strings to avoid later repeated conversion
+        # more to come...
+        self.REQUEST_LIMIT_TIME = int(self.REQUEST_LIMIT_TIME)
+        self.REQUEST_LIMIT_COUNT = int(self.REQUEST_LIMIT_COUNT)
 
         # cruise through classes
         # more checks to come...
