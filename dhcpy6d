@@ -2107,9 +2107,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             # Option 56 NTP server
             # https://tools.ietf.org/html/rfc5908
             if 56 in options_request:
-
                 ntp_server_options = ''
-
                 # if Transactions[transaction_id].Client:
                 #     if len(cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER) > 0:
                 #         nameserver = ''
@@ -2121,13 +2119,14 @@ class Handler(SocketServer.DatagramRequestHandler):
                 if len(cfg.NTP_SERVER) > 0:
                     for ntp_server_type in cfg.NTP_SERVER_dict.keys():
                         # ntp_server_suboption
-                        for ntp_server in cfg.NTP_SERVER_dict(ntp_server_type):
-                            if ntp_server_type == 'ADDR':
-                                ntp_server_suboption = build_option(1, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.NTP_SERVER_dict[ntp_server])))
+                        for ntp_server in cfg.NTP_SERVER_dict[ntp_server_type]:
+                            ntp_server_suboption = ''
+                            if ntp_server_type == 'SRV':
+                                ntp_server_suboption = build_option(1, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ntp_server)))
                             elif ntp_server_type == 'MC':
-                                ntp_server_suboption = build_option(2, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.NTP_SERVER_dict[ntp_server])))
+                                ntp_server_suboption = build_option(2, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ntp_server)))
                             elif ntp_server_type == 'FQDN':
-                                ntp_server_suboption = build_option(3, convert_dns_to_binary(cfg.NTP_SERVER_dict[ntp_server]))
+                                ntp_server_suboption = build_option(3, convert_dns_to_binary(ntp_server))
                             ntp_server_options += ntp_server_suboption
                     response_ascii += build_option(56, ntp_server_options)
                     # options in answer to be logged
