@@ -145,8 +145,8 @@ class Store(object):
                                    self.Transactions[transaction_id].DUID,
                                    self.Transactions[transaction_id].IAID,
                                    now,
-                                   now + int(a.PREFERRED_LIFETIME),
-                                   now + int(a.VALID_LIFETIME))
+                                   now + a.PREFERRED_LIFETIME,
+                                   now + a.VALID_LIFETIME)
                             self.query(query)
                             del now
                         # otherwise update it if not a random address
@@ -170,8 +170,8 @@ class Store(object):
                                    self.Transactions[transaction_id].DUID,
                                    self.Transactions[transaction_id].IAID,
                                    now,
-                                   now + int(a.PREFERRED_LIFETIME),
-                                   now + int(a.VALID_LIFETIME),
+                                   now + a.PREFERRED_LIFETIME,
+                                   now + a.VALID_LIFETIME,
                                    a.ADDRESS)
                             self.query(query)
                             del now
@@ -209,8 +209,8 @@ class Store(object):
                                    self.Transactions[transaction_id].DUID,
                                    self.Transactions[transaction_id].IAID,
                                    now,
-                                   now + int(p.PREFERRED_LIFETIME),
-                                   now + int(p.VALID_LIFETIME))
+                                   now + p.PREFERRED_LIFETIME,
+                                   now + p.VALID_LIFETIME)
                             self.query(query)
                             del now
                         # otherwise update it if not a random address
@@ -233,8 +233,8 @@ class Store(object):
                                    self.Transactions[transaction_id].DUID,
                                    self.Transactions[transaction_id].IAID,
                                    now,
-                                   now + int(p.PREFERRED_LIFETIME),
-                                   now + int(p.VALID_LIFETIME),
+                                   now + p.PREFERRED_LIFETIME,
+                                   now + p.VALID_LIFETIME,
                                    p.PREFIX)
                             self.query(query)
                             del now
@@ -288,7 +288,7 @@ class Store(object):
 
 
     @clean_query_answer
-    def get_range_prefix_for_recycling(self, prefix='', length='', frange='', trange='', duid='', mac=''):
+    def get_range_prefix_for_recycling(self, prefix='', length=0, frange='', trange='', duid='', mac=''):
         '''
             ask DB for last known prefixes of an already known host to be recycled
             this is most useful for CONFIRM-requests that will get a not-available-answer but get an
@@ -305,9 +305,9 @@ class Store(object):
                 "last_message != 1 "\
                 "ORDER BY last_update DESC LIMIT 1" %\
                 (self.table_prefixes,
-                 prefix+frange+((128-int(length))/4)*'0',
-                 prefix+trange+((128-int(length))/4)*'0',
-                 length,
+                 prefix+frange+((128-length)/4)*'0',
+                 prefix+trange+((128-length)/4)*'0',
+                 str(length),
                  duid,
                  mac)
         return self.query(query)
@@ -328,7 +328,7 @@ class Store(object):
 
 
     @clean_query_answer
-    def get_highest_range_prefix(self, prefix='', length='', frange='', trange=''):
+    def get_highest_range_prefix(self, prefix='', length=0, frange='', trange=''):
         '''
             ask DB for highest known prefix - if necessary range sensitive
         '''
@@ -337,9 +337,9 @@ class Store(object):
                 "'%s' <= prefix AND prefix <= '%s' AND "\
                 "length = '%s' ORDER BY prefix DESC LIMIT 1" %\
                 (self.table_prefixes,
-                    prefix+frange+((128-int(length))/4)*'0',
-                    prefix+trange+((128-int(length))/4)*'0',
-                    length)
+                    prefix+frange+((128-length)/4)*'0',
+                    prefix+trange+((128-length)/4)*'0',
+                    str(length))
         return self.query(query)
 
 
@@ -358,7 +358,7 @@ class Store(object):
 
 
     @clean_query_answer
-    def get_oldest_inactive_range_prefix(self, prefix='', length='', frange='', trange=''):
+    def get_oldest_inactive_range_prefix(self, prefix='', length=0, frange='', trange=''):
         '''
             ask DB for oldest known inactive prefix to minimize chance of collisions
             ordered by valid_until to get leases that are free as long as possible
@@ -369,9 +369,9 @@ class Store(object):
                 "length = '%s' "\
                 "ORDER BY valid_until ASC LIMIT 1" %\
                 (self.table_prefixes,
-                 prefix+frange+((128-int(length))/4)*'0',
-                 prefix+trange+((128-int(length))/4)*'0',
-                 length)
+                 prefix+frange+((128-length)/4)*'0',
+                 prefix+trange+((128-length)/4)*'0',
+                 str(length))
         return self.query(query)
 
 
@@ -440,15 +440,15 @@ class Store(object):
 
 
     @clean_query_answer
-    def check_number_of_prefixes(self, prefix='', length='', frange='', trange=''):
+    def check_number_of_prefixes(self, prefix='', length=0, frange='', trange=''):
         '''
             check how many leases are stored - used to find out if address range has been exceeded
         '''
         query = "SELECT COUNT(prefix) FROM %s WHERE prefix LIKE '%s%%' AND "\
                 "'%s' <= prefix AND prefix <= '%s'" % (self.table_prefixes,
                                                        prefix,
-                                                       prefix+frange+((128-int(length))/4)*'0',
-                                                       prefix+trange+((128-int(length))/4)*'0')
+                                                       prefix+frange+((128-length)/4)*'0',
+                                                       prefix+trange+((128-length)/4)*'0')
         return self.query(query)
 
 
