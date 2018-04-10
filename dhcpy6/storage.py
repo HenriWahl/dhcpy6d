@@ -412,7 +412,17 @@ class Store(object):
         '''
         query = "SELECT {0}.prefix, {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
         answer = self.query(query)
-        return answer[0]
+        if answer != None:
+            if len(answer)>0:
+                if len(answer[0]) > 0:
+                    return answer[0]
+                else:
+                    # calling method expects quartet of prefix, length, router and class - get None if nothing there
+                    return((None, None, None, None))
+            else:
+                return((None, None, None, None))
+        else:
+            return((None, None, None, None))
 
 
     @clean_query_answer
