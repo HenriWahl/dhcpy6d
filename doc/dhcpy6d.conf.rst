@@ -171,6 +171,7 @@ environments.
     Enables request limits for clients wich can be controled by *request_limit_time* and *request_limit_count*.
 
 **request_limit_time = <seconds>**
+
 **request_limit_count = <max_number_of_requests>**
     Requests can be limited to avoid server to be flooded by buggy clients. Set number of request during a certain time in seconds.
 

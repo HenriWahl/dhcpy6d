@@ -1586,22 +1586,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             if not len(bytes) > 8:
                 pass
             elif self.is_control_message:
-                control_message = binascii.unhexlify(bytes)
-                control_message_fragments = control_message.split(' ')
-                # clean message
-                control_message_clean= list()
-                for count in range(len(control_message_fragments)):
-                    if control_message_fragments[count] != '':
-                        control_message_clean.append(control_message_fragments[count])
-                command = control_message_clean[0]
-                arguments = control_message_clean[1:]
-
-                # change dynamic prefix
-                if command == 'prefix' and len(arguments) == 1:
-                    cfg.PREFIX = arguments[0]
-                    volatilestore.store_dynamic_prefix(cfg.PREFIX)
-                log.info('Control message "%s" received' % ' '.join(control_message_clean))
-
+                self.control_message(bytes)
             else:
                 message_type = int(bytes[0:2], 16)
                 transaction_id = bytes[2:8]
@@ -2270,7 +2255,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
     def finish(self):
         '''
-        send response from self.response
+            send response from self.response
         '''
         # send only if there is anything to send
         if cfg.REALLY_DO_IT:
@@ -2278,6 +2263,27 @@ class Handler(SocketServer.DatagramRequestHandler):
                 self.socket.sendto(self.response, self.client_address)
         else:
             log.error("Nothing sent - please set 'really_do_it = yes' in config file or as command line option.")
+
+
+    def control_message(self, bytes):
+        '''
+            execute commands sent in by control message
+        '''
+        control_message = binascii.unhexlify(bytes)
+        control_message_fragments = control_message.split(' ')
+        # clean message
+        control_message_clean = list()
+        for count in range(len(control_message_fragments)):
+            if control_message_fragments[count] != '':
+                control_message_clean.append(control_message_fragments[count])
+        command = control_message_clean[0]
+        arguments = control_message_clean[1:]
+
+        # change dynamic prefix
+        if command == 'prefix' and len(arguments) == 1:
+            cfg.PREFIX = arguments[0]
+            volatilestore.store_dynamic_prefix(cfg.PREFIX)
+        log.info('Control message "%s" received' % ' '.join(control_message_clean))
 
 
 ### MAIN ###
