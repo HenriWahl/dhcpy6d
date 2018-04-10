@@ -410,7 +410,7 @@ class Store(object):
         '''
             get all route parameters plus class for a certain prefix - mostly to delete the route
         '''
-        query = "SELECT {0}.prefix, {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
+        query = "SELECT {0}.prefix, {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE {0}.prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
         answer = self.query(query)
         if answer != None:
             if len(answer)>0:
