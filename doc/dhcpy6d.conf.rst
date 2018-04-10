@@ -174,6 +174,9 @@ environments.
 **request_limit_count = <max_number_of_requests>**
     Requests can be limited to avoid server to be flooded by buggy clients. Set number of request during a certain time in seconds.
 
+**request_limit_release_time = <seconds>**
+    Duration in seconds for brute force clients to stay on the blacklist.
+
 **ntp_server = <ntp_server> [<ntp_server> ...]**
     NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56.
 

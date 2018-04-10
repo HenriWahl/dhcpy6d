@@ -1173,9 +1173,18 @@ class TidyUpThread(threading.Thread):
             check for brute force clients and put them into blacklist if necessary
             get time as now from caller
         '''
+
+        # clean blacklist
+        for client in requests_blacklist.keys():
+            if now > requests_blacklist[client].timestamp + cfg.REQUEST_LIMIT_RELEASE_TIME:
+                log.info("Releasing client {0} from blacklist".format(client))
+                requests_blacklist.pop(client)
+
+        # clean default requests list
         for client in requests.keys():
             if now > requests[client].timestamp + cfg.REQUEST_LIMIT_TIME:
                 if requests[client].count > cfg.REQUEST_LIMIT_COUNT:
+                    log.info("Blacklisting client {0} after {1} requests".format(client, requests[client].count))
                     requests_blacklist[client] = requests.pop(client)
                 else:
                     requests.pop(client)
