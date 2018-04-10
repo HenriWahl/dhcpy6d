@@ -2005,9 +2005,9 @@ class Handler(SocketServer.DatagramRequestHandler):
                         nameserver = ''
                         for ns in cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER:
                             nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                    response_ascii += build_option(23, binascii.b2a_hex(nameserver))
-                    # options in answer to be logged
-                    options_answer.append(23)
+                        response_ascii += build_option(23, binascii.b2a_hex(nameserver))
+                        # options in answer to be logged
+                        options_answer.append(23)
 
                 elif len(cfg.NAMESERVER) > 0:
                     # in case several nameservers are given convert them all and add them
