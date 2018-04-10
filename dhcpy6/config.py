@@ -203,6 +203,7 @@ class Config(object):
         self.IGNORE_IAID = 'False'
 
         # allow setting request rate limits to put clients onto blacklist
+        self.REQUEST_LIMIT = 'no'
         self.REQUEST_LIMIT_TIME = '60'
         self.REQUEST_LIMIT_COUNT = '20'
 
@@ -435,20 +436,26 @@ class Config(object):
         if len(self.NTP_SERVER) > 0:
             self.NTP_SERVER = listify_option(self.NTP_SERVER)
 
-        # convert to boolean value
-        self.DNS_UPDATE = BOOLPOOL[self.DNS_UPDATE.lower()]
-        self.DNS_USE_CLIENT_HOSTNAME = BOOLPOOL[self.DNS_USE_CLIENT_HOSTNAME.lower()]
-        self.DNS_IGNORE_CLIENT = BOOLPOOL[self.DNS_IGNORE_CLIENT.lower()]
-        self.REALLY_DO_IT = BOOLPOOL[self.REALLY_DO_IT.lower()]
-        self.LOG = BOOLPOOL[self.LOG.lower()]
-        self.LOG_CONSOLE = BOOLPOOL[self.LOG_CONSOLE.lower()]
-        self.LOG_LEVEL = self.LOG_LEVEL.upper()
-        self.LOG_SYSLOG = BOOLPOOL[self.LOG_SYSLOG.lower()]
-        self.CACHE_MAC_LLIP = BOOLPOOL[self.CACHE_MAC_LLIP.lower()]
-        self.LOG_MAC_LLIP = BOOLPOOL[self.LOG_MAC_LLIP.lower()]
-        self.IGNORE_IAID = BOOLPOOL[self.IGNORE_IAID.lower()]
+        # convert to boolean values
+        for option in ['DNS_UPDATE',
+                       'DNS_USE_CLIENT_HOSTNAME',
+                       'DNS_IGNORE_CLIENT',
+                       'REALLY_DO_IT',
+                       'LOG',
+                       'LOG_CONSOLE',
+                       'LOG_SYSLOG',
+                       'CACHE_MAC_LLIP',
+                       'LOG_MAC_LLIP',
+                       'IGNORE_IAID',
+                       'REQUEST_LIMIT']:
+            try:
+                self.__dict__[option] = BOOLPOOL[self.__dict__[option].lower()]
+            except:
+                error_exit("Option '{0}' only allows boolean values like 'yes' and 'no'.".format(option.lower()))
 
+        # upperize for syslog
         self.LOG_SYSLOG_FACILITY = self.LOG_SYSLOG_FACILITY.upper()
+        self.LOG_LEVEL = self.LOG_LEVEL.upper()
 
         # index of classes which add some identification rules etc.
         for c in self.CLASSES.values():
@@ -732,6 +739,8 @@ class Config(object):
         # check validity of identification mode
         if not self.IDENTIFICATION_MODE.strip() in ['match_all', 'match_some']:
             error_exit("%s Identification mode must be one of 'match_all' or 'macht_some'." % (msg_prefix))
+
+
 
         # check if request rate limit seconds are a number
         if not self.REQUEST_LIMIT_TIME.isdigit():
