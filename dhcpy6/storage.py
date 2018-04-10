@@ -398,12 +398,21 @@ class Store(object):
         '''
             get unused prefixes to be able to delete their routes
         '''
-        query = "SELECT {0}.prefix FROM {0} INNER JOIN routes ON {0}.prefix = {1}.prefix WHERE {0}.active = 0".format(self.table_prefixes, self.table_routes)
+        query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 0".format(self.table_prefixes, self.table_routes)
         prefixes = self.query(query)
         inactive_prefixes = list()
         for p in prefixes:
             inactive_prefixes.append(p[0])
         return inactive_prefixes
+
+
+    def get_route(self, prefix):
+        '''
+            get all route parameters plus class for a certain prefix - mostly to delete the route
+        '''
+        query = "SELECT {0}.prefix, {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
+        answer = self.query(query)
+        return answer[0]
 
 
     @clean_query_answer

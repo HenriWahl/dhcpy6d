@@ -1134,15 +1134,9 @@ class TidyUpThread(threading.Thread):
                         volatilestore.unlock_unused_advertised_leases()
                         volatilestore.unlock_unused_advertised_prefixes()
                         # remove routes with inactive prefixes
-                        for prefix in volatilestore.get_inactive_prefixes():
-                            volatilestore.remove_route(prefix)
+                        self.check_routes()
                         # check for brute force clients and put them into blacklist if necessary
-                        for client in requests.keys():
-                            if now > requests[client].timestamp + cfg.REQUEST_LIMIT_TIME:
-                                if requests[client].count > cfg.REQUEST_LIMIT_COUNT:
-                                    requests_blacklist[client] = requests.pop(client)
-                                else:
-                                    requests.pop(client)
+                        self.check_requests(now)
                         dbcount = 0
                 dbcount += 1
 
@@ -1162,8 +1156,29 @@ class TidyUpThread(threading.Thread):
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
 
-    def remove_routes(self):
-        pass
+
+    def check_routes(self):
+        '''
+            remove routes with inactive prefixes
+        '''
+        for prefix in volatilestore.get_inactive_prefixes():
+            prefix, length, router, pclass = volatilestore.get_route(prefix)
+            # hopefully the class stored in database still exists
+            if pclass in cfg.CLASSES:
+                route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
+
+
+    def check_requests(self, now):
+        '''
+            check for brute force clients and put them into blacklist if necessary
+            get time as now from caller
+        '''
+        for client in requests.keys():
+            if now > requests[client].timestamp + cfg.REQUEST_LIMIT_TIME:
+                if requests[client].count > cfg.REQUEST_LIMIT_COUNT:
+                    requests_blacklist[client] = requests.pop(client)
+                else:
+                    requests.pop(client)
 
 
 class RouteThread(threading.Thread):
