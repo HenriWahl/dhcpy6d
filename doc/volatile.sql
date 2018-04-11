@@ -51,4 +51,12 @@ CREATE TABLE meta (
   PRIMARY KEY (item_key)
 );
 
-INSERT INTO meta (item_key, item_value) VALUES ('version', '2');
+CREATE TABLE routes (
+  prefix varchar(32) NOT NULL,
+  length tinyint(4) NOT NULL,
+  router varchar(32) NOT NULL,
+  last_update bigint NOT NULL,
+  PRIMARY KEY (prefix)
+);
+
+INSERT INTO meta (item_key, item_value) VALUES ('version', '3');
