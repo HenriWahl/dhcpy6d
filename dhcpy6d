@@ -1215,11 +1215,12 @@ class RouteThread(threading.Thread):
                 result = subprocess.call(call_real.split(' '))
             except Exception, err:
                 result = err
-            if result == 0:
-                if mode == 'up':
-                    volatilestore.store_route(prefix, length, router)
-                if mode == 'down':
-                    volatilestore.remove_route(prefix)
+            # ignore result to avoid routes being set but not noted in database when a command like
+            # 'ip -6 route delete' gives a return code not 0 because a route already exists
+            if mode == 'up':
+                volatilestore.store_route(prefix, length, router)
+            if mode == 'down':
+                volatilestore.remove_route(prefix)
             log.info("Called '{0}' to modify route - result: {1}".format(call_real, result))
 
 
