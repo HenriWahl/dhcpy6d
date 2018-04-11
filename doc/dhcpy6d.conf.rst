@@ -170,6 +170,9 @@ environments.
 **request_limit = yes|no**
     Enables request limits for clients wich can be controled by *request_limit_time* and *request_limit_count*.
 
+**request_limit_identification = mac|llip**
+    Identifies clients either by MAC address or Link Local IP.
+
 **request_limit_time = <seconds>**
 
 **request_limit_count = <max_number_of_requests>**
