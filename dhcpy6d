@@ -1576,7 +1576,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     if mac not in requests:
                         requests[mac] = Request(mac)
                     else:
-                        requests[CollectedMACs[mac]].count += 1
+                        requests[mac].count += 1
             del llip
         try:
             # convert raw message into ascii-bytes
