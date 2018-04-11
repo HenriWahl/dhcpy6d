@@ -207,6 +207,7 @@ class Config(object):
         self.REQUEST_LIMIT_TIME = '60'
         self.REQUEST_LIMIT_COUNT = '20'
         self.REQUEST_LIMIT_RELEASE_TIME = '7200'
+        self.REQUEST_LIMIT_IDENTIFICATION = 'llip'
 
         # regexp filters for hostnames etc.
         self.FILTERS = {'mac': [], 'duid': [], 'hostname': []}
@@ -752,6 +753,10 @@ class Config(object):
         # check if request rate limit blacklist release time seconds are a number
         if not self.REQUEST_LIMIT_RELEASE_TIME.isdigit():
             error_exit("%s Request limit blacklist release time '%s' is invalid." % (msg_prefix, self.REQUEST_LIMIT_RELEASE_TIME))
+
+        # check validity of identification attributes
+        if not self.REQUEST_LIMIT_IDENTIFICATION in ['mac', 'llip']:
+            error_exit("%s Request limit identification must be one of 'mac' or 'llip'." % (msg_prefix))
 
         # Make integers of number strings to avoid later repeated conversion
         # more to come...
