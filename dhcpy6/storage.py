@@ -1062,7 +1062,7 @@ class SQLite(Store):
                 os.chown(self.cfg.STORE_SQLITE_VOLATILE, pwd.getpwnam(self.cfg.USER).pw_uid, grp.getgrnam(self.cfg.GROUP).gr_gid)
             if storage_type == 'config':
                 storage = self.cfg.STORE_SQLITE_CONFIG
-            self.connection = sqlite3.connect(storage, check_same_thread = False)
+            self.connection = sys.modules['sqlite3'].connect(storage, check_same_thread = False)
             self.cursor = self.connection.cursor()
             self.connected = True
         except:
@@ -1271,7 +1271,7 @@ class DB(Store):
             except:
                 error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
             try:
-                self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,
+                self.connection = sys.modules['MySQLdb'].connect(host=self.cfg.STORE_DB_HOST,
                                                    db=self.cfg.STORE_DB_DB,
                                                    user=self.cfg.STORE_DB_USER,
                                                    passwd=self.cfg.STORE_DB_PASSWORD)
@@ -1292,7 +1292,7 @@ class DB(Store):
                 sys.stdout.flush()
                 error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
             try:
-                self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,
+                self.connection = sys.modules['psycopg2'].connect(host=self.cfg.STORE_DB_HOST,
                                                    database=self.cfg.STORE_DB_DB,
                                                    user=self.cfg.STORE_DB_USER,
                                                    passwd=self.cfg.STORE_DB_PASSWORD)
@@ -1339,7 +1339,7 @@ class DBMySQL(DB):
         except:
             error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
         try:
-            self.connection = MySQLdb.connect(host=self.cfg.STORE_DB_HOST,\
+            self.connection = sys.modules['MySQLdb'].connect(host=self.cfg.STORE_DB_HOST,\
                                                db=self.cfg.STORE_DB_DB,\
                                                user=self.cfg.STORE_DB_USER,\
                                                passwd=self.cfg.STORE_DB_PASSWORD)
@@ -1368,7 +1368,7 @@ class DBPostgreSQL(DB):
             sys.stdout.flush()
             error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
         try:
-            self.connection = psycopg2.connect(host=self.cfg.STORE_DB_HOST,\
+            self.connection = sys.modules['psycopg2'].connect(host=self.cfg.STORE_DB_HOST,\
                                                database=self.cfg.STORE_DB_DB,\
                                                user=self.cfg.STORE_DB_USER,\
                                                password=self.cfg.STORE_DB_PASSWORD)
