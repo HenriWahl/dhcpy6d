@@ -5,7 +5,7 @@
 
 Name:              dhcpy6d
 Version: 0.6.999
-Release:           10%{?dist}
+Release:           1%{?dist}
 Summary:           DHCPv6 server daemon
 
 %if 0%{?suse_version}
