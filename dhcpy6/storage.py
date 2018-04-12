@@ -1052,8 +1052,8 @@ class SQLite(Store):
         '''
             Initialize DB connection
         '''
-
-        import sqlite3
+        if not 'sqlite3' in sys.modules.keys():
+            import sqlite3
 
         try:
             if storage_type == 'volatile':
@@ -1266,7 +1266,8 @@ class DB(Store):
         '''
         if self.cfg.STORE_CONFIG == 'mysql' or self.cfg.STORE_VOLATILE == 'mysql':
             try:
-                import MySQLdb
+                if not 'MySQLdb' in sys.modules.keys():
+                    import MySQLdb
             except:
                 error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
             try:
@@ -1284,7 +1285,8 @@ class DB(Store):
 
         elif self.cfg.STORE_CONFIG == 'postgresql' or self.cfg.STORE_VOLATILE == 'postgresql':
             try:
-                import psycopg2
+                if not 'psycopg2' in sys.modules.keys():
+                    import psycopg2
             except:
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
@@ -1309,6 +1311,7 @@ class DB(Store):
         except Exception as err:
             # try to reestablish database connection
             print 'Error: {0}'.format(str(err))
+
             if not self.DBConnect():
                 return None
             else:
@@ -1331,7 +1334,8 @@ class DBMySQL(DB):
             Connect to database server according to database type
         '''
         try:
-            import MySQLdb
+            if not 'MySQLdb' in sys.modules.keys():
+                import MySQLdb
         except:
             error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
         try:
@@ -1357,7 +1361,8 @@ class DBPostgreSQL(DB):
             Connect to database server according to database type
         '''
         try:
-            import psycopg2
+            if not 'psycopg2' in sys.modules.keys():
+                import psycopg2
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
