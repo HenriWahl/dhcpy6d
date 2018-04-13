@@ -1311,7 +1311,7 @@ class DB(Store):
         except Exception as err:
             # try to reestablish database connection
             print 'Error: {0}'.format(str(err))
-
+            print 'Query: {0}'.format(query)
             if not self.DBConnect():
                 return None
             else:
