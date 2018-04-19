@@ -1057,7 +1057,6 @@ def manage_prefixes_routes():
 
     for prefix in active_prefixes:
         prefix, length, router, pclass = volatilestore.get_route(prefix)
-        print prefix, length, router, pclass
         if pclass in cfg.CLASSES:
             route_queue.put(('up', cfg.CLASSES[pclass].CALL_UP, prefix, length, router))
 
