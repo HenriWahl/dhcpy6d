@@ -394,6 +394,19 @@ class Store(object):
             return((None, None, None, None))
 
 
+    def get_active_prefixes(self):
+        '''
+            get used prefixes to be able to reinstall their routes
+        '''
+        query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 1".format(self.table_prefixes, self.table_routes)
+        answer = self.query(query)
+        active_prefixes = list()
+        if answer is not None:
+            for prefix in answer:
+                active_prefixes.append(prefix[0])
+        return active_prefixes
+
+
     def get_inactive_prefixes(self):
         '''
             get unused prefixes to be able to delete their routes
@@ -411,7 +424,7 @@ class Store(object):
         '''
             get all route parameters plus class for a certain prefix - mostly to delete the route
         '''
-        query = "SELECT {0}.prefix, {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE {0}.prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
+        query = "SELECT {0}.prefix, {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE {1}.prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
         answer = self.query(query)
         if answer != None:
             if len(answer)>0:

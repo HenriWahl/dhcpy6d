@@ -209,6 +209,9 @@ class Config(object):
         self.REQUEST_LIMIT_RELEASE_TIME = '7200'
         self.REQUEST_LIMIT_IDENTIFICATION = 'llip'
 
+        # restore still valid routes at startup and remove inactive ones
+        self.MANAGE_ROUTES_AT_START = 'False'
+
         # regexp filters for hostnames etc.
         self.FILTERS = {'mac': [], 'duid': [], 'hostname': []}
 
