@@ -905,8 +905,8 @@ class Config(object):
                     error_exit("%s Prefix type '%s' is not defined." % (msg_prefix, p))
 
                 # test validity of category
-                if not self.PREFIXES[p].CATEGORY.strip() in ['range']:
-                    error_exit("%s Category '%s' is invalid. Category must be 'range' right now." % (
+                if not self.PREFIXES[p].CATEGORY.strip() in ['range', 'id']:
+                    error_exit("%s Category '%s' is invalid. Category must be 'range' or 'id'." % (
                     msg_prefix, self.PREFIXES[p].CATEGORY))
 
                 # test validity of pattern - has its own error output

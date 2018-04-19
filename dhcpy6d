@@ -479,19 +479,12 @@ def build_client(transaction_id):
                                     if p['type'] in cfg.CLASSES[p['class']].PREFIXES:
                                         # flag for lease usage
                                         use_lease = True
-                                        # test lease validity against address prototype pattern only if not fixed or from DNS
-                                        if not p['category'] in ['fixed', 'dns']:
-                                            # test if address matches pattern
-                                            for i in range(len(prefix_prefix)):
-                                                if prefix_prefix[i] != cfg.PREFIXES[p['type']].PROTOTYPE[i] and \
-                                                   cfg.PREFIXES[p['type']].PROTOTYPE[i] != 'X':
-                                                    use_lease = False
-                                                    break
-                                        elif a['category'] == 'fixed' and not prefix_prefix in client_config.PREFIX:
-                                            use_lease = False
-                                        elif a['category'] == 'dns':
-                                            use_lease = False
-
+                                        # test if prefix matches pattern
+                                        for i in range(len(prefix_prefix)):
+                                            if prefix_prefix[i] != cfg.PREFIXES[p['type']].PROTOTYPE[i] and \
+                                               cfg.PREFIXES[p['type']].PROTOTYPE[i] != 'X':
+                                                use_lease = False
+                                                break
                                         # only use prefix if it still matches prototype
                                         if use_lease == True:
                                             # when category is range, test if it still applies
@@ -793,7 +786,14 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
     # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
     p = p.replace('$prefix$', cfg.PREFIX)
 
-    if pattern.CATEGORY == 'range':
+    if pattern.CATEGORY == 'id':
+        # if there is an ID build address
+        if str(client_config.ID) <> '':
+            p = p.replace('$id$', str(client_config.ID))
+        else:
+            return None
+
+    elif pattern.CATEGORY == 'range':
         frange, trange = pattern.RANGE.split('-')
         if len(frange)<4:
             frange ='0'*(4-len(frange)) + frange
