@@ -452,7 +452,8 @@ class Config(object):
                        'CACHE_MAC_LLIP',
                        'LOG_MAC_LLIP',
                        'IGNORE_IAID',
-                       'REQUEST_LIMIT']:
+                       'REQUEST_LIMIT',
+                       'MANAGE_ROUTES_AT_START']:
             try:
                 self.__dict__[option] = BOOLPOOL[self.__dict__[option].lower()]
             except:
