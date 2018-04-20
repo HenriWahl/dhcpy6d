@@ -85,12 +85,18 @@ class Store(object):
             put queries received into query queue and return the answers from answer queue
         '''
         self.query_queue.put(query)
-        answer = ''
-        while answer == '':
-            self.results.update(self.answer_queue.get())
-            if query in self.results.keys():
-                answer = self.results.pop(query)
+        self.results.update(self.answer_queue.get())
+
+        if query in self.results.keys():
+            answer = self.results.pop(query)
+        else:
+            answer = ''
+            while answer == '':
+                self.results.update(self.answer_queue.get())
+                if query in self.results.keys():
+                    answer = self.results.pop(query)
         return answer
+
 
 
     def clean_query_answer(method):
