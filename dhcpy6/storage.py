@@ -55,7 +55,7 @@ class QueryQueue(threading.Thread):
                 sys.stdout.flush()
                 answer = ''
 
-            self.answer_queue.put(answer)
+            self.answer_queue.put({query: answer})
 
 
 class Store(object):
@@ -76,6 +76,8 @@ class Store(object):
         self.table_routes = 'routes'
         # flag to check if connection is OK
         self.connected = False
+        # storage of query answers
+        self.results = dict()
 
 
     def query(self, query):
@@ -83,8 +85,11 @@ class Store(object):
             put queries received into query queue and return the answers from answer queue
         '''
         self.query_queue.put(query)
-        answer = self.answer_queue.get()
-
+        answer = ''
+        while answer == '':
+            self.results.update(self.answer_queue.get())
+            if query in self.results.keys():
+                answer = self.results.pop(query)
         return answer
 
 
