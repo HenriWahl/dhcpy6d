@@ -90,8 +90,8 @@ class Store(object):
         if query in self.results.keys():
             answer = self.results.pop(query)
         else:
-            answer = ''
-            while answer == '':
+            answer = None
+            while answer is None:
                 self.results.update(self.answer_queue.get())
                 if query in self.results.keys():
                     answer = self.results.pop(query)
