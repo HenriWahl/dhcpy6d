@@ -1124,5 +1124,6 @@ class Class(object):
         # shouldn't be an empty list because in this case the class would not make sense at all
         # as default both will be advertised
         self.ADVERTISE = ['addresses', 'prefixes']
+        # commands or scripts to be called for setting and removing routes for prefixes
         self.CALL_UP = ''
         self.CALL_DOWN = ''

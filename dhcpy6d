@@ -1050,13 +1050,15 @@ def manage_prefixes_routes():
     volatilestore.release_free_prefixes(int(time.time()))
     inactive_prefixes = volatilestore.get_inactive_prefixes()
     active_prefixes = volatilestore.get_active_prefixes()
+
     for prefix in inactive_prefixes:
-        prefix, length, router, pclass = volatilestore.get_route(prefix)
+        length, router, pclass = volatilestore.get_route(prefix)
         if pclass in cfg.CLASSES:
+            print prefix
             route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
 
     for prefix in active_prefixes:
-        prefix, length, router, pclass = volatilestore.get_route(prefix)
+        length, router, pclass = volatilestore.get_route(prefix)
         if pclass in cfg.CLASSES:
             route_queue.put(('up', cfg.CLASSES[pclass].CALL_UP, prefix, length, router))
 
@@ -1180,7 +1182,7 @@ class TidyUpThread(threading.Thread):
             remove routes with inactive prefixes
         '''
         for prefix in volatilestore.get_inactive_prefixes():
-            prefix, length, router, pclass = volatilestore.get_route(prefix)
+            length, router, pclass = volatilestore.get_route(prefix)
             # hopefully the class stored in database still exists
             if pclass in cfg.CLASSES:
                 route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
