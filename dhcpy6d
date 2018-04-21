@@ -1132,7 +1132,7 @@ class TidyUpThread(threading.Thread):
                 now = int(time.time())
                 for t in Transactions.keys():
                     try:
-                        if now > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 20:
+                        if now > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
                             Transactions.pop(Transactions[t].ID)
                     except Exception, err:
                         log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))

@@ -1,4 +1,4 @@
-dhcpy6d (0.6.9999-5) stable; urgency=medium
+dhcpy6d (0.6.9999-6) stable; urgency=medium
 
   * New upstream release
     + added ntp_server option
