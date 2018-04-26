@@ -312,8 +312,8 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
     try:
         while answer_pos < answer_len:
             curr_pos = answer_pos
-            if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug('nlm[%i:]: parsing up to %i...' % (answer_pos, answer_len))
+            #if log.getEffectiveLevel() <= logging.DEBUG:
+            #    log.debug('nlm[%i:]: parsing up to %i...' % (answer_pos, answer_len))
 
             nlmsg_len, nlmsg_type, nlmsg_flags, nlmsg_seq, nlmsg_pid = \
                     struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)
@@ -341,10 +341,10 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
 
             # data for this Routing/device hook record
             nlmsg_data = answer[answer_pos+nlmsg_header_len:answer_pos+nlmsg_len]
-            if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug('nlm[%i:%i]%s: %s' % (answer_pos, answer_pos+nlmsg_len, \
-                          str(struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)), \
-                          binascii.b2a_hex(nlmsg_data)))
+            #if log.getEffectiveLevel() <= logging.DEBUG:
+            #    log.debug('nlm[%i:%i]%s: %s' % (answer_pos, answer_pos+nlmsg_len, \
+            #              str(struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)), \
+            #              binascii.b2a_hex(nlmsg_data)))
 
             if nlmsg_type == NLMSG_DONE:
                 break
@@ -364,9 +364,9 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
             curr_pos = answer_pos+nlmsg_header_len
             ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type = \
                     struct.unpack_from('<%s' % ndmsg_fmt, nlmsg_data, 0)
-            if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug('nlm[%i:%i]: family %s, pad1 %s, pad2 %s, ifindex %s, state %s, flags %s, type %s' % \
-                          (answer_pos, answer_pos+nlmsg_len, ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type))
+            #if log.getEffectiveLevel() <= logging.DEBUG:
+            #    log.debug('nlm[%i:%i]: family %s, pad1 %s, pad2 %s, ifindex %s, state %s, flags %s, type %s' % \
+            #              (answer_pos, answer_pos+nlmsg_len, ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type))
 
             nda = {
                 'NDM_FAMILY' : ndm_family, 'NDM_IFINDEX': ndm_ifindex,
@@ -376,8 +376,8 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
             nlmsg_data_len = nlmsg_len-nlmsg_header_len
             while nlmsg_data_pos < nlmsg_data_len:
                 curr_pos = answer_pos+nlmsg_header_len+nlmsg_data_pos
-                if log.getEffectiveLevel() <= logging.DEBUG:
-                    log.debug('nla[%i:]: parsing up to %i...' % (nlmsg_data_pos, nlmsg_data_len))
+                #if log.getEffectiveLevel() <= logging.DEBUG:
+                #    log.debug('nla[%i:]: parsing up to %i...' % (nlmsg_data_pos, nlmsg_data_len))
 
                 nla_len, nla_type = \
                         struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)
@@ -392,10 +392,10 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
 
                 # data for this Routing/device hook record attribute
                 nla_data = nlmsg_data[nlmsg_data_pos+nla_header_len:nlmsg_data_pos+nla_len]
-                if log.getEffectiveLevel() <= logging.DEBUG:
-                    log.debug('nla[%i:]%s: %s' % (nlmsg_data_pos, \
-                              str(struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
-                              binascii.b2a_hex(nla_data)))
+                #if log.getEffectiveLevel() <= logging.DEBUG:
+                #    log.debug('nla[%i:]%s: %s' % (nlmsg_data_pos, \
+                #              str(struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
+                #              binascii.b2a_hex(nla_data)))
 
                 nda_type_key = NDA.get(nla_type, str(nla_type))
                 if nda_type_key == 'NDA_DST':
@@ -412,8 +412,8 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
                 nlmsg_data_pos += nla_header_len
                 nlmsg_data_pos += (nla_len-nla_header_len+NLA_ALIGNTO-1) & ~(NLA_ALIGNTO-1) # alginment to 4
 
-            if log.getEffectiveLevel() <= logging.DEBUG:
-                log.debug('nlm[%i:%i]: %s' % (answer_pos, answer_pos+nlmsg_len, str(nda)))
+            #if log.getEffectiveLevel() <= logging.DEBUG:
+            #    log.debug('nlm[%i:%i]: %s' % (answer_pos, answer_pos+nlmsg_len, str(nda)))
 
             # prepare all required data to be returned to callee
             # * only care about configured devices
