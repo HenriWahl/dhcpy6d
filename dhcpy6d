@@ -129,6 +129,9 @@ route_queue = Queue.Queue()
 requests = dict()
 requests_blacklist = dict()
 
+# global time variable, synchronized by TimerThread
+timer = int(time.time())
+
 # save OS
 OS = platform.system()
 if 'BSD' in OS:
@@ -408,7 +411,7 @@ def build_client(transaction_id):
                                                     client.Addresses.append(ia)
 
                                             # de-preferred random address has to be deleted and replaced
-                                            elif a['category'] == 'random' and int(time.time()) > a['preferred_until']:
+                                            elif a['category'] == 'random' and timer > a['preferred_until']:
                                                 # create new random address if old one is depreferred
                                                 random_address = parse_pattern_address(cfg.ADDRESSES[a['type']], client_config, transaction_id)
                                                 # create new random address if old one is de-preferred
@@ -898,7 +901,7 @@ def get_ip_from_dns(hostname):
         return(False)
 
 
-def collect_macs():
+def collect_macs(now):
     '''
         collect MAC address from clients to link local addresses with MACs
         if a client has a new MAC the LLIP changes - with privacy extension enabled anyway
@@ -909,13 +912,13 @@ def collect_macs():
     try:
         # Linux can use kernel neighbor cache
         if OS == 'Linux':
-            for host in get_neighbor_cache_linux(cfg, IF_NUMBER, log).values():
+            for host in get_neighbor_cache_linux(cfg, IF_NUMBER, log, timer).values():
                 if not host.llip in CollectedMACs and host.llip.lower().startswith('fe80'):
                     CollectedMACs[str(host.llip)] = host
                     if cfg.LOG_MAC_LLIP == True:
                         log.info('Collected MAC %s for LinkLocalIP %s' % (host.mac, colonify_ip6(host.llip)))
                     if cfg.CACHE_MAC_LLIP == True:
-                        volatilestore.store_mac_llip(host.mac, host.llip)
+                        volatilestore.store_mac_llip(host.mac, host.llip, timer)
         else:
             # subject to change - other distros might have other paths - might become a task
             # for a setup routine to find appropriate paths
@@ -934,10 +937,11 @@ def collect_macs():
                        and ':' in f[NC[OS]['mac']]:
                         CollectedMACs[f[NC[OS]['llip']]] = NeighborCacheRecord(llip=f[NC[OS]['llip']],
                                                                                mac=f[NC[OS]['mac']],
-                                                                               interface=f[NC[OS]['dev']])
+                                                                               interface=f[NC[OS]['dev']],
+                                                                               now=now)
                         if cfg.LOG_MAC_LLIP == True:
                             log.info('Collected MAC %s for LinkLocalIP %s' % (f[NC[OS]['mac']], colonify_ip6(f[NC[OS]['llip']])))
-                        volatilestore.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']])
+                        volatilestore.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']], timer)
     except Exception,err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()
@@ -1047,14 +1051,13 @@ def manage_prefixes_routes():
     '''
         delete or add inactive or active routes according to the prefixes in database
     '''
-    volatilestore.release_free_prefixes(int(time.time()))
+    volatilestore.release_free_prefixes(timer)
     inactive_prefixes = volatilestore.get_inactive_prefixes()
     active_prefixes = volatilestore.get_active_prefixes()
 
     for prefix in inactive_prefixes:
         length, router, pclass = volatilestore.get_route(prefix)
         if pclass in cfg.CLASSES:
-            print prefix
             route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
 
     for prefix in active_prefixes:
@@ -1129,10 +1132,9 @@ class TidyUpThread(threading.Thread):
             # get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                now = int(time.time())
                 for t in Transactions.keys():
                     try:
-                        if now > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
+                        if timer > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
                             Transactions.pop(Transactions[t].ID)
                     except Exception, err:
                         log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))
@@ -1146,31 +1148,30 @@ class TidyUpThread(threading.Thread):
                     # cleaning database once per minute should be enough
                     if dbcount > 60/cfg.CLEANING_INTERVAL:
                         # remove leases which might not be recycled like random addresses for example
-                        volatilestore.remove_leases(category='random', timestamp=now)
+                        volatilestore.remove_leases(timer, 'random')
                         # set leases and prefixes free whose valid lifetime is over
-                        volatilestore.release_free_leases(now)
-                        volatilestore.release_free_prefixes(now)
+                        volatilestore.release_free_leases(timer)
+                        volatilestore.release_free_prefixes(timer)
                         # unlock advertised leases and prefixes remaining
-                        volatilestore.unlock_unused_advertised_leases()
-                        volatilestore.unlock_unused_advertised_prefixes()
+                        volatilestore.unlock_unused_advertised_leases(timer)
+                        volatilestore.unlock_unused_advertised_prefixes(timer)
                         # remove routes with inactive prefixes
                         self.check_routes()
                         # check for brute force clients and put them into blacklist if necessary
-                        self.check_requests(now)
+                        self.check_requests(timer)
                         dbcount = 0
                 dbcount += 1
 
                 # clean collected MAC addresses after 300 seconds
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
-                    timestamp = int(time.time())
+                    timestamp = timer
                     for record in CollectedMACs.values():
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP == True:
                                 log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
                             CollectedMACs.pop(record.llip)
                     del timestamp
-                del now
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:
             traceback.print_exc(file=sys.stdout)
@@ -1238,10 +1239,27 @@ class RouteThread(threading.Thread):
             # ignore result to avoid routes being set but not noted in database when a command like
             # 'ip -6 route delete' gives a return code not 0 because a route already exists
             if mode == 'up':
-                volatilestore.store_route(prefix, length, router)
+                volatilestore.store_route(prefix, length, router, timer)
             if mode == 'down':
                 volatilestore.remove_route(prefix)
             log.info("Called '{0}' to modify route - result: {1}".format(call_real, result))
+
+
+class TimerThread(threading.Thread):
+    '''
+        thread for timer
+    '''
+
+    def __init__(self):
+        threading.Thread.__init__(self, name='Timer')
+        self.setDaemon(1)
+
+
+    def run(self):
+        global timer
+        while True:
+            timer = int(time.time())
+            time.sleep(1)
 
 
 class Client(object):
@@ -1313,7 +1331,7 @@ class Request(object):
     def __init__(self, client):
         self.client = client
         self.count = 1
-        self.timestamp = int(time.time())
+        self.timestamp = timer
 
 
 class Transaction(object):
@@ -1336,7 +1354,7 @@ class Transaction(object):
         # default dummy OptionsRequest
         self.OptionsRequest = list()
         # timestamp to manage/clean transactions
-        self.Timestamp = int(time.time())
+        self.Timestamp = timer
         # dummy hostname
         self.FQDN = ''
         self.Hostname = ''
@@ -1659,7 +1677,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         if Transactions[transaction_id].ClientLLIP in CollectedMACs:
                             Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                     else:
-                        Transactions[transaction_id].Timestamp = int(time.time())
+                        Transactions[transaction_id].Timestamp = timer
                         Transactions[transaction_id].LastMessageReceivedType = message_type
 
                     # log incoming messages
@@ -1677,7 +1695,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                             # client will get answer if its LLIP & MAC is known
                             if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
                                 # complete MAC collection - will make most sence on Linux and its native neighborcache access
-                                collect_macs()
+                                collect_macs(timer)
 
                                 # when still no trace of the client in neighbor cache then send silly signal back
                                 if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
@@ -1686,7 +1704,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # status code 'Success' sounds silly but works best
                                     self.build_response(7, transaction_id, [13], status=0)
                                     # complete MAC collection
-                                    collect_macs()
+                                    collect_macs(timer)
 
                                 # try to add client MAC address to transaction object
                                 try:
@@ -1710,7 +1728,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                                         [7] + Transactions[transaction_id].OptionsRequest)
 
                                     # store leases for addresses and lock advertised address
-                                    volatilestore.store(transaction_id)
+                                    volatilestore.store(transaction_id, timer)
 
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -1726,7 +1744,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + \
                                                             [7] + [14] + Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store(transaction_id)
+                                    volatilestore.store(transaction_id, timer)
 
                                     # run external script for setting a route to the delegated prefix
                                     if 25 in Transactions[transaction_id].IA_Options:
@@ -1755,7 +1773,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store(transaction_id)
+                                    volatilestore.store(transaction_id, timer)
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction_id)
 
@@ -1765,7 +1783,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, Transactions[transaction_id].IA_Options + [7] + \
                                                         Transactions[transaction_id].OptionsRequest)
                                     # store leases for addresses
-                                    volatilestore.store(transaction_id)
+                                    volatilestore.store(transaction_id, timer)
 
                                 # RELEASE
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
@@ -1778,10 +1796,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                                             dns_delete(transaction_id, address=a, action='release')
                                     for a in Transactions[transaction_id].Addresses:
                                         # free lease
-                                        volatilestore.release_lease(a)
+                                        volatilestore.release_lease(a, timer)
                                     for p in Transactions[transaction_id].Prefixes:
                                         # free prefix - without length
-                                        volatilestore.release_prefix(p.split('/')[0])
+                                        volatilestore.release_prefix(p.split('/')[0], timer)
                                         # delete route to formerly requesting client
                                         modify_route(transaction_id, 'down')
                                     # send status code option (type 13) with success (type 0)
@@ -2356,13 +2374,9 @@ if __name__ == '__main__':
     if cfg.CACHE_MAC_LLIP == True:
         volatilestore.CollectMACsFromDB()
 
-    # start TidyUp thread for cleaning in background
-    tidyup_thread = TidyUpThread()
-    tidyup_thread.start()
-
-    # start DNS query queue to care for DNS in background
-    dnsquery_thread = DNSQueryThread(dnsquery_queue)
-    dnsquery_thread.start()
+    # start timer
+    timer_thread = TimerThread()
+    timer_thread.start()
 
     # start route queue to care for routes in background
     route_thread = RouteThread(route_queue)
@@ -2371,6 +2385,14 @@ if __name__ == '__main__':
     # delete invalid and add valid routes - useful after reboot
     if cfg.MANAGE_ROUTES_AT_START:
         manage_prefixes_routes()
+
+    # start TidyUp thread for cleaning in background
+    tidyup_thread = TidyUpThread()
+    tidyup_thread.start()
+
+    # start DNS query queue to care for DNS in background
+    dnsquery_thread = DNSQueryThread(dnsquery_queue)
+    dnsquery_thread.start()
 
     # set user and group
     log.info('Running as user %s (UID %s) and group %s (GID %s)' % (cfg.USER, pwd.getpwnam(cfg.USER).pw_uid, cfg.GROUP, grp.getgrnam(cfg.GROUP).gr_gid))

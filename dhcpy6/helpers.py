@@ -253,14 +253,14 @@ class NeighborCacheRecord(object):
         object for neighbor cache entries to be returned by get_neighbor_cache_linux() and in CollectedMACs
         .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB
     '''
-    def __init__(self, llip='', mac='', interface=''):
+    def __init__(self, llip='', mac='', interface='', now=0):
         self.llip = llip
         self.mac = mac
         self.interface = interface
-        self.timestamp = time.time()
+        self.timestamp = now
 
 
-def get_neighbor_cache_linux(cfg, IF_NUMBER, log):
+def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
     '''
         imported version of https://github.com/vokac/dhcpy6d
         https://github.com/vokac/dhcpy6d/commit/bd34d3efb18ba6016a2b3afea0b6a3fcdfb524a4
@@ -430,7 +430,8 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log):
                         # store neighbor caches entries
                         record = NeighborCacheRecord(llip=decompress_ip6(nda['NDA_DST']),
                                                      mac=nda['NDA_LLADDR'],
-                                                     interface=IF_NUMBER[nda['NDM_IFINDEX']])
+                                                     interface=IF_NUMBER[nda['NDM_IFINDEX']],
+                                                     now=now)
                         result[str(record.llip)] = record
 
             # move to next record

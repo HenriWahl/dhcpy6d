@@ -86,7 +86,6 @@ class Store(object):
         '''
         if query in self.results.keys():
             answer = self.results.pop(query)
-            return answer
         else:
             answer = None
             while answer is None:
@@ -123,7 +122,7 @@ class Store(object):
         return(self.query("SELECT item_value FROM meta WHERE item_key = 'version'"))
 
 
-    def store(self, transaction_id):
+    def store(self, transaction_id, now):
         '''
             store lease in lease DB
         '''
@@ -136,7 +135,7 @@ class Store(object):
                     if answer != None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            now = int(time.time())
+                            ###now = int(time.time())
                             query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime,\
                                      hostname, type, category, ia_type, class, mac, duid, iaid, last_update,\
                                      preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s',\
@@ -159,10 +158,10 @@ class Store(object):
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME))
                             self.query(query)
-                            del now
+                            ###del now
                         # otherwise update it if not a random address
                         elif a.CATEGORY != 'random':
-                            now = int(time.time())
+                            ###now = int(time.time())
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      ia_type = '%s', class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
@@ -185,7 +184,7 @@ class Store(object):
                                    now + int(a.VALID_LIFETIME),
                                    a.ADDRESS)
                             self.query(query)
-                            del now
+                            ###del now
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
@@ -200,7 +199,7 @@ class Store(object):
                     if answer != None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            now = int(time.time())
+                            ###now = int(time.time())
                             query = "INSERT INTO %s (prefix, length, active, last_message, preferred_lifetime, valid_lifetime,\
                                      hostname, type, category, class, mac, duid, iaid, last_update,\
                                      preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',\
@@ -223,10 +222,10 @@ class Store(object):
                                    now + int(p.PREFERRED_LIFETIME),
                                    now + int(p.VALID_LIFETIME))
                             self.query(query)
-                            del now
+                            ###del now
                         # otherwise update it if not a random address
                         elif p.CATEGORY != 'random':
-                            now = int(time.time())
+                            ###now = int(time.time())
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
@@ -248,7 +247,7 @@ class Store(object):
                                    now + int(p.VALID_LIFETIME),
                                    p.PREFIX)
                             self.query(query)
-                            del now
+                            ###del now
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
@@ -261,17 +260,19 @@ class Store(object):
 
 
     @clean_query_answer
-    def store_route(self, prefix, length, router):
+    def store_route(self, prefix, length, router, now):
         '''
             store route in database to keep track of routes and be able to delete them later
         '''
         query = "SELECT prefix FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
         if self.query is not None:
             if len(self.query(query)) == 0:
-                query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, int(time.time()))
+                ###query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, int(time.time()))
+                query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, now)
                 return self.query(query)
             elif len(self.query(query)) == 1:
-                query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
+                ###query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
+                query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, now)
                 return self.query(query)
             return None
         else:
@@ -451,22 +452,24 @@ class Store(object):
 
 
     @clean_query_answer
-    def release_lease(self, address):
+    def release_lease(self, address, now):
         '''
             release a lease via setting its active flag to False
             set last_message to 8 because of RELEASE messages having this message id
         '''
-        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, int(time.time()), address)
+        ###query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, int(time.time()), address)
+        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, now, address)
         self.query(query)
 
 
     @clean_query_answer
-    def release_prefix(self, prefix):
+    def release_prefix(self, prefix, now):
         '''
             release a prefix via setting its active flag to False
             set last_message to 8 because of RELEASE messages having this message id
         '''
-        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE prefix = '%s'" % (self.table_prefixes, int(time.time()), prefix)
+        ###query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE prefix = '%s'" % (self.table_prefixes, int(time.time()), prefix)
+        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE prefix = '%s'" % (self.table_prefixes, now, prefix)
         self.query(query)
 
 
@@ -615,28 +618,31 @@ class Store(object):
             return(False)
 
 
-    def release_free_leases(self, timestamp=int(time.time())):
+    ###def release_free_leases(self, timestamp=int(time.time())):
+    def release_free_leases(self, now):
         '''
             release all invalid leases via setting their active flag to False
         '''
-        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, timestamp)
+        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, now)
         return self.query(query)
 
 
-    def release_free_prefixes(self, timestamp=int(time.time())):
+    ###def release_free_prefixes(self, timestamp=int(time.time())):
+    def release_free_prefixes(self, now):
         '''
             release all invalid prefixes via setting their active flag to False
         '''
-        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_prefixes, timestamp)
+        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_prefixes, now)
         return self.query(query)
 
 
-    def remove_leases(self, category="random", timestamp=int(time.time())):
+    ###def remove_leases(self, category="random", timestamp=int(time.time())):
+    def remove_leases(self, now, category="random"):
         '''
             remove all leases of a certain category like random - they will grow the database
             but be of no further use
         '''
-        query = "DELETE FROM %s WHERE active = 0 AND category = '%s' AND valid_until < '%s'" % (self.table_leases, category, timestamp)
+        query = "DELETE FROM %s WHERE active = 0 AND category = '%s' AND valid_until < '%s'" % (self.table_leases, category, now)
         return self.query(query)
 
 
@@ -648,21 +654,23 @@ class Store(object):
         return self.query(query)
 
 
-    def unlock_unused_advertised_leases(self, timestamp=int(time.time())):
+    ###def unlock_unused_advertised_leases(self, timestamp=int(time.time())):
+    def unlock_unused_advertised_leases(self, now):
         '''
             unlock leases marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
         '''
-        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, timestamp + 60)
+        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, now + 60)
         return self.query(query)
 
 
-    def unlock_unused_advertised_prefixes(self, timestamp=int(time.time())):
+    ###def unlock_unused_advertised_prefixes(self, timestamp=int(time.time())):
+    def unlock_unused_advertised_prefixes(self, now):
         '''
             unlock prefixes marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
         '''
-        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_prefixes, timestamp + 60)
+        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_prefixes, now + 60)
         return self.query(query)
 
 
@@ -768,7 +776,8 @@ class Store(object):
         return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
 
 
-    def store_mac_llip(self, mac, link_local_ip):
+    ###def store_mac_llip(self, mac, link_local_ip):
+    def store_mac_llip(self, mac, link_local_ip, now):
         '''
             store MAC-link-local-ip-mapping
         '''
@@ -777,10 +786,10 @@ class Store(object):
         # if known already update timestamp of MAC-link-local-ip-mapping
         if not db_entry or db_entry == []:
             query = "INSERT INTO macs_llips (mac, link_local_ip, last_update) VALUES ('%s', '%s', '%s')" % \
-                  (mac, link_local_ip, int(time.time()))
+                  (mac, link_local_ip, now)
             self.query(query)
         else:
-            query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, int(time.time()), mac)
+            query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, now, mac)
             self.query(query)
 
     @clean_query_answer
@@ -810,14 +819,14 @@ class Store(object):
             collect all known MACs and link local addresses from database at startup
             to reduce attempts to read neighbor cache
         '''
-        query = 'SELECT link_local_ip, mac FROM %s' % (self.table_macs_llips)
+        query = 'SELECT link_local_ip, mac, last_update FROM %s' % (self.table_macs_llips)
         answer = self.query(query)
         if answer:
             for m in answer:
                 try:
                     # m[0] is LLIP, m[1] is the matching MAC
-                    # interface is ignored and timestamp comes with instance of NeighborCacheRecord()
-                    self.CollectedMACs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1])
+                    # interface is ignored
+                    self.CollectedMACs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1], now=m[2])
                 except Exception, err:
                     #Log("ERROR: CollectMACsFromDB(): " + str(err))
                     print err
