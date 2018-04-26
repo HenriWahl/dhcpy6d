@@ -88,6 +88,9 @@ WHITESPACE = ' ,'
 # needed for NTP server option 56 and its suboptions
 NTP_SERVER_TYPES = {'SRV': 1, 'MC': 2, 'FQDN': 3}
 
+# define address characters once - for decompress_ipv6
+ADDRESS_CHARS_STRICT = ':0123456789abcdef'
+ADDRESS_CHARS_NON_STRICT = ':0123456789abcdefx'
 
 def convert_dns_to_binary(name):
     '''
@@ -155,31 +158,40 @@ def decompress_ip6(ip6, strict=True):
         decompresses shortened IPv6 address and returns it as ':'-less 32 character string
         additionally allows testing for prototype address with less strict set of allowed characters
     '''
+
+    ip6 = ip6.lower()
+
+    # cache some repeated calls
+    colon_count1 = ip6.count(':')
+    colon_count2 = ip6.count('::')
+    colon_count3 = ip6.count(':::')
+
     # if in strict mode there are no hex numbers and ':' something is wrong
     if strict == True:
-        for c in ip6.lower():
-            if not c in ':0123456789abcdef':
+        for c in ip6:
+            if not c in ADDRESS_CHARS_STRICT:
                 raise Exception('%s should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f' % (ip6))
     else:
         # used for comparison of leases with address pattern - X replace the dynamic part of the address
-        for c in ip6.lower():
-            if not c in ':0123456789abcdefx':
+        for c in ip6:
+            if not c in ADDRESS_CHARS_NON_STRICT:
                 raise Exception('%s should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f x' % (ip6))
     # nothing to do
-    if len(ip6) == 32 and ip6.count(':') == 0:
+    if len(ip6) == 32 and colon_count1 == 0:
         return ip6
 
     # larger heaps of :: smell like something wrong
-    if ip6.count('::') > 1 or ip6.count(':::') >= 1:
+    if colon_count2 > 1 or colon_count3 >= 1:
         raise Exception("%s has too many accumulated ':'" % (ip6))
     
     # less than 7 ':' but no '::' also make a bad impression
-    if ip6.count(':') < 7 and ip6.count('::') <> 1:
+    if colon_count1 < 7 and colon_count2 <> 1:
         raise Exception("%s is missing some ':'" % (ip6))
     
     # replace :: with :0000:: - the last ':' will be cut of finally
     while ip6.count(':') < 8 and ip6.count('::') == 1:
         ip6 = ip6.replace('::', ':0000::')
+
     # remaining ':' will be cut off
     ip6 = ip6.replace('::', ':')
 
@@ -191,11 +203,12 @@ def decompress_ip6(ip6, strict=True):
     ip6_segments_source = ip6.split(':')
     ip6_segments_target = list()
     for s in ip6_segments_source:
-        while len(s) < 4:
-            s = '0' + s
+        #while len(s) < 4:
+        #    s = '0' + s
         if len(s) > 4:
-            raise Exception
-        ip6_segments_target.append(s)
+            raise Exception("%s has segment with more than 4 digits" % (ip6))
+        else:
+            ip6_segments_target.append(s.zfill(4))
 
     # return with separator (mostly '')
     return ''.join(ip6_segments_target)
@@ -321,16 +334,16 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
             # basic safety checks for received data (imitates NLMSG_OK)
             if nlmsg_len < struct.calcsize('<%s' % nlmsghdr_fmt):
                 log.warn('broken data from netlink (position %i, nlmsg_len %i): '\
-                         'nlmsg_len is smaler then structure size' % (answer_pos, nlmsg_len))
+                         'nlmsg_len is smaller than structure size' % (answer_pos, nlmsg_len))
                 break
             if answer_len-answer_pos < struct.calcsize('<%s' % nlmsghdr_fmt):
                 log.warn('broken data from netlink (position %i, length avail %i): '\
-                         'received data size is smaler then structure size' % \
+                         'received data size is smaller than structure size' % \
                          (answer_pos, answer_len-answer_pos))
                 break
             if answer_len-answer_pos < nlmsg_len:
                 log.warn('broken data from netlink (position %i, length avail %i): '\
-                         'received data size is smaller then nlmsg_len' % \
+                         'received data size is smaller than nlmsg_len' % \
                          (answer_pos, answer_len-answer_pos))
                 break
             if (pid != nlmsg_pid or seq != nlmsg_seq):
