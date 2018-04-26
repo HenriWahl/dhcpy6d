@@ -432,7 +432,7 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
                                                      mac=nda['NDA_LLADDR'],
                                                      interface=IF_NUMBER[nda['NDM_IFINDEX']],
                                                      now=now)
-                        result[str(record.llip)] = record
+                        result[record.llip] = record
 
             # move to next record
             answer_pos += nlmsg_len
