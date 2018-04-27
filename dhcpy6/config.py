@@ -202,6 +202,9 @@ class Config(object):
         # allow to ignore IAIDs which play no big role at all for server
         self.IGNORE_IAID = 'False'
 
+        # ignore clients which do no appear in the neighbor cache table
+        self.IGNORE_UNKNOWN_CLIENTS = 'True'
+
         # allow setting request rate limits to put clients onto blacklist
         self.REQUEST_LIMIT = 'no'
         self.REQUEST_LIMIT_TIME = '60'
@@ -452,6 +455,7 @@ class Config(object):
                        'CACHE_MAC_LLIP',
                        'LOG_MAC_LLIP',
                        'IGNORE_IAID',
+                       'IGNORE_UNKNOWN_CLIENTS',
                        'REQUEST_LIMIT',
                        'MANAGE_ROUTES_AT_START']:
             try:

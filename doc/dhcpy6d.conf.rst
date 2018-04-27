@@ -167,6 +167,9 @@ environments.
 **ignore_iaid = yes|no**
     Ignore IAID when looking for leases in database. Might be of use in case some clients are chaninging their IAD for some unknown reason.
 
+**ignore_unknown_clients = yes|no**
+    Ignore clients if no trace of them can be found in the neighbor cache.
+
 **request_limit = yes|no**
     Enables request limits for clients wich can be controled by *request_limit_time* and *request_limit_count*.
 

@@ -1592,6 +1592,11 @@ class Handler(SocketServer.DatagramRequestHandler):
         # empty dummy response
         self.response = ''
 
+        # avoid processing requests of unknown clients which cannot be found in the neighbor cache table
+        if cfg.IGNORE_UNKNOWN_CLIENTS:
+            if self.client_address[0] in requests_blacklist:
+                return False
+
         # default is no control request
         self.is_control_message = False
 
@@ -1709,7 +1714,13 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, [13], status=0)
                                     # complete MAC collection
                                     collect_macs(timer)
-
+                                    # if client cannot be found in
+                                    if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                                        if cfg.IGNORE_UNKNOWN_CLIENTS:
+                                            client_address = copy.deepcopy(self.client_address[0])
+                                            requests_blacklist[client_address] = Request(client_address)
+                                            log.info("Blacklisting unknwon client {0}".format(client_address))
+                                            del client_address
                                 # try to add client MAC address to transaction object
                                 try:
                                     Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac

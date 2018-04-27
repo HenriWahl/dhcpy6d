@@ -1,10 +1,11 @@
-dhcpy6d (0.6.9999-7) stable; urgency=medium
+dhcpy6d (0.6.9999-8) stable; urgency=medium
 
   * New upstream release
     + added ntp_server option
     + added request limits
     + allow to inject prefix - e.g. changed prefix from ISP
     + optimized time requests
+    + ignore unknown clients
     + fixes for prefix delegation
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 02 Apr 2018 20:30:00 +0200
