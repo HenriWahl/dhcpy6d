@@ -921,8 +921,6 @@ def collect_macs(now):
                             log.info('Collected MAC %s for LinkLocalIP %s' % (host.mac, colonify_ip6(host.llip)))
                         if cfg.CACHE_MAC_LLIP == True:
                             volatilestore.store_mac_llip(host.mac, host.llip, timer)
-                else:
-                    break
         else:
             # subject to change - other distros might have other paths - might become a task
             # for a setup routine to find appropriate paths
@@ -1592,9 +1590,12 @@ class Handler(SocketServer.DatagramRequestHandler):
         # empty dummy response
         self.response = ''
 
+        # raw address+interface, used for requests monitoring
+        client_address = copy.deepcopy(self.client_address[0])
+
         # avoid processing requests of unknown clients which cannot be found in the neighbor cache table
         if cfg.IGNORE_UNKNOWN_CLIENTS:
-            if self.client_address[0] in requests_blacklist:
+            if client_address in requests_blacklist:
                 return False
 
         # default is no control request
@@ -1604,17 +1605,16 @@ class Handler(SocketServer.DatagramRequestHandler):
         if cfg.REQUEST_LIMIT:
             if cfg.REQUEST_LIMIT_IDENTIFICATION == 'llip':
                 # avoid further processing if client is known to be bad
-                if self.client_address[0] in requests_blacklist:
+                if client_address in requests_blacklist:
                     return False
-                llip = copy.deepcopy(self.client_address[0])
                 # add client to requests tracker if not known, otherwise raise counter
-                if llip not in requests:
-                    requests[llip] = Request(llip)
+                if client_address not in requests:
+                    requests[client_address] = Request(client_address)
                 else:
-                    requests[llip].count += 1
+                    requests[client_address].count += 1
             # otherwise a MAC address
             else:
-                llip = decompress_ip6(self.client_address[0].split('%')[0])
+                llip = decompress_ip6(client_address.split('%')[0])
                 if llip in CollectedMACs:
                     mac = copy.deepcopy(CollectedMACs[llip].mac)
                     if mac in requests_blacklist:
@@ -1624,7 +1624,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         requests[mac] = Request(mac)
                     else:
                         requests[mac].count += 1
-            del llip
+                del llip
         try:
             # convert raw message into ascii-bytes
             bytes = binascii.hexlify(self.request[0])
@@ -1633,11 +1633,11 @@ class Handler(SocketServer.DatagramRequestHandler):
             # should be extended
             # if sent from non-LLIP there is no interface - the request is rejected at the moment
             try:
-                client_llip, interface = self.client_address[0].split('%')
+                client_llip, interface = client_address.split('%')
                 client_llip = decompress_ip6(client_llip)
             except:
                 # interface is set to '' and later evaluated to trigger a statuscode message
-                client_llip, interface = self.client_address[0], ''
+                client_llip, interface = client_address, ''
                 client_llip = decompress_ip6(client_llip)
 
                 # local connection is a control message
@@ -1716,11 +1716,11 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     collect_macs(timer)
                                     # if client cannot be found in
                                     if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                        if cfg.IGNORE_UNKNOWN_CLIENTS:
-                                            client_address = copy.deepcopy(self.client_address[0])
-                                            requests_blacklist[client_address] = Request(client_address)
-                                            log.info("Blacklisting unknwon client {0}".format(client_address))
-                                            del client_address
+                                        if cfg.IGNORE_UNKNOWN_CLIENTS and client_address in requests:
+                                            if requests[client_address].count > 1:
+                                                requests_blacklist[client_address] = Request(client_address)
+                                                log.info("Blacklisting unknown client {0}".format(client_address))
+                                                return False
                                 # try to add client MAC address to transaction object
                                 try:
                                     Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
@@ -1844,7 +1844,7 @@ class Handler(SocketServer.DatagramRequestHandler):
         except Exception,err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            log.error('handle(): %s | Caused by: %s | Transaction: %s' % (str(err), self.client_address[0], transaction_id))
+            log.error('handle(): %s | Caused by: %s | Transaction: %s' % (str(err), client_address, transaction_id))
             return None
 
 
