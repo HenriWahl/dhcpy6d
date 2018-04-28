@@ -1,4 +1,4 @@
-dhcpy6d (0.6.9999-8) stable; urgency=medium
+dhcpy6d (0.7-1) stable; urgency=medium
 
   * New upstream release
     + added ntp_server option
@@ -8,7 +8,7 @@ dhcpy6d (0.6.9999-8) stable; urgency=medium
     + ignore unknown clients
     + fixes for prefix delegation
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 02 Apr 2018 20:30:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 30 Apr 2018 20:30:00 +0200
 
 dhcpy6d (0.6-1) stable; urgency=medium
 

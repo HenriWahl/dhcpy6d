@@ -3,11 +3,11 @@ dhcpy6d.conf
 ============
 
 --------------------------------------------
-configuration file for DHCPv6 server dhcpy6d
+Configuration file for DHCPv6 server dhcpy6d
 --------------------------------------------
 
 :Author: Copyright (C) 2012-2018 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   2018-04-02
+:Date:   2018-04-30
 :Version: 0.7
 :Manual section: 5
 :Copyright: This manual page is licensed under the GPL-2 license.
@@ -45,6 +45,7 @@ environments.
 
 **really_do_it = yes|no**
     Let dhcpy6d **really do it** and respond to client requests - disabling might be of use for debugging and testing.
+    *Default: no*
 
 **interface = <interface> [<interface> ...]**
     The interfaces the server listens on is defined with keyword interface. Multiple interfaces have to be separated by spaces.
@@ -66,9 +67,11 @@ environments.
  
 **user = <user>**
     For security reasons dhcpy6d can and should be run as non-root user.
+    *Default: root*
 
 **group = <group>**
     For security reasons dhcpy6d can and should be run as non-root group.
+    *Default: root*
 
 **nameserver = <nameserver-address> [<nameserver-address> ...]**
     Nameservers to be replied to request option 23 are defined with nameserver. If more than one is needed they have to be separated by spaces.
@@ -80,42 +83,54 @@ environments.
 **domain_search_list = <domain-name> [<domain-name> ...]**
     Domain search lists to be used with option 24. If none is given the value of domain above is used. Multiple domains have to be separated by space or comma.
 
+**ntp_server = <ntp_server> [<ntp_server> ...]**
+    NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56.
+
 **log = yes|no**
     Enable logging.
+    *Default: no*
 
 **log_console = yes|no**
     Log to the console where **dhcpy6d** has been started.
+    *Default: no*
 
 **log_file = </path/to/dhcpy6d/log/file>**
     Defines the file used for logging. Will be created if it does not yet exist.
 
 **log_syslog = yes|no**
     If logs should go to syslog it is set here.
+    *Default: no*
 
 **log_syslog_destination = syslogserver**
     An UDP syslog server may be used if **log_syslog_destination** points to it. Optionally a port other than default 514 can be set when adding ":<port>" to the destination.
 
 **log_syslog_facility = <log-facility>**
     The default syslog facility is *daemon* but can be changed here.
+    *Default: daemon*
 
 **log_mac_llip = yes|no**
     Log discovered MAC/LLIP pairs of clients. Might be pretty verbose in larger setups and with disabled MAC/LLIP pair caching.
+    *Default: no*
 
 **store_config = file|sqlite|mysql|postgresql|none**
     Configuration of clients can be stored in a file or in a database. Databases MySQL, PostgreSQL and SQLite are supported at the moment, thus possible values are *file*, *mysql*, *postgresql*  or *sqlite*.
     To disable any client configuration source it has to be *none*.
+    *Default: none*
 
 **store_file_config = </path/to/client/conf/file>**
-    File which contains the clients configuration. Default is */etc/dhcpy6d-clients.conf*. For details see **dhcpy6d-clients.conf(5)**.
+    File which contains the clients configuration. For details see **dhcpy6d-clients.conf(5)**.
+    *Default: /etc/dhcpy6d-clients.conf*
 
 **store_sqlite_config = /path/to/sqlite/config/file**
     SQLite database file which contains the clients configuration.
+    *Default: config.sqlite*
  
 **store_volatile = sqlite|mysql|postgresql**
     Volatile data like leases and the mapping between Link Local addresses and MAC addresses can be stored in MySQL, PostgreSQL or SQLite database, so the possible values are *mysql*, *postgresql* and *sqlite*.
     
 **store_sqlite_volatile = /path/to/sqlite/volatile/file**
-    If set set to *sqlite* a SQLite database file must be defined. Default is */var/lib/dhcpy6d/volatile.sqlite*.
+    If set to *sqlite* a SQLite database file must be defined.
+    *Default: /var/lib/dhcpy6d/volatile.sqlite*
 
 **store_db_host = <database-host>**
 
@@ -128,16 +143,20 @@ environments.
 
 **cache_mac_llip = yes|no**
     Cache discovered MAC/LLIP pairs in database. If enabled reduces response time and opens dhcpy6d to *possible* MAC/LLIP poisoning. If disabled might increase system load.
+    *Default: no*
 
 **identification = <mac> <duid> <hostname>**
     Clients can be set to be identified by several attributes - MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database.
     Same MAC and different DUIDs might be interesting for clients with multiple OS.
+    *Default: mac*
 
 **identification_mode = match_all|match_some**
     If more than one identification attribute has been set, the identification mode can be one of *match_all* or *match_some*. The first means that all attributes have to match to identify a client and the latter is more tolerant.
+    *Default: match_all*
 
 **dns_update = yes|no**
     Dynamically update DNS. This works at the moment only with Bind DNS, but might be extended to others, maybe via call of an external command.
+    *Default: no*
 
 **dns_update_nameserver = <nameserver-address> [<nameserver-address> ...]**
 
@@ -148,44 +167,59 @@ environments.
 
 **dns_ignore_client = yes|no**
     Clients may request that they update the DNS record theirself. If their wishes shall be ignored this option has to be true.
+    *Default: yes*
 
 **dns_use_client_hostname = yes|no**
     The client hostname either comes from configuration of dhcpy6d or in the client request.
+    *Default: no*
 
 **preferred_lifetime = <seconds>**
+    *Default: 5400*
 
 **valid_lifetime = <seconds>**
+    *Default: 7200*
 
 **t1 = <seconds>**
+    *Default: 2700*
 
 **t2 = <seconds>**
     Preferred lifetime, valid lifetime, T1 and T2 in seconds are configured with the corresponding options.
+    *Default: 4050*
 
 **information_refresh_time = <seconds>**
     The lifetime of information given to clients as response to an *information-request* message.
+    *Default: 6000*
 
 **ignore_iaid = yes|no**
-    Ignore IAID when looking for leases in database. Might be of use in case some clients are chaninging their IAD for some unknown reason.
+    Ignore IAID when looking for leases in database. Might be of use in case some clients are changing their IAD for some unknown reason.
+    *Default: no*
 
 **ignore_unknown_clients = yes|no**
     Ignore clients if no trace of them can be found in the neighbor cache.
+    *Default: yes*
 
 **request_limit = yes|no**
     Enables request limits for clients wich can be controled by *request_limit_time* and *request_limit_count*.
+    *Default: no*
 
 **request_limit_identification = mac|llip**
     Identifies clients either by MAC address or Link Local IP.
+    *Default: llip*
 
 **request_limit_time = <seconds>**
+    *Default: 60*
 
 **request_limit_count = <max_number_of_requests>**
     Requests can be limited to avoid server to be flooded by buggy clients. Set number of request during a certain time in seconds.
+    *Default: 20*
 
 **request_limit_release_time = <seconds>**
     Duration in seconds for brute force clients to stay on the blacklist.
+    *Default: 7200*
 
-**ntp_server = <ntp_server> [<ntp_server> ...]**
-    NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56.
+**manage_routes_at_start = yes|no**
+    Check prefixes at startup and call commands for adding and deleting routes respectively.
+    Default: no
 
 
 Address definitions in multiple [address_<address_name>] sections

@@ -135,7 +135,6 @@ class Store(object):
                     if answer != None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            ###now = int(time.time())
                             query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime,\
                                      hostname, type, category, ia_type, class, mac, duid, iaid, last_update,\
                                      preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s',\
@@ -158,10 +157,8 @@ class Store(object):
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME))
                             self.query(query)
-                            ###del now
                         # otherwise update it if not a random address
                         elif a.CATEGORY != 'random':
-                            ###now = int(time.time())
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      ia_type = '%s', class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
@@ -184,7 +181,6 @@ class Store(object):
                                    now + int(a.VALID_LIFETIME),
                                    a.ADDRESS)
                             self.query(query)
-                            ###del now
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
@@ -199,7 +195,6 @@ class Store(object):
                     if answer != None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            ###now = int(time.time())
                             query = "INSERT INTO %s (prefix, length, active, last_message, preferred_lifetime, valid_lifetime,\
                                      hostname, type, category, class, mac, duid, iaid, last_update,\
                                      preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',\
@@ -222,10 +217,8 @@ class Store(object):
                                    now + int(p.PREFERRED_LIFETIME),
                                    now + int(p.VALID_LIFETIME))
                             self.query(query)
-                            ###del now
                         # otherwise update it if not a random address
                         elif p.CATEGORY != 'random':
-                            ###now = int(time.time())
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
@@ -247,7 +240,6 @@ class Store(object):
                                    now + int(p.VALID_LIFETIME),
                                    p.PREFIX)
                             self.query(query)
-                            ###del now
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
@@ -267,11 +259,9 @@ class Store(object):
         query = "SELECT prefix FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
         if self.query is not None:
             if len(self.query(query)) == 0:
-                ###query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, int(time.time()))
                 query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, now)
                 return self.query(query)
             elif len(self.query(query)) == 1:
-                ###query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, int(time.time()))
                 query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, now)
                 return self.query(query)
             return None
@@ -457,7 +447,6 @@ class Store(object):
             release a lease via setting its active flag to False
             set last_message to 8 because of RELEASE messages having this message id
         '''
-        ###query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, int(time.time()), address)
         query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, now, address)
         self.query(query)
 
@@ -468,7 +457,6 @@ class Store(object):
             release a prefix via setting its active flag to False
             set last_message to 8 because of RELEASE messages having this message id
         '''
-        ###query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE prefix = '%s'" % (self.table_prefixes, int(time.time()), prefix)
         query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE prefix = '%s'" % (self.table_prefixes, now, prefix)
         self.query(query)
 
@@ -618,7 +606,6 @@ class Store(object):
             return(False)
 
 
-    ###def release_free_leases(self, timestamp=int(time.time())):
     def release_free_leases(self, now):
         '''
             release all invalid leases via setting their active flag to False
@@ -627,7 +614,6 @@ class Store(object):
         return self.query(query)
 
 
-    ###def release_free_prefixes(self, timestamp=int(time.time())):
     def release_free_prefixes(self, now):
         '''
             release all invalid prefixes via setting their active flag to False
@@ -636,7 +622,6 @@ class Store(object):
         return self.query(query)
 
 
-    ###def remove_leases(self, category="random", timestamp=int(time.time())):
     def remove_leases(self, now, category="random"):
         '''
             remove all leases of a certain category like random - they will grow the database
@@ -654,7 +639,6 @@ class Store(object):
         return self.query(query)
 
 
-    ###def unlock_unused_advertised_leases(self, timestamp=int(time.time())):
     def unlock_unused_advertised_leases(self, now):
         '''
             unlock leases marked as advertised but apparently never been delivered
@@ -664,7 +648,6 @@ class Store(object):
         return self.query(query)
 
 
-    ###def unlock_unused_advertised_prefixes(self, timestamp=int(time.time())):
     def unlock_unused_advertised_prefixes(self, now):
         '''
             unlock prefixes marked as advertised but apparently never been delivered
@@ -706,9 +689,6 @@ class Store(object):
                                                 aclass=aclass,\
                                                 address=address,\
                                                 id=id)
-
-                #### in case of various addresses split them...
-                ###self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS = listify_option(self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].ADDRESS)
 
                 # and put the host objects into index
                 if self.Transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
@@ -776,7 +756,6 @@ class Store(object):
         return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
 
 
-    ###def store_mac_llip(self, mac, link_local_ip):
     def store_mac_llip(self, mac, link_local_ip, now):
         '''
             store MAC-link-local-ip-mapping

@@ -914,7 +914,6 @@ def collect_macs(now):
         if OS == 'Linux':
             for host in get_neighbor_cache_linux(cfg, IF_NUMBER, log, timer).values():
                 if not host.llip in CollectedMACs:
-                    ###if host.llip.lower().startswith('fe80'):
                     if host.llip.startswith('fe80'):
                         CollectedMACs[host.llip] = host
                         if cfg.LOG_MAC_LLIP == True:
@@ -1372,10 +1371,7 @@ class Transaction(object):
         self.IAT2 = cfg.T2
         # IA option - NA, TA or PD -> DHCPv6 option 3, 4 or 25
         # to be used in option_requests in Handler.build_response()
-        ###self.IA_Option = None
-
         self.IA_Options = list()
-
         # Addresses given by client, for example for RENEW or RELEASE requests
         self.Addresses = list()
         # same with prefixes

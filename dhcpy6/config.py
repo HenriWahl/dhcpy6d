@@ -134,7 +134,7 @@ class Config(object):
         self.STORE_VOLATILE = 'sqlite'
 
         # file for client information
-        self.STORE_FILE_CONFIG = 'clients.conf'
+        self.STORE_FILE_CONFIG = '/etc/dhcpy6d-clients.conf'
 
         # DB data
         self.STORE_DB_HOST = 'localhost'
@@ -143,7 +143,7 @@ class Config(object):
         self.STORE_DB_PASSWORD = 'password'
 
         self.STORE_SQLITE_CONFIG = 'config.sqlite'
-        self.STORE_SQLITE_VOLATILE = 'volatile.sqlite'
+        self.STORE_SQLITE_VOLATILE = '/var/lib/dhcpy6d/volatile.sqlite'
 
         # whether MAC-LLIP pairs should be stored forever or retrieved freshly if needed
         self.CACHE_MAC_LLIP = 'False'
