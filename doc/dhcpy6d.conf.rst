@@ -25,14 +25,18 @@ Boolean settings can be set with *1|0*, *on|off* or *yes|no* values.
 
 Some options allow multiple values. These have to be separated by spaces.
 
-There are 3 types of sections:
+There are 4 types of sections:
 
 **[dhcpy6d]**
     This section contains general options like interfaces, storage and logging. Only one [dhcpy6d] section is allowed.
 
 **[address_<address_name>]**
-    There can be various *[address_<address_name>]* sections. In address sections severall address ranges and types can be defind according to you needs.
+    There can be various *[address_<address_name>]* sections. In several address sections several address ranges and types can be defined.
     Addresses are organized in classes. For details read further down.
+
+**[prefix_<prefix_name>]**
+    There can be various *[prefix_<prefix_name>]* sections. In several prefix sections several prefix ranges and types can be defined.
+    Prefixes are organized in classes. For details read further down.
 
 **[class_<class_name>]**
     Class definitions allow to apply different addresses, time limits et al. to different types of clients.
@@ -219,7 +223,7 @@ environments.
 
 **manage_routes_at_start = yes|no**
     Check prefixes at startup and call commands for adding and deleting routes respectively.
-    Default: no
+    *Default: no*
 
 
 Address definitions in multiple [address_<address_name>] sections
@@ -280,6 +284,7 @@ There can be many address definitions which will be used by classes. Every addre
 
 **ia_type = na|ta**
     IA (Identity Association) types can be one of non-temporary address *na* or temporary address *ta*. Default and probably most used is *na*.
+    *Default: na*
 
 **preferred_lifetime = <seconds>**
 
@@ -287,6 +292,7 @@ There can be many address definitions which will be used by classes. Every addre
     As default preferred and valid lifetime are set in general settings, but it is configurable individually for every address setting.
 
 **dns_update = yes|no**
+    *Default: no*
 
 **dns_zone = <dnszone>**
 
@@ -342,6 +348,8 @@ A prefix definition may contain several properties:
     As default Link Local Address of requesting client is not used as router address for external call.
     Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
     Alternatively the client Link Local Address might be used by enabling this option.
+    *Default: no*
+
 
 Class definitions in multiple [class_<class_name>] sections
 ===========================================================
@@ -382,7 +390,8 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 
 **advertise = addresses|prefixes**
     A class per default allows to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either *addresses* or *prefixes*.
-    
+    *Default: addresses*
+
 **call_up = <executable> [$prefix$] [$length$] [$router$]**
     When a route is requested and accepted the custom *executable* will called and the optional but senseful variables will be filled with their appropriate values.
 

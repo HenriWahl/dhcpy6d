@@ -1126,8 +1126,8 @@ class Class(object):
         self.ANSWER = 'normal'
         # which IA_* should this class supply - addresses, prefixes or both?
         # shouldn't be an empty list because in this case the class would not make sense at all
-        # as default both will be advertised
-        self.ADVERTISE = ['addresses', 'prefixes']
+        # as default only addresses will be advertised
+        self.ADVERTISE = ['addresses']
         # commands or scripts to be called for setting and removing routes for prefixes
         self.CALL_UP = ''
         self.CALL_DOWN = ''
