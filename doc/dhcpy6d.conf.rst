@@ -856,6 +856,59 @@ Configuration with filter
     |    [class_default]
     |    addresses = global
 
+Configuration with prefixes
+---------------------------
+
+Here dhcpy6d also provides prefixes in the default class. To avoid heavy load by bad clients request limits are activated.
+
+    |
+    |    [dhcpy6d]
+    |    interface = eth0
+    |    server_preference = 255
+    |
+    |    store_config = none
+    |    store_volatile = sqlite
+    |    store_sqlite_volatile = /var/lib/dhcpy6d/volatile.sqlite
+    |
+    |    log = on
+    |    log_console = yes
+    |    log_syslog = yes
+    |    log_file = /var/log/dhcpy6d.log
+    |
+    |    identification_mode = match_all
+    |    identification = mac
+    |
+    |    nameserver = 2001:db8::53
+    |    ntp_server = 2001:db8::123
+    |
+    |    # Mitigate ugly and aggressive clients
+    |    request_limit = yes
+    |    request_limit_time = 30
+    |    request_limit_count = 10
+    |    request_limit_identification = llip
+    |    ignore_iaid = yes
+    |    ignore_unknown_clients = yes
+    |
+    |    advertise = adresses prefixes
+    |    manage_routes_at_start = yes
+    |
+    |    [address_default]
+    |    category = mac
+    |    pattern = 2001:db8::$mac$
+    |
+    |    [prefix_default]
+    |    category = range
+    |    range = 0000-ffff
+    |    pattern = 2001:db8:0:$range$::
+    |    route_link_local = yes
+    |    length = 64
+    |
+    |    [class_default]
+    |    addresses = default
+    |    prefixes = default
+    |    call_up = sudo ip -6 route add $prefix$/$length$ via $router$ dev eth0
+    |    call_down = sudo ip -6 route delete $prefix$/$length$ via $router$ dev eth0
+
 
 License
 =======
