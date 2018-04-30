@@ -68,7 +68,8 @@ environments.
 
 **server_preference = <0-255>**
     The server preference determines the priority of the server. The maximum value is 255 which means highest priority.
- 
+    *Default: 255*
+
 **user = <user>**
     For security reasons dhcpy6d can and should be run as non-root user.
     *Default: root*
@@ -368,6 +369,7 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 
 **answer = normal|noaddress|none**
     Normally a client will get an answer, but if for whatever reason is a need to give it an *NoAddrAvail* message back or completely ignore the client it can be set here.
+    *Default: normal*
 
 **nameserver = <nameserver-address> [<nameserver-address> ...]**
     Each class can have its own nameservers. If this option is used it replaces the nameservers from general settings.
@@ -465,8 +467,6 @@ Minimal configuration
     |    category = mac
     |    # ULA-type address pattern.
     |    pattern = fd01:db8:dead:bad:beef:$mac$
-
-
 
 Configuration with valid and unknown clients
 --------------------------------------------
@@ -808,7 +808,6 @@ Configuration with dynamic DNS Updates
     |    # Valid clients get a different nameserver.
     |    nameserver = 2001:db8::53
 
-
 Configuration with filter
 -------------------------
 
@@ -908,6 +907,48 @@ Here dhcpy6d also provides prefixes in the default class. To avoid heavy load by
     |    prefixes = default
     |    call_up = sudo ip -6 route add $prefix$/$length$ via $router$ dev eth0
     |    call_down = sudo ip -6 route delete $prefix$/$length$ via $router$ dev eth0
+
+Only use fixed addresses
+------------------------
+
+If no addresses should be generated, the clients need to have an address defined in their configuration file or database. It looks like this:
+
+    |    [example-client]
+    |    hostname = example-client
+    |    mac = 01:02:03:04:05:06
+    |    class = fixed_address
+    |    address = 2001:db8::1234
+
+The according class of the client simply must not have any address definition an might as well stay empty:
+
+    |
+    |    [dhcpy6d]
+    |    # Set to yes to really answer to clients.
+    |    really_do_it = yes
+    |
+    |    # Interface to listen to multicast ff02::1:2.
+    |    interface = eth0
+    |
+    |    # Some server DUID.
+    |    serverduid = 0001000134824528134567366121
+    |
+    |    # Do not identify and configure clients.
+    |    store_config = none
+    |
+    |    # SQLite DB for leases and LLIP-MAC-mapping.
+    |    store_volatile = sqlite
+    |    store_sqlite_volatile = /var/lib/dhcpy6d/volatile.sqlite
+    |
+    |    # Special address type which applies to all not specially.
+    |    # configured clients.
+    |    [address_default]
+    |    # Choosing MAC-based addresses.
+    |    category = mac
+    |    # ULA-type address pattern.
+    |    pattern = fd01:db8:dead:bad:beef:$mac$
+    |
+    |    [class_fixed_address]
+    |    # just no address definiton here
 
 
 License
