@@ -50,10 +50,10 @@ class QueryQueue(threading.Thread):
             query = self.query_queue.get()
             try:
                 answer = self.store.DBQuery(query)
-            except:
+            except Exception, error:
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
-                answer = ''
+                answer = error
 
             self.answer_queue.put({query: answer})
 
@@ -122,13 +122,13 @@ class Store(object):
         return(self.query("SELECT item_value FROM meta WHERE item_key = 'version'"))
 
 
-    def store(self, transaction_id, now):
+    def store(self, transaction, now):
         '''
             store lease in lease DB
         '''
         # only if client exists
-        if self.Transactions[transaction_id].Client:
-            for a in self.Transactions[transaction_id].Client.Addresses:
+        if transaction.Client:
+            for a in transaction.Client.Addresses:
                 if not a.ADDRESS is None:
                     query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
                     answer = self.query(query)
@@ -142,40 +142,44 @@ class Store(object):
                                   (self.table_leases,
                                    a.ADDRESS,
                                    1,
-                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   transaction.LastMessageReceivedType,
                                    a.PREFERRED_LIFETIME,
                                    a.VALID_LIFETIME,
-                                   self.Transactions[transaction_id].Client.Hostname,
+                                   transaction.Client.Hostname,
                                    a.TYPE,
                                    a.CATEGORY,
                                    a.IA_TYPE,
-                                   self.Transactions[transaction_id].Client.Class,
-                                   self.Transactions[transaction_id].MAC,
-                                   self.Transactions[transaction_id].DUID,
-                                   self.Transactions[transaction_id].IAID,
+                                   transaction.Client.Class,
+                                   transaction.MAC,
+                                   transaction.DUID,
+                                   transaction.IAID,
                                    now,
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME))
-                            self.query(query)
+                            result = self.query(query)
+                            # for unknow reasons sometime a lease shall be inserted which already exists
+                            # in this case go further (aka continue) and do an update instead of an insert
+                            if result != 'IntegrityError':
+                                continue
                         # otherwise update it if not a random address
-                        elif a.CATEGORY != 'random':
+                        if a.CATEGORY != 'random':
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      ia_type = '%s', class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
                                      last_update = '%s', preferred_until = '%s', valid_until = '%s'\
                                   WHERE address = '%s'" % \
                                   (self.table_leases,
-                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   transaction.LastMessageReceivedType,
                                    a.PREFERRED_LIFETIME,
                                    a.VALID_LIFETIME,
-                                   self.Transactions[transaction_id].Client.Hostname,
+                                   transaction.Client.Hostname,
                                    a.TYPE,
                                    a.CATEGORY,
                                    a.IA_TYPE,
-                                   self.Transactions[transaction_id].Client.Class,
-                                   self.Transactions[transaction_id].MAC,
-                                   self.Transactions[transaction_id].DUID,
-                                   self.Transactions[transaction_id].IAID,
+                                   transaction.Client.Class,
+                                   transaction.MAC,
+                                   transaction.DUID,
+                                   transaction.IAID,
                                    now,
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME),
@@ -184,11 +188,11 @@ class Store(object):
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
-                                     (self.table_leases, self.Transactions[transaction_id].LastMessageReceivedType,
+                                     (self.table_leases, transaction.LastMessageReceivedType,
                                       a.ADDRESS)
                             self.query(query)
 
-            for p in self.Transactions[transaction_id].Client.Prefixes:
+            for p in transaction.Client.Prefixes:
                 if not p.PREFIX is None:
                     query = "SELECT prefix FROM %s WHERE prefix = '%s'" % (self.table_prefixes, p.PREFIX)
                     answer = self.query(query)
@@ -203,38 +207,43 @@ class Store(object):
                                    p.PREFIX,
                                    p.LENGTH,
                                    1,
-                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   transaction.LastMessageReceivedType,
                                    p.PREFERRED_LIFETIME,
                                    p.VALID_LIFETIME,
-                                   self.Transactions[transaction_id].Client.Hostname,
+                                   transaction.Client.Hostname,
                                    p.TYPE,
                                    p.CATEGORY,
-                                   self.Transactions[transaction_id].Client.Class,
-                                   self.Transactions[transaction_id].MAC,
-                                   self.Transactions[transaction_id].DUID,
-                                   self.Transactions[transaction_id].IAID,
+                                   transaction.Client.Class,
+                                   transaction.MAC,
+                                   transaction.DUID,
+                                   transaction.IAID,
                                    now,
                                    now + int(p.PREFERRED_LIFETIME),
                                    now + int(p.VALID_LIFETIME))
-                            self.query(query)
+                            result = self.query(query)
+                            # for unknow reasons sometime a lease shall be inserted which already exists
+                            # in this case go further (aka continue) and do an update instead of an insert
+                            # doing this here for prefixes is just a precautional measure
+                            if result != 'IntegrityError':
+                                continue
                         # otherwise update it if not a random address
-                        elif p.CATEGORY != 'random':
+                        if p.CATEGORY != 'random':
                             query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
                                      last_update = '%s', preferred_until = '%s', valid_until = '%s'\
                                      WHERE prefix = '%s'" % \
                                   (self.table_prefixes,
-                                   self.Transactions[transaction_id].LastMessageReceivedType,
+                                   transaction.LastMessageReceivedType,
                                    p.PREFERRED_LIFETIME,
                                    p.VALID_LIFETIME,
-                                   self.Transactions[transaction_id].Client.Hostname,
+                                   transaction.Client.Hostname,
                                    p.TYPE,
                                    p.CATEGORY,
-                                   self.Transactions[transaction_id].Client.Class,
-                                   self.Transactions[transaction_id].MAC,
-                                   self.Transactions[transaction_id].DUID,
-                                   self.Transactions[transaction_id].IAID,
+                                   transaction.Client.Class,
+                                   transaction.MAC,
+                                   transaction.DUID,
+                                   transaction.IAID,
                                    now,
                                    now + int(p.PREFERRED_LIFETIME),
                                    now + int(p.VALID_LIFETIME),
@@ -243,7 +252,7 @@ class Store(object):
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
-                                     (self.table_prefixes, self.Transactions[transaction_id].LastMessageReceivedType,
+                                     (self.table_prefixes, transaction.LastMessageReceivedType,
                                       p.PREFIX)
                             self.query(query)
             return True
@@ -1317,28 +1326,6 @@ class DB(Store):
         return self.connected
 
 
-    def DBQuery(self, query):
-        try:
-            self.cursor.execute(query)
-        except Exception as err:
-            # try to reestablish database connection
-            print 'Error: {0}'.format(str(err))
-            print 'Query: {0}'.format(query)
-            if not self.DBConnect():
-                return None
-            else:
-                try:
-                    self.cursor.execute(query)
-                except:
-                    traceback.print_exc(file=sys.stdout)
-                    sys.stdout.flush()
-                    self.connected = False
-                    return None
-
-        result = self.cursor.fetchall()
-        return result
-
-
 class DBMySQL(DB):
 
     def DBConnect(self):
@@ -1364,6 +1351,30 @@ class DBMySQL(DB):
             self.connected = False
 
         return self.connected
+
+
+    def DBQuery(self, query):
+        try:
+            self.cursor.execute(query)
+        except MySQLdb.IntegrityError:
+            return 'IntegrityError'
+        except Exception as err:
+            # try to reestablish database connection
+            print 'Error: {0}'.format(str(err))
+            print 'Query: {0}'.format(query)
+            if not self.DBConnect():
+                return None
+            else:
+                try:
+                    self.cursor.execute(query)
+                except:
+                    traceback.print_exc(file=sys.stdout)
+                    sys.stdout.flush()
+                    self.connected = False
+                    return None
+
+        result = self.cursor.fetchall()
+        return result
 
 
 class DBPostgreSQL(DB):
