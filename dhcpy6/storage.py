@@ -159,7 +159,10 @@ class Store(object):
                             result = self.query(query)
                             # for unknow reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
-                            if result != 'IntegrityError':
+                            if result == 'IntegrityError':
+                                print 'IntegrityError:', query
+                            else:
+                                # jump to next item of loop
                                 continue
                         # otherwise update it if not a random address
                         if a.CATEGORY != 'random':
@@ -167,7 +170,7 @@ class Store(object):
                                      valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
                                      ia_type = '%s', class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
                                      last_update = '%s', preferred_until = '%s', valid_until = '%s'\
-                                  WHERE address = '%s'" % \
+                                     WHERE address = '%s'" % \
                                   (self.table_leases,
                                    transaction.LastMessageReceivedType,
                                    a.PREFERRED_LIFETIME,
@@ -816,7 +819,6 @@ class Store(object):
                     # interface is ignored
                     self.CollectedMACs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1], now=m[2])
                 except Exception, err:
-                    #Log("ERROR: CollectMACsFromDB(): " + str(err))
                     print err
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()
