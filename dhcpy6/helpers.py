@@ -160,7 +160,6 @@ def decompress_ip6(ip6, strict=True):
     '''
 
     ip6 = ip6.lower()
-
     # cache some repeated calls
     colon_count1 = ip6.count(':')
     colon_count2 = ip6.count('::')
