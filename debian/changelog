@@ -1,6 +1,7 @@
-dhcpy6d (0.7.0.9-5) stable; urgency=medium
+dhcpy6d (0.7.1-1) stable; urgency=medium
 
   * New upstream release
+    + fixed recycling of prefixes
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 02 May 2018 20:30:00 +0200
 
