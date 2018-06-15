@@ -1,9 +1,16 @@
+dhcpy6d (0.7.2-1) stable; urgency=medium
+
+  * New upstream release
+    + fix for MySQLdb.IntegrityError
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 15 Jun 2018 7:30:00 +0200
+
 dhcpy6d (0.7.1-1) stable; urgency=medium
 
   * New upstream release
     + fixed recycling of prefixes
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 02 May 2018 20:30:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 11 Jun 2018 10:30:00 +0200
 
 dhcpy6d (0.7-1) stable; urgency=medium
 
