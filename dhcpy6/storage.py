@@ -1358,7 +1358,7 @@ class DBMySQL(DB):
     def DBQuery(self, query):
         try:
             self.cursor.execute(query)
-        except MySQLdb.IntegrityError:
+        except sys.modules['MySQLdb'].IntegrityError:
             return 'IntegrityError'
         except Exception as err:
             # try to reestablish database connection
