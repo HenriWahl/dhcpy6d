@@ -1,8 +1,8 @@
 .\" Man page generated from reStructuredText.
 .
-.TH DHCPY6D.CONF 5 "2017-08-11" "0.6" ""
+.TH DHCPY6D.CONF 5 "2018-04-30" "0.7" ""
 .SH NAME
-dhcpy6d.conf \- configuration file for DHCPv6 server dhcpy6d
+dhcpy6d.conf \- Configuration file for DHCPv6 server dhcpy6d
 .
 .nr rst2man-indent-level 0
 .
@@ -42,15 +42,19 @@ Boolean settings can be set with \fI1|0\fP, \fIon|off\fP or \fIyes|no\fP values.
 .sp
 Some options allow multiple values. These have to be separated by spaces.
 .sp
-There are 3 types of sections:
+There are 4 types of sections:
 .INDENT 0.0
 .TP
 .B \fB[dhcpy6d]\fP
 This section contains general options like interfaces, storage and logging. Only one [dhcpy6d] section is allowed.
 .TP
 .B \fB[address_<address_name>]\fP
-There can be various \fI[address_<address_name>]\fP sections. In address sections severall address ranges and types can be defind according to you needs.
+There can be various \fI[address_<address_name>]\fP sections. In several address sections several address ranges and types can be defined.
 Addresses are organized in classes. For details read further down.
+.TP
+.B \fB[prefix_<prefix_name>]\fP
+There can be various \fI[prefix_<prefix_name>]\fP sections. In several prefix sections several prefix ranges and types can be defined.
+Prefixes are organized in classes. For details read further down.
 .TP
 .B \fB[class_<class_name>]\fP
 Class definitions allow to apply different addresses, time limits et al. to different types of clients.
@@ -63,6 +67,7 @@ environments.
 .TP
 .B \fBreally_do_it = yes|no\fP
 Let dhcpy6d \fBreally do it\fP and respond to client requests \- disabling might be of use for debugging and testing.
+\fIDefault: no\fP
 .TP
 .B \fBinterface = <interface> [<interface> ...]\fP
 The interfaces the server listens on is defined with keyword interface. Multiple interfaces have to be separated by spaces.
@@ -81,59 +86,74 @@ It is composed of \fIDUID\-type(LLT=1)\fP + \fIHardware\-type(Ethernet=1)\fP + \
 .TP
 .B \fBserver_preference = <0\-255>\fP
 The server preference determines the priority of the server. The maximum value is 255 which means highest priority.
+\fIDefault: 255\fP
 .TP
 .B \fBuser = <user>\fP
 For security reasons dhcpy6d can and should be run as non\-root user.
+\fIDefault: root\fP
 .TP
 .B \fBgroup = <group>\fP
 For security reasons dhcpy6d can and should be run as non\-root group.
+\fIDefault: root\fP
 .TP
 .B \fBnameserver = <nameserver\-address> [<nameserver\-address> ...]\fP
 Nameservers to be replied to request option 23 are defined with nameserver. If more than one is needed they have to be separated by spaces.
 If an address type is of category \fIdns\fP at least one nameserver has to be given here.
 .TP
-.B \fBdomain = <domaine\-name>\fP
+.B \fBdomain = <domain\-name>\fP
 The domain to be used with FQDN hostnames for option 39.
 .TP
-.B \fBdomain_search_list = <domainname> [<domainname> ...]\fP
-Domain search lists to be used with option 24t. If none is given the value of domain above is used. Multiple domains have to be separated by space or comma.
+.B \fBdomain_search_list = <domain\-name> [<domain\-name> ...]\fP
+Domain search lists to be used with option 24. If none is given the value of domain above is used. Multiple domains have to be separated by space or comma.
+.TP
+.B \fBntp_server = <ntp_server> [<ntp_server> ...]\fP
+NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56.
 .TP
 .B \fBlog = yes|no\fP
 Enable logging.
+\fIDefault: no\fP
 .TP
 .B \fBlog_console = yes|no\fP
 Log to the console where \fBdhcpy6d\fP has been started.
+\fIDefault: no\fP
 .TP
 .B \fBlog_file = </path/to/dhcpy6d/log/file>\fP
 Defines the file used for logging. Will be created if it does not yet exist.
 .TP
 .B \fBlog_syslog = yes|no\fP
 If logs should go to syslog it is set here.
+\fIDefault: no\fP
 .TP
 .B \fBlog_syslog_destination = syslogserver\fP
 An UDP syslog server may be used if \fBlog_syslog_destination\fP points to it. Optionally a port other than default 514 can be set when adding ":<port>" to the destination.
 .TP
 .B \fBlog_syslog_facility = <log\-facility>\fP
 The default syslog facility is \fIdaemon\fP but can be changed here.
+\fIDefault: daemon\fP
 .TP
 .B \fBlog_mac_llip = yes|no\fP
 Log discovered MAC/LLIP pairs of clients. Might be pretty verbose in larger setups and with disabled MAC/LLIP pair caching.
+\fIDefault: no\fP
 .TP
 .B \fBstore_config = file|sqlite|mysql|postgresql|none\fP
 Configuration of clients can be stored in a file or in a database. Databases MySQL, PostgreSQL and SQLite are supported at the moment, thus possible values are \fIfile\fP, \fImysql\fP, \fIpostgresql\fP  or \fIsqlite\fP\&.
 To disable any client configuration source it has to be \fInone\fP\&.
+\fIDefault: none\fP
 .TP
 .B \fBstore_file_config = </path/to/client/conf/file>\fP
-File which contains the clients configuration. Default is \fI/etc/dhcpy6d\-clients.conf\fP\&. For details see \fBdhcpy6d\-clients.conf(5)\fP\&.
+File which contains the clients configuration. For details see \fBdhcpy6d\-clients.conf(5)\fP\&.
+\fIDefault: /etc/dhcpy6d\-clients.conf\fP
 .TP
 .B \fBstore_sqlite_config = /path/to/sqlite/config/file\fP
 SQLite database file which contains the clients configuration.
+\fIDefault: config.sqlite\fP
 .TP
 .B \fBstore_volatile = sqlite|mysql|postgresql\fP
 Volatile data like leases and the mapping between Link Local addresses and MAC addresses can be stored in MySQL, PostgreSQL or SQLite database, so the possible values are \fImysql\fP, \fIpostgresql\fP and \fIsqlite\fP\&.
 .TP
 .B \fBstore_sqlite_volatile = /path/to/sqlite/volatile/file\fP
-If set set to \fIsqlite\fP a SQLite database file must be defined. Default is \fI/var/lib/dhcpy6d/volatile.sqlite\fP\&.
+If set to \fIsqlite\fP a SQLite database file must be defined.
+\fIDefault: /var/lib/dhcpy6d/volatile.sqlite\fP
 .UNINDENT
 .sp
 \fBstore_db_host = <database\-host>\fP
@@ -148,16 +168,20 @@ If \fBstore_config\fP and/or \fBstore_volatile\fP use a database to store inform
 .TP
 .B \fBcache_mac_llip = yes|no\fP
 Cache discovered MAC/LLIP pairs in database. If enabled reduces response time and opens dhcpy6d to \fIpossible\fP MAC/LLIP poisoning. If disabled might increase system load.
+\fIDefault: no\fP
 .TP
 .B \fBidentification = <mac> <duid> <hostname>\fP
 Clients can be set to be identified by several attributes \- MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database.
 Same MAC and different DUIDs might be interesting for clients with multiple OS.
+\fIDefault: mac\fP
 .TP
 .B \fBidentification_mode = match_all|match_some\fP
 If more than one identification attribute has been set, the identification mode can be one of \fImatch_all\fP or \fImatch_some\fP\&. The first means that all attributes have to match to identify a client and the latter is more tolerant.
+\fIDefault: match_all\fP
 .TP
 .B \fBdns_update = yes|no\fP
 Dynamically update DNS. This works at the moment only with Bind DNS, but might be extended to others, maybe via call of an external command.
+\fIDefault: no\fP
 .UNINDENT
 .sp
 \fBdns_update_nameserver = <nameserver\-address> [<nameserver\-address> ...]\fP
@@ -170,23 +194,59 @@ When connecting to a Bind DNS server for dynamic DNS updates its address and the
 .TP
 .B \fBdns_ignore_client = yes|no\fP
 Clients may request that they update the DNS record theirself. If their wishes shall be ignored this option has to be true.
+\fIDefault: yes\fP
 .TP
 .B \fBdns_use_client_hostname = yes|no\fP
 The client hostname either comes from configuration of dhcpy6d or in the client request.
-.UNINDENT
-.sp
-\fBpreferred_lifetime = <seconds>\fP
-.sp
-\fBvalid_lifetime = <seconds>\fP
-.sp
-\fBt1 = <seconds>\fP
-.INDENT 0.0
+\fIDefault: no\fP
+.TP
+.B \fBpreferred_lifetime = <seconds>\fP
+\fIDefault: 5400\fP
+.TP
+.B \fBvalid_lifetime = <seconds>\fP
+\fIDefault: 7200\fP
+.TP
+.B \fBt1 = <seconds>\fP
+\fIDefault: 2700\fP
 .TP
 .B \fBt2 = <seconds>\fP
 Preferred lifetime, valid lifetime, T1 and T2 in seconds are configured with the corresponding options.
+\fIDefault: 4050\fP
 .TP
 .B \fBinformation_refresh_time = <seconds>\fP
 The lifetime of information given to clients as response to an \fIinformation\-request\fP message.
+\fIDefault: 6000\fP
+.TP
+.B \fBignore_iaid = yes|no\fP
+Ignore IAID when looking for leases in database. Might be of use in case some clients are changing their IAD for some unknown reason.
+\fIDefault: no\fP
+.TP
+.B \fBignore_unknown_clients = yes|no\fP
+Ignore clients if no trace of them can be found in the neighbor cache.
+\fIDefault: yes\fP
+.TP
+.B \fBrequest_limit = yes|no\fP
+Enables request limits for clients wich can be controled by \fIrequest_limit_time\fP and \fIrequest_limit_count\fP\&.
+\fIDefault: no\fP
+.TP
+.B \fBrequest_limit_identification = mac|llip\fP
+Identifies clients either by MAC address or Link Local IP.
+\fIDefault: llip\fP
+.TP
+.B \fBrequest_limit_time = <seconds>\fP
+\fIDefault: 60\fP
+.TP
+.B \fBrequest_limit_count = <max_number_of_requests>\fP
+Requests can be limited to avoid server to be flooded by buggy clients. Set number of request during a certain time in seconds.
+\fIDefault: 20\fP
+.TP
+.B \fBrequest_limit_release_time = <seconds>\fP
+Duration in seconds for brute force clients to stay on the blacklist.
+\fIDefault: 7200\fP
+.TP
+.B \fBmanage_routes_at_start = yes|no\fP
+Check prefixes at startup and call commands for adding and deleting routes respectively.
+\fIDefault: no\fP
 .UNINDENT
 .SH ADDRESS DEFINITIONS IN MULTIPLE [ADDRESS_<ADDRESS_NAME>] SECTIONS
 .sp
@@ -254,6 +314,7 @@ This placeholder can be used instead of a literal prefix and uses the prefix giv
 .TP
 .B \fBia_type = na|ta\fP
 IA (Identity Association) types can be one of non\-temporary address \fIna\fP or temporary address \fIta\fP\&. Default and probably most used is \fIna\fP\&.
+\fIDefault: na\fP
 .UNINDENT
 .sp
 \fBpreferred_lifetime = <seconds>\fP
@@ -261,9 +322,10 @@ IA (Identity Association) types can be one of non\-temporary address \fIna\fP or
 .TP
 .B \fBvalid_lifetime = <seconds>\fP
 As default preferred and valid lifetime are set in general settings, but it is configurable individually for every address setting.
+.TP
+.B \fBdns_update = yes|no\fP
+\fIDefault: no\fP
 .UNINDENT
-.sp
-\fBdns_update = yes|no\fP
 .sp
 \fBdns_zone = <dnszone>\fP
 .INDENT 0.0
@@ -327,6 +389,7 @@ As default preferred and valid lifetime are set in general settings, but it is c
 As default Link Local Address of requesting client is not used as router address for external call.
 Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
 Alternatively the client Link Local Address might be used by enabling this option.
+\fIDefault: no\fP
 .UNINDENT
 .SH CLASS DEFINITIONS IN MULTIPLE [CLASS_<CLASS_NAME>] SECTIONS
 .sp
@@ -345,6 +408,7 @@ A class can contain prefixes \- even most probably only one prefix will be usefu
 .TP
 .B \fBanswer = normal|noaddress|none\fP
 Normally a client will get an answer, but if for whatever reason is a need to give it an \fINoAddrAvail\fP message back or completely ignore the client it can be set here.
+\fIDefault: normal\fP
 .TP
 .B \fBnameserver = <nameserver\-address> [<nameserver\-address> ...]\fP
 Each class can have its own nameservers. If this option is used it replaces the nameservers from general settings.
@@ -371,6 +435,7 @@ It is possible to let a class only apply on specific interfaces. These have to b
 .TP
 .B \fBadvertise = addresses|prefixes\fP
 A class per default allows to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either \fIaddresses\fP or \fIprefixes\fP\&.
+\fIDefault: addresses\fP
 .TP
 .B \fBcall_up = <executable> [$prefix$] [$length$] [$router$]\fP
 When a route is requested and accepted the custom \fIexecutable\fP will called and the optional but senseful variables will be filled with their appropriate values.
@@ -852,6 +917,119 @@ addresses = local
 filter_hostname = win.*
 [class_default]
 addresses = global
+.in -2
+.fi
+.sp
+.UNINDENT
+.UNINDENT
+.SS Configuration with prefixes
+.sp
+Here dhcpy6d also provides prefixes in the default class. To avoid heavy load by bad clients request limits are activated.
+.INDENT 0.0
+.INDENT 3.5
+.nf
+
+.in +2
+[dhcpy6d]
+interface = eth0
+server_preference = 255
+
+store_config = none
+store_volatile = sqlite
+store_sqlite_volatile = /var/lib/dhcpy6d/volatile.sqlite
+
+log = on
+log_console = yes
+log_syslog = yes
+log_file = /var/log/dhcpy6d.log
+
+identification_mode = match_all
+identification = mac
+
+nameserver = 2001:db8::53
+ntp_server = 2001:db8::123
+
+# Mitigate ugly and aggressive clients
+request_limit = yes
+request_limit_time = 30
+request_limit_count = 10
+request_limit_identification = llip
+ignore_iaid = yes
+ignore_unknown_clients = yes
+
+advertise = adresses prefixes
+manage_routes_at_start = yes
+
+[address_default]
+category = mac
+pattern = 2001:db8::$mac$
+
+[prefix_default]
+category = range
+range = 0000\-ffff
+pattern = 2001:db8:0:$range$::
+route_link_local = yes
+length = 64
+
+[class_default]
+addresses = default
+prefixes = default
+call_up = sudo ip \-6 route add $prefix$/$length$ via $router$ dev eth0
+call_down = sudo ip \-6 route delete $prefix$/$length$ via $router$ dev eth0
+.in -2
+.fi
+.sp
+.UNINDENT
+.UNINDENT
+.SS Only use fixed addresses
+.sp
+If no addresses should be generated, the clients need to have an address defined in their configuration file or database. It looks like this:
+.INDENT 0.0
+.INDENT 3.5
+.nf
+[example\-client]
+hostname = example\-client
+mac = 01:02:03:04:05:06
+class = fixed_address
+address = 2001:db8::1234
+.fi
+.sp
+.UNINDENT
+.UNINDENT
+.sp
+The according class of the client simply must not have any address definition an might as well stay empty:
+.INDENT 0.0
+.INDENT 3.5
+.nf
+
+.in +2
+[dhcpy6d]
+# Set to yes to really answer to clients.
+really_do_it = yes
+
+# Interface to listen to multicast ff02::1:2.
+interface = eth0
+
+# Some server DUID.
+serverduid = 0001000134824528134567366121
+
+# Do not identify and configure clients.
+store_config = none
+
+# SQLite DB for leases and LLIP\-MAC\-mapping.
+store_volatile = sqlite
+store_sqlite_volatile = /var/lib/dhcpy6d/volatile.sqlite
+
+# Special address type which applies to all not specially.
+# configured clients.
+[address_default]
+# Choosing MAC\-based addresses.
+category = mac
+# ULA\-type address pattern.
+pattern = fd01:db8:dead:bad:beef:$mac$
+
+[class_fixed_address]
+# just no address definiton here
 .in -2
 .fi
 .sp

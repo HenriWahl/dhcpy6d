@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH DHCPY6D 8 "2017-08-11" "0.6" ""
+.TH DHCPY6D 8 "2018-04-30" "0.7" ""
 .SH NAME
 dhcpy6d \- MAC address aware DHCPv6 server
 .
@@ -94,6 +94,9 @@ Set the prefix which will be substituted for the $prefix$ variable in address de
 .TP
 .B \fB\-G, \-\-generate\-duid\fP
 Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
+.TP
+.B \fB\-m, \-\-message "<message>"\fP
+Send message to running dhcpy6d server. At the moment the only valid message is \fI"prefix <prefix>"\fP\&. The value of \fI<prefix>\fP will be used instantly where \fI$prefix$\fP is to be replaced as placeholder in address definitions. This might be of use for dynamic prefixes by ISPs, for example: \fIdhcpy6d \-m "prefix 2001:db8"\fP\&.
 .UNINDENT
 .SH FILES
 .INDENT 0.0

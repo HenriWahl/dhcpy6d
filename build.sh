@@ -56,8 +56,8 @@ if [ "$OS" == "debian" ]
                 sudo apt -y install python-all
         fi
 
-        debuild clean
-		debuild binary-indep
+        debuild --no-tgz-check -- clean
+		debuild --no-tgz-check -- binary-indep
 
 elif [ "$OS" == "redhat" ]
 	then

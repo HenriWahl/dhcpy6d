@@ -17,11 +17,11 @@ Package: dhcpy6d
 Architecture: all
 Depends: adduser,
          ucf,
+         python-dnspython,
          ${misc:Depends},
          ${python:Depends}
 Pre-Depends: dpkg (>= 1.16.5)
-Suggests: python-dnspython,
-          python-mysqldb,
+Suggests: python-mysqldb,
           python-psycopg2 
 Description: MAC address aware DHCPv6 server written in Python
  Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be
