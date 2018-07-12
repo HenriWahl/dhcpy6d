@@ -205,6 +205,9 @@ class Config(object):
         # ignore clients which do no appear in the neighbor cache table
         self.IGNORE_UNKNOWN_CLIENTS = 'True'
 
+        # ignore classes so every client gets the defailt for the interface its request comes in from
+        self.ONLY_DEFAULT_CLASS = 'False'
+
         # allow setting request rate limits to put clients onto blacklist
         self.REQUEST_LIMIT = 'no'
         self.REQUEST_LIMIT_TIME = '60'
@@ -456,6 +459,7 @@ class Config(object):
                        'LOG_MAC_LLIP',
                        'IGNORE_IAID',
                        'IGNORE_UNKNOWN_CLIENTS',
+                       'ONLY_DEFAULT_CLASS',
                        'REQUEST_LIMIT',
                        'MANAGE_ROUTES_AT_START']:
             try:
@@ -748,7 +752,7 @@ class Config(object):
 
         # check validity of identification mode
         if not self.IDENTIFICATION_MODE.strip() in ['match_all', 'match_some']:
-            error_exit("%s Identification mode must be one of 'match_all' or 'macht_some'." % (msg_prefix))
+            error_exit("%s Identification mode must be one of 'match_all' or 'match_some'." % (msg_prefix))
 
         # check if request rate limit seconds are a number
         if not self.REQUEST_LIMIT_TIME.isdigit():

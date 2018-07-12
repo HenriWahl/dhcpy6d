@@ -172,6 +172,12 @@ IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'D
 # empty options string test
 EMPTY_OPTIONS = [None, False, '', []]
 
+# dummy IAID for transactions
+DUMMY_IAID = '00000000'
+
+# dummy MAC for transactions
+DUMMY_MAC = '00:00:00:00:00:00'
+
 # store
 # because of thread trouble there should not be too much db connections at once
 # so we need to use the queryqueue way - subject to change
@@ -1373,7 +1379,7 @@ class Transaction(object):
         # Interface the request came in
         self.Interface = interface
         # MAC address
-        self.MAC = None
+        self.MAC = DUMMY_MAC
         # last message for following the protocol
         self.LastMessageReceivedType = message_type
         # dictionary for options
@@ -1390,7 +1396,7 @@ class Transaction(object):
         self.DNS_O = 0
         self.DNS_S = 0
         # dummy IAID
-        self.IAID = '00000000'
+        self.IAID = DUMMY_IAID
         # dummy IAT1
         self.IAT1 = cfg.T1
         # dummy IAT2
@@ -1416,7 +1422,7 @@ class Transaction(object):
         # Rapid Commit flag
         self.RapidCommit = False
         # answer type - take from class definition, one of 'normal', 'noaddress', 'noprefix' or 'none'
-        # defaults to 'address' as this is the main purpose of dhcpy6d
+        # defaults to 'normal' as this is the main purpose of dhcpy6d
         self.Answer = 'normal'
         # default DUID values
         self.DUID = ''
@@ -1616,7 +1622,8 @@ class Handler(SocketServer.DatagramRequestHandler):
         client_address = copy.deepcopy(self.client_address[0])
 
         # avoid processing requests of unknown clients which cannot be found in the neighbor cache table
-        if cfg.IGNORE_UNKNOWN_CLIENTS:
+        # only makes sense if classes are not ignored and thus the neighbor cache is used
+        if not cfg.ONLY_DEFAULT_CLASS and cfg.IGNORE_UNKNOWN_CLIENTS:
             if client_address in requests_blacklist:
                 return False
 
@@ -1706,7 +1713,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                         Transactions[transaction_id] = Transaction(transaction_id, client_llip, interface, message_type, options)
                         # add client MAC address to transaction object
                         if Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                            Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
+                            if not cfg.ONLY_DEFAULT_CLASS:
+                                Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                     else:
                         Transactions[transaction_id].Timestamp = timer
                         Transactions[transaction_id].LastMessageReceivedType = message_type
@@ -1725,36 +1733,38 @@ class Handler(SocketServer.DatagramRequestHandler):
                         else:
                             # client will get answer if its LLIP & MAC is known
                             if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                # complete MAC collection - will make most sence on Linux and its native neighborcache access
-                                collect_macs(timer)
-
-                                # when still no trace of the client in neighbor cache then send silly signal back
-                                if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                    # if not known send status code option failure to get
-                                    # LLIP/MAC mapping from neighbor cache
-                                    # status code 'Success' sounds silly but works best
-                                    self.build_response(7, transaction_id, [13], status=0)
-                                    # complete MAC collection
+                                if not cfg.ONLY_DEFAULT_CLASS:
+                                    # complete MAC collection - will make most sence on Linux and its native neighborcache access
                                     collect_macs(timer)
-                                    # if client cannot be found in
-                                    if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                        if cfg.IGNORE_UNKNOWN_CLIENTS and client_address in requests:
-                                            if requests[client_address].count > 1:
-                                                requests_blacklist[client_address] = Request(client_address)
-                                                log.info("Blacklisting unknown client {0}".format(client_address))
-                                                return False
-                                # try to add client MAC address to transaction object
-                                try:
-                                    Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
-                                except:
-                                    # MAC not yet found :-(
-                                    if cfg.LOG_MAC_LLIP == True:
-                                        log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (colonify_ip6(Transactions[transaction_id].ClientLLIP))))
 
+                                    # when still no trace of the client in neighbor cache then send silly signal back
+                                    if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                                        # if not known send status code option failure to get
+                                        # LLIP/MAC mapping from neighbor cache
+                                        # status code 'Success' sounds silly but works best
+                                        self.build_response(7, transaction_id, [13], status=0)
+                                        # complete MAC collection
+                                        collect_macs(timer)
+                                        # if client cannot be found in collected MACs
+                                        if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                                            if cfg.IGNORE_UNKNOWN_CLIENTS and client_address in requests:
+                                                if requests[client_address].count > 1:
+                                                    requests_blacklist[client_address] = Request(client_address)
+                                                    log.info("Blacklisting unknown client {0}".format(client_address))
+                                                    return False
+
+                                    # try to add client MAC address to transaction object
+                                    try:
+                                        Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
+                                    except:
+                                        # MAC not yet found :-(
+                                        if cfg.LOG_MAC_LLIP == True:
+                                            log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (colonify_ip6(Transactions[transaction_id].ClientLLIP))))
                             # if finally there is some info about the client try to answer the request
                             if Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                if not Transactions[transaction_id].MAC:
-                                    Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
+                                if not cfg.ONLY_DEFAULT_CLASS:
+                                    if Transactions[transaction_id].MAC == DUMMY_MAC:
+                                        Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
 
                                 # ADVERTISE
                                 # if last request was a SOLICIT send an ADVERTISE (type 2) back
