@@ -1623,7 +1623,7 @@ class Handler(SocketServer.DatagramRequestHandler):
 
         # avoid processing requests of unknown clients which cannot be found in the neighbor cache table
         # only makes sense if classes are not ignored and thus the neighbor cache is used
-        if not cfg.ONLY_DEFAULT_CLASS and cfg.IGNORE_UNKNOWN_CLIENTS:
+        if not cfg.IGNORE_MAC and cfg.IGNORE_UNKNOWN_CLIENTS:
             if client_address in requests_blacklist:
                 return False
 
@@ -1713,7 +1713,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         Transactions[transaction_id] = Transaction(transaction_id, client_llip, interface, message_type, options)
                         # add client MAC address to transaction object
                         if Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                            if not cfg.ONLY_DEFAULT_CLASS:
+                            if not cfg.IGNORE_MAC:
                                 Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                     else:
                         Transactions[transaction_id].Timestamp = timer
@@ -1733,7 +1733,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         else:
                             # client will get answer if its LLIP & MAC is known
                             if not Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                if not cfg.ONLY_DEFAULT_CLASS:
+                                if not cfg.IGNORE_MAC:
                                     # complete MAC collection - will make most sence on Linux and its native neighborcache access
                                     collect_macs(timer)
 
@@ -1762,7 +1762,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                                             log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (colonify_ip6(Transactions[transaction_id].ClientLLIP))))
                             # if finally there is some info about the client try to answer the request
                             if Transactions[transaction_id].ClientLLIP in CollectedMACs:
-                                if not cfg.ONLY_DEFAULT_CLASS:
+                                if not cfg.IGNORE_MAC:
                                     if Transactions[transaction_id].MAC == DUMMY_MAC:
                                         Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
 

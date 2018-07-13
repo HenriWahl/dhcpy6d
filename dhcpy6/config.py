@@ -205,8 +205,8 @@ class Config(object):
         # ignore clients which do no appear in the neighbor cache table
         self.IGNORE_UNKNOWN_CLIENTS = 'True'
 
-        # ignore classes so every client gets the defailt for the interface its request comes in from
-        self.ONLY_DEFAULT_CLASS = 'False'
+        # ignore classes so every client gets the default for the interface its request comes in from
+        self.IGNORE_MAC = 'False'
 
         # allow setting request rate limits to put clients onto blacklist
         self.REQUEST_LIMIT = 'no'
