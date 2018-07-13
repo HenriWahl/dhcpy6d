@@ -1760,8 +1760,9 @@ class Handler(SocketServer.DatagramRequestHandler):
                                         # MAC not yet found :-(
                                         if cfg.LOG_MAC_LLIP == True:
                                             log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (colonify_ip6(Transactions[transaction_id].ClientLLIP))))
-                            # if finally there is some info about the client try to answer the request
-                            if Transactions[transaction_id].ClientLLIP in CollectedMACs:
+
+                            # if finally there is some info about the client or MACs play no role try to answer the request
+                            if Transactions[transaction_id].ClientLLIP in CollectedMACs or cfg.IGNORE_MAC:
                                 if not cfg.IGNORE_MAC:
                                     if Transactions[transaction_id].MAC == DUMMY_MAC:
                                         Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
@@ -1913,7 +1914,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             # Option 3 + 5 Identity Association for Non-temporary Address
             if 3 in options_request:
                 # check if MAC of LLIP is really known
-                if Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                if Transactions[transaction_id].ClientLLIP in CollectedMACs or cfg.IGNORE_MAC:
                     # collect client information
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = build_client(transaction_id)
@@ -1984,7 +1985,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             # IA_TA temporary addresses
             if 4 in options_request:
                 # check if MAC of LLIP is really known
-                if Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                if Transactions[transaction_id].ClientLLIP in CollectedMACs or cfg.IGNORE_MAC:
                     # collect client information
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = build_client(transaction_id)
@@ -2119,7 +2120,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             # Option 25 Prefix Delegation
             if 25 in options_request:
                 # check if MAC of LLIP is really known
-                if Transactions[transaction_id].ClientLLIP in CollectedMACs:
+                if Transactions[transaction_id].ClientLLIP in CollectedMACs or cfg.IGNORE_MAC:
                     # collect client information
                     if Transactions[transaction_id].Client == None:
                         Transactions[transaction_id].Client = build_client(transaction_id)
