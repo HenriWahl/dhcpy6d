@@ -31,6 +31,7 @@ import socket
 import struct
 import binascii
 import ctypes
+import ctypes.util
 import platform
 import time
 
@@ -462,23 +463,14 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
 
 def get_libc():
     '''
-        return libC-object to be used for NIC handling in dhcpy6d and Config.py
-        first get the library to connect to - OS-dependent
+        return libC-object to be used for NIC handling in dhcpy6d and config.py
+        find_library makes this OS-independent
     '''
-    OS = platform.system()
-    if OS == "Linux":
-        libc_name = "libc.so.6"
-    elif "BSD" in OS:
-        # libc_ver() returns version number of libc that is hardcoded in
-        # libc file name
-        libc_name = "libc.so." + platform.libc_ver()[1]
-    elif OS == "Darwin":
-        libc_name = "libc.dylib"
-    else:
+    try:
+        return ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+    except:
         print "\n OS not yet supported. :-( \n"
         sys.exit(1)
-    # use ctypes for libc access
-    return ctypes.cdll.LoadLibrary(libc_name)
 
 
 def send_control_message(message):

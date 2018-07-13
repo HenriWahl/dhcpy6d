@@ -205,8 +205,11 @@ class Config(object):
         # ignore clients which do no appear in the neighbor cache table
         self.IGNORE_UNKNOWN_CLIENTS = 'True'
 
-        # ignore classes so every client gets the default for the interface its request comes in from
+        # ignore MAC addresses as identifier - useful for neighbor-cache-less interfaces like ppp0
         self.IGNORE_MAC = 'False'
+
+        # ignore interface to be able to listen on dynamically created interfaces like ppp
+        self.IGNORE_INTERFACE = 'False'
 
         # allow setting request rate limits to put clients onto blacklist
         self.REQUEST_LIMIT = 'no'
@@ -460,6 +463,7 @@ class Config(object):
                        'IGNORE_IAID',
                        'IGNORE_UNKNOWN_CLIENTS',
                        'IGNORE_MAC',
+                       'IGNORE_INTERFACE',
                        'REQUEST_LIMIT',
                        'MANAGE_ROUTES_AT_START']:
             try:
@@ -544,10 +548,11 @@ class Config(object):
             error_exit("%s Group '%s' does not exist" % (msg_prefix, self.GROUP))
 
         # check interface
-        for i in self.INTERFACE:
-            # also accept Linux VLAN and other definitions but interface must exist
-            if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
-                error_exit("%s Interface '%s' is unknown." % (msg_prefix, i))
+        if not self.IGNORE_INTERFACE:
+            for i in self.INTERFACE:
+                # also accept Linux VLAN and other definitions but interface must exist
+                if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
+                    error_exit("%s Interface '%s' is unknown." % (msg_prefix, i))
 
         # check multicast address
         try:
@@ -784,10 +789,11 @@ class Config(object):
                 error_exit("%s answer type must be one of 'normal', 'noaddress' and 'none'." % (msg_prefix))
 
             # check interface
-            for i in self.CLASSES[c].INTERFACE:
-                # also accept Linux VLAN and other definitions but interface must exist
-                if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
-                    error_exit("%s Interface '%s' is invalid." % (msg_prefix, i))
+            if not self.IGNORE_INTERFACE:
+                for i in self.CLASSES[c].INTERFACE:
+                    # also accept Linux VLAN and other definitions but interface must exist
+                    if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
+                        error_exit("%s Interface '%s' is invalid." % (msg_prefix, i))
 
             # check advertised IA types
             for i in self.CLASSES[c].ADVERTISE:

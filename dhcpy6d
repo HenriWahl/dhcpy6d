@@ -155,7 +155,7 @@ NC = { 'BSD': { 'call' : '/usr/sbin/ndp -a -n',
                    'len'  : 3}
             }
 
-# libc access via ctypes, needed for interface handling, get it by Helpers.get_libc()
+# libc access via ctypes, needed for interface handling, get it by helpers.get_libc()
 LIBC = get_libc()
 
 # index IF name > number, gets filled in UDPMulticastIPv6
@@ -1280,7 +1280,7 @@ class RouteThread(threading.Thread):
 
 class TimerThread(threading.Thread):
     '''
-        thread for timer
+        thread for timer, used in different places
     '''
 
     def __init__(self):
@@ -1590,11 +1590,17 @@ class UDPMulticastIPv6(SocketServer.UnixDatagramServer):
         for i in cfg.INTERFACE:
             IF_NAME[i] = LIBC.if_nametoindex(i)
             IF_NUMBER[IF_NAME[i]] = i
-            if_number = struct.pack('I', LIBC.if_nametoindex(i))
+            if_number = struct.pack('I', IF_NAME[i])
             mgroup = socket.inet_pton(socket.AF_INET6, cfg.MCAST) + if_number
 
-            # join multicast group
-            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mgroup)
+            # join multicast group - should work definitively if not ignoring interface at startup
+            if cfg.IGNORE_INTERFACE:
+                try:
+                    self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mgroup)
+                except Exception, err:
+                    print(err)
+            else:
+                self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mgroup)
 
         # bind socket to server address
         self.socket.bind(self.server_address)
@@ -1672,6 +1678,10 @@ class Handler(SocketServer.DatagramRequestHandler):
                 # local connection is a control message
                 if client_llip == '00000000000000000000000000000001' and interface == '':
                     self.is_control_message = True
+
+            # do nothing if interface is not configured
+            if not interface in cfg.INTERFACE:
+                return False
 
             # bad or too short message is thrown away
             if not len(bytes) > 8:
