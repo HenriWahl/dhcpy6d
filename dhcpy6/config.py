@@ -459,7 +459,7 @@ class Config(object):
                        'LOG_MAC_LLIP',
                        'IGNORE_IAID',
                        'IGNORE_UNKNOWN_CLIENTS',
-                       'ONLY_DEFAULT_CLASS',
+                       'IGNORE_MAC',
                        'REQUEST_LIMIT',
                        'MANAGE_ROUTES_AT_START']:
             try:
