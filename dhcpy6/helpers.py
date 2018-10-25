@@ -20,6 +20,7 @@
 
 import binascii
 import random
+import re
 import sys
 import shlex
 import logging
@@ -481,3 +482,16 @@ def send_control_message(message):
     message = message.strip('"').strip('"')
     socket_control = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
     socket_control.sendto(message, ('::1', 547))
+
+def mac2eui64(mac):
+    '''
+    Convert a MAC address to a EUI64 address
+    '''
+    # http://tools.ietf.org/html/rfc4291#section-2.5.1
+    eui64 = re.sub(r'[.:-]', '', mac).lower()
+    eui64 = eui64[0:6] + 'fffe' + eui64[6:]
+    eui64 = hex(int(eui64[0:2], 16) ^ 2)[2:].zfill(2) + eui64[2:]
+
+    split_string = lambda x, n: [x[i:i + n] for i in range(0, len(x), n)]
+
+    return ':'.join(split_string(eui64, 4))

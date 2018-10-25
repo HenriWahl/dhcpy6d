@@ -242,6 +242,9 @@ There can be many address definitions which will be used by classes. Every addre
     **mac**
         Uses MAC address from client request as part of address
 
+    **eui64**
+        Also uses MAC address from client as part of address, but converts it to a 64-bit extended unique identifier (EUI-64)
+
     **id**
         Uses ID given to client in configuration file or database as one octet of address, should be in range 0-ffff
 
@@ -268,11 +271,14 @@ There can be many address definitions which will be used by classes. Every addre
 
 **pattern = 2001:db8::$mac$|$id$|$range$|$random$**
 
-**pattern= $prefix$::$mac$|$id$|$range$|$random$**
+**pattern= $prefix$::$mac$|$eui64$|$id$|$range$|$random$**
     Patterns allow to design the addresses according to their category. See examples section below to make it more clear. 
 
     **$mac$**
         The MAC address from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be stretched over 3 thus octets like 00:11:22:33:44:55 become 0011:2233:4455.
+
+    **$eui64$**
+        The MAC address converted to a modified 64-bit extended unique identifier (EUI-64) from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be converted according to RFC 4291 like 52:54:00:e5:b4:64 become 5054:ff:fee5:b464
 
     **$id$**
         If clients get an ID in client configuration file or in client configuration database this ID will fill one octet. Thus the ID has to be in the range of 0000-ffff.
@@ -949,6 +955,9 @@ The according class of the client simply must not have any address definition an
     |    category = mac
     |    # ULA-type address pattern.
     |    pattern = fd01:db8:dead:bad:beef:$mac$
+    |    # To use the EUI-64 instead of the plain MAC address:
+    |    #category = eui64
+    |    #pattern = fd01:db8:dead:bad:$eui64$
     |
     |    [class_fixed_address]
     |    # just no address definiton here
