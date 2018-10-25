@@ -159,6 +159,9 @@ environments.
     If more than one identification attribute has been set, the identification mode can be one of *match_all* or *match_some*. The first means that all attributes have to match to identify a client and the latter is more tolerant.
     *Default: match_all*
 
+**ignore_mac = yes|no**
+    If serving only for delivering addresses regardless of classes (e.g. on PPP interface) MACs do not need to be investigated.
+
 **dns_update = yes|no**
     Dynamically update DNS. This works at the moment only with Bind DNS, but might be extended to others, maybe via call of an external command.
     *Default: no*
