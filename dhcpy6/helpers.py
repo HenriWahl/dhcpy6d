@@ -492,4 +492,6 @@ def mac2eui64(mac):
     eui64 = eui64[0:6] + 'fffe' + eui64[6:]
     eui64 = hex(int(eui64[0:2], 16) ^ 2)[2:].zfill(2) + eui64[2:]
 
-    return eui64
+    split_string = lambda x, n: [x[i:i + n] for i in range(0, len(x), n)]
+
+    return ':'.join(split_string(eui64, 4))
