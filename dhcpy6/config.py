@@ -846,7 +846,7 @@ class Config(object):
                 # test validity of category
                 if not self.ADDRESSES[a].CATEGORY.strip() in ['eui64', 'fixed', 'range', 'random', 'mac', 'id', 'dns']:
                     error_exit(
-                        "%s Category '%s' is invalid. Category must be one of 'eui64'. 'fixed', 'range', 'random', 'mac', 'id' and 'dns'." % (
+                        "%s Category '%s' is invalid. Category must be one of 'eui64', 'fixed', 'range', 'random', 'mac', 'id' and 'dns'." % (
                         msg_prefix, self.ADDRESSES[a].CATEGORY))
 
                 # test validity of pattern - has its own error output
