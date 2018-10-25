@@ -275,7 +275,7 @@ There can be many address definitions which will be used by classes. Every addre
         The MAC address from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be stretched over 3 thus octets like 00:11:22:33:44:55 become 0011:2233:4455.
 
     **$eui64$**
-        The MAC address converted to a 64-bit extended unique identifier (EUI-64) from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be stretched over 3 thus octets like 00:11:22:33:44:55 become 0011:2233:4455.
+        The MAC address converted to a modified 64-bit extended unique identifier (EUI-64) from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be converted according to RFC 4291 like 52:54:00:e5:b4:64 become 5054:ff:fee5:b464
 
     **$id$**
         If clients get an ID in client configuration file or in client configuration database this ID will fill one octet. Thus the ID has to be in the range of 0000-ffff.
