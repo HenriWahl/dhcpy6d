@@ -702,7 +702,7 @@ def parse_pattern_address(address, client_config, transaction_id):
     elif address.CATEGORY == 'eui64':
         # https://tools.ietf.org/html/rfc4291#section-2.5.1
         mac = Transactions[transaction_id].MAC
-        a = a.replace('$eui64$', mac2eui64(mac))
+        a = a.replace('$eui64$', convert_mac_to_eui64(mac))
     elif address.CATEGORY in ['fixed', 'dns']:
         # No patterns for fixed address, let's bail
         return None

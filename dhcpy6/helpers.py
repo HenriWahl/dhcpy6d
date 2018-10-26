@@ -20,11 +20,9 @@
 
 import binascii
 import random
-import re
 import sys
 import shlex
 import logging
-
 
 # needed for neighbor cache access
 import select
@@ -204,8 +202,6 @@ def decompress_ip6(ip6, strict=True):
     ip6_segments_source = ip6.split(':')
     ip6_segments_target = list()
     for s in ip6_segments_source:
-        #while len(s) < 4:
-        #    s = '0' + s
         if len(s) > 4:
             raise Exception("%s has segment with more than 4 digits" % (ip6))
         else:
@@ -483,12 +479,14 @@ def send_control_message(message):
     socket_control = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
     socket_control.sendto(message, ('::1', 547))
 
-def mac2eui64(mac):
+
+def convert_mac_to_eui64(mac):
     '''
     Convert a MAC address to a EUI64 address
     '''
     # http://tools.ietf.org/html/rfc4291#section-2.5.1
-    eui64 = re.sub(r'[.:-]', '', mac).lower()
+    # only ':' come in MACs from get_neighbor_cache_linux()
+    eui64 = mac.replace(':', '')
     eui64 = eui64[0:6] + 'fffe' + eui64[6:]
     eui64 = hex(int(eui64[0:2], 16) ^ 2)[2:].zfill(2) + eui64[2:]
 
