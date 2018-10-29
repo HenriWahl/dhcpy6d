@@ -1120,6 +1120,8 @@ class Class(object):
         self.PREFIXES = list()
         self.NAMESERVER = ''
         self.NTP_SERVER = ''
+        # Auxiliary options, derived from self.NTP_SERVER
+        self.NTP_SERVER_dict = {'SRV': [], 'MC': [], 'FQDN': []}
         self.FILTER_MAC = ''
         self.FILTER_HOSTNAME = ''
         self.FILTER_DUID = ''
