@@ -1684,7 +1684,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     self.is_control_message = True
 
             # do nothing if interface is not configured
-            if not interface in cfg.INTERFACE:
+            if not interface in cfg.INTERFACE and not self.is_control_message:
                 return False
 
             # bad or too short message is thrown away
