@@ -457,11 +457,12 @@ def build_client(transaction_id):
                 # important indent here, has to match for...addresses-loop!
                 # look for addresses in transaction that are invalid and add them
                 # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: decompress_ip6(x.ADDRESS), client.Addresses)):
-                    client.Addresses.append(Address(address=a,
-                                                    valid=False,
-                                                    preferred_lifetime=0,
-                                                    valid_lifetime=0))
+                if len(client.Addresses) > 0:
+                    for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: decompress_ip6(x.ADDRESS), client.Addresses)):
+                        client.Addresses.append(Address(address=a,
+                                                        valid=False,
+                                                        preferred_lifetime=0,
+                                                        valid_lifetime=0))
 
             if 'prefixes' in cfg.CLASSES[client.Class].ADVERTISE and \
                25 in Transactions[transaction_id].IA_Options:
@@ -471,6 +472,7 @@ def build_client(transaction_id):
 
                     # check_prefix returns hostname, prefix, length, type, category, class, preferred_until of leased address
                     answer = volatilestore.check_prefix(prefix_prefix, prefix_length, transaction_id)
+
                     if answer:
                         if len(answer) > 0:
                             for item in answer:
@@ -532,14 +534,15 @@ def build_client(transaction_id):
                 # important indent here, has to match for...prefixes-loop!
                 # look for prefixes in transaction that are invalid and add them
                 # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
-                for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
-                    prefix, length = split_prefix(p)
-                    client.Prefixes.append(Prefix(prefix=prefix,
-                                                  length=length,
-                                                  valid=False,
-                                                  preferred_lifetime=0,
-                                                  valid_lifetime=0))
-                    del(prefix, length)
+                if len(client.Prefixes) > 0:
+                    for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
+                        prefix, length = split_prefix(p)
+                        client.Prefixes.append(Prefix(prefix=prefix,
+                                                      length=length,
+                                                      valid=False,
+                                                      preferred_lifetime=0,
+                                                      valid_lifetime=0))
+                        del(prefix, length)
 
             return client
 
@@ -2184,9 +2187,13 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     response_ascii += build_option(25, Transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
                                     # if no prefixes available a NoPrefixAvail status code has to be sent
                                     if ia_prefixes == '':
-                                        # if class advertises no prefixes tell client
-                                        # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                        response_ascii += build_option(13, '%04x' % (6))
+                                        # REBIND not possible
+                                        if Transactions[transaction_id].LastMessageReceivedType == 6:
+                                            # Option 13 Status Code Option - statuscode is 3: 'NoBinding'
+                                            response_ascii += build_option(13, '%04x' % (3))
+                                        else:
+                                            # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
+                                            response_ascii += build_option(13, '%04x' % (6))
                                     # options in answer to be logged
                                     options_answer.append(25)
 
