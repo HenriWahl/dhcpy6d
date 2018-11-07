@@ -230,7 +230,7 @@ class Config(object):
                                             pattern='fdef::$mac$',
                                             aclass='default',
                                             atype='default',
-                                            prototype='fdef0000000000000000XXXXXXXXXXXX')
+                                            prototype='fdef0000000000000000xxxxxxxxxxxx')
 
         # define dummy address scheme for fixed addresses
         # pattern and prototype are not really needed as this
@@ -991,13 +991,13 @@ class ConfigObject(object):
         # check different client address categories - to be extended!
         if self.CATEGORY in ['mac', 'id', 'range', 'random']:
             if self.CATEGORY == 'mac':
-                prototype = prototype.replace('$mac$', 'XXXX:XXXX:XXXX')
+                prototype = prototype.replace('$mac$', 'xxxx:xxxx:xxxx')
             elif self.CATEGORY == 'id':
-                prototype = prototype.replace('$id$', 'XXXX')
+                prototype = prototype.replace('$id$', 'xxxx')
             elif self.CATEGORY == 'random':
-                prototype = prototype.replace('$random64$', 'XXXX:XXXX:XXXX:XXXX')
+                prototype = prototype.replace('$random64$', 'xxxx:xxxx:xxxx:xxxx')
             elif self.CATEGORY == 'range':
-                prototype = prototype.replace('$range$', 'XXXX')
+                prototype = prototype.replace('$range$', 'xxxx')
             try:
                 # build complete 'address' and ignore all the Xs (strict=False)
                 # all X will become x
@@ -1027,7 +1027,7 @@ class ConfigObject(object):
         # prototype has placeholder X return finally True, otherwise stop
         # at the first difference and give back False
         for i in range(32):
-            if self.PROTOTYPE[i] == address[i] or self.PROTOTYPE[i] == 'X':
+            if self.PROTOTYPE[i] == address[i] or self.PROTOTYPE[i] == 'x':
                 match = True
             else:
                 match = False
