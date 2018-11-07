@@ -377,7 +377,7 @@ def build_client(transaction_id):
                                             # test if address matches pattern
                                             for i in range(len(address)):
                                                 if address[i] != cfg.ADDRESSES[a['type']].PROTOTYPE[i] and \
-                                                   cfg.ADDRESSES[a['type']].PROTOTYPE[i] != 'X':
+                                                   cfg.ADDRESSES[a['type']].PROTOTYPE[i] != 'x':
                                                     use_lease = False
                                                     break
                                         elif a['category'] == 'fixed' and not client_config.ADDRESS == None:
@@ -493,7 +493,7 @@ def build_client(transaction_id):
                                         # test if prefix matches pattern
                                         for i in range(len(prefix_prefix)):
                                             if prefix_prefix[i] != cfg.PREFIXES[p['type']].PROTOTYPE[i] and \
-                                               cfg.PREFIXES[p['type']].PROTOTYPE[i] != 'X':
+                                               cfg.PREFIXES[p['type']].PROTOTYPE[i] != 'x':
                                                 use_lease = False
                                                 break
                                         # only use prefix if it still matches prototype
@@ -2271,14 +2271,6 @@ class Handler(SocketServer.DatagramRequestHandler):
             # https://tools.ietf.org/html/rfc5908
             if 56 in options_request:
                 ntp_server_options = ''
-                # if Transactions[transaction_id].Client:
-                #     if len(cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER) > 0:
-                #         nameserver = ''
-                #         for ns in cfg.CLASSES[Transactions[transaction_id].Client.Class].NAMESERVER:
-                #             nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                #     response_ascii += build_option(56, binascii.b2a_hex(nameserver))
-                #     # options in answer to be logged
-                #     options_answer.append(56)
                 if len(cfg.NTP_SERVER) > 0:
                     for ntp_server_type in cfg.NTP_SERVER_dict.keys():
                         # ntp_server_suboption

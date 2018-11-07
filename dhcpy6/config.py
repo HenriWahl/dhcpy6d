@@ -1000,11 +1000,13 @@ class ConfigObject(object):
                 prototype = prototype.replace('$range$', 'XXXX')
             try:
                 # build complete 'address' and ignore all the Xs (strict=False)
+                # all X will become x
                 prototype = decompress_ip6(prototype, strict=False)
             except Exception, err:
                 error_exit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
 
         self.PROTOTYPE = prototype
+
 
     def inject_dynamic_prefix_into_prototype(self, dynamic_prefix):
         '''
