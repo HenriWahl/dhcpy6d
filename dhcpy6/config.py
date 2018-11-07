@@ -1016,6 +1016,7 @@ class ConfigObject(object):
             prefix_pattern = self.PATTERN.replace('$prefix$', dynamic_prefix)
             self.build_prototype(prefix_pattern)
 
+
     def matches_prototype(self, address):
         '''
             test if given address matches prototype and therefore this address' DNS zone

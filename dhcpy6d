@@ -457,12 +457,11 @@ def build_client(transaction_id):
                 # important indent here, has to match for...addresses-loop!
                 # look for addresses in transaction that are invalid and add them
                 # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                if len(client.Addresses) > 0:
-                    for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: decompress_ip6(x.ADDRESS), client.Addresses)):
-                        client.Addresses.append(Address(address=a,
-                                                        valid=False,
-                                                        preferred_lifetime=0,
-                                                        valid_lifetime=0))
+                for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: decompress_ip6(x.ADDRESS), client.Addresses)):
+                    client.Addresses.append(Address(address=a,
+                                                    valid=False,
+                                                    preferred_lifetime=0,
+                                                    valid_lifetime=0))
 
             if 'prefixes' in cfg.CLASSES[client.Class].ADVERTISE and \
                25 in Transactions[transaction_id].IA_Options:
