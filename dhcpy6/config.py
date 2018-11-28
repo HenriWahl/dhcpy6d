@@ -190,8 +190,9 @@ class Config(object):
         # interval for TidyUp thread - time to sleep in TidyUpThread
         self.CLEANING_INTERVAL = 5
 
-        # sddress and class schemes
+        # sddress, bootfile and class schemes
         self.ADDRESSES = dict()
+        self.BOOTFILES = dict()
         self.CLASSES = dict()
         self.PREFIXES = dict()
 
@@ -316,6 +317,9 @@ class Config(object):
         # whyever sections classes get overwritten sometimes and so some configs had been missing
         # so create classes and addresses here
         for section in config.sections():
+            # global PXE boot url schemes
+            if section.startswith('bootfile_'):
+                self.BOOTFILES[section.split('bootfile_')[1]] = BootFile(name=section.split('bootfile_')[1].strip())
             if section.startswith('class_'):
                 self.CLASSES[section.split('class_')[1]] = Class(name=section.split('class_')[1].strip())
             if section.startswith('address_'):
@@ -345,6 +349,13 @@ class Config(object):
                     else:
                         object.__setattr__(self, item[0].upper(), str(item[1]).strip())
                 else:
+                    # global PXE boot url schemes
+                    if section.lower().startswith('bootfile_'):
+                        if not item[0].upper() in self.BOOTFILES[section.lower().split('bootfile_')[1]].__dict__:
+                                error_exit("Keyword '%s' in section '[%s]' of configuration file '%s' is unknown." %
+                                           (item[0], section, configfile))
+                        self.BOOTFILES[section.lower().split('bootfile_')[1]].__setattr__(item[0].upper(),
+                                                                                          str(item[1]).strip())
                     # global address schemes
                     if section.lower().startswith('address_'):
                         # check if keyword is known - if not, exit
@@ -382,6 +393,14 @@ class Config(object):
                             for address in lex:
                                 if len(address) > 0:
                                     self.CLASSES[section.lower().split('class_')[1]].ADDRESSES.append(address)
+                        elif item[0].upper() == 'BOOTFILES':
+                            # strip whitespace and separators of bootfiles
+                            lex = shlex.shlex(item[1])
+                            lex.whitespace = WHITESPACE
+                            lex.wordchars += ':.'
+                            for bootfile in lex:
+                                if len(bootfile) > 0:
+                                    self.CLASSES[section.lower().split('class_')[1]].BOOTFILES.append(bootfile)
                         elif item[0].upper() == 'PREFIXES':
                             # strip whitespace and separators of prefixes
                             lex = shlex.shlex(item[1])
@@ -911,6 +930,13 @@ class Config(object):
                         (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
                          self.ADDRESSES[a].PREFERRED_LIFETIME, self.ADDRESSES[a].VALID_LIFETIME))
 
+            # check every single bootfile of a class
+            for b in self.CLASSES[c].BOOTFILES:
+                msg_prefix = "Bootfile '%s' BOOTFILE type '%s':" % (c, b)
+                # test if used bootfiles are defined
+                if not b in self.BOOTFILES:
+                    error_exit("%s Bootfile type '%s' is not defined." % (msg_prefix, b))
+
             # check every single prefix of a class
             for p in self.CLASSES[c].PREFIXES:
                 msg_prefix = "Class '%s' PREFIX type '%s':" % (c, p)
@@ -965,6 +991,15 @@ class Config(object):
                     error_exit("%s Prefix length '%s' is invalid." % (msg_prefix, self.PREFIXES[p].LENGTH))
                 if not 0 <= int(self.PREFIXES[p].LENGTH) <= 128:
                     error_exit("%s Prefix length '%s' must be in range 0-128." % (msg_prefix, self.PREFIXES[p].LENGTH))
+
+        # cruise through bootfiles
+        # more checks to come...
+        for b in self.BOOTFILES:
+            msg_prefix = "Bootfile '%s':" % b
+            bootfile_url = self.BOOTFILES[b].BOOTFILE_URL
+
+            if bootfile_url is None or bootfile_url == '':
+                error_exit("%s Bootfile url parameter must be set and is not allowed to be empty." % msg_prefix)
 
 
 class ConfigObject(object):
@@ -1121,6 +1156,7 @@ class Class(object):
         self.NAME = name
         self.ADDRESSES = list()
         self.PREFIXES = list()
+        self.BOOTFILES = list()
         self.NAMESERVER = ''
         self.NTP_SERVER = ''
         # Auxiliary options, derived from self.NTP_SERVER
@@ -1146,3 +1182,17 @@ class Class(object):
         # commands or scripts to be called for setting and removing routes for prefixes
         self.CALL_UP = ''
         self.CALL_DOWN = ''
+
+class BootFile(object):
+    """
+        class for netboot defintion
+    """
+
+    def __init__(self, name=''):
+        self.NAME = name
+        # PXE client architecture (Option 61)
+        self.CLIENT_ARCHITECTURE = ''
+        # PXE bootfile URL (Option 59)
+        self.BOOTFILE_URL = ''
+        # User class (Option 15)
+        self.USER_CLASS = ''

@@ -42,7 +42,7 @@ Boolean settings can be set with \fI1|0\fP, \fIon|off\fP or \fIyes|no\fP values.
 .sp
 Some options allow multiple values. These have to be separated by spaces.
 .sp
-There are 4 types of sections:
+There are 5 types of sections:
 .INDENT 0.0
 .TP
 .B \fB[dhcpy6d]\fP
@@ -58,6 +58,10 @@ Prefixes are organized in classes. For details read further down.
 .TP
 .B \fB[class_<class_name>]\fP
 Class definitions allow to apply different addresses, time limits et al. to different types of clients.
+.TP
+.B \fB[bootfile_<bootfile_name>]\fP
+There can be various \fI[bootfile_<bootfile_name>]\fP sections. In serveral bootfile sections several tftp bootfile urls with restrictions
+to CPU architecture and user class supplied by the PXE client can be defined.
 .UNINDENT
 .SH GENERAL CONFIGURATION IN SECTION [DHCPY6D]
 .sp
@@ -178,6 +182,9 @@ Same MAC and different DUIDs might be interesting for clients with multiple OS.
 .B \fBidentification_mode = match_all|match_some\fP
 If more than one identification attribute has been set, the identification mode can be one of \fImatch_all\fP or \fImatch_some\fP\&. The first means that all attributes have to match to identify a client and the latter is more tolerant.
 \fIDefault: match_all\fP
+.TP
+.B \fBignore_mac = yes|no\fP
+If serving only for delivering addresses regardless of classes (e.g. on PPP interface) MACs do not need to be investigated.
 .TP
 .B \fBdns_update = yes|no\fP
 Dynamically update DNS. This works at the moment only with Bind DNS, but might be extended to others, maybe via call of an external command.
@@ -470,6 +477,16 @@ The prefix length.
 .B \fB$router$\fP
 The host which routes into the advertised prefix \- of course the requesting client IPv6.
 .UNINDENT
+.TP
+.B \fBbootfiles = <bootfile> [<bootfile> ...]\fP
+List of PXE bootfiles to evaluate for clients in this client. Each value must refer a bootfile section (see below). Each bootfile is evaluated by the filter defined in the bootfile section, the first machting bootfile is chosen.
+.sp
+Example:
+.INDENT 7.0
+.INDENT 3.5
+\fIbootfiles = eth1_ipxe eth1_efi64 eth1_efi32 eth1_efibc\fP
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .SS Default Class
 .sp
@@ -482,6 +499,56 @@ Default class for all clients that do not match any other class. Like any other 
 .TP
 .B \fB[class_default_<interface>]\fP
 If dhcpy6d listens at multiple interfaces, one can define a default class for every \(aqinterface\(aq.
+.UNINDENT
+.SH BOOTFILE DEFINITIONS IN MULTIPLE [BOOTFILE_<BOOTFILE_NAME>] SECTIONS
+.sp
+The \fI<bootfile_name>\fP part of an \fB[bootfile_<bootfile_name>]\fP section is an arbitrarily chosen identifier like \fIefi32\fP, \fIbios\fP or \fIefi64\fP\&.
+Each bootfile can be restricted to an architecture and/or an user class which is sent by the PXE client.
+.INDENT 0.0
+.TP
+.B \fBbootfile_url = <url>\fP
+The bootfile URL in a format like \fItftp://[2001:db8:85a3::8a2e:370:7334]/pxe.efi\fP\&. The possible protocols are dependent on the PXE client, TFTP should be supported by almost every client.
+.TP
+.B \fBclient_architecture = <architecture>\fP
+Optionally restrict the bootfile to a specific CPU architecture. If the client doesn\(aqt match the requirement, the next bootfile assigned to the class definition is chosen or no bootfile is provided, if there are no
+further alternatives.
+.sp
+Either the integer identifier for an architecture is possible (e.g. 0009 for EFI x86\-64). The integer must consists of four numeric digits, empty digits must be written as zero (e.g. 9 => 0009). For a full list of
+possible integer identifier see \fI\%https://tools.ietf.org/html/rfc4578#section\-2.1\fP\&. Alternatively the well\-known names of registered CPU architectures defined in RF4578 can be used:
+.INDENT 7.0
+.IP \(bu 2
+Intel x86PC
+.IP \(bu 2
+NEC/PC98
+.IP \(bu 2
+EFI Itanium
+.IP \(bu 2
+DEC Alpha
+.IP \(bu 2
+Arc x86
+.IP \(bu 2
+Intel Lean Client
+.IP \(bu 2
+EFI IA32
+.IP \(bu 2
+EFI BC
+.IP \(bu 2
+EFI Xscale
+.IP \(bu 2
+EFI x86\-64
+.UNINDENT
+.TP
+.B \fBuser_class = <user_class>\fP
+Optionally restrict this bootfile to PXE clients sending this user class. The \fIuser_class\fP is matched against the value of the client with simple comparison (no regular expression).
+.sp
+Example:
+.INDENT 7.0
+.INDENT 3.5
+\fIuser_class = iPXE\fP
+.UNINDENT
+.UNINDENT
+.sp
+This restricts the bootfile to the iPXE boot firmware.
 .UNINDENT
 .SH EXAMPLES
 .sp
@@ -1044,6 +1111,62 @@ pattern = fd01:db8:dead:bad:beef:$mac$
 .sp
 .UNINDENT
 .UNINDENT
+.SS Supply a PXE bootfile for different CPU architectures and user classes
+.sp
+This example how to assign PXE bootfiles depending on CPU architecture and user class:
+.INDENT 0.0
+.INDENT 3.5
+.nf
+[class_default_eth1]
+bootfiles = eth1_ipxe eth1_efi64 eth1_efi32 eth1_efibc
+addresses = eth1
+interface = eth1
+nameserver = fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd 2001:0470:76aa:00f5:5054:00ff:fec2:c5dd
+filter_mac = .*
+
+[address_eth1]
+# Choosing EUI\-64\-based addresses.
+category = eui64
+# ULA\-type address pattern.
+pattern = fdff:cc21:56df:8bc8::$eui64$
+
+[bootfile_eth1_ipxe]
+user_class = iPXE
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/default.ipxe\fP
+
+[bootfile_eth1_efi32]
+client_architecture = 0006
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/efi32/ipxe.efi\fP
+
+[bootfile_eth1_efibc]
+client_architecture = 0007
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/efi64/ipxe.efi\fP
+
+[bootfile_eth1_efi64]
+client_architecture = 0009
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/efi32/ipxe.efi\fP
+
+[bootfile_eth2_ipxe]
+user_class = iPXE
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/default.ipxe\fP
+
+[bootfile_eth2_efi32]
+client_architecture = 0006
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/efi32/ipxe.efi\fP
+
+[bootfile_eth2_efibc]
+client_architecture = 0007
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/efi64/ipxe.efi\fP
+
+[bootfile_eth2_efi64]
+client_architecture = 0009
+bootfile_url = \fI\%tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/efi32/ipxe.efi\fP
+.fi
+.sp
+.UNINDENT
+.UNINDENT
+.sp
+At first there is a check for the iPXE boot firmware, which delivers an iPXE script on success. Otherwise the iPXE binary matching to the architecture is served.
 .SH LICENSE
 .sp
 This program is free software; you can redistribute it

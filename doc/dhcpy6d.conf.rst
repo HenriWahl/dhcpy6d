@@ -25,7 +25,7 @@ Boolean settings can be set with *1|0*, *on|off* or *yes|no* values.
 
 Some options allow multiple values. These have to be separated by spaces.
 
-There are 4 types of sections:
+There are 5 types of sections:
 
 **[dhcpy6d]**
     This section contains general options like interfaces, storage and logging. Only one [dhcpy6d] section is allowed.
@@ -40,6 +40,10 @@ There are 4 types of sections:
 
 **[class_<class_name>]**
     Class definitions allow to apply different addresses, time limits et al. to different types of clients.
+
+**[bootfile_<bootfile_name>]**
+    There can be various *[bootfile_<bootfile_name>]* sections. In serveral bootfile sections several tftp bootfile urls with restrictions
+    to CPU architecture and user class supplied by the PXE client can be defined.
 
 General configuration in section [dhcpy6d]
 ==========================================
@@ -427,6 +431,13 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
     **$router$**
         The host which routes into the advertised prefix - of course the requesting client IPv6.
 
+**bootfiles = <bootfile> [<bootfile> ...]**
+    List of PXE bootfiles to evaluate for clients in this client. Each value must refer a bootfile section (see below). Each bootfile is evaluated by the filter defined in the bootfile section, the first machting bootfile is chosen.
+
+    Example:
+
+        *bootfiles = eth1_ipxe eth1_efi64 eth1_efi32 eth1_efibc*
+
 Default Class
 -------------
 
@@ -439,6 +450,41 @@ This class could get an address scheme too. It should be enough if 'address_defa
 **[class_default_<interface>]**
     If dhcpy6d listens at multiple interfaces, one can define a default class for every 'interface'.
 
+Bootfile definitions in multiple [bootfile_<bootfile_name>] sections
+====================================================================
+
+The *<bootfile_name>* part of an **[bootfile_<bootfile_name>]** section is an arbitrarily chosen identifier like *efi32*, *bios* or *efi64*.
+Each bootfile can be restricted to an architecture and/or an user class which is sent by the PXE client.
+
+**bootfile_url = <url>**
+    The bootfile URL in a format like *tftp://[2001:db8:85a3::8a2e:370:7334]/pxe.efi*. The possible protocols are dependent on the PXE client, TFTP should be supported by almost every client.
+
+**client_architecture = <architecture>**
+    Optionally restrict the bootfile to a specific CPU architecture. If the client doesn't match the requirement, the next bootfile assigned to the class definition is chosen or no bootfile is provided, if there are no
+    further alternatives.
+
+    Either the integer identifier for an architecture is possible (e.g. 0009 for EFI x86-64). The integer must consists of four numeric digits, empty digits must be written as zero (e.g. 9 => 0009). For a full list of
+    possible integer identifier see `<https://tools.ietf.org/html/rfc4578#section-2.1>`_. Alternatively the well-known names of registered CPU architectures defined in RF4578 can be used:
+
+    * Intel x86PC
+    * NEC/PC98
+    * EFI Itanium
+    * DEC Alpha
+    * Arc x86
+    * Intel Lean Client
+    * EFI IA32
+    * EFI BC
+    * EFI Xscale
+    * EFI x86-64
+
+**user_class = <user_class>**
+    Optionally restrict this bootfile to PXE clients sending this user class. The *user_class* is matched against the value of the client with simple comparison (no regular expression).
+
+    Example:
+
+        *user_class = iPXE*
+
+    This restricts the bootfile to the iPXE boot firmware.
 
 Examples
 ========
@@ -962,6 +1008,58 @@ The according class of the client simply must not have any address definition an
     |    [class_fixed_address]
     |    # just no address definiton here
 
+
+Supply a PXE bootfile for different CPU architectures and user classes
+----------------------------------------------------------------------
+
+This example how to assign PXE bootfiles depending on CPU architecture and user class:
+
+    |   [class_default_eth1]
+    |   bootfiles = eth1_ipxe eth1_efi64 eth1_efi32 eth1_efibc
+    |   addresses = eth1
+    |   interface = eth1
+    |   nameserver = fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd 2001:0470:76aa:00f5:5054:00ff:fec2:c5dd
+    |   filter_mac = .*
+    |
+    |   [address_eth1]
+    |   # Choosing EUI-64-based addresses.
+    |   category = eui64
+    |   # ULA-type address pattern.
+    |   pattern = fdff:cc21:56df:8bc8::$eui64$
+    |
+    |   [bootfile_eth1_ipxe]
+    |   user_class = iPXE
+    |   bootfile_url = tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/default.ipxe
+    |
+    |   [bootfile_eth1_efi32]
+    |   client_architecture = 0006
+    |   bootfile_url = tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/efi32/ipxe.efi
+    |
+    |   [bootfile_eth1_efibc]
+    |   client_architecture = 0007
+    |   bootfile_url = tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/efi64/ipxe.efi
+    |
+    |   [bootfile_eth1_efi64]
+    |   client_architecture = 0009
+    |   bootfile_url = tftp://[fdff:cc21:56df:8bc8:5054:00ff:fec2:c5dd]/efi32/ipxe.efi
+    |
+    |   [bootfile_eth2_ipxe]
+    |   user_class = iPXE
+    |   bootfile_url = tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/default.ipxe
+    |
+    |   [bootfile_eth2_efi32]
+    |   client_architecture = 0006
+    |   bootfile_url = tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/efi32/ipxe.efi
+    |
+    |   [bootfile_eth2_efibc]
+    |   client_architecture = 0007
+    |   bootfile_url = tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/efi64/ipxe.efi
+    |
+    |   [bootfile_eth2_efi64]
+    |   client_architecture = 0009
+    |   bootfile_url = tftp://[fdff:cc21:56df:fe1d:5054:00ff:fe3f:5da0]/efi32/ipxe.efi
+
+At first there is a check for the iPXE boot firmware, which delivers an iPXE script on success. Otherwise the iPXE binary matching to the architecture is served.
 
 License
 =======
