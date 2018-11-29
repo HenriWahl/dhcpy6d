@@ -92,3 +92,16 @@ STATUS_CODE = {0: 'Success',
                5: 'Use Multicast',
                6: 'No Prefix available'
                }
+
+# see https://tools.ietf.org/html/rfc4578#section-2.1
+ARCHITECTURE_TYPE = {0: 'Intel x86PC',
+                     1: 'NEC / PC98',
+                     2: 'EFI Itanium',
+                     3: 'DEC Alpha',
+                     4: 'Arc x86',
+                     5: 'Intel Lean Client',
+                     6: 'EFI IA32',
+                     7: 'EFI BC',
+                     8: 'EFI Xscale',
+                     9: 'EFI x86 - 64'
+                     }

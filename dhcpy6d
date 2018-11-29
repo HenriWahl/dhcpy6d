@@ -595,6 +595,20 @@ def build_client(transaction_id):
                                          dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                             client.Addresses.append(ia)
 
+                    # add all bootfiles which belong to that class
+                    for bootfile in cfg.CLASSES[client_config.CLASS].BOOTFILES:
+                        client_architecture = cfg.BOOTFILES[bootfile].CLIENT_ARCHITECTURE
+                        user_class = cfg.BOOTFILES[bootfile].USER_CLASS
+
+                        # check if transaction attributes matches the bootfile defintion
+                        if (not client_architecture or \
+                                Transactions[transaction_id].ClientArchitecture == client_architecture or \
+                                Transactions[transaction_id].KnownClientArchitecture == client_architecture) and \
+                           (not user_class or \
+                                Transactions[transaction_id].UserClass == user_class):
+                            client.Bootfiles.append(cfg.BOOTFILES[bootfile])
+
+
                     if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
                        25 in Transactions[transaction_id].IA_Options:
                         for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
@@ -632,6 +646,18 @@ def build_client(transaction_id):
                                          dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
                                          dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                             client.Addresses.append(ia)
+
+                    for bootfile in cfg.CLASSES['default_' + Transactions[transaction_id].Interface].BOOTFILES:
+                        client_architecture = bootfile.CLIENT_ARCHITECTURE
+                        user_class = bootfile.USER_CLASS
+
+                        # check if transaction attributes matches the bootfile defintion
+                        if (not client_architecture or \
+                                Transactions[transaction_id].ClientArchitecture == client_architecture or \
+                                Transactions[transaction_id].KnownClientArchitecture == client_architecture) and \
+                           (not user_class or \
+                                Transactions[transaction_id].UserClass == user_class):
+                            client.Bootfiles.append(bootfile)
         else:
             # use default class if host is unknown
             client.Hostname = Transactions[transaction_id].Hostname
@@ -1308,6 +1334,10 @@ class Client(object):
     def __init__(self):
         # Addresses, depending on class or fixed addresses
         self.Addresses = list()
+        # Bootfiles, depending on class and architecture
+        self.Bootfiles = list()
+        # Last chosen Bootfile
+        self.ChosenBootfile = ''
         # Prefixes, depending on class or fixed prefixes
         self.Prefixes = list()
         # DUID
@@ -1340,6 +1370,11 @@ class Client(object):
                         for a in self.__dict__[o]:
                             option += ' ' + colonify_ip6(a.ADDRESS)
                         optionsstring = optionsstring + ' | '  + option
+                elif o == 'Bootfiles':
+                    option = 'Bootfiles:'
+                    for a in self.__dict__[o]:
+                        option += ' ' + a.BOOTFILE_URL
+                    optionsstring = optionsstring + ' | '  + option
                 elif o == 'Prefixes':
                     if 'prefixes' in cfg.CLASSES[self.Class].ADVERTISE:
                         option = 'Prefixes:'
@@ -1436,6 +1471,12 @@ class Transaction(object):
         self.DUID_EN = 0
         # Elapsed Time - option 8, at least sent by WIDE dhcp6c when requesting delegated prefix
         self.ElapsedTime = 0
+        # Client architecture type (RFC 5970)
+        self.ClientArchitecture = ''
+        # Known client architecture type (RFC 4578) (e.g. EFI x86 - 64)
+        self.KnownClientArchitecture = ''
+        # UserClass (https://tools.ietf.org/html/rfc3315#section-22.15)
+        self.UserClass = ''
 
         # DUID of client
         # 1 Client Identifier Option
@@ -1499,6 +1540,12 @@ class Transaction(object):
         if 14 in options:
             self.RapidCommit = True
 
+        # 15 User Class Option
+        if 15 in options:
+            user_class_raw = options[15]
+            # raw user class is prefixed with null byte (00 in hex) and eot (04 in hex)
+            self.UserClass = binascii.a2b_hex(user_class_raw[4:])
+
         # 16 Vendor Class Option
         if 16 in options:
             self.VendorClassEN = int(options[16][0:8], 16)
@@ -1543,6 +1590,19 @@ class Transaction(object):
                 self.Hostname = ''
             del n
 
+        # Client architecture type
+        # 61 Client System Architecture Type Option
+        if 61 in options:
+            # raw client architecture is supplied as a 16-bit integer (e. g. 0007)
+            # See https://tools.ietf.org/html/rfc4578#section-2.1
+            client_architecture_raw = options[61]
+            # short number (0007 => 7 for dictionary usage)
+            client_architecture_short = int(client_architecture_raw)
+
+            self.ClientArchitecture = client_architecture_raw
+
+            if client_architecture_short in ARCHITECTURE_TYPE:
+                self.KnownClientArchitecture = ARCHITECTURE_TYPE[client_architecture_short]
 
     def _get_options_string(self):
         '''
@@ -2285,6 +2345,23 @@ class Handler(SocketServer.DatagramRequestHandler):
                     response_ascii += build_option(56, ntp_server_options)
                     # options in answer to be logged
                     options_answer.append(56)
+
+            # Option 59 Network Boot
+            # https://tools.ietf.org/html/rfc5970
+            if 59 in options_request:
+                # build client if not done yet
+                if Transactions[transaction_id].Client == None:
+                    Transactions[transaction_id].Client = build_client(transaction_id)
+
+                bootfiles = Transactions[transaction_id].Client.Bootfiles
+                if len(bootfiles) > 0:
+                    # TODO add preference logic
+                    bootfile_url = bootfiles[0].BOOTFILE_URL
+                    Transactions[transaction_id].Client.ChosenBootFile = bootfile_url
+                    bootfile_options = binascii.b2a_hex(bootfile_url)
+                    response_ascii += build_option(59, bootfile_options)
+                    # options in answer to be logged
+                    options_answer.append(59)
 
             # if databases are not connected send error to client
             if not (configstore.connected == volatilestore.connected == True):
