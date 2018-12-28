@@ -222,7 +222,7 @@ def colonify_ip6(address):
         return 'N/A'
 
 
-def compress_prefix(prefix, length):
+def combine_prefix_length(prefix, length):
     '''
         add prefix and length to 'prefix/length' string
     '''
@@ -234,6 +234,13 @@ def split_prefix(prefix):
         split prefix and length from 'prefix/length' notation
     '''
     return(prefix.split('/'))
+
+
+def decompress_prefix(prefix, length):
+    '''
+        return prefix with decompressed address part
+    '''
+    return(combine_prefix_length(decompress_ip6(prefix), length))
 
 
 def error_exit(message='An error occured.', status=1):

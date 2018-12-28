@@ -534,7 +534,7 @@ def build_client(transaction_id):
                 # look for prefixes in transaction that are invalid and add them
                 # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
                 if len(client.Prefixes) > 0:
-                    for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_ip6(split_prefix(x.PREFIX)[0]), client.Prefixes)):
+                    for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_prefix(x.PREFIX, x.LENGTH), client.Prefixes)):
                         prefix, length = split_prefix(p)
                         client.Prefixes.append(Prefix(prefix=prefix,
                                                       length=length,
@@ -1567,7 +1567,7 @@ class Transaction(object):
                 for p in range(len(payload[32:])/50):
                     prefix = payload[50:][(p*58):(p*58)+32]
                     length = int(payload[48:][(p*58):(p*58)+2], 16)
-                    prefix_combined = compress_prefix(prefix, length)
+                    prefix_combined = combine_prefix_length(prefix, length)
                     # in case a prefix is asked for twice by one host ignore the twin
                     if not prefix_combined in self.Prefixes:
                         self.Prefixes.append(prefix_combined)
@@ -1627,7 +1627,7 @@ class Transaction(object):
                         option = 'Prefixes:'
                         for p in self.__dict__[o]:
                             prefix, length = split_prefix(p)
-                            option += compress_prefix(colonify_ip6(prefix), length)
+                            option += combine_prefix_length(colonify_ip6(prefix), length)
                 elif o == 'ClientLLIP':
                     option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
                     optionsstring = optionsstring + ' | '  + option
