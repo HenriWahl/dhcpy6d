@@ -1108,6 +1108,8 @@ class SQLite(Store):
             elif query.startswith('DELETE'):
                 self.connection.commit()
             self.connected = True
+        except sys.modules['sqlite3'].IntegrityError:
+            return 'IntegrityError'
         except Exception, err:
             self.connected = False
             print err
