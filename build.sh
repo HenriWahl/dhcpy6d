@@ -48,7 +48,7 @@ if [ "$OS" == "debian" ]
         # install missing packages
         if ! which debuild
             then
-                sudo apt -y install build-essential devscripts dh-systemd
+                sudo apt -y install build-essential devscripts dh-python dh-systemd
         fi
 
         if [ ! -d /usr/share/doc/python-all ]

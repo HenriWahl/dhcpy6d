@@ -1,26 +1,27 @@
 Source: dhcpy6d
 Section: net
-X-Python-Version: >= 2.6
+X-Python-Version: >= 2.7
 Priority: optional
 Maintainer: Axel Beckert <abe@debian.org>
 Uploaders: Henri Wahl <h.wahl@ifw-dresden.de>
 Build-Depends: debhelper (>= 9~),
-               python-all (>= 2.7.9-1~),
-               dh-systemd (>= 1.5)
+               python-all (>= 2.7.13-1~),
+               dh-systemd (>= 10.2.5)
 Build-Depends-Indep: dh-python
 Homepage: https://dhcpy6d.ifw-dresden.de/
 Vcs-Git: git://github.com/HenriWahl/dhcpy6d.git
 Vcs-Browser: https://github.com/HenriWahl/dhcpy6d
-Standards-Version: 3.9.6
+Standards-Version: 4.2.1
 
 Package: dhcpy6d
 Architecture: all
 Depends: adduser,
-         ucf,
+         lsb-base,
          python-dnspython,
          ${misc:Depends},
-         ${python:Depends}
-Pre-Depends: dpkg (>= 1.16.5)
+         ${python:Depends},
+         ucf
+Pre-Depends: dpkg (>= 1.19.5)
 Suggests: python-mysqldb,
           python-psycopg2 
 Description: MAC address aware DHCPv6 server written in Python
