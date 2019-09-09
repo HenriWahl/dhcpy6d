@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf8
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2018 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,16 +23,16 @@ import socket
 import struct
 import platform
 import binascii
-import commands
+import subprocess
 import subprocess
 import shlex
 import sys
 import time
 import threading
-import Queue
+import queue
 import os
 import re
-import SocketServer
+import socketserver
 import traceback
 import copy
 import logging
@@ -114,16 +114,16 @@ Transactions = dict()
 CollectedMACs = dict()
 
 # queues for queries
-configquery_queue = Queue.Queue()
-configanswer_queue = Queue.Queue()
-volatilequery_queue = Queue.Queue()
-volatileanswer_queue = Queue.Queue()
+configquery_queue = queue.Queue()
+configanswer_queue = queue.Queue()
+volatilequery_queue = queue.Queue()
+volatileanswer_queue = queue.Queue()
 
 # queue for dns actualization
-dnsquery_queue = Queue.Queue()
+dnsquery_queue = queue.Queue()
 
 # queue for executing some script to modify routes after delegating prefixes
-route_queue = Queue.Queue()
+route_queue = queue.Queue()
 
 # attempt to log connections and count them to find out which clients do silly crazy brute force
 requests = dict()
@@ -208,10 +208,10 @@ if cfg.STORE_VOLATILE == 'sqlite':
 
 # do not start if no database connection exists
 if not configstore.connected:
-    print '\nConfiguration database is not connected!\n'
+    print('\nConfiguration database is not connected!\n')
     sys.exit(1)
 if not volatilestore.connected:
-    print '\nDatabase for volatile data is not connected!\n'
+    print('\nDatabase for volatile data is not connected!\n')
     sys.exit(1)
 
 
@@ -358,7 +358,7 @@ def build_client(transaction_id):
                     if answer:
                         if len(answer) > 0:
                             for item in answer:
-                                a = dict(zip(('hostname', 'address', 'type', 'category', 'ia_type', 'class', 'preferred_until'), item))
+                                a = dict(list(zip(('hostname', 'address', 'type', 'category', 'ia_type', 'class', 'preferred_until'), item)))
                                 # if lease exists but no configured client set class to default
                                 if client_config == None:
                                     client.Hostname = Transactions[transaction_id].Hostname
@@ -457,7 +457,7 @@ def build_client(transaction_id):
                 # important indent here, has to match for...addresses-loop!
                 # look for addresses in transaction that are invalid and add them
                 # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                for a in set(Transactions[transaction_id].Addresses).difference(map(lambda x: decompress_ip6(x.ADDRESS), client.Addresses)):
+                for a in set(Transactions[transaction_id].Addresses).difference([decompress_ip6(x.ADDRESS) for x in client.Addresses]):
                     client.Addresses.append(Address(address=a,
                                                     valid=False,
                                                     preferred_lifetime=0,
@@ -475,7 +475,7 @@ def build_client(transaction_id):
                     if answer:
                         if len(answer) > 0:
                             for item in answer:
-                                p = dict(zip(('hostname', 'prefix', 'length', 'type', 'category', 'class', 'preferred_until'), item))
+                                p = dict(list(zip(('hostname', 'prefix', 'length', 'type', 'category', 'class', 'preferred_until'), item)))
                                 # if lease exists but no configured client set class to default
                                 if client_config == None:
                                     client.Hostname = Transactions[transaction_id].Hostname
@@ -534,7 +534,7 @@ def build_client(transaction_id):
                 # look for prefixes in transaction that are invalid and add them
                 # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
                 if len(client.Prefixes) > 0:
-                    for p in set(Transactions[transaction_id].Prefixes).difference(map(lambda x: decompress_prefix(x.PREFIX, x.LENGTH), client.Prefixes)):
+                    for p in set(Transactions[transaction_id].Prefixes).difference([decompress_prefix(x.PREFIX, x.LENGTH) for x in client.Prefixes]):
                         prefix, length = split_prefix(p)
                         client.Prefixes.append(Prefix(prefix=prefix,
                                                       length=length,
@@ -705,7 +705,7 @@ def build_client(transaction_id):
 
         return client
 
-    except Exception,err:
+    except Exception as err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()
         log.error('build_client(): ' + str(err))
@@ -736,7 +736,7 @@ def parse_pattern_address(address, client_config, transaction_id):
         return None
     elif address.CATEGORY == 'id':
         # if there is an ID build address
-        if str(client_config.ID) <> '':
+        if str(client_config.ID) != '':
             a = a.replace('$id$', str(client_config.ID))
         else:
             return None
@@ -830,7 +830,7 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
 
     if pattern.CATEGORY == 'id':
         # if there is an ID build address
-        if str(client_config.ID) <> '':
+        if str(client_config.ID) != '':
             p = p.replace('$id$', str(client_config.ID))
         else:
             return None
@@ -976,7 +976,7 @@ def collect_macs(now):
     try:
         # Linux can use kernel neighbor cache
         if OS == 'Linux':
-            for host in get_neighbor_cache_linux(cfg, IF_NUMBER, log, timer).values():
+            for host in list(get_neighbor_cache_linux(cfg, IF_NUMBER, log, timer).values()):
                 if not host.llip in CollectedMACs:
                     if host.llip.startswith('fe80'):
                         CollectedMACs[host.llip] = host
@@ -987,7 +987,7 @@ def collect_macs(now):
         else:
             # subject to change - other distros might have other paths - might become a task
             # for a setup routine to find appropriate paths
-            for host in commands.getoutput(NC[OS]['call']).splitlines():
+            for host in subprocess.getoutput(NC[OS]['call']).splitlines():
                 # get fragments of output line
                 f = shlex.split(host)
                 if f[NC[OS]['dev']] in cfg.INTERFACE and len(f) >= NC[OS]['len'] :
@@ -1007,7 +1007,7 @@ def collect_macs(now):
                         if cfg.LOG_MAC_LLIP == True:
                             log.info('Collected MAC %s for LinkLocalIP %s' % (f[NC[OS]['mac']], colonify_ip6(f[NC[OS]['llip']])))
                         volatilestore.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']], timer)
-    except Exception,err:
+    except Exception as err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()
         log.error('collect_macs(): ' + str(err))
@@ -1055,7 +1055,7 @@ def dns_delete(transaction_id, address='', action='release'):
     # local flag to check if address should be deleted from DNS
     delete = False
 
-    for a in cfg.ADDRESSES.values():
+    for a in list(cfg.ADDRESSES.values()):
         # if there is any address type which prototype matches use its DNS ZONE
         if a.matches_prototype(address):
             # kind of RCF-compliant security measure - check if hostname and DUID from transaction fits them of store
@@ -1175,7 +1175,7 @@ class DNSQueryThread(threading.Thread):
                 elif action == 'release':
                     update_rev.delete(dns.reversename.from_address(address), 'PTR')
                 dns.query.tcp(update_rev, cfg.DNS_UPDATE_NAMESERVER)
-            except Exception,err:
+            except Exception as err:
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
                 log.error('DNSUPDATE: ' + str(err))
@@ -1197,11 +1197,11 @@ class TidyUpThread(threading.Thread):
             # get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                for t in Transactions.keys():
+                for t in list(Transactions.keys()):
                     try:
                         if timer > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
                             Transactions.pop(Transactions[t].ID)
-                    except Exception, err:
+                    except Exception as err:
                         log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))
                         traceback.print_exc(file=sys.stdout)
                         sys.stdout.flush()
@@ -1231,7 +1231,7 @@ class TidyUpThread(threading.Thread):
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
                     timestamp = timer
-                    for record in CollectedMACs.values():
+                    for record in list(CollectedMACs.values()):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP == True:
                                 log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
@@ -1261,13 +1261,13 @@ class TidyUpThread(threading.Thread):
         '''
 
         # clean blacklist
-        for client in requests_blacklist.keys():
+        for client in list(requests_blacklist.keys()):
             if now > requests_blacklist[client].timestamp + cfg.REQUEST_LIMIT_RELEASE_TIME:
                 log.info("Releasing client {0} from blacklist".format(client))
                 requests_blacklist.pop(client)
 
         # clean default requests list
-        for client in requests.keys():
+        for client in list(requests.keys()):
             if now > requests[client].timestamp + cfg.REQUEST_LIMIT_TIME:
                 if requests[client].count > cfg.REQUEST_LIMIT_COUNT:
                     log.info("Blacklisting client {0} after {1} requests".format(client, requests[client].count))
@@ -1299,7 +1299,7 @@ class RouteThread(threading.Thread):
             # subprocess needs list as argument which it gets by split()
             try:
                 result = subprocess.call(call_real.split(' '))
-            except Exception, err:
+            except Exception as err:
                 result = err
             # ignore result to avoid routes being set but not noted in database when a command like
             # 'ip -6 route delete' gives a return code not 0 because a route already exists
@@ -1357,7 +1357,7 @@ class Client(object):
         '''
         optionsstring = ''
         # put own attributes into a string
-        options = self.__dict__.keys()
+        options = list(self.__dict__.keys())
         options.sort()
         for o in options:
             # ignore some attributes
@@ -1609,7 +1609,7 @@ class Transaction(object):
         '''
         optionsstring = ''
         # put own attributes into a string
-        options = self.__dict__.keys()
+        options = list(self.__dict__.keys())
         options.sort()
         for o in options:
             # ignore some attributes
@@ -1637,7 +1637,7 @@ class Transaction(object):
         return optionsstring
 
 
-class UDPMulticastIPv6(SocketServer.UnixDatagramServer):
+class UDPMulticastIPv6(socketserver.UnixDatagramServer):
     '''
         modify server_bind to work with multicast
         add DHCPv6 multicast group ff02::1:2
@@ -1662,7 +1662,7 @@ class UDPMulticastIPv6(SocketServer.UnixDatagramServer):
             if cfg.IGNORE_INTERFACE:
                 try:
                     self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mgroup)
-                except Exception, err:
+                except Exception as err:
                     print(err)
             else:
                 self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mgroup)
@@ -1677,7 +1677,7 @@ class UDPMulticastIPv6(SocketServer.UnixDatagramServer):
         self.request_queue_size = 100
 
 
-class Handler(SocketServer.DatagramRequestHandler):
+class Handler(socketserver.DatagramRequestHandler):
     '''
         manage all incoming datagrams
     '''
@@ -1953,7 +1953,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     # may be evaluated to reset the whole transaction
                     Transactions[transaction_id].Counter += 1
 
-        except Exception,err:
+        except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             log.error('handle(): %s | Caused by: %s | Transaction: %s' % (str(err), client_address, transaction_id))
@@ -2255,8 +2255,8 @@ class Handler(SocketServer.DatagramRequestHandler):
                                     # options in answer to be logged
                                     options_answer.append(25)
 
-                                except Exception, err:
-                                    print err
+                                except Exception as err:
+                                    print(err)
                                     # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                                     response_ascii += build_option(13, '%04x' % (6))
                                     # options in answer to be logged
@@ -2330,7 +2330,7 @@ class Handler(SocketServer.DatagramRequestHandler):
             if 56 in options_request:
                 ntp_server_options = ''
                 if len(cfg.NTP_SERVER) > 0:
-                    for ntp_server_type in cfg.NTP_SERVER_dict.keys():
+                    for ntp_server_type in list(cfg.NTP_SERVER_dict.keys()):
                         # ntp_server_suboption
                         for ntp_server in cfg.NTP_SERVER_dict[ntp_server_type]:
                             ntp_server_suboption = ''
@@ -2424,7 +2424,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                         options_answer.sort()
                         log.info('%s | TransactionID: %s | Options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, Transactions[transaction_id].Client._get_options_string()))
                     else:
-                        print options_request
+                        print(options_request)
                         log.info('what else should I do?')
                 else:
                     options_answer.sort()
@@ -2433,12 +2433,12 @@ class Handler(SocketServer.DatagramRequestHandler):
             # response
             self.response = binascii.a2b_hex(response_ascii)
 
-        except Exception, err:
+        except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             log.error('Response(): ' + str(err))
-            print transaction_id
-            print Transactions[transaction_id].Client.__dict__
+            print(transaction_id)
+            print(Transactions[transaction_id].Client.__dict__)
 
             # clear any response
             self.response = ''

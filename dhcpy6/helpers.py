@@ -2,7 +2,7 @@
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2018 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -141,7 +141,7 @@ def correct_mac(mac):
     '''
         OpenBSD shortens MAC addresses in ndp output - here they grow again
     '''
-    decompressed = map(lambda m: '%02x' % (int(m, 16)), mac.split(':'))
+    decompressed = ['%02x' % (int(m, 16)) for m in mac.split(':')]
     return ':'.join(decompressed)
 
 
@@ -184,7 +184,7 @@ def decompress_ip6(ip6, strict=True):
         raise Exception("%s has too many accumulated ':'" % (ip6))
     
     # less than 7 ':' but no '::' also make a bad impression
-    if colon_count1 < 7 and colon_count2 <> 1:
+    if colon_count1 < 7 and colon_count2 != 1:
         raise Exception("%s is missing some ':'" % (ip6))
     
     # replace :: with :0000:: - the last ':' will be cut of finally
@@ -454,7 +454,7 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
             # move to next record
             answer_pos += nlmsg_len
 
-    except struct.error, e:
+    except struct.error as e:
         log.warn('broken data from netlink (position %i, data[%i:%i] = %s...): %s' % \
                  (answer_pos, curr_pos, answer_len, \
                   binascii.b2a_hex(answer[curr_pos:curr_pos+8]), str(e)))
@@ -473,7 +473,7 @@ def get_libc():
     try:
         return ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
     except:
-        print "\n OS not yet supported. :-( \n"
+        print("\n OS not yet supported. :-( \n")
         sys.exit(1)
 
 

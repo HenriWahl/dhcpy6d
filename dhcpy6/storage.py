@@ -2,7 +2,7 @@
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2018 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 
 import sys
 import threading
-import ConfigParser
-from helpers import *
+import configparser
+from .helpers import *
 import os
 import pwd
 import grp
@@ -50,7 +50,7 @@ class QueryQueue(threading.Thread):
             query = self.query_queue.get()
             try:
                 answer = self.store.DBQuery(query)
-            except Exception, error:
+            except Exception as error:
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
                 answer = error
@@ -84,7 +84,7 @@ class Store(object):
         '''
             put queries received into query queue and return the answers from answer queue
         '''
-        if query in self.results.keys():
+        if query in list(self.results.keys()):
             answer = self.results.pop(query)
         else:
             answer = None
@@ -92,7 +92,7 @@ class Store(object):
                 self.query_queue.put(query)
                 self.results.update(self.answer_queue.get())
                 # just make sure the right answer comes back
-                if query in self.results.keys():
+                if query in list(self.results.keys()):
                     answer = self.results.pop(query)
         return answer
 
@@ -160,7 +160,7 @@ class Store(object):
                             # for unknow reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
                             if result == 'IntegrityError':
-                                print 'IntegrityError:', query
+                                print('IntegrityError:', query)
                             else:
                                 # jump to next item of loop
                                 continue
@@ -818,8 +818,8 @@ class Store(object):
                     # m[0] is LLIP, m[1] is the matching MAC
                     # interface is ignored
                     self.CollectedMACs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1], now=m[2])
-                except Exception, err:
-                    print err
+                except Exception as err:
+                    print(err)
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()
                     return None
@@ -841,10 +841,10 @@ class Store(object):
             if self.query('SELECT last_message FROM leases LIMIT 1') == None:
                 # row 'last_message' in tables 'leases' does not exist yet, comes with version 0.1.6
                 self.query('ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0')
-                print "Adding row 'last_message' to table 'leases' in volatile storage succeeded."
+                print("Adding row 'last_message' to table 'leases' in volatile storage succeeded.")
         except:
-            print "\n'ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0' on volatile database failed."
-            print 'Please apply manually or grant necessary permissions.\n'
+            print("\n'ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0' on volatile database failed.")
+            print('Please apply manually or grant necessary permissions.\n')
             sys.exit(1)
 
         # after 0.4.3 with working PostgreSQL support the timestamps have to be stores in epoch seconds, not datetime
@@ -860,13 +860,13 @@ class Store(object):
                                      "INSERT INTO meta (item_key, item_value) VALUES ('version', '1')"]
                     for db_operation in db_operations:
                         self.query(db_operation)
-                        print '{0} in volatile storage succeded.'.format(db_operation)
+                        print('{0} in volatile storage succeded.'.format(db_operation))
             except:
-                print "\n{0} on volatile database failed.".format(db_operation)
-                print 'Please apply manually or grant necessary permissions.\n'
+                print("\n{0} on volatile database failed.".format(db_operation))
+                print('Please apply manually or grant necessary permissions.\n')
                 sys.exit(1)
         except:
-            print '\nSomething went wrong when retrieving version from database.\n'
+            print('\nSomething went wrong when retrieving version from database.\n')
             sys.exit(1)
 
         # find out if timestamps still are in datetime format - applies only to sqlite and mysql anyway
@@ -883,7 +883,7 @@ class Store(object):
                     update_type = 'mysql'
 
                 # SQLite
-                if type(db_datetime_test[0][0]) is unicode:
+                if type(db_datetime_test[0][0]) is str:
                     if ' ' in db_datetime_test[0][0]:
                         update_type = 'sqlite'
 
@@ -896,7 +896,7 @@ class Store(object):
                         for table in db_tables:
                             for column in db_tables[table]:
                                 self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL'.format(table, column))
-                                print 'ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL succeeded'.format(table, column)
+                                print('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL succeeded'.format(table, column))
                         # get old timestamps
                         timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases')
                         for timestamp_old in timestamps_old:
@@ -917,7 +917,7 @@ class Store(object):
                                                                                preferred_until_new,
                                                                                valid_until_new,
                                                                                address))
-                        print 'Converting timestamps of leases succeeded'
+                        print('Converting timestamps of leases succeeded')
                         timestamps_old = self.query('SELECT mac, last_update FROM macs_llips')
                         for timestamp_old in timestamps_old:
                             mac, last_update = timestamp_old
@@ -925,12 +925,12 @@ class Store(object):
                             self.query("UPDATE macs_llips SET last_update_new = {0} "
                                                 "WHERE mac = '{1}'".format(last_update_new,
                                                                            mac))
-                        print 'Converting timestamps of macs_llips succeeded'
+                        print('Converting timestamps of macs_llips succeeded')
                         for table in db_tables:
                             for column in db_tables[table]:
                                 self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
                                 self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
-                                print 'Moving column {0} of table {1} succeeded'.format(column, table)
+                                print('Moving column {0} of table {1} succeeded'.format(column, table))
 
                     if update_type == 'sqlite':
                         for table in db_tables:
@@ -968,7 +968,7 @@ class Store(object):
                                                                                preferred_until_new,
                                                                                valid_until_new,
                                                                                address))
-                        print 'Converting timestamps of leases succeeded'
+                        print('Converting timestamps of leases succeeded')
                         timestamps_old = self.query('SELECT mac, last_update FROM macs_llips_old')
                         for timestamp_old in timestamps_old:
                             mac, last_update = timestamp_old
@@ -976,7 +976,7 @@ class Store(object):
                             self.query("UPDATE macs_llips SET last_update = {0} "
                                                 "WHERE mac = '{1}'".format(last_update_new,
                                                                            mac))
-                        print 'Converting timestamps of macs_llips succeeded'
+                        print('Converting timestamps of macs_llips succeeded')
 
         # Extend volatile database to handle prefixes - comes with database version 2
         if int(self.get_db_version()) < 2:
@@ -1026,7 +1026,7 @@ class Store(object):
             self.query("UPDATE meta SET item_value='2' WHERE item_key='version'")
 
             # All OK
-            print "Adding table 'prefixes' succeeded"
+            print("Adding table 'prefixes' succeeded")
 
         # Extend volatile database to handle routes - comes with database version 3
         if int(self.get_db_version()) < 3:
@@ -1052,7 +1052,7 @@ class Store(object):
             self.query("UPDATE meta SET item_value='3' WHERE item_key='version'")
 
             # All OK
-            print "Adding table 'routes' succeeded"
+            print("Adding table 'routes' succeeded")
 
 
 class SQLite(Store):
@@ -1075,7 +1075,7 @@ class SQLite(Store):
         '''
             Initialize DB connection
         '''
-        if not 'sqlite3' in sys.modules.keys():
+        if not 'sqlite3' in list(sys.modules.keys()):
             import sqlite3
 
         try:
@@ -1110,9 +1110,9 @@ class SQLite(Store):
             self.connected = True
         except sys.modules['sqlite3'].IntegrityError:
             return 'IntegrityError'
-        except Exception, err:
+        except Exception as err:
             self.connected = False
-            print err
+            print(err)
             return None
 
         return answer.fetchall()
@@ -1135,7 +1135,7 @@ class Textfile(Store):
         self.IDs = dict()
 
         # instantiate a Configparser
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.read(self.cfg.STORE_FILE_CONFIG)
 
         # read all sections of config file
@@ -1158,7 +1158,7 @@ class Textfile(Store):
                 error_exit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.Hosts[section].CLASS, self.Hosts[section].HOSTNAME))
 
             if self.Hosts[section].ID != '':
-                if self.Hosts[section].ID in self.IDs.keys():
+                if self.Hosts[section].ID in list(self.IDs.keys()):
                     error_exit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.Hosts[section].ID, self.Hosts[section].HOSTNAME, self.IDs[self.Hosts[section].ID]))
                 else:
                     self.IDs[self.Hosts[section].ID] = self.Hosts[section].HOSTNAME
@@ -1171,7 +1171,7 @@ class Textfile(Store):
 
             # Decompress IPv6-Addresses
             if self.Hosts[section].ADDRESS != None:
-                self.Hosts[section].ADDRESS =  map(lambda x: decompress_ip6(x), self.Hosts[section].ADDRESS)
+                self.Hosts[section].ADDRESS =  [decompress_ip6(x) for x in self.Hosts[section].ADDRESS]
 
             # and put the host objects into index
             if self.Hosts[section].MAC:
@@ -1281,8 +1281,8 @@ class DB(Store):
         self.connection = None
         try:
             self.DBConnect()
-        except Exception, err:
-            print err
+        except Exception as err:
+            print(err)
 
 
     def DBConnect(self):
@@ -1291,7 +1291,7 @@ class DB(Store):
         '''
         if self.cfg.STORE_CONFIG == 'mysql' or self.cfg.STORE_VOLATILE == 'mysql':
             try:
-                if not 'MySQLdb' in sys.modules.keys():
+                if not 'MySQLdb' in list(sys.modules.keys()):
                     import MySQLdb
             except:
                 error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
@@ -1310,7 +1310,7 @@ class DB(Store):
 
         elif self.cfg.STORE_CONFIG == 'postgresql' or self.cfg.STORE_VOLATILE == 'postgresql':
             try:
-                if not 'psycopg2' in sys.modules.keys():
+                if not 'psycopg2' in list(sys.modules.keys()):
                     import psycopg2
             except:
                 traceback.print_exc(file=sys.stdout)
@@ -1337,7 +1337,7 @@ class DBMySQL(DB):
             Connect to database server according to database type
         '''
         try:
-            if not 'MySQLdb' in sys.modules.keys():
+            if not 'MySQLdb' in list(sys.modules.keys()):
                 import MySQLdb
         except:
             error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
@@ -1364,8 +1364,8 @@ class DBMySQL(DB):
             return 'IntegrityError'
         except Exception as err:
             # try to reestablish database connection
-            print 'Error: {0}'.format(str(err))
-            print 'Query: {0}'.format(query)
+            print('Error: {0}'.format(str(err)))
+            print('Query: {0}'.format(query))
             if not self.DBConnect():
                 return None
             else:
@@ -1388,7 +1388,7 @@ class DBPostgreSQL(DB):
             Connect to database server according to database type
         '''
         try:
-            if not 'psycopg2' in sys.modules.keys():
+            if not 'psycopg2' in list(sys.modules.keys()):
                 import psycopg2
         except:
             traceback.print_exc(file=sys.stdout)
@@ -1414,7 +1414,7 @@ class DBPostgreSQL(DB):
             self.cursor.execute(query)
         except Exception as err:
             # try to reestablish database connection
-            print 'Error: {0}'.format(str(err))
+            print('Error: {0}'.format(str(err)))
             if not self.DBConnect():
                 return None
             else:

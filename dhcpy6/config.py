@@ -2,7 +2,7 @@
 #
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2018 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 import sys
-import ConfigParser
+import configparser
 import stat
 import os
 import os.path
@@ -34,7 +34,7 @@ import getopt
 import re
 import ctypes
 
-from helpers import *
+from .helpers import *
 
 # use ctypes for libc access in get_libc from helpers
 LIBC = get_libc()
@@ -73,7 +73,7 @@ class Config(object):
     '''
 
     def __init__(self):
-        '''
+        '''not
             define defaults
         '''
         # access dynamic PREFIX
@@ -284,12 +284,12 @@ class Config(object):
                     send_control_message(arg)
                     sys.exit(0)
                 if opt in ('-G', '--generate-duid'):
-                    print generate_duid()
+                    print(generate_duid())
                     sys.exit(0)
 
-        except getopt.GetoptError, err:
-            print err
-            print USAGE
+        except getopt.GetoptError as err:
+            print(err)
+            print(USAGE)
             sys.exit(1)
 
         if configfile == None:
@@ -311,7 +311,7 @@ class Config(object):
         '''
 
         # instantiate Configparser
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.read(configfile)
 
         # whyever sections classes get overwritten sometimes and so some configs had been missing
@@ -495,7 +495,7 @@ class Config(object):
         self.LOG_LEVEL = self.LOG_LEVEL.upper()
 
         # index of classes which add some identification rules etc.
-        for c in self.CLASSES.values():
+        for c in list(self.CLASSES.values()):
             if c.FILTER_MAC != '': self.FILTERS['mac'].append(c)
             if c.FILTER_DUID != '': self.FILTERS['duid'].append(c)
             if c.FILTER_HOSTNAME != '': self.FILTERS['hostname'].append(c)
@@ -576,7 +576,7 @@ class Config(object):
         # check multicast address
         try:
             decompress_ip6(self.MCAST)
-        except Exception, err:
+        except Exception as err:
             error_exit("%s Multicast address '%s' is invalid." % (msg_prefix, err))
         if not self.MCAST.lower().startswith('ff'):
             error_exit("Multicast address '%s' is invalid." % (msg_prefix))
@@ -590,7 +590,7 @@ class Config(object):
         # check server's address
         try:
             decompress_ip6(self.ADDRESS)
-        except Exception, err:
+        except Exception as err:
             error_exit("%s Server address '%s' is invalid." % (msg_prefix, err))
 
         # check server duid
@@ -601,7 +601,7 @@ class Config(object):
         for nameserver in self.NAMESERVER:
             try:
                 decompress_ip6(nameserver)
-            except Exception, err:
+            except Exception as err:
                 error_exit("%s Name server address '%s' is invalid." % (msg_prefix, err))
 
         # split NTP server types into possible 3 (address, multicast, FQDN)
@@ -614,7 +614,7 @@ class Config(object):
                     self.NTP_SERVER_dict['MC'].append(ntp_server.lower())
                 else:
                     self.NTP_SERVER_dict['SRV'].append(ntp_server.lower())
-            except Exception, err:
+            except Exception as err:
                 if re.match('^[a-z0-9.-]*$', ntp_server, re.IGNORECASE):
                     self.NTP_SERVER_dict['FQDN'].append(ntp_server.lower())
                 else:
@@ -823,7 +823,7 @@ class Config(object):
             for nameserver in self.CLASSES[c].NAMESERVER:
                 try:
                     decompress_ip6(nameserver)
-                except Exception, err:
+                except Exception as err:
                     error_exit("%s Name server address '%s' is invalid." % (msg_prefix, err))
 
             # split NTP server types into possible 3 (address, multicast, FQDN)
@@ -836,7 +836,7 @@ class Config(object):
                         self.CLASSES[c].NTP_SERVER_dict['MC'].append(ntp_server.lower())
                     else:
                         self.CLASSES[c].NTP_SERVER_dict['SRV'].append(ntp_server.lower())
-                except Exception, err:
+                except Exception as err:
                     if re.match('^[a-z0-9.-]*$', ntp_server, re.IGNORECASE):
                         self.CLASSES[c].NTP_SERVER_dict['FQDN'].append(ntp_server.lower())
                     else:
@@ -1037,7 +1037,7 @@ class ConfigObject(object):
                 # build complete 'address' and ignore all the Xs (strict=False)
                 # all X will become x
                 prototype = decompress_ip6(prototype, strict=False)
-            except Exception, err:
+            except Exception as err:
                 error_exit("Address type '%s' address pattern '%s' is not valid: %s" % (self.TYPE, self.PATTERN, err))
 
         self.PROTOTYPE = prototype
