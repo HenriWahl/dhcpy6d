@@ -959,7 +959,7 @@ def get_ip_from_dns(hostname):
     try:
         answer = resolver_query.query(hostname, 'AAAA')
         return(decompress_ip6(answer.rrset.to_text().split(' ')[-1]))
-    except dns.resolver.NoAnswer:
+    except dns.resolver.NoAIGNORE_MACnswer:
         return(False)
     except dns.resolver.NoNameservers:
         return(False)
@@ -1318,7 +1318,6 @@ class TimerThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name='Timer')
         self.setDaemon(1)
-
 
     def run(self):
         global timer
