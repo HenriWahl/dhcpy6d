@@ -64,18 +64,22 @@ See manpage dhcpy6d(8) for details.
 
 
 def generate_duid():
-    return '00010001%08x%012x' % (time.time(), uuid.getnode())
+    """
+    Creates a DUID for the server - neede if none exists or is given
+    :return:
+    """
+    return '00010001{0:08x}{1:012x}'.format(int(time.time()), uuid.getnode())
 
 
 class Config(object):
-    '''
+    """
       general settings
-    '''
+    """
 
     def __init__(self):
-        '''not
+        """not
             define defaults
-        '''
+        """
         # access dynamic PREFIX
         global PREFIX
         self.PREFIX = PREFIX
@@ -306,9 +310,9 @@ class Config(object):
         self.read_config(configfile)
 
     def read_config(self, configfile):
-        '''
+        """
             read configuration from file, should work with included files too - at least this is the plan
-        '''
+        """
 
         # instantiate Configparser
         config = configparser.ConfigParser()
@@ -1008,9 +1012,9 @@ class ConfigObject(object):
     """
 
     def build_prototype(self, pattern=None):
-        '''
+        """
             build prototype of pattern for later comparison with leases
-        '''
+        """
 
         # if called with de-$prefix$-ed pattern use it
         if pattern == None:
@@ -1044,20 +1048,20 @@ class ConfigObject(object):
 
 
     def inject_dynamic_prefix_into_prototype(self, dynamic_prefix):
-        '''
+        """
             called from main to put then known dynamic prefix into protoype
-        '''
+        """
         if '$prefix$' in self.PATTERN:
             prefix_pattern = self.PATTERN.replace('$prefix$', dynamic_prefix)
             self.build_prototype(prefix_pattern)
 
 
     def matches_prototype(self, address):
-        '''
+        """
             test if given address matches prototype and therefore this address' DNS zone
             information might be used
             only used for address types, not client instances
-        '''
+        """
         match = False
         # compare all chars of address and prototype, if they do match or
         # prototype has placeholder X return finally True, otherwise stop
@@ -1072,9 +1076,9 @@ class ConfigObject(object):
 
 
 class Address(ConfigObject):
-    '''
+    """
         class for address definition, used for config
-    '''
+    """
 
     def __init__(self,
                  address=None,
@@ -1148,9 +1152,9 @@ class Prefix(ConfigObject):
 
 
 class Class(object):
-    '''
+    """
         class for class definition
-    '''
+    """
 
     def __init__(self, name=''):
         self.NAME = name

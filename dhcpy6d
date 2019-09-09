@@ -216,12 +216,12 @@ if not volatilestore.connected:
 
 
 def build_client(transaction_id):
-    '''
+    """
         builds client object of client config and transaction data
         checks if filters apply
         check if lease is still valid for RENEW and REBIND answers
         check if invalid addresses need to get deleted with lifetime 0
-    '''
+    """
     try:
         # create client object
         client = Client()
@@ -713,9 +713,9 @@ def build_client(transaction_id):
 
 
 def parse_pattern_address(address, client_config, transaction_id):
-    '''
+    """
         parse address pattern and replace variables with current values
-    '''
+    """
     # parse all pattern parts
     a = address.PATTERN
 
@@ -819,9 +819,9 @@ def parse_pattern_address(address, client_config, transaction_id):
 
 
 def parse_pattern_prefix(pattern, client_config, transaction_id):
-    '''
+    """
         parse address pattern and replace variables with current values
-    '''
+    """
     # parse all pattern parts
     p = pattern.PATTERN
 
@@ -966,13 +966,13 @@ def get_ip_from_dns(hostname):
 
 
 def collect_macs(now):
-    '''
+    """
         collect MAC address from clients to link local addresses with MACs
         if a client has a new MAC the LLIP changes - with privacy extension enabled anyway
         calls local ip command to get neighbor cache - any more sophisticated idea is welcome!
 
         The Linux netlink method is considered stable now.
-    '''
+    """
     try:
         # Linux can use kernel neighbor cache
         if OS == 'Linux':
@@ -1014,7 +1014,7 @@ def collect_macs(now):
 
 
 def dns_update(transaction_id, action='update'):
-    '''
+    """
         update DNS entries on specified nameserver
         at the moment this only works with Bind
         uses all addresses of client if they want to be dynamically updated
@@ -1023,7 +1023,7 @@ def dns_update(transaction_id, action='update'):
         - client wants to update DNS itself -> sends 0 0 0
         - client wants server to update DNS -> sends 0 0 1
         - client wants no server DNS update -> sends 1 0 0
-    '''
+    """
     if Transactions[transaction_id].Client:
         # if allowed use client supplied hostname, otherwise that from config
         if cfg.DNS_USE_CLIENT_HOSTNAME:
@@ -1045,10 +1045,10 @@ def dns_update(transaction_id, action='update'):
 
 
 def dns_delete(transaction_id, address='', action='release'):
-    '''
+    """
         delete DNS entries on specified nameserver
         at the moment this only works with ISC Bind
-    '''
+    """
     hostname, duid, mac, iaid = volatilestore.get_host_lease(address)
 
     # if address should be updated in DNS update it
@@ -1079,9 +1079,9 @@ def dns_delete(transaction_id, address='', action='release'):
 
 
 def modify_route(transaction_id, mode):
-    '''
+    """
         called when route has to be set - calls itself any external script or something like that
-    '''
+    """
     # check if client is already set - otherwise crashes
     if Transactions[transaction_id].Client != None:
         # only do anything if class of client has something defined to be called
@@ -1113,9 +1113,9 @@ def modify_route(transaction_id, mode):
 
 
 def manage_prefixes_routes():
-    '''
+    """
         delete or add inactive or active routes according to the prefixes in database
-    '''
+    """
     volatilestore.release_free_prefixes(timer)
     inactive_prefixes = volatilestore.get_inactive_prefixes()
     active_prefixes = volatilestore.get_active_prefixes()
@@ -1132,9 +1132,9 @@ def manage_prefixes_routes():
 
 
 class DNSQueryThread(threading.Thread):
-    '''
+    """
         thread for updating DNS entries of valid leases without blocking main thread
-    '''
+    """
 
     def __init__(self, dnsquery_queue):
         threading.Thread.__init__(self, name='DNSQuery')
@@ -1182,9 +1182,9 @@ class DNSQueryThread(threading.Thread):
 
 
 class TidyUpThread(threading.Thread):
-    '''
+    """
         clean leases and transactions if obsolete
-    '''
+    """
     def __init__(self):
         threading.Thread.__init__(self, name='TidyUp')
         self.setDaemon(1)
@@ -1244,9 +1244,9 @@ class TidyUpThread(threading.Thread):
 
 
     def check_routes(self):
-        '''
+        """
             remove routes with inactive prefixes
-        '''
+        """
         for prefix in volatilestore.get_inactive_prefixes():
             length, router, pclass = volatilestore.get_route(prefix)
             # hopefully the class stored in database still exists
@@ -1255,10 +1255,10 @@ class TidyUpThread(threading.Thread):
 
 
     def check_requests(self, now):
-        '''
+        """
             check for brute force clients and put them into blacklist if necessary
             get time as now from caller
-        '''
+        """
 
         # clean blacklist
         for client in list(requests_blacklist.keys()):
@@ -1277,9 +1277,9 @@ class TidyUpThread(threading.Thread):
 
 
 class RouteThread(threading.Thread):
-    '''
+    """
         thread for updating routes without blocking main thread
-    '''
+    """
 
     def __init__(self, route_queue):
         threading.Thread.__init__(self, name='Route')
@@ -1288,9 +1288,9 @@ class RouteThread(threading.Thread):
 
 
     def run(self):
-        '''
+        """
             wait for new queries in queue until the end of the world
-        '''
+        """
         while True:
             mode, call, prefix, length, router = self.route_queue.get()
             call_real = call.replace('$prefix$', colonify_ip6(prefix)).\
@@ -1311,9 +1311,9 @@ class RouteThread(threading.Thread):
 
 
 class TimerThread(threading.Thread):
-    '''
+    """
         thread for timer, used in different places
-    '''
+    """
 
     def __init__(self):
         threading.Thread.__init__(self, name='Timer')
@@ -1327,9 +1327,9 @@ class TimerThread(threading.Thread):
 
 
 class Client(object):
-    '''
+    """
         client object, generated from configuration database or on the fly
-    '''
+    """
     def __init__(self):
         # Addresses, depending on class or fixed addresses
         self.Addresses = list()
@@ -1352,9 +1352,9 @@ class Client(object):
 
 
     def _get_options_string(self):
-        '''
+        """
             all attributes in a string for logging
-        '''
+        """
         optionsstring = ''
         # put own attributes into a string
         options = list(self.__dict__.keys())
@@ -1387,10 +1387,10 @@ class Client(object):
 
 
 class Route(object):
-    '''
+    """
         store data of a route which should be given to an external application
         router is here the prefix requesting host
-    '''
+    """
     def __init__(self, prefix, length, router):
         self.prefix = prefix
         self.length = length
@@ -1398,9 +1398,9 @@ class Route(object):
 
 
 class Request(object):
-    '''
+    """
         to be stored in requests dictionary to log client requests to be able to find brute force clients
-    '''
+    """
     def __init__(self, client):
         self.client = client
         self.count = 1
@@ -1408,9 +1408,9 @@ class Request(object):
 
 
 class Transaction(object):
-    '''
+    """
         all data of one transaction, to be collected in Transactions
-    '''
+    """
     def __init__(self, transaction_id, client_llip, interface, message_type, options):
         # Transaction ID
         self.ID = transaction_id
@@ -1604,9 +1604,9 @@ class Transaction(object):
                 self.KnownClientArchitecture = ARCHITECTURE_TYPE[client_architecture_short]
 
     def _get_options_string(self):
-        '''
+        """
             get all options in one string for debugging
-        '''
+        """
         optionsstring = ''
         # put own attributes into a string
         options = list(self.__dict__.keys())
@@ -1638,14 +1638,14 @@ class Transaction(object):
 
 
 class UDPMulticastIPv6(socketserver.UnixDatagramServer):
-    '''
+    """
         modify server_bind to work with multicast
         add DHCPv6 multicast group ff02::1:2
-    '''
+    """
     def server_bind(self):
-        '''
+        """
             multicast & python: http://code.activestate.com/recipes/442490/
-        '''
+        """
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # multicast parameters
         # hop is one because it is all about the same subnet
@@ -1678,14 +1678,14 @@ class UDPMulticastIPv6(socketserver.UnixDatagramServer):
 
 
 class Handler(socketserver.DatagramRequestHandler):
-    '''
+    """
         manage all incoming datagrams
-    '''
+    """
 
     def handle(self):
-        '''
+        """
             request handling happens here
-        '''
+        """
         # empty dummy response
         self.response = ''
 
@@ -1961,7 +1961,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
 
     def build_response(self, response_type, transaction_id, options_request, status=0):
-        '''
+        """
             creates answer and puts it into self.response
             arguments:
                 response_type - mostly 2 or 7
@@ -1969,7 +1969,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 option_request
                 status - mostly 0 (OK)
             response will be sent by self.finish()
-        '''
+        """
         try:
             # Header
             # response type + transaction id
@@ -2447,9 +2447,9 @@ class Handler(socketserver.DatagramRequestHandler):
 
 
     def finish(self):
-        '''
+        """
             send response from self.response
-        '''
+        """
         # send only if there is anything to send
         if cfg.REALLY_DO_IT:
             if len(self.response) > 0:
@@ -2459,9 +2459,9 @@ class Handler(socketserver.DatagramRequestHandler):
 
 
     def control_message(self, bytes):
-        '''
+        """
             execute commands sent in by control message
-        '''
+        """
         control_message = binascii.unhexlify(bytes)
         control_message_fragments = control_message.split(' ')
         # clean message

@@ -6,7 +6,8 @@ ENV HTTPS_PROXY $HTTP_PROXY
 ENV http_proxy $HTTP_PROXY
 ENV https_proxy $HTTP_PROXY
 
-RUN pip install dnspython \
+RUN pip install distro \
+                dnspython \
                 mysqlclient \
                 psycopg2
 
