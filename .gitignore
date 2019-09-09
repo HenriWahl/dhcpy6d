@@ -1,3 +1,5 @@
 *.conf
 *.pyc
 *.yaml
+*.db
+*.log
