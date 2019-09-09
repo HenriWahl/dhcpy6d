@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+import distro
 import socket
 import struct
 import platform
@@ -46,7 +47,7 @@ import dns.reversename
 
 # access /usr/share/pyshared on Debian
 # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715010
-if platform.dist()[0].lower() == 'debian':
+if distro.id() == 'debian':
     sys.path[0:0] = ['/usr/share/pyshared']
 
 from dhcpy6.helpers import *
