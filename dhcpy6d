@@ -45,6 +45,8 @@ import dns.query
 import dns.resolver
 import dns.reversename
 
+import psutil
+
 # access /usr/share/pyshared on Debian
 # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715010
 if distro.id() == 'debian':
@@ -1652,6 +1654,9 @@ class UDPMulticastIPv6(socketserver.UnixDatagramServer):
         # hop is one because it is all about the same subnet
         self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_LOOP, 0)
         self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, 1)
+
+        interfaces = psutil.net_if_addrs()
+
         # looks like there is no other way to find interfaces than via libc
         for i in cfg.INTERFACE:
             IF_NAME[i] = LIBC.if_nametoindex(i)

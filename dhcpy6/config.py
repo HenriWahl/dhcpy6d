@@ -572,6 +572,8 @@ class Config(object):
 
         # check interface
         if not self.IGNORE_INTERFACE:
+            import psutil
+            interfaces = psutil.net_if_addrs()
             for i in self.INTERFACE:
                 # also accept Linux VLAN and other definitions but interface must exist
                 if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
