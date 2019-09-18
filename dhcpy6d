@@ -1659,7 +1659,8 @@ class UDPMulticastIPv6(socketserver.UnixDatagramServer):
 
         # looks like there is no other way to find interfaces than via libc
         for i in cfg.INTERFACE:
-            IF_NAME[i] = LIBC.if_nametoindex(i)
+            # IF_NAME[i] = LIBC.if_nametoindex(i)
+            IF_NAME[i] = socket.if_nametoindex(i)
             IF_NUMBER[IF_NAME[i]] = i
             if_number = struct.pack('I', IF_NAME[i])
             mgroup = socket.inet_pton(socket.AF_INET6, cfg.MCAST) + if_number
@@ -1697,6 +1698,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
         # raw address+interface, used for requests monitoring
         client_address = copy.deepcopy(self.client_address[0])
+        interface = socket.if_indextoname(self.client_address[3])
 
         # avoid processing requests of unknown clients which cannot be found in the neighbor cache table
         # only makes sense if classes are not ignored and thus the neighbor cache is used
@@ -1720,7 +1722,8 @@ class Handler(socketserver.DatagramRequestHandler):
                     requests[client_address].count += 1
             # otherwise a MAC address
             else:
-                llip = decompress_ip6(client_address.split('%')[0])
+                # llip = decompress_ip6(client_address.split('%')[0])
+                llip = decompress_ip6(client_address)
                 if llip in CollectedMACs:
                     mac = copy.deepcopy(CollectedMACs[llip].mac)
                     if mac in requests_blacklist:
