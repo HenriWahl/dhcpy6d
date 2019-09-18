@@ -1360,8 +1360,8 @@ class Client(object):
         """
         optionsstring = ''
         # put own attributes into a string
-        options = list(self.__dict__.keys())
-        options.sort()
+        options = sorted(list(self.__dict__.keys()))
+        # options.sort()
         for o in options:
             # ignore some attributes
             if not o in IGNORED_LOG_OPTIONS and \
@@ -1612,8 +1612,8 @@ class Transaction(object):
         """
         optionsstring = ''
         # put own attributes into a string
-        options = list(self.__dict__.keys())
-        options.sort()
+        options = sorted(list(self.__dict__.keys()))
+        # options.sort()
         for o in options:
             # ignore some attributes
             if not o in IGNORED_LOG_OPTIONS and \
@@ -2427,13 +2427,15 @@ class Handler(socketserver.DatagramRequestHandler):
                                     (transaction_id, colonify_ip6(Transactions[transaction_id].ClientLLIP)))
 
                     elif 3 in options_request or 4 in options_request or 13 in options_request or 25 in options_request:
-                        options_answer.sort()
+                        # options_answer.sort()
+                        options_answer = sorted(options_answer)
                         log.info('%s | TransactionID: %s | Options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, Transactions[transaction_id].Client._get_options_string()))
                     else:
                         print(options_request)
                         log.info('what else should I do?')
                 else:
-                    options_answer.sort()
+                    # options_answer.sort()
+                    options_answer = sorted(options_answer)
                     log.info('%s | TransactionID: %s | Options: %s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer))
 
             # response
