@@ -33,7 +33,6 @@ import grp
 import getopt
 import re
 import ctypes
-import psutil
 
 from .helpers import *
 
@@ -576,7 +575,7 @@ class Config(object):
             for i in self.INTERFACE:
                 # also accept Linux VLAN and other definitions but interface must exist
                 # if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
-                if not i in psutil.net_if_addrs() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
+                if not i in get_interfaces() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                     error_exit("%s Interface '%s' is unknown." % (msg_prefix, i))
 
         # check multicast address
@@ -818,7 +817,7 @@ class Config(object):
                 for i in self.CLASSES[c].INTERFACE:
                     # also accept Linux VLAN and other definitions but interface must exist
                     # if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
-                    if not i in psutil.net_if_addrs() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
+                    if not i in get_interfaces() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                         error_exit("%s Interface '%s' is invalid." % (msg_prefix, i))
 
             # check advertised IA types

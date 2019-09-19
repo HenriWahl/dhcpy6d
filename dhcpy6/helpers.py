@@ -455,8 +455,8 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
             answer_pos += nlmsg_len
 
     except struct.error as e:
-        log.warn('broken data from netlink (position %i, data[%i:%i] = %s...): %s' % \
-                 (answer_pos, curr_pos, answer_len, \
+        log.warn('broken data from netlink (position %i, data[%i:%i] = %s...): %s' %
+                 (answer_pos, curr_pos, answer_len,
                   binascii.b2a_hex(answer[curr_pos:curr_pos+8]), str(e)))
 
     # clean up
@@ -466,10 +466,10 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
 
 
 def get_libc():
-    '''
+    """
         return libC-object to be used for NIC handling in dhcpy6d and config.py
         find_library makes this OS-independent
-    '''
+    """
     try:
         return ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
     except:
@@ -500,3 +500,24 @@ def convert_mac_to_eui64(mac):
     split_string = lambda x, n: [x[i:i + n] for i in range(0, len(x), n)]
 
     return ':'.join(split_string(eui64, 4))
+
+
+class Interface:
+    """
+    hold interface information
+    interface information comes in tuple from socket.if_nameindex()
+    """
+    def __init__(self, interface_tuple):
+        self.index, self.name = interface_tuple
+
+
+def get_interfaces():
+    """
+    return dict full of Interface objects
+    :return:
+    """
+    interfaces = {}
+    for interface_tuple in socket.if_nameindex():
+        interface = Interface(interface_tuple)
+        interfaces[interface.name] = interface
+    return interfaces
