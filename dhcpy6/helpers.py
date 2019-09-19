@@ -482,7 +482,7 @@ def send_control_message(message):
         Send a control message to the locally running dhcpy6d daemon
     '''
     # clean message of quotations marks
-    message = message.strip('"').strip('"')
+    message = message.strip('"').encode('utf8')
     socket_control = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
     socket_control.sendto(message, ('::1', 547))
 
