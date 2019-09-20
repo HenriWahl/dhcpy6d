@@ -34,6 +34,8 @@ import ctypes.util
 import platform
 import time
 
+from pyroute2 import IPRoute
+
 # used for NETLINK in get_neighbor_cache_linux() access by Github/vokac
 RTM_NEWNEIGH = 28
 RTM_DELNEIGH = 29
@@ -96,6 +98,8 @@ ADDRESS_CHARS_NON_STRICT = ':0123456789abcdefx'
 LOCALHOST = '::1'
 LOCALHOST_LLIP = '00000000000000000000000000000001'
 LOCALHOST_INTERFACES = ['', 'lo', 'lo0']
+
+ipr = IPRoute()
 
 def convert_dns_to_binary(name):
     '''
@@ -285,6 +289,18 @@ class NeighborCacheRecord(object):
         self.interface = interface
         self.timestamp = now
 
+def get_neighbor_cache_linux_pyroute2(cfg, IF_NUMBER, log, now):
+    result = {}
+    neighbors = ipr.get_neighbours(family=socket.AF_INET6,
+                       match=lambda x: x.get_attr('NDA_DST').startswith('fe80:') and x['ifindex'] in IF_NUMBER)
+    for neighbor in neighbors:
+        record = NeighborCacheRecord(llip=decompress_ip6(neighbor.get_attr('NDA_DST')),
+                                     mac=neighbor.get_attr('NDA_LLADDR'),
+                                     interface=IF_NUMBER[neighbor['ifindex']],
+                                     now=now)
+        result[record.llip]=record
+
+    return result
 
 def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
     '''

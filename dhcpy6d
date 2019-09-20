@@ -979,6 +979,7 @@ def collect_macs(now):
         # Linux can use kernel neighbor cache
         if OS == 'Linux':
             for host in list(get_neighbor_cache_linux(cfg, IF_NUMBER, log, timer).values()):
+            # for host in list(get_neighbor_cache_linux_pyroute2(cfg, IF_NUMBER, log, timer).values()):
                 if not host.llip in CollectedMACs:
                     if host.llip.startswith('fe80'):
                         CollectedMACs[host.llip] = host
