@@ -137,7 +137,7 @@ def build_option(number, payload):
     '''
     # option number and length take 2 byte each so the string has to be 4 chars long
     option = '%04x' % (number)          # option number
-    option += '%04x' % (len(payload)/2) # payload length, /2 because 2 chars are 1 byte
+    option += '%04x' % (len(payload)//2) # payload length, /2 because 2 chars are 1 byte
     option += payload  
     return option
     
@@ -154,6 +154,8 @@ def colonify_mac(mac):
     '''
         return complete MAC address with colons
     '''
+    if type(mac) == bytes:
+        mac = mac.decode()
     return ':'.join((mac[0:2], mac[2:4], mac[4:6],\
                      mac[6:8], mac[8:10], mac[10:12]))
 
@@ -221,6 +223,8 @@ def colonify_ip6(address):
         return complete IPv6 address with colons
     '''
     if address:
+        if type(address) == bytes:
+            address = address.decode()
         return ':'.join((address[0:4], address[4:8], address[8:12], address[12:16],\
                         address[16:20], address[20:24], address[24:28], address[28:32]))
     else:
@@ -312,7 +316,7 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
     s.send(MSG_HEADER + MSG)
 
     # read all data from socket
-    answer = ''
+    answer = b''
     while True:
         r,w,e = select.select([s], [], [], 0.)
         if s not in r: break # no more data
@@ -352,7 +356,7 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
                 break
             if answer_len-answer_pos < nlmsg_len:
                 log.warn('broken data from netlink (position %i, length avail %i): '\
-                         'received data size is smaller than nlmsg_len' % \
+                         'received dcolonify_ata size is smaller than nlmsg_len' % \
                          (answer_pos, answer_len-answer_pos))
                 break
             if (pid != nlmsg_pid or seq != nlmsg_seq):

@@ -515,7 +515,7 @@ def build_client(transaction_id):
                                                 # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
                                                 # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
                                                 # as first character of range part of prefix - assuming steps of width 4
-                                                prefix_range_index = int(cfg.PREFIXES[p['type']].LENGTH) / 4 - 4
+                                                prefix_range_index = int(cfg.PREFIXES[p['type']].LENGTH) // 4 - 4
                                                 # prefix itself has a prefix - the first part of the prefix pattern
                                                 prefix_prefix = decompress_ip6(p['prefix'].replace('$range$', '0000'))[:prefix_range_index + 4]
 
@@ -849,7 +849,7 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
         # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
         # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
         # as first character of range part of prefix - assuming steps of width 4
-        prefix_range_index = int(pattern.LENGTH)/4-4
+        prefix_range_index = int(pattern.LENGTH)//4-4
         # prefix itself has a prefix - the first part of the prefix pattern
         prefix_prefix = decompress_ip6(p.replace('$range$', '0000'))[:prefix_range_index]
 
@@ -1213,7 +1213,7 @@ class TidyUpThread(threading.Thread):
                     volatilestore.DBConnect()
                 else:
                     # cleaning database once per minute should be enough
-                    if dbcount > 60/cfg.CLEANING_INTERVAL:
+                    if dbcount > 60//cfg.CLEANING_INTERVAL:
                         # remove leases which might not be recycled like random addresses for example
                         volatilestore.remove_leases(timer, 'random')
                         # set leases and prefixes free whose valid lifetime is over
@@ -1499,7 +1499,7 @@ class Transaction(object):
                 self.IAT2 = int(payload[16:24], 16)
 
                 # addresses given by client if any
-                for a in range(len(payload[32:])/44):
+                for a in range(len(payload[32:])//44):
                     address = payload[32:][(a*56):(a*56)+32]
                     # in case an address is asked for twice by one host ignore the twin
                     if not address in self.Addresses:
@@ -1515,7 +1515,7 @@ class Transaction(object):
                 self.IAT2 = int(payload[16:24], 16)
 
                 # addresses given by client if any
-                for a in range(len(payload[32:])/44):
+                for a in range(len(payload[32:])//44):
                     address = payload[32:][(a*56):(a*56)+32]
                     # in case an address is asked for twice by one host ignore the twin
                     if not address in self.Addresses:
@@ -1565,7 +1565,7 @@ class Transaction(object):
                 #8               16      24      28          32                  40      48          50      82
 
                 # Prefixes given by client if any
-                for p in range(len(payload[32:])/50):
+                for p in range(len(payload[32:])//50):
                     prefix = payload[50:][(p*58):(p*58)+32]
                     length = int(payload[48:][(p*58):(p*58)+2], 16)
                     prefix_combined = combine_prefix_length(prefix, length)
@@ -1737,7 +1737,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 del llip
         try:
             # convert raw message into ascii-bytes
-            raw_bytes = binascii.hexlify(self.request[0])
+            raw_bytes = binascii.hexlify(self.request[0]).decode()
 
             # local connection is a control message
             # for BSD there might be different localhost addresses

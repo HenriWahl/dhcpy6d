@@ -319,8 +319,8 @@ class Store(object):
                 "last_message != 1 "\
                 "ORDER BY last_update DESC LIMIT 1" %\
                 (self.table_prefixes,
-                 prefix+frange+((128-int(length))/4)*'0',
-                 prefix+trange+((128-int(length))/4)*'0',
+                 prefix+frange+((128-int(length))//4)*'0',
+                 prefix+trange+((128-int(length))//4)*'0',
                  length,
                  duid,
                  mac)
@@ -351,8 +351,8 @@ class Store(object):
                 "'%s' <= prefix AND prefix <= '%s' AND "\
                 "length = '%s' ORDER BY prefix DESC LIMIT 1" %\
                 (self.table_prefixes,
-                    prefix+frange+((128-int(length))/4)*'0',
-                    prefix+trange+((128-int(length))/4)*'0',
+                    prefix+frange+((128-int(length))//4)*'0',
+                    prefix+trange+((128-int(length))//4)*'0',
                     length)
         return self.query(query)
 
@@ -494,8 +494,8 @@ class Store(object):
         query = "SELECT COUNT(prefix) FROM %s WHERE prefix LIKE '%s%%' AND "\
                 "'%s' <= prefix AND prefix <= '%s'" % (self.table_prefixes,
                                                        prefix,
-                                                       prefix+frange+((128-int(length))/4)*'0',
-                                                       prefix+trange+((128-int(length))/4)*'0')
+                                                       prefix+frange+((128-int(length))//4)*'0',
+                                                       prefix+trange+((128-int(length))//4)*'0')
         return self.query(query)
 
 
