@@ -1694,7 +1694,12 @@ class Handler(socketserver.DatagramRequestHandler):
 
         # raw address+interface, used for requests monitoring
         client_address = copy.deepcopy(self.client_address[0])
-        interface = socket.if_indextoname(self.client_address[3])
+        try:
+            interface = socket.if_indextoname(self.client_address[3])
+        except OSError:
+            # strangely the interface index is 0 if sent to localhost -
+            # even if 'lo' has the index 1
+            interface = ''
 
         # avoid processing requests of unknown clients which cannot be found in the neighbor cache table
         # only makes sense if classes are not ignored and thus the neighbor cache is used
@@ -1734,26 +1739,9 @@ class Handler(socketserver.DatagramRequestHandler):
             # convert raw message into ascii-bytes
             raw_bytes = binascii.hexlify(self.request[0])
 
-            # clean client IP address - might come in short notation, which
-            # should be extended
-            # if sent from non-LLIP there is no interface - the request is rejected at the moment
-            # obsolete in Python 3
-            # try:
-            #     client_llip, interface = client_address.split('%')
-            #     client_llip = decompress_ip6(client_llip)
-            # except:
-            #     # interface is set to '' and later evaluated to trigger a statuscode message
-            #     client_llip, interface = client_address, ''
-            #     client_llip = decompress_ip6(client_llip)
-            #
-            #     # local connection is a control message
-            #     if client_llip == '00000000000000000000000000000001' and interface == '':
-            #         self.is_control_message = True
-
-            client_llip = decompress_ip6(client_address)
-
             # local connection is a control message
-            if client_llip == '00000000000000000000000000000001' and interface == '':
+            # for BSD there might be different localhost addresses
+            if client_address == LOCALHOST and interface in LOCALHOST_INTERFACES:
                 self.is_control_message = True
 
             # do nothing if interface is not configured
@@ -1797,6 +1785,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 if message_type in MESSAGE_TYPES:
                     # 2. create Transaction object if not yet done
                     if not transaction_id in Transactions:
+                        client_llip = decompress_ip6(client_address)
                         Transactions[transaction_id] = Transaction(transaction_id, client_llip, interface, message_type, options)
                         # add client MAC address to transaction object
                         if Transactions[transaction_id].ClientLLIP in CollectedMACs:

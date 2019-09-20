@@ -92,6 +92,11 @@ NTP_SERVER_TYPES = {'SRV': 1, 'MC': 2, 'FQDN': 3}
 ADDRESS_CHARS_STRICT = ':0123456789abcdef'
 ADDRESS_CHARS_NON_STRICT = ':0123456789abcdefx'
 
+# localhost
+LOCALHOST = '::1'
+LOCALHOST_LLIP = '00000000000000000000000000000001'
+LOCALHOST_INTERFACES = ['', 'lo', 'lo0']
+
 def convert_dns_to_binary(name):
     '''
         convert domain name as described in RFC 1035, 3.1
