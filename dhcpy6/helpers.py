@@ -108,8 +108,8 @@ def convert_dns_to_binary(name):
     binary = ''
     domain_parts = name.split('.')
     for p in domain_parts:
-        binary += '%02x' % (len(p))     # length of Domain Name Segements
-        binary += binascii.b2a_hex(p)
+        binary += '%02x' % (len(p))     # length of Domain Name Segments
+        binary += binascii.b2a_hex(p.encode()).decode()
     # final zero size octet following RFC 1035
     binary += '00'
     return binary
