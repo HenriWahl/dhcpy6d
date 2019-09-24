@@ -1,5 +1,3 @@
-# encoding: utf8
-#
 # DHCPy6d DHCPv6 Daemon
 #
 # Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
@@ -19,12 +17,25 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 # DHCPv6
-MESSAGE_TYPES = {1: 'SOLICIT', 2: 'ADVERTISE', 3: 'REQUEST', 4: 'CONFIRM', 5: 'RENEW',
-                 6: 'REBIND', 7: 'REPLY', 8: 'RELEASE', 9: 'DECLINE', 10: 'RECONFIGURE',
-                 11: 'INFORMATION-REQUEST', 12: 'RELAY-FORW', 13: 'RELAY-REPL'}
+MESSAGE_TYPES = {1: 'SOLICIT',
+                 2: 'ADVERTISE',
+                 3: 'REQUEST',
+                 4: 'CONFIRM',
+                 5: 'RENEW',
+                 6: 'REBIND',
+                 7: 'REPLY',
+                 8: 'RELEASE',
+                 9: 'DECLINE',
+                 10: 'RECONFIGURE',
+                 11: 'INFORMATION-REQUEST',
+                 12: 'RELAY-FORW',
+                 13: 'RELAY-REPL'}
 
 # DUID               
-DUID_TYPES = {1: 'DUID-LLT', 2: 'DUID-EN', 3: 'DUID-LL', 4: 'DUID-UUID'}
+DUID_TYPES = {1: 'DUID-LLT',
+              2: 'DUID-EN',
+              3: 'DUID-LL',
+              4: 'DUID-UUID'}
 
 # see http://www.iana.org/assignments/dhcpv6-parameters/
 OPTION_REQUEST = {1: 'OPTION_CLIENTID',

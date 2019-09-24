@@ -1,5 +1,3 @@
-# encoding: utf8
-#
 # DHCPy6d DHCPv6 Daemon
 #
 # Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
@@ -58,7 +56,7 @@ class QueryQueue(threading.Thread):
             self.answer_queue.put({query: answer})
 
 
-class Store(object):
+class Store:
     """
         abstract class to present MySQL or SQLlite
     """
@@ -1236,7 +1234,7 @@ class Textfile(Store):
         return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
 
 
-class ClientConfig(object):
+class ClientConfig:
     """
         static client settings object to be stuffed into Hosts dict of Textfile store
     """
@@ -1260,7 +1258,7 @@ class ClientConfig(object):
         self.DUID = duid
 
 
-class ClientConfigDB(object):
+class ClientConfigDB:
     """
         class for storing client config snippet from DB - used in SQLite and MySQL Storage
     """

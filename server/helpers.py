@@ -1,5 +1,3 @@
-# encoding: utf8
-#
 # DHCPy6d DHCPv6 Daemon
 #
 # Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
@@ -278,7 +276,7 @@ def listify_option(option):
         return None
 
 
-class NeighborCacheRecord(object):
+class NeighborCacheRecord:
     '''
         object for neighbor cache entries to be returned by get_neighbor_cache_linux() and in CollectedMACs
         .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB

@@ -1,5 +1,3 @@
-# encoding: utf8
-#
 # DHCPy6d DHCPv6 Daemon
 #
 # Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
@@ -18,5 +16,5 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-"""Module dhcpy6d"""
+"""Module server"""
 

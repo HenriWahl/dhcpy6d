@@ -1,5 +1,3 @@
-# encoding: utf8
-#
 # DHCPy6d DHCPv6 Daemon
 #
 # Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
@@ -71,13 +69,13 @@ def generate_duid():
     return '00010001{0:08x}{1:012x}'.format(int(time.time()), uuid.getnode())
 
 
-class Config(object):
+class Config:
     """
       general settings
     """
 
     def __init__(self):
-        """not
+        """
             define defaults
         """
         # access dynamic PREFIX
@@ -1008,7 +1006,7 @@ class Config(object):
                 error_exit("%s Bootfile url parameter must be set and is not allowed to be empty." % msg_prefix)
 
 
-class ConfigObject(object):
+class ConfigObject:
     """
         class providing methods both for addresses and prefixes
     """
@@ -1153,7 +1151,7 @@ class Prefix(ConfigObject):
         self.ROUTE_LINK_LOCAL = route_link_local
 
 
-class Class(object):
+class Class:
     """
         class for class definition
     """
@@ -1189,7 +1187,7 @@ class Class(object):
         self.CALL_UP = ''
         self.CALL_DOWN = ''
 
-class BootFile(object):
+class BootFile:
     """
         class for netboot defintion
     """
@@ -1202,3 +1200,6 @@ class BootFile(object):
         self.BOOTFILE_URL = ''
         # User class (Option 15)
         self.USER_CLASS = ''
+
+# singleton-like central instance
+cfg = Config()

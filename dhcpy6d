@@ -20,6 +20,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 import distro
+import sys
+# access /usr/share/pyshared on Debian
+# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715010
+if distro.id() == 'debian':
+    sys.path[0:0] = ['/usr/share/pyshared']
+
 import socket
 import struct
 import platform
@@ -27,7 +33,6 @@ import binascii
 import subprocess
 import subprocess
 import shlex
-import sys
 import time
 import threading
 import queue
@@ -50,13 +55,17 @@ import dns.reversename
 if distro.id() == 'debian':
     sys.path[0:0] = ['/usr/share/pyshared']
 
-from dhcpy6.helpers import *
-from dhcpy6.constants import *
-from dhcpy6.config import *
-from dhcpy6.storage import *
+from server.helpers import *
+from server.constants import *
+# from server.config import *
+from server.config import (cfg,
+                           Address,
+                           Prefix)
+from server.log import log
+from server.storage import *
 
 # create and read config file
-cfg = Config()
+# cfg = Config()
 
 # if nameserver is given create resolver
 if len(cfg.NAMESERVER) > 0:
@@ -74,39 +83,6 @@ if cfg.DNS_UPDATE:
     # resolver for DNS updates
     resolver_update = dns.resolver.Resolver()
     resolver_update.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
-
-# Logging
-log = logging.getLogger('dhcpy6d')
-if cfg.LOG:
-    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
-    log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
-    if cfg.LOG_FILE != '':
-        os.chown(cfg.LOG_FILE, pwd.getpwnam(cfg.USER).pw_uid, grp.getgrnam(cfg.GROUP).gr_gid)
-        log_handler = logging.handlers.WatchedFileHandler(cfg.LOG_FILE)
-        log_handler.setFormatter(formatter)
-        log.addHandler(log_handler)
-    # std err console output
-    if cfg.LOG_CONSOLE:
-        log_handler = logging.StreamHandler()
-        log_handler.setFormatter(formatter)
-        log.addHandler(log_handler)
-    if cfg.LOG_SYSLOG:
-        # time should be added by syslog daemon
-        hostname = socket.gethostname().split('.')[0]
-        formatter = logging.Formatter(hostname + ' %(name)s %(levelname)s %(message)s')
-        # if /socket/file is given use this as addres
-        if cfg.LOG_SYSLOG_DESTINATION.startswith('/') == True:
-            destination = cfg.LOG_SYSLOG_DESTINATION
-        # if host and port are defined use them...
-        elif cfg.LOG_SYSLOG_DESTINATION.count(':') == 1:
-            destination = tuple(cfg.LOG_SYSLOG_DESTINATION.split(':'))
-        # ...otherwise add port 514 to given host address
-        else:
-            destination = (cfg.LOG_SYSLOG_DESTINATION, 514)
-        log_handler = logging.handlers.SysLogHandler(address=destination,
-                      facility=logging.handlers.SysLogHandler.__dict__['LOG_' + cfg.LOG_SYSLOG_FACILITY])
-        log_handler.setFormatter(formatter)
-        log.addHandler(log_handler)
 
 # dictionary to store transactions - key is transaction ID, value a transaction object
 Transactions = dict()
@@ -1329,7 +1305,7 @@ class TimerThread(threading.Thread):
             time.sleep(1)
 
 
-class Client(object):
+class Client:
     """
         client object, generated from configuration database or on the fly
     """
@@ -1389,7 +1365,7 @@ class Client(object):
         return optionsstring
 
 
-class Route(object):
+class Route:
     """
         store data of a route which should be given to an external application
         router is here the prefix requesting host
@@ -1400,7 +1376,7 @@ class Route(object):
         self.router = router
 
 
-class Request(object):
+class Request:
     """
         to be stored in requests dictionary to log client requests to be able to find brute force clients
     """
@@ -1410,7 +1386,7 @@ class Request(object):
         self.timestamp = timer
 
 
-class Transaction(object):
+class Transaction:
     """
         all data of one transaction, to be collected in Transactions
     """

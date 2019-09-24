@@ -10,8 +10,7 @@ RUN pip install distro \
                 dnspython \
                 mysqlclient \
                 psutil \
-                psycopg2 \
-                pyroute2
+                psycopg2
 
 RUN useradd --system --user-group dhcpy6d
 
