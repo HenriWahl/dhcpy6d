@@ -2468,7 +2468,7 @@ class Handler(socketserver.DatagramRequestHandler):
             execute commands sent in by control message
         """
         control_message = binascii.unhexlify(raw_bytes)
-        control_message_fragments = control_message.split(' ')
+        control_message_fragments = control_message.decode().split(' ')
         # clean message
         control_message_clean = list()
         for count in range(len(control_message_fragments)):
