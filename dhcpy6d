@@ -50,11 +50,6 @@ import dns.query
 import dns.resolver
 import dns.reversename
 
-# access /usr/share/pyshared on Debian
-# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715010
-if distro.id() == 'debian':
-    sys.path[0:0] = ['/usr/share/pyshared']
-
 from server.helpers import *
 from server.constants import *
 # from server.config import *
