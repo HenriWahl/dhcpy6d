@@ -35,6 +35,8 @@ if len(cfg.NAMESERVER) > 0:
     # default nameservers for DNS queries
     resolver_query = dns.resolver.Resolver()
     resolver_query.nameservers = cfg.NAMESERVER
+else:
+    resolver_query = None
 
 # RNDC Key for DNS updates from ISC Bind /etc/rndc.key
 if cfg.DNS_UPDATE:
@@ -46,6 +48,8 @@ if cfg.DNS_UPDATE:
     # resolver for DNS updates
     resolver_update = dns.resolver.Resolver()
     resolver_update.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
+else:
+    resolver_update = None
 
 # dictionary to store transactions - key is transaction ID, value a transaction object
 Transactions = dict()
