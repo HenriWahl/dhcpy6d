@@ -52,140 +52,33 @@ import dns.reversename
 
 from server.helpers import *
 from server.constants import *
-# from server.config import *
 from server.config import (cfg,
                            Address,
                            Prefix)
+from server.globals import (CollectedMACs,
+                            configstore,
+                            configanswer_queue,
+                            configquery_queue,
+                            dnsquery_queue,
+                            DUMMY_IAID,
+                            DUMMY_MAC,
+                            EMPTY_OPTIONS,
+                            IA_OPTIONS,
+                            IF_NAME,
+                            IF_NUMBER,
+                            IGNORED_LOG_OPTIONS,
+                            NC,
+                            OS,
+                            requests,
+                            requests_blacklist,
+                            route_queue,
+                            timer,
+                            volatilestore,
+                            volatileanswer_queue,
+                            volatilequery_queue,
+                            Transactions)
 from server.log import log
 from server.storage import *
-
-# create and read config file
-# cfg = Config()
-
-# if nameserver is given create resolver
-if len(cfg.NAMESERVER) > 0:
-    # default nameservers for DNS queries
-    resolver_query = dns.resolver.Resolver()
-    resolver_query.nameservers = cfg.NAMESERVER
-
-# RNDC Key for DNS updates from ISC Bind /etc/rndc.key
-if cfg.DNS_UPDATE:
-    import dns.update
-    import dns.tsigkeyring
-
-    Keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY : cfg.DNS_RNDC_SECRET})
-
-    # resolver for DNS updates
-    resolver_update = dns.resolver.Resolver()
-    resolver_update.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
-
-# dictionary to store transactions - key is transaction ID, value a transaction object
-Transactions = dict()
-
-# collected MAC addresses from clients, mapping to link local IPs
-CollectedMACs = dict()
-
-# queues for queries
-configquery_queue = queue.Queue()
-configanswer_queue = queue.Queue()
-volatilequery_queue = queue.Queue()
-volatileanswer_queue = queue.Queue()
-
-# queue for dns actualization
-dnsquery_queue = queue.Queue()
-
-# queue for executing some script to modify routes after delegating prefixes
-route_queue = queue.Queue()
-
-# attempt to log connections and count them to find out which clients do silly crazy brute force
-requests = dict()
-requests_blacklist = dict()
-
-# global time variable, synchronized by TimerThread
-timer = int(time.time())
-
-# save OS
-OS = platform.system()
-if 'BSD' in OS:
-    OS = 'BSD'
-
-# platform-dependant neighbor cache call
-# every platform has its different output
-# dev, llip and mac are positions of output of call
-# len is minimal length a line has to have to be evaluable
-#
-# update: has been different to Linux which now access neighbor cache natively
-NC = { 'BSD': { 'call' : '/usr/sbin/ndp -a -n',
-                'dev'  : 2,
-                'llip' : 0,
-                'mac'  : 1,
-                'len'  : 3},
-       'Darwin': { 'call' : '/usr/sbin/ndp -a -n',
-                   'dev'  : 2,
-                   'llip' : 0,
-                   'mac'  : 1,
-                   'len'  : 3}
-            }
-
-# libc access via ctypes, needed for interface handling, get it by helpers.get_libc()
-# obsolete in Python 3
-# LIBC = get_libc()
-
-# index IF name > number, gets filled in UDPMulticastIPv6
-IF_NAME = dict()
-# index IF number > name
-IF_NUMBER = dict()
-
-# IA_NA, IA_TA and IA_PD Options referred here in handler
-IA_OPTIONS = (3, 4, 25)
-
-# options to be ignored when logging
-IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'DUIDLLAddress', 'DUIDType', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old']
-
-# empty options string test
-EMPTY_OPTIONS = [None, False, '', []]
-
-# dummy IAID for transactions
-DUMMY_IAID = '00000000'
-
-# dummy MAC for transactions
-DUMMY_MAC = '00:00:00:00:00:00'
-
-# store
-# because of thread trouble there should not be too much db connections at once
-# so we need to use the queryqueue way - subject to change
-# source of configuration of hosts
-# use client configuration only if needed
-if cfg.STORE_CONFIG:
-    if cfg.STORE_CONFIG == 'file':
-        configstore = Textfile(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
-    if cfg.STORE_CONFIG == 'mysql':
-        configstore = DBMySQL(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
-    if cfg.STORE_CONFIG == 'postgresql':
-        configstore = DBPostgreSQL(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
-    if cfg.STORE_CONFIG == 'sqlite':
-        configstore = SQLite(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs, storage_type='config')
-else:
-    # dummy configstore if no client config is needed
-    configstore = Store(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
-    # 'none' store is always connected
-    configstore.connected = True
-
-# storage for changing data like leases, LLIPs, DUIDs etc.
-if cfg.STORE_VOLATILE == 'mysql':
-    volatilestore = DBMySQL(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs)
-if cfg.STORE_VOLATILE == 'postgresql':
-    volatilestore = DBPostgreSQL(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs)
-if cfg.STORE_VOLATILE == 'sqlite':
-    volatilestore = SQLite(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs, storage_type='volatile')
-
-# do not start if no database connection exists
-if not configstore.connected:
-    print('\nConfiguration database is not connected!\n')
-    sys.exit(1)
-if not volatilestore.connected:
-    print('\nDatabase for volatile data is not connected!\n')
-    sys.exit(1)
 
 
 def build_client(transaction_id):
@@ -360,7 +253,7 @@ def build_client(transaction_id):
                                             use_lease = False
 
                                         # only use lease if it still matches prototype
-                                        if use_lease == True:
+                                        if use_lease:
                                             # when category is range, test if it still applies
                                             if a['category'] == 'range':
                                                 # borrowed from parse_pattern_address to find out if lease is still in a meanwhile maybe changed range
@@ -469,7 +362,7 @@ def build_client(transaction_id):
                                                 use_lease = False
                                                 break
                                         # only use prefix if it still matches prototype
-                                        if use_lease == True:
+                                        if use_lease:
                                             # when category is range, test if it still applies
                                             if p['category'] == 'range':
                                                 # borrowed from parse_pattern_prefix to find out if lease is still in a meanwhile maybe changed range
@@ -954,9 +847,9 @@ def collect_macs(now):
                 if not host.llip in CollectedMACs:
                     if host.llip.startswith('fe80'):
                         CollectedMACs[host.llip] = host
-                        if cfg.LOG_MAC_LLIP == True:
+                        if cfg.LOG_MAC_LLIP:
                             log.info('Collected MAC %s for LinkLocalIP %s' % (host.mac, colonify_ip6(host.llip)))
-                        if cfg.CACHE_MAC_LLIP == True:
+                        if cfg.CACHE_MAC_LLIP:
                             volatilestore.store_mac_llip(host.mac, host.llip, timer)
         else:
             # subject to change - other distros might have other paths - might become a task
@@ -978,7 +871,7 @@ def collect_macs(now):
                                                                                mac=f[NC[OS]['mac']],
                                                                                interface=f[NC[OS]['dev']],
                                                                                now=now)
-                        if cfg.LOG_MAC_LLIP == True:
+                        if cfg.LOG_MAC_LLIP:
                             log.info('Collected MAC %s for LinkLocalIP %s' % (f[NC[OS]['mac']], colonify_ip6(f[NC[OS]['llip']])))
                         volatilestore.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']], timer)
     except Exception as err:
@@ -1009,7 +902,7 @@ def dns_update(transaction_id, action='update'):
 
         # if address should be updated in DNS update it
         for a in Transactions[transaction_id].Client.Addresses:
-            if a.DNS_UPDATE and hostname != '' and a.VALID == True:
+            if a.DNS_UPDATE and hostname != '' and a.VALID:
                 if cfg.DNS_IGNORE_CLIENT or Transactions[transaction_id].DNS_S == 1:
                     # put query into DNS query queue
                     dnsquery_queue.put((action, hostname, a))
@@ -1041,7 +934,7 @@ def dns_delete(transaction_id, address='', action='release'):
                     if not mac == Transactions[transaction_id].MAC:
                         delete = False
 
-            if hostname != '' and delete == True:
+            if hostname != '' and delete:
                 # use address from address types as template for the real
                 # address to be deleted from DNS
                 dns_address = copy.copy(a)
@@ -1065,7 +958,7 @@ def modify_route(transaction_id, mode):
             routes = list()
             for prefix in Transactions[transaction_id].Client.Prefixes:
                 # use LinkLocal Address of client if wanted
-                if prefix.ROUTE_LINK_LOCAL == True:
+                if prefix.ROUTE_LINK_LOCAL:
                     router = Transactions[transaction_id].ClientLLIP
                 else:
                     if len(Transactions[transaction_id].Client.Addresses) == 1:
@@ -1207,7 +1100,7 @@ class TidyUpThread(threading.Thread):
                     timestamp = timer
                     for record in list(CollectedMACs.values()):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
-                            if cfg.LOG_MAC_LLIP == True:
+                            if cfg.LOG_MAC_LLIP:
                                 log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
                             CollectedMACs.pop(record.llip)
                     del timestamp
@@ -1440,8 +1333,8 @@ class Transaction:
         self.Answer = 'normal'
         # default DUID values
         self.DUID = ''
-        self.DUIDType = 1
-        self.DUID_EN = 0
+        # self.DUIDType = 1
+        # self.DUID_EN = 0
         # Elapsed Time - option 8, at least sent by WIDE dhcp6c when requesting delegated prefix
         self.ElapsedTime = 0
         # Client architecture type (RFC 5970)
@@ -1455,12 +1348,12 @@ class Transaction:
         # 1 Client Identifier Option
         if 1 in options:
             self.DUID = options[1]
-            self.DUIDType = int(options[1][0:4], 16)
-            # DUID-EN can be retrieved from DUID
-            if self.DUIDType == 2:
-                # some HP printers seem to produce pretty bad requests, thus some cleaning is necessary
-                # e.g. '1 1 1 00020000000b0026b1f72a49' instead of '00020000000b0026b1f72a49'
-                self.DUID_EN = int(options[1].split(' ')[-1][4:12], 16)
+            # self.DUIDType = int(options[1][0:4], 16)
+            # # DUID-EN can be retrieved from DUID
+            # if self.DUIDType == 2:
+            #     # some HP printers seem to produce pretty bad requests, thus some cleaning is necessary
+            #     # e.g. '1 1 1 00020000000b0026b1f72a49' instead of '00020000000b0026b1f72a49'
+            #     self.DUID_EN = int(options[1].split(' ')[-1][4:12], 16)
 
         # Identity Association for Non-temporary Addresses
         # 3 Identity Association for Non-temporary Address Option
@@ -1806,7 +1699,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                         Transactions[transaction_id].MAC = CollectedMACs[Transactions[transaction_id].ClientLLIP].mac
                                     except:
                                         # MAC not yet found :-(
-                                        if cfg.LOG_MAC_LLIP == True:
+                                        if cfg.LOG_MAC_LLIP:
                                             log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (colonify_ip6(Transactions[transaction_id].ClientLLIP))))
 
                             # if finally there is some info about the client or MACs play no role try to answer the request
@@ -2199,7 +2092,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                     for prefix in Transactions[transaction_id].Client.Prefixes:
                                         ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
                                                                                         colonify_ip6(prefix.PREFIX))).decode()
-                                        if prefix.VALID == True:
+                                        if prefix.VALID:
                                             preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
                                             valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
                                         else:
@@ -2463,7 +2356,7 @@ if __name__ == '__main__':
 
     # configure SocketServer
     UDPMulticastIPv6.address_family = socket.AF_INET6
-    server = UDPMulticastIPv6(('', 547), Handler)
+    udp_server = UDPMulticastIPv6(('', 547), Handler)
 
     # start query queue watcher
     configquery_queue_watcher = QueryQueue(cfg, configstore, configquery_queue, configanswer_queue)
@@ -2474,7 +2367,7 @@ if __name__ == '__main__':
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':
         cfg.PREFIX = volatilestore.get_dynamic_prefix()
-    if cfg.PREFIX == None:
+    if cfg.PREFIX is None:
         cfg.PREFIX = ''
 
     # apply dynamic prefix to addresses and prefixes
@@ -2487,7 +2380,7 @@ if __name__ == '__main__':
     volatilestore.LegacyAdjustments()
 
     # collect all known MAC addresses from database
-    if cfg.CACHE_MAC_LLIP == True:
+    if cfg.CACHE_MAC_LLIP:
         volatilestore.CollectMACsFromDB()
 
     # start timer
@@ -2521,6 +2414,6 @@ if __name__ == '__main__':
 
     # serve forever
     try:
-        server.serve_forever()
+        udp_server.serve_forever()
     except KeyboardInterrupt:
         sys.exit(0)
