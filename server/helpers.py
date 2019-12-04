@@ -21,6 +21,7 @@ import random
 import sys
 import shlex
 import logging
+import uuid
 
 # needed for neighbor cache access
 import select
@@ -257,7 +258,13 @@ def error_exit(message='An error occured.', status=1):
     '''
     sys.stderr.write('\n%s\n\n' % (message))
     sys.exit(status)
-    
+
+def generate_duid():
+    """
+    Creates a DUID for the server - needed if none exists or is given
+    :return:
+    """
+    return '00010001{0:08x}{1:012x}'.format(int(time.time()), uuid.getnode())
     
 def listify_option(option):
     '''
@@ -471,16 +478,16 @@ def get_neighbor_cache_linux(cfg, IF_NUMBER, log, now):
     return result
 
 
-def get_libc():
-    """
-        return libC-object to be used for NIC handling in dhcpy6d and config.py
-        find_library makes this OS-independent
-    """
-    try:
-        return ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
-    except:
-        print("\n OS not yet supported. :-( \n")
-        sys.exit(1)
+# def get_libc():
+#     """
+#         return libC-object to be used for NIC handling in dhcpy6d and config.py
+#         find_library makes this OS-independent
+#     """
+#     try:
+#         return ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+#     except:
+#         print("\n OS not yet supported. :-( \n")
+#         sys.exit(1)
 
 
 def send_control_message(message):

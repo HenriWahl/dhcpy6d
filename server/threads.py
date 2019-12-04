@@ -25,13 +25,13 @@ import traceback
 import dns
 
 from server.config import cfg
-from server.globals import (CollectedMACs,
+from server.globals import (collected_macs,
                             requests,
                             requests_blacklist,
                             route_queue,
                             resolver_update,
-                            Transactions,
-                            volatilestore)
+                            transactions,
+                            volatile_store)
 from server.helpers import colonify_ip6
 from server.log import log
 
@@ -101,29 +101,29 @@ class TidyUpThread(Thread):
             # get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                for t in list(Transactions.keys()):
+                for t in list(transactions.keys()):
                     try:
-                        if timer > Transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
-                            Transactions.pop(Transactions[t].ID)
+                        if timer > transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
+                            transactions.pop(transactions[t].ID)
                     except Exception as err:
                         log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))
                         traceback.print_exc(file=sys.stdout)
                         sys.stdout.flush()
 
                 # if disconnected try reconnect
-                if not volatilestore.connected:
-                    volatilestore.DBConnect()
+                if not volatile_store.connected:
+                    volatile_store.DBConnect()
                 else:
                     # cleaning database once per minute should be enough
                     if dbcount > 60//cfg.CLEANING_INTERVAL:
                         # remove leases which might not be recycled like random addresses for example
-                        volatilestore.remove_leases(timer, 'random')
+                        volatile_store.remove_leases(timer, 'random')
                         # set leases and prefixes free whose valid lifetime is over
-                        volatilestore.release_free_leases(timer)
-                        volatilestore.release_free_prefixes(timer)
+                        volatile_store.release_free_leases(timer)
+                        volatile_store.release_free_prefixes(timer)
                         # unlock advertised leases and prefixes remaining
-                        volatilestore.unlock_unused_advertised_leases(timer)
-                        volatilestore.unlock_unused_advertised_prefixes(timer)
+                        volatile_store.unlock_unused_advertised_leases(timer)
+                        volatile_store.unlock_unused_advertised_prefixes(timer)
                         # remove routes with inactive prefixes
                         self.check_routes()
                         # check for brute force clients and put them into blacklist if necessary
@@ -135,11 +135,11 @@ class TidyUpThread(Thread):
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
                 if cfg.CACHE_MAC_LLIP == False:
                     timestamp = timer
-                    for record in list(CollectedMACs.values()):
+                    for record in list(collected_macs.values()):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP:
                                 log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
-                            CollectedMACs.pop(record.llip)
+                            collected_macs.pop(record.llip)
                     del timestamp
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:
@@ -151,8 +151,8 @@ class TidyUpThread(Thread):
         """
             remove routes with inactive prefixes
         """
-        for prefix in volatilestore.get_inactive_prefixes():
-            length, router, pclass = volatilestore.get_route(prefix)
+        for prefix in volatile_store.get_inactive_prefixes():
+            length, router, pclass = volatile_store.get_route(prefix)
             # hopefully the class stored in database still exists
             if pclass in cfg.CLASSES:
                 route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
@@ -208,9 +208,9 @@ class RouteThread(Thread):
             # ignore result to avoid routes being set but not noted in database when a command like
             # 'ip -6 route delete' gives a return code not 0 because a route already exists
             if mode == 'up':
-                volatilestore.store_route(prefix, length, router, timer)
+                volatile_store.store_route(prefix, length, router, timer)
             if mode == 'down':
-                volatilestore.remove_route(prefix)
+                volatile_store.remove_route(prefix)
             log.info("Called '{0}' to modify route - result: {1}".format(call_real, result))
 
 

@@ -35,8 +35,8 @@ import ctypes
 from .helpers import *
 
 # use ctypes for libc access in get_libc from helpers
-LIBC = get_libc()
-
+# LIBC = get_libc()
+#
 # needed for boolean options
 BOOLPOOL = {'0': False, '1': True, 'no': False, 'yes': True, 'false': False, 'true': True, False: False, True: True,
             'on': True, 'off': False}
@@ -61,12 +61,12 @@ See manpage dhcpy6d(8) for details.
 '''
 
 
-def generate_duid():
-    """
-    Creates a DUID for the server - neede if none exists or is given
-    :return:
-    """
-    return '00010001{0:08x}{1:012x}'.format(int(time.time()), uuid.getnode())
+# def generate_duid():
+#     """
+#     Creates a DUID for the server - needed if none exists or is given
+#     :return:
+#     """
+#     return '00010001{0:08x}{1:012x}'.format(int(time.time()), uuid.getnode())
 
 
 class Config:

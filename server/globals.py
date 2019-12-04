@@ -52,19 +52,19 @@ else:
     resolver_update = None
 
 # dictionary to store transactions - key is transaction ID, value a transaction object
-Transactions = dict()
+transactions = dict()
 
 # collected MAC addresses from clients, mapping to link local IPs
-CollectedMACs = dict()
+collected_macs = dict()
 
 # queues for queries
-configquery_queue = queue.Queue()
-configanswer_queue = queue.Queue()
-volatilequery_queue = queue.Queue()
-volatileanswer_queue = queue.Queue()
+config_query_queue = queue.Queue()
+config_answer_queue = queue.Queue()
+volatile_query_queue = queue.Queue()
+volatile_answer_queue = queue.Queue()
 
 # queue for dns actualization
-dnsquery_queue = queue.Queue()
+dns_query_queue = queue.Queue()
 
 # queue for executing some script to modify routes after delegating prefixes
 route_queue = queue.Queue()
@@ -131,31 +131,31 @@ DUMMY_MAC = '00:00:00:00:00:00'
 # use client configuration only if needed
 if cfg.STORE_CONFIG:
     if cfg.STORE_CONFIG == 'file':
-        configstore = Textfile(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
+        config_store = Textfile(cfg, config_query_queue, config_answer_queue, transactions, collected_macs)
     if cfg.STORE_CONFIG == 'mysql':
-        configstore = DBMySQL(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
+        config_store = DBMySQL(cfg, config_query_queue, config_answer_queue, transactions, collected_macs)
     if cfg.STORE_CONFIG == 'postgresql':
-        configstore = DBPostgreSQL(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
+        config_store = DBPostgreSQL(cfg, config_query_queue, config_answer_queue, transactions, collected_macs)
     if cfg.STORE_CONFIG == 'sqlite':
-        configstore = SQLite(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs, storage_type='config')
+        config_store = SQLite(cfg, config_query_queue, config_answer_queue, transactions, collected_macs, storage_type='config')
 else:
     # dummy configstore if no client config is needed
-    configstore = Store(cfg, configquery_queue, configanswer_queue, Transactions, CollectedMACs)
+    config_store = Store(cfg, config_query_queue, config_answer_queue, transactions, collected_macs)
     # 'none' store is always connected
-    configstore.connected = True
+    config_store.connected = True
 
 # storage for changing data like leases, LLIPs, DUIDs etc.
 if cfg.STORE_VOLATILE == 'mysql':
-    volatilestore = DBMySQL(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs)
+    volatile_store = DBMySQL(cfg, volatile_query_queue, volatile_answer_queue, transactions, collected_macs)
 if cfg.STORE_VOLATILE == 'postgresql':
-    volatilestore = DBPostgreSQL(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs)
+    volatile_store = DBPostgreSQL(cfg, volatile_query_queue, volatile_answer_queue, transactions, collected_macs)
 if cfg.STORE_VOLATILE == 'sqlite':
-    volatilestore = SQLite(cfg, volatilequery_queue, volatileanswer_queue, Transactions, CollectedMACs, storage_type='volatile')
+    volatile_store = SQLite(cfg, volatile_query_queue, volatile_answer_queue, transactions, collected_macs, storage_type='volatile')
 
 # do not start if no database connection exists
-if not configstore.connected:
+if not config_store.connected:
     print('\nConfiguration database is not connected!\n')
     sys.exit(1)
-if not volatilestore.connected:
+if not volatile_store.connected:
     print('\nDatabase for volatile data is not connected!\n')
     sys.exit(1)
