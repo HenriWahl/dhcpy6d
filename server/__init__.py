@@ -23,6 +23,7 @@ import random
 import select
 import shlex
 import socket
+import socketserver
 import struct
 import subprocess
 import sys
@@ -57,6 +58,7 @@ from .constants import (RTM_DELNEIGH,
                         NLA_ALIGNTO,
                         NLMSG_ALIGNTO)
 from .globals import (collected_macs,
+                      IF_NAME,
                       IF_NUMBER,
                       NC,
                       OS,
@@ -80,6 +82,47 @@ class NeighborCacheRecord:
         self.mac = mac
         self.interface = interface
         self.timestamp = now
+
+
+class UDPMulticastIPv6(socketserver.UnixDatagramServer):
+    """
+        modify server_bind to work with multicast
+        add DHCPv6 multicast group ff02::1:2
+    """
+    def server_bind(self):
+        """
+            multicast & python: http://code.activestate.com/recipes/442490/
+        """
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # multicast parameters
+        # hop is one because it is all about the same subnet
+        self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_LOOP, 0)
+        self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, 1)
+
+        for i in cfg.INTERFACE:
+            # IF_NAME[i] = LIBC.if_nametoindex(i)
+            IF_NAME[i] = socket.if_nametoindex(i)
+            IF_NUMBER[IF_NAME[i]] = i
+            if_number = struct.pack('I', IF_NAME[i])
+            mgroup = socket.inet_pton(socket.AF_INET6, cfg.MCAST) + if_number
+
+            # join multicast group - should work definitively if not ignoring interface at startup
+            if cfg.IGNORE_INTERFACE:
+                try:
+                    self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mgroup)
+                except Exception as err:
+                    print(err)
+            else:
+                self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mgroup)
+
+        # bind socket to server address
+        self.socket.bind(self.server_address)
+
+        # attempt to avoid blocking
+        self.socket.setblocking(False)
+
+        # some more requests?
+        self.request_queue_size = 100
 
 
 def get_neighbor_cache_linux(if_number, now):
