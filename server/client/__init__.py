@@ -21,22 +21,23 @@ import sys
 import traceback
 
 from ..config import (Address,
-                           cfg,
-                           Prefix)
+                      cfg,
+                      Prefix)
 from ..dns import get_ip_from_dns
 from ..globals import (config_store,
-                            EMPTY_OPTIONS,
-                            IGNORED_LOG_OPTIONS,
-                            timer,
-                            transactions,
-                            volatile_store)
+                       EMPTY_OPTIONS,
+                       IGNORED_LOG_OPTIONS,
+                       timer,
+                       transactions,
+                       volatile_store)
 from ..helpers import (colonify_ip6,
-                            decompress_ip6,
-                            decompress_prefix,
-                            split_prefix)
+                       decompress_ip6,
+                       decompress_prefix,
+                       split_prefix)
 from ..log import log
 from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
+
 
 class Client:
     """

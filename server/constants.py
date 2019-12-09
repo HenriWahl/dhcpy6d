@@ -16,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+import socket
+import struct
+
 # DHCPv6
 MESSAGE_TYPES = {1: 'SOLICIT',
                  2: 'ADVERTISE',
@@ -116,3 +119,50 @@ ARCHITECTURE_TYPE = {0: 'Intel x86PC',
                      8: 'EFI Xscale',
                      9: 'EFI x86 - 64'
                      }
+
+# used for NETLINK in get_neighbor_cache_linux() access by Github/vokac
+RTM_NEWNEIGH = 28
+RTM_DELNEIGH = 29
+RTM_GETNEIGH = 30
+NLM_F_REQUEST = 1
+# Modifiers to GET request
+NLM_F_ROOT = 0x100
+NLM_F_MATCH = 0x200
+NLM_F_DUMP = (NLM_F_ROOT | NLM_F_MATCH)
+# NETLINK message is alsways the same except header seq
+MSG = struct.pack('B', socket.AF_INET6)
+# always the same length...
+MSG_HEADER_LENGTH = 17
+# ...type...
+MSG_HEADER_TYPE = RTM_GETNEIGH
+# ...flags.
+MSG_HEADER_FLAGS = (NLM_F_REQUEST | NLM_F_DUMP)
+NLMSG_NOOP = 0x1  # /* Nothing.             */
+NLMSG_ERROR = 0x2  # /* Error                */
+NLMSG_DONE = 0x3  # /* End of a dump        */
+NLMSG_OVERRUN = 0x4  # /* Data lost            */
+
+NUD_INCOMPLETE = 0x01
+# state of peer
+NUD_REACHABLE = 0x02
+NUD_STALE = 0x04
+NUD_DELAY = 0x08
+NUD_PROBE = 0x10
+NUD_FAILED = 0x20
+NUD_NOARP = 0x40
+NUD_PERMANENT = 0x80
+NUD_NONE = 0x00
+
+NDA = {
+    0: 'NDA_UNSPEC',
+    1: 'NDA_DST',
+    2: 'NDA_LLADDR',
+    3: 'NDA_CACHEINFO',
+    4: 'NDA_PROBES',
+    5: 'NDA_VLAN',
+    6: 'NDA_PORT',
+    7: 'NDA_VNI',
+    8: 'NDA_IFINDEX',
+}
+NLMSG_ALIGNTO = 4
+NLA_ALIGNTO = 4
