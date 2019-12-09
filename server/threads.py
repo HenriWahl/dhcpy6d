@@ -30,10 +30,11 @@ from .globals import (collected_macs,
                       requests_blacklist,
                       route_queue,
                       resolver_update,
-                      transactions,
-                      volatile_store)
+                      transactions)
 from .helpers import colonify_ip6
 from .log import log
+from .storage import volatile_store
+
 
 class DNSQueryThread(Thread):
     """

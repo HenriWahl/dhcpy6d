@@ -35,20 +35,19 @@ import socket
 from server import UDPMulticastIPv6
 from server.config import cfg
 
-from server.globals import (config_store,
-                            config_answer_queue,
+from server.globals import (config_answer_queue,
                             config_query_queue,
                             dns_query_queue,
                             IF_NAME,
                             route_queue,
-                            volatile_store,
                             volatile_answer_queue,
                             volatile_query_queue)
 from server.log import log
 from server.response import Handler
 from server.route import manage_prefixes_routes
-from server.storage import (initialize_stores,
-                            QueryQueue)
+from server.storage import (config_store,
+                            QueryQueue,
+                            volatile_store)
 from server.threads import (DNSQueryThread,
                             RouteThread,
                             TidyUpThread,
@@ -69,9 +68,6 @@ if __name__ == '__main__':
     configquery_queue_watcher.start()
     volatilequery_queue_watcher = QueryQueue(volatile_store, volatile_query_queue, volatile_answer_queue)
     volatilequery_queue_watcher.start()
-
-    # config_store and volatile_store have to be initialized
-    initialize_stores()
 
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':

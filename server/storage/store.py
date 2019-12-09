@@ -1020,3 +1020,63 @@ class Store:
 
             # All OK
             print("Adding table 'routes' succeeded")
+
+
+class DB(Store):
+    """
+        MySQL and PostgreSQL database interface
+        for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
+    """
+
+    def __init__(self, query_queue, answer_queue):
+        Store.__init__(self, query_queue, answer_queue)
+        self.connection = None
+        try:
+            self.DBConnect()
+        except Exception as err:
+            print(err)
+
+
+    def DBConnect(self):
+        """
+            Connect to database server according to database type
+        """
+        if cfg.STORE_CONFIG == 'mysql' or cfg.STORE_VOLATILE == 'mysql':
+            try:
+                if not 'MySQLdb' in list(sys.modules.keys()):
+                    import MySQLdb
+            except:
+                error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
+            try:
+                self.connection = sys.modules['MySQLdb'].connect(host=cfg.STORE_DB_HOST,
+                                                   db=cfg.STORE_DB_DB,
+                                                   user=cfg.STORE_DB_USER,
+                                                   passwd=cfg.STORE_DB_PASSWORD)
+                self.connection.autocommit(True)
+                self.cursor = self.connection.cursor()
+                self.connected = True
+            except:
+                traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
+                self.connected = False
+
+        elif cfg.STORE_CONFIG == 'postgresql' or cfg.STORE_VOLATILE == 'postgresql':
+            try:
+                if not 'psycopg2' in list(sys.modules.keys()):
+                    import psycopg2
+            except:
+                traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
+                error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
+            try:
+                self.connection = sys.modules['psycopg2'].connect(host=cfg.STORE_DB_HOST,
+                                                   database=cfg.STORE_DB_DB,
+                                                   user=cfg.STORE_DB_USER,
+                                                   passwd=cfg.STORE_DB_PASSWORD)
+                self.cursor = self.connection.cursor()
+                self.connected = True
+            except:
+                traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
+                self.connected = False
+        return self.connected
