@@ -47,6 +47,19 @@ class Interface:
         self.index, self.name = interface_tuple
 
 
+class NeighborCacheRecord:
+    """
+    object for neighbor cache entries to be returned by get_neighbor_cache_linux() and in CollectedMACs
+    .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB
+    """
+
+    def __init__(self, llip='', mac='', interface='', now=0):
+        self.llip = llip
+        self.mac = mac
+        self.interface = interface
+        self.timestamp = now
+
+
 def convert_dns_to_binary(name):
     """
     convert domain name as described in RFC 1035, 3.1

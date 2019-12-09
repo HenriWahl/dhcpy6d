@@ -1,4 +1,17 @@
 Changelog for dhcpy6d
+
+2018-10-25
+
+    added ignore_mac option to work with ppp interfaces
+
+2018-06-15
+
+    fix for MySQLdb.IntegrityError
+
+2018-06-11 0.7.1
+
+    fixed recycling of prefixes
+
 2018-04-30 0.7
 
     added ntp_server option

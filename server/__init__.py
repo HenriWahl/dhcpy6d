@@ -67,21 +67,9 @@ from .globals import (collected_macs,
 from .helpers import (colonify_ip6,
                       colonify_mac,
                       correct_mac,
-                      decompress_ip6)
+                      decompress_ip6,
+                      NeighborCacheRecord)
 from .log import log
-
-
-class NeighborCacheRecord:
-    """
-    object for neighbor cache entries to be returned by get_neighbor_cache_linux() and in CollectedMACs
-    .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB
-    """
-
-    def __init__(self, llip='', mac='', interface='', now=0):
-        self.llip = llip
-        self.mac = mac
-        self.interface = interface
-        self.timestamp = now
 
 
 class UDPMulticastIPv6(socketserver.UnixDatagramServer):
