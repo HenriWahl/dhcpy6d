@@ -67,7 +67,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
     def handle(self):
         """
-            request handling happens here
+        request handling happens here
         """
         # empty dummy response
         self.response = ''
@@ -340,7 +340,6 @@ class Handler(socketserver.DatagramRequestHandler):
             sys.stdout.flush()
             log.error('handle(): %s | Caused by: %s | Transaction: %s' % (str(err), client_address, transaction_id))
             return None
-
 
     def build_response(self, response_type, transaction_id, options_request, status=0):
         """
@@ -834,10 +833,9 @@ class Handler(socketserver.DatagramRequestHandler):
 
             return None
 
-
     def finish(self):
         """
-            send response from self.response
+        send response from self.response
         """
         # send only if there is anything to send
         if cfg.REALLY_DO_IT:
@@ -846,10 +844,9 @@ class Handler(socketserver.DatagramRequestHandler):
         else:
             log.error("Nothing sent - please set 'really_do_it = yes' in config file or as command line option.")
 
-
     def control_message(self, raw_bytes):
         """
-            execute commands sent in by control message
+        execute commands sent in by control message
         """
         control_message = binascii.unhexlify(raw_bytes)
         control_message_fragments = control_message.decode().split(' ')
