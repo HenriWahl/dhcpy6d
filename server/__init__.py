@@ -62,15 +62,14 @@ from .globals import (collected_macs,
                       IF_NUMBER,
                       NC,
                       OS,
-                      timer,
-                      volatile_store)
+                      timer)
 from .helpers import (colonify_ip6,
                       colonify_mac,
                       correct_mac,
                       decompress_ip6,
                       NeighborCacheRecord)
 from .log import log
-
+from .storage import volatile_store
 
 class UDPMulticastIPv6(socketserver.UnixDatagramServer):
     """

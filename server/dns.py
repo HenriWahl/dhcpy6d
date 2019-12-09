@@ -24,10 +24,10 @@ from dns.resolver import (NoAnswer,
 from .config import cfg
 from .globals import (dns_query_queue,
                       transactions,
-                      resolver_query,
-                      volatile_store)
+                      resolver_query)
 from .helpers import (colonify_ip6,
                       decompress_ip6)
+from .storage import volatile_store
 
 
 def dns_update(transaction_id, action='update'):

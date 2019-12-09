@@ -19,9 +19,9 @@
 from .config import cfg
 from .globals import (route_queue,
                       timer,
-                      transactions,
-                      volatile_store)
+                      transactions)
 from .log import log
+from .storage import volatile_store
 
 class Route:
     """
