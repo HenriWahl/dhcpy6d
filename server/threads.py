@@ -24,16 +24,16 @@ import traceback
 
 import dns
 
-from server.config import cfg
-from server.globals import (collected_macs,
-                            requests,
-                            requests_blacklist,
-                            route_queue,
-                            resolver_update,
-                            transactions,
-                            volatile_store)
-from server.helpers import colonify_ip6
-from server.log import log
+from .config import cfg
+from .globals import (collected_macs,
+                      requests,
+                      requests_blacklist,
+                      route_queue,
+                      resolver_update,
+                      transactions,
+                      volatile_store)
+from .helpers import colonify_ip6
+from .log import log
 
 class DNSQueryThread(Thread):
     """

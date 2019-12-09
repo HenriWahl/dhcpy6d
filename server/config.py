@@ -1201,5 +1201,14 @@ class BootFile:
         # User class (Option 15)
         self.USER_CLASS = ''
 
+
+def generate_duid():
+    """
+    Creates a DUID for the server - needed if none exists or is given
+    :return:
+    """
+    return '00010001{0:08x}{1:012x}'.format(int(time.time()), uuid.getnode())
+
+
 # singleton-like central instance
 cfg = Config()

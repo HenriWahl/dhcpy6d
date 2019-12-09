@@ -23,12 +23,12 @@ import time
 
 import dns
 
-from server.config import cfg
-from server.storage import (DBMySQL,
-                            DBPostgreSQL,
-                            SQLite,
-                            Store,
-                            Textfile)
+from .config import cfg
+from .storage import (DBMySQL,
+                      DBPostgreSQL,
+                      SQLite,
+                      Store,
+                      Textfile)
 
 # if nameserver is given create resolver
 if len(cfg.NAMESERVER) > 0:
@@ -87,7 +87,7 @@ if 'BSD' in OS:
 # len is minimal length a line has to have to be evaluable
 #
 # update: has been different to Linux which now access neighbor cache natively
-NC = { 'BSD': { 'call' : '/usr/sbin/ndp -a -n',
+NC = {'BSD': {'call' : '/usr/sbin/ndp -a -n',
                 'dev'  : 2,
                 'llip' : 0,
                 'mac'  : 1,
@@ -97,7 +97,7 @@ NC = { 'BSD': { 'call' : '/usr/sbin/ndp -a -n',
                    'llip' : 0,
                    'mac'  : 1,
                    'len'  : 3}
-            }
+      }
 
 # libc access via ctypes, needed for interface handling, get it by helpers.get_libc()
 # obsolete in Python 3
