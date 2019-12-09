@@ -31,14 +31,12 @@ from ..constants import MESSAGE_TYPES
 from ..dns import (dns_delete,
                    dns_update)
 from ..globals import (collected_macs,
-                       config_store,
                        DUMMY_MAC,
                        IA_OPTIONS,
                        requests,
                        requests_blacklist,
                        timer,
-                       transactions,
-                       volatile_store)
+                       transactions)
 from ..helpers import (build_option,
                        colonify_ip6,
                        convert_dns_to_binary,
@@ -47,6 +45,8 @@ from ..helpers import (build_option,
                        LOCALHOST_INTERFACES)
 from ..log import log
 from ..route import modify_route
+from ..storage import (config_store,
+                       volatile_store)
 from ..transaction import Transaction
 
 
