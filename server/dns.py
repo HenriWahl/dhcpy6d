@@ -48,10 +48,10 @@ def dns_update(transaction_id, action='update'):
             hostname = transactions[transaction_id].Hostname
         else:
             # hostname from client info built from configuration
-            hostname = transactions[transaction_id].Client.Hostname
+            hostname = transactions[transaction_id].Client.hostname
 
         # if address should be updated in DNS update it
-        for a in transactions[transaction_id].Client.Addresses:
+        for a in transactions[transaction_id].Client.addresses:
             if a.DNS_UPDATE and hostname != '' and a.VALID:
                 if cfg.DNS_IGNORE_CLIENT or transactions[transaction_id].DNS_S == 1:
                     # put query into DNS query queue

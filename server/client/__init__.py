@@ -24,17 +24,18 @@ from ..config import (Address,
                       cfg,
                       Prefix)
 from ..dns import get_ip_from_dns
-from ..globals import (config_store,
-                       EMPTY_OPTIONS,
+from ..globals import (EMPTY_OPTIONS,
                        IGNORED_LOG_OPTIONS,
                        timer,
-                       transactions,
-                       volatile_store)
+                       transactions)
 from ..helpers import (colonify_ip6,
                        decompress_ip6,
                        decompress_prefix,
                        split_prefix)
 from ..log import log
+from ..storage import (config_store,
+                       volatile_store)
+
 from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
 
@@ -56,7 +57,7 @@ class Client:
         self.duid = ''
         # Hostname
         self.hostname = ''
-        # Class/role of client
+        # Class/role of client - sadly "class" is a keyword and "class_" is more error prone
         self.client_class = ''
         # MAC
         self.mac = ''

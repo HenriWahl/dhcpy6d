@@ -120,7 +120,7 @@ class Store:
         """
         # only if client exists
         if transaction.Client:
-            for a in transaction.Client.Addresses:
+            for a in transaction.Client.addresses:
                 if not a.ADDRESS is None:
                     query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
                     answer = self.query(query)
@@ -137,11 +137,11 @@ class Store:
                                    transaction.LastMessageReceivedType,
                                    a.PREFERRED_LIFETIME,
                                    a.VALID_LIFETIME,
-                                   transaction.Client.Hostname,
+                                   transaction.Client.hostname,
                                    a.TYPE,
                                    a.CATEGORY,
                                    a.IA_TYPE,
-                                   transaction.Client.Class,
+                                   transaction.Client.client_class,
                                    transaction.MAC,
                                    transaction.DUID,
                                    transaction.IAID,
@@ -167,11 +167,11 @@ class Store:
                                    transaction.LastMessageReceivedType,
                                    a.PREFERRED_LIFETIME,
                                    a.VALID_LIFETIME,
-                                   transaction.Client.Hostname,
+                                   transaction.Client.hostname,
                                    a.TYPE,
                                    a.CATEGORY,
                                    a.IA_TYPE,
-                                   transaction.Client.Class,
+                                   transaction.Client.client_class,
                                    transaction.MAC,
                                    transaction.DUID,
                                    transaction.IAID,
@@ -187,7 +187,7 @@ class Store:
                                       a.ADDRESS)
                             self.query(query)
 
-            for p in transaction.Client.Prefixes:
+            for p in transaction.Client.prefixes:
                 if not p.PREFIX is None:
                     query = "SELECT prefix FROM %s WHERE prefix = '%s'" % (self.table_prefixes, p.PREFIX)
                     answer = self.query(query)
@@ -205,10 +205,10 @@ class Store:
                                    transaction.LastMessageReceivedType,
                                    p.PREFERRED_LIFETIME,
                                    p.VALID_LIFETIME,
-                                   transaction.Client.Hostname,
+                                   transaction.Client.hostname,
                                    p.TYPE,
                                    p.CATEGORY,
-                                   transaction.Client.Class,
+                                   transaction.Client.client_class,
                                    transaction.MAC,
                                    transaction.DUID,
                                    transaction.IAID,
@@ -232,10 +232,10 @@ class Store:
                                    transaction.LastMessageReceivedType,
                                    p.PREFERRED_LIFETIME,
                                    p.VALID_LIFETIME,
-                                   transaction.Client.Hostname,
+                                   transaction.Client.hostname,
                                    p.TYPE,
                                    p.CATEGORY,
-                                   transaction.Client.Class,
+                                   transaction.Client.client_class,
                                    transaction.MAC,
                                    transaction.DUID,
                                    transaction.IAID,

@@ -22,6 +22,7 @@ from ..globals import transactions
 from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option)
+
 from .store import (ClientConfig,
                     Store)
 

@@ -377,7 +377,7 @@ class Handler(socketserver.DatagramRequestHandler):
                         # transactions[transaction_id].Client = build_client(transaction_id)
                         transactions[transaction_id].Client = Client(transaction_id)
 
-                    if 'addresses' in cfg.CLASSES[transactions[transaction_id].Client.Class].ADVERTISE and \
+                    if 'addresses' in cfg.CLASSES[transactions[transaction_id].Client.client_class].ADVERTISE and \
                                     (3 or 4) in transactions[transaction_id].IA_Options:
                         # check if only a short NoAddrAvail answer or none at all is to be returned
                         if not transactions[transaction_id].Answer == 'normal':
@@ -385,7 +385,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                                 response_ascii += build_option(13, '%04x' % (2))
                                 # clean client addresses which not be deployed anyway
-                                transactions[transaction_id].Client.Addresses[:] = []
+                                transactions[transaction_id].Client.addresses[:] = []
                                 # options in answer to be logged
                                 options_answer.append(13)
                             else:
@@ -399,7 +399,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 # embed option 5 into option 3 - several if necessary
                                 ia_addresses = ''
                                 try:
-                                    for address in transactions[transaction_id].Client.Addresses:
+                                    for address in transactions[transaction_id].Client.addresses:
                                         if address.IA_TYPE == 'na':
                                             ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
                                                                                              colonify_ip6(address.ADDRESS))).decode()
@@ -419,9 +419,9 @@ class Handler(socketserver.DatagramRequestHandler):
                                         #
                                         # todo: default clients sometimes seem to have class ''
                                         #
-                                        if transactions[transaction_id].Client.Class != '':
-                                            t1 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.Class].T1))
-                                            t2 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.Class].T2))
+                                        if transactions[transaction_id].Client.client_class != '':
+                                            t1 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.client_class].T1))
+                                            t2 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.client_class].T2))
                                         else:
                                             t1 = '%08x' % (int(cfg.T1))
                                             t2 = '%08x' % (int(cfg.T2))
@@ -449,7 +449,7 @@ class Handler(socketserver.DatagramRequestHandler):
                         # transactions[transaction_id].Client = build_client(transaction_id)
                         transactions[transaction_id].Client = Client(transaction_id)
 
-                    if 'addresses' in cfg.CLASSES[transactions[transaction_id].Client.Class].ADVERTISE and \
+                    if 'addresses' in cfg.CLASSES[transactions[transaction_id].Client.client_class].ADVERTISE and \
                         (3 or 4) in transactions[transaction_id].IA_Options:
                         # check if only a short NoAddrAvail answer or none at all ist t be returned
                         if not transactions[transaction_id].Answer == 'normal':
@@ -457,7 +457,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                                 response_ascii += build_option(13, '%04x' % (2))
                                 # clean client addresses which not be deployed anyway
-                                transactions[transaction_id].Client.Addresses[:] = []
+                                transactions[transaction_id].Client.addresses[:] = []
                                 # options in answer to be logged
                                 options_answer.append(13)
                             else:
@@ -471,7 +471,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 # embed option 5 into option 4 - several if necessary
                                 ia_addresses = ''
                                 try:
-                                    for address in transactions[transaction_id].Client.Addresses:
+                                    for address in transactions[transaction_id].Client.addresses:
                                         if address.IA_TYPE == 'ta':
                                             ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
                                                                                              colonify_ip6(address.ADDRESS))).decode()
@@ -550,9 +550,9 @@ class Handler(socketserver.DatagramRequestHandler):
                 # should not be necessary to check if Transactions[transaction_id].Client exists but there are
                 # crazy clients out in the wild which might become silent this way
                 if transactions[transaction_id].Client:
-                    if len(cfg.CLASSES[transactions[transaction_id].Client.Class].NAMESERVER) > 0:
+                    if len(cfg.CLASSES[transactions[transaction_id].Client.client_class].NAMESERVER) > 0:
                         nameserver = ''
-                        for ns in cfg.CLASSES[transactions[transaction_id].Client.Class].NAMESERVER:
+                        for ns in cfg.CLASSES[transactions[transaction_id].Client.client_class].NAMESERVER:
                             nameserver += socket.inet_pton(socket.AF_INET6, ns)
                         response_ascii += build_option(23, binascii.b2a_hex(nameserver).decode())
                         # options in answer to be logged
@@ -586,14 +586,14 @@ class Handler(socketserver.DatagramRequestHandler):
                         transactions[transaction_id].Client = Client(transaction_id)
 
                     # Only if prefixes are provided
-                    if 'prefixes' in cfg.CLASSES[transactions[transaction_id].Client.Class].ADVERTISE:
+                    if 'prefixes' in cfg.CLASSES[transactions[transaction_id].Client.client_class].ADVERTISE:
                         # check if only a short NoPrefixAvail answer or none at all is to be returned
                         if not transactions[transaction_id].Answer == 'normal':
                             if transactions[transaction_id].Answer == 'noprefix':
                                 # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                                 response_ascii += build_option(13, '%04x' % (6))
                                 # clean client prefixes which not be deployed anyway
-                                transactions[transaction_id].Client.Prefixes[:] = []
+                                transactions[transaction_id].Client.prefixes[:] = []
                                 # options in answer to be logged
                                 options_answer.append(13)
                             else:
@@ -607,7 +607,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 # embed option 26 into option 25 - several if necessary
                                 ia_prefixes = ''
                                 try:
-                                    for prefix in transactions[transaction_id].Client.Prefixes:
+                                    for prefix in transactions[transaction_id].Client.prefixes:
                                         ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
                                                                                         colonify_ip6(prefix.PREFIX))).decode()
                                         if prefix.VALID:
@@ -619,9 +619,9 @@ class Handler(socketserver.DatagramRequestHandler):
                                         length = '%02x' % (int(prefix.LENGTH))
                                         ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
 
-                                    if transactions[transaction_id].Client.Class != '':
-                                        t1 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.Class].T1))
-                                        t2 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.Class].T2))
+                                    if transactions[transaction_id].Client.client_class != '':
+                                        t1 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.client_class].T1))
+                                        t2 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].Client.client_class].T2))
                                     else:
                                         t1 = '%08x' % (int(cfg.T1))
                                         t2 = '%08x' % (int(cfg.T2))
@@ -680,7 +680,7 @@ class Handler(socketserver.DatagramRequestHandler):
                     hostname = transactions[transaction_id].Hostname
                 # use hostname from config
                 else:
-                    hostname = transactions[transaction_id].Client.Hostname
+                    hostname = transactions[transaction_id].Client.hostname
                 if not hostname == '':
                     if cfg.DNS_UPDATE == 1:
                         # DNS update done by server - don't care what client wants
@@ -780,8 +780,8 @@ class Handler(socketserver.DatagramRequestHandler):
             else:
                 # log response
                 if not transactions[transaction_id].Client is None:
-                    if len(transactions[transaction_id].Client.Addresses) == 0 and\
-                       len(transactions[transaction_id].Client.Prefixes) == 0 and\
+                    if len(transactions[transaction_id].Client.addresses) == 0 and\
+                       len(transactions[transaction_id].Client.prefixes) == 0 and\
                        transactions[transaction_id].Answer == 'normal' and\
                        transactions[transaction_id].LastMessageReceivedType in [1, 3, 5, 6]:
                         # create error response - headers have to be recreated because

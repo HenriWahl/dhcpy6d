@@ -64,10 +64,16 @@ if __name__ == '__main__':
     udp_server = UDPMulticastIPv6(('', 547), Handler)
 
     # start query queue watcher
-    configquery_queue_watcher = QueryQueue(config_store, config_query_queue, config_answer_queue)
-    configquery_queue_watcher.start()
-    volatilequery_queue_watcher = QueryQueue(volatile_store, volatile_query_queue, volatile_answer_queue)
-    volatilequery_queue_watcher.start()
+    config_query_queue_watcher = QueryQueue(name='config_query_queue',
+                                            store=config_store,
+                                            query_queue=config_query_queue,
+                                            answer_queue=config_answer_queue)
+    config_query_queue_watcher.start()
+    volatile_query_queue_watcher = QueryQueue(name='volatile_query_queue',
+                                              store=volatile_store,
+                                              query_queue=volatile_query_queue,
+                                              answer_queue=volatile_answer_queue)
+    volatile_query_queue_watcher.start()
 
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':

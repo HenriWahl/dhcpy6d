@@ -31,7 +31,7 @@ from ..globals import (config_answer_queue,
                        volatile_answer_queue,
                        volatile_query_queue,
                        volatile_store)
-from ..helpers import error_exit
+
 from .mysql import DBMySQL
 from .postgresql import DBPostgreSQL
 from .sqlite import SQLite
@@ -45,8 +45,8 @@ class QueryQueue(threading.Thread):
     """
     Pump queries around
     """
-    def __init__(self, store, query_queue, answer_queue):
-        threading.Thread.__init__(self, name='query_queue')
+    def __init__(self, name='', store=None, query_queue=None, answer_queue=None):
+        threading.Thread.__init__(self, name=name)
         self.query_queue = query_queue
         self.answer_queue = answer_queue
         self.store = store
