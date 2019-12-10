@@ -106,7 +106,7 @@ class Textfile(Store):
             get host(s?) and its information belonging to that mac
         """
         hosts = list()
-        mac = transactions[transaction_id].MAC
+        mac = transactions[transaction_id].mac
         if mac in self.IndexMAC:
             hosts.extend(self.IndexMAC[mac])
             return hosts
@@ -119,7 +119,7 @@ class Textfile(Store):
             get host and its information belonging to that DUID
         """
         hosts = list()
-        duid = transactions[transaction_id].DUID
+        duid = transactions[transaction_id].duid
         if duid in self.IndexDUID:
             hosts.extend(self.IndexDUID[duid])
             return hosts
@@ -131,7 +131,7 @@ class Textfile(Store):
         """
             get host and its information by hostname
         """
-        hostname = transactions[transaction_id].Hostname
+        hostname = transactions[transaction_id].hostname
         if hostname in self.Hosts:
             return [self.Hosts[hostname]]
         else:

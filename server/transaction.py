@@ -38,74 +38,74 @@ class Transaction:
     """
     def __init__(self, transaction_id, client_llip, interface, message_type, options):
         # Transaction ID
-        self.ID = transaction_id
+        self.id = transaction_id
         # Link Local IP of client
-        self.ClientLLIP = client_llip
+        self.client_llip = client_llip
         # Interface the request came in
-        self.Interface = interface
+        self.interface = interface
         # MAC address
-        self.MAC = DUMMY_MAC
+        self.mac = DUMMY_MAC
         # last message for following the protocol
-        self.LastMessageReceivedType = message_type
+        self.last_message_received_type = message_type
         # dictionary for options
-        self.OptionsRaw = options
+        self.options_raw = options
         # default dummy OptionsRequest
-        self.OptionsRequest = list()
+        self.options_request = list()
         # timestamp to manage/clean transactions
-        self.Timestamp = timer
+        self.timestamp = timer
         # dummy hostname
-        self.FQDN = ''
-        self.Hostname = ''
+        self.fqdn = ''
+        self.hostname = ''
         # DNS Options for option 39
-        self.DNS_N = 0
-        self.DNS_O = 0
-        self.DNS_S = 0
+        self.dns_n = 0
+        self.dns_o = 0
+        self.dns_s = 0
         # dummy IAID
-        self.IAID = DUMMY_IAID
+        self.iaid = DUMMY_IAID
         # dummy IAT1
-        self.IAT1 = cfg.T1
+        self.iat1 = cfg.T1
         # dummy IAT2
-        self.IAT2 = cfg.T2
+        self.iat2 = cfg.T2
         # IA option - NA, TA or PD -> DHCPv6 option 3, 4 or 25
         # to be used in option_requests in Handler.build_response()
-        self.IA_Options = list()
+        self.ia_options = list()
         # Addresses given by client, for example for RENEW or RELEASE requests
-        self.Addresses = list()
+        self.addresses = list()
         # same with prefixes
-        self.Prefixes = list()
+        self.prefixes = list()
         # might be used against clients that are running wild
         # initial 1 as being increased after handling
-        self.Counter = 1
+        self.counter = 1
         # temporary storage for client configuration from DB config
         # - only used if config comes from DB
-        self.ClientConfigDB = None
+        self.client_config_db = None
         # client config from config store
-        self.Client = None
+        self.client = None
         # Vendor Class Option
-        self.VendorClassEN = None
-        self.VendorClassData = ''
+        self.vendor_class_en = None
+        self.vendor_class_data = ''
         # Rapid Commit flag
-        self.RapidCommit = False
+        self.rapid_commit = False
         # answer type - take from class definition, one of 'normal', 'noaddress', 'noprefix' or 'none'
         # defaults to 'normal' as this is the main purpose of dhcpy6d
-        self.Answer = 'normal'
+        self.answer = 'normal'
         # default DUID values
-        self.DUID = ''
+        self.duid = ''
         # self.DUIDType = 1
         # self.DUID_EN = 0
         # Elapsed Time - option 8, at least sent by WIDE dhcp6c when requesting delegated prefix
-        self.ElapsedTime = 0
+        self.elapsed_time = 0
         # Client architecture type (RFC 5970)
-        self.ClientArchitecture = ''
+        self.client_architecture = ''
         # Known client architecture type (RFC 4578) (e.g. EFI x86 - 64)
-        self.KnownClientArchitecture = ''
+        self.known_client_architecture = ''
         # UserClass (https://tools.ietf.org/html/rfc3315#section-22.15)
-        self.UserClass = ''
+        self.user_class = ''
 
         # DUID of client
         # 1 Client Identifier Option
         if 1 in options:
-            self.DUID = options[1]
+            self.duid = options[1]
             # self.DUIDType = int(options[1][0:4], 16)
             # # DUID-EN can be retrieved from DUID
             # if self.DUIDType == 2:
@@ -117,33 +117,33 @@ class Transaction:
         # 3 Identity Association for Non-temporary Address Option
         if 3 in options:
             for payload in options[3]:
-                self.IAID = payload[0:8]
-                self.IAT1 = int(payload[8:16], 16)
-                self.IAT2 = int(payload[16:24], 16)
+                self.iaid = payload[0:8]
+                self.iat1 = int(payload[8:16], 16)
+                self.iat2 = int(payload[16:24], 16)
 
                 # addresses given by client if any
                 for a in range(len(payload[32:])//44):
                     address = payload[32:][(a*56):(a*56)+32]
                     # in case an address is asked for twice by one host ignore the twin
-                    if not address in self.Addresses:
-                        self.Addresses.append(address)
-            self.IA_Options.append(3)
+                    if not address in self.addresses:
+                        self.addresses.append(address)
+            self.ia_options.append(3)
 
         # Identity Association for Temporary Addresses
         # 4 Identity Association for Temporary Address Option
         if 4 in options:
             for payload in options[4]:
-                self.IAID = payload[0:8]
-                self.IAT1 = int(payload[8:16], 16)
-                self.IAT2 = int(payload[16:24], 16)
+                self.iaid = payload[0:8]
+                self.iat1 = int(payload[8:16], 16)
+                self.iat2 = int(payload[16:24], 16)
 
                 # addresses given by client if any
                 for a in range(len(payload[32:])//44):
                     address = payload[32:][(a*56):(a*56)+32]
                     # in case an address is asked for twice by one host ignore the twin
-                    if not address in self.Addresses:
-                        self.Addresses.append(address)
-            self.IA_Options.append(4)
+                    if not address in self.addresses:
+                        self.addresses.append(address)
+            self.ia_options.append(4)
 
         # Options Requested
         # 6 Option Request Option
@@ -153,35 +153,35 @@ class Transaction:
             while len(opts) > 0:
                 options_request.append(int(opts[0:4], 16))
                 opts = opts[4:]
-            self.OptionsRequest = options_request
+            self.options_request = options_request
 
         # 8 Elapsed Time
         # RFC 3315: This time is expressed in hundredths of a second (10^-2 seconds).
         if 8 in options:
-            self.ElapsedTime = int(options[8][0:8], 16)
+            self.elapsed_time = int(options[8][0:8], 16)
 
         # 14 Rapid Commit flag
         if 14 in options:
-            self.RapidCommit = True
+            self.rapid_commit = True
 
         # 15 User Class Option
         if 15 in options:
             user_class_raw = options[15]
             # raw user class is prefixed with null byte (00 in hex) and eot (04 in hex)
-            self.UserClass = binascii.a2b_hex(user_class_raw[4:])
+            self.user_class = binascii.a2b_hex(user_class_raw[4:])
 
         # 16 Vendor Class Option
         if 16 in options:
-            self.VendorClassEN = int(options[16][0:8], 16)
-            self.VendorClassData = binascii.unhexlify(options[16][12:])
+            self.vendor_class_en = int(options[16][0:8], 16)
+            self.vendor_class_data = binascii.unhexlify(options[16][12:])
 
         # Identity Association for Prefix Delegation
         # 25 Identity Association for Prefix Delegation
         if 25 in options:
             for payload in options[25]:
-                self.IAID = payload[0:8]
-                self.IAT1 = int(payload[8:16], 16)
-                self.IAT2 = int(payload[16:24], 16)
+                self.iaid = payload[0:8]
+                self.iat1 = int(payload[8:16], 16)
+                self.iat2 = int(payload[16:24], 16)
 
                 # iaid        t1        t2       ia_prefix   opt_length       preferred validlt    length    prefix
                 #00000001    ffffffff  ffffffff  001a        0019             00000e10   00001518    30     fd661234000000000000000000000000
@@ -193,25 +193,25 @@ class Transaction:
                     length = int(payload[48:][(p*58):(p*58)+2], 16)
                     prefix_combined = combine_prefix_length(prefix, length)
                     # in case a prefix is asked for twice by one host ignore the twin
-                    if not prefix_combined in self.Prefixes:
-                        self.Prefixes.append(prefix_combined)
+                    if not prefix_combined in self.prefixes:
+                        self.prefixes.append(prefix_combined)
                     del(prefix, length, prefix_combined)
-            self.IA_Options.append(25)
+            self.ia_options.append(25)
 
         # FQDN
         # 39 FQDN Option
         if 39 in options:
             bits = ('%4s' % (str(bin(int(options[39][1:2]))).strip('0b'))).replace(' ', '0')
-            self.DNS_N = int(bits[1])
-            self.DNS_O = int(bits[2])
-            self.DNS_S = int(bits[3])
+            self.dns_n = int(bits[1])
+            self.dns_o = int(bits[2])
+            self.dns_s = int(bits[3])
             # only hostname needed
-            self.FQDN = convert_binary_to_dns(options[39][2:])
-            self.Hostname = self.FQDN.split('.')[0].lower()
+            self.fqdn = convert_binary_to_dns(options[39][2:])
+            self.hostname = self.fqdn.split('.')[0].lower()
             # test if hostname is valid
             n = re.compile('^([a-z0-9\-\_]+)*$')
-            if n.match(self.Hostname) == None:
-                self.Hostname = ''
+            if n.match(self.hostname) == None:
+                self.hostname = ''
             del n
 
         # Client architecture type
@@ -223,10 +223,10 @@ class Transaction:
             # short number (0007 => 7 for dictionary usage)
             client_architecture_short = int(client_architecture_raw)
 
-            self.ClientArchitecture = client_architecture_raw
+            self.client_architecture = client_architecture_raw
 
             if client_architecture_short in ARCHITECTURE_TYPE:
-                self.KnownClientArchitecture = ARCHITECTURE_TYPE[client_architecture_short]
+                self.known_client_architecture = ARCHITECTURE_TYPE[client_architecture_short]
 
     def _get_options_string(self):
         """
@@ -241,13 +241,13 @@ class Transaction:
             if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'Addresses':
-                    if (3 or 4) in self.IA_Options:
+                    if (3 or 4) in self.ia_options:
                         option = 'Addresses:'
                         for a in self.__dict__[o]:
                             option += ' ' + colonify_ip6(a)
                         optionsstring = optionsstring + ' | '  + option
                 elif o == 'Prefixes':
-                    if 25 in self.IA_Options:
+                    if 25 in self.ia_options:
                         option = 'Prefixes:'
                         for p in self.__dict__[o]:
                             prefix, length = split_prefix(p)

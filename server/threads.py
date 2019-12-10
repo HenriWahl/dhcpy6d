@@ -104,8 +104,8 @@ class TidyUpThread(Thread):
                 # transaction data can be deleted after transaction is finished
                 for t in list(transactions.keys()):
                     try:
-                        if timer > transactions[t].Timestamp + cfg.CLEANING_INTERVAL * 10:
-                            transactions.pop(transactions[t].ID)
+                        if timer > transactions[t].timestamp + cfg.CLEANING_INTERVAL * 10:
+                            transactions.pop(transactions[t].id)
                     except Exception as err:
                         log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))
                         traceback.print_exc(file=sys.stdout)

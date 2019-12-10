@@ -125,15 +125,15 @@ class Client:
                 # look into all classes and their filters
                 for c in cfg.FILTERS[f]:
                     # check further only if class applies to interface
-                    if transactions[transaction_id].Interface in c.INTERFACE:
+                    if transactions[transaction_id].interface in c.INTERFACE:
                         # MACs
                         if c.FILTER_MAC != '':
                             pattern = re.compile(c.FILTER_MAC)
                             # if mac filter fits client mac address add client config
-                            if len(pattern.findall(transactions[transaction_id].MAC)) > 0:
-                                client_config = config_store.get_client_config(hostname=transactions[transaction_id].Hostname,
-                                                                               mac=[transactions[transaction_id].MAC],
-                                                                               duid=transactions[transaction_id].DUID,
+                            if len(pattern.findall(transactions[transaction_id].mac)) > 0:
+                                client_config = config_store.get_client_config(hostname=transactions[transaction_id].hostname,
+                                                                               mac=[transactions[transaction_id].mac],
+                                                                               duid=transactions[transaction_id].duid,
                                                                                aclass=c.NAME)
                                 # add classname to dictionary - if there are more than one entry classes do not match
                                 # and thus are invalid
@@ -142,10 +142,10 @@ class Client:
                         if c.FILTER_DUID != '':
                             pattern = re.compile(c.FILTER_DUID)
                             # if duid filter fits client duid address add client config
-                            if len(pattern.findall(transactions[transaction_id].DUID)) > 0:
-                                client_config = config_store.get_client_config(hostname=transactions[transaction_id].Hostname,
-                                                                               mac=[transactions[transaction_id].MAC],
-                                                                               duid=transactions[transaction_id].DUID,
+                            if len(pattern.findall(transactions[transaction_id].duid)) > 0:
+                                client_config = config_store.get_client_config(hostname=transactions[transaction_id].hostname,
+                                                                               mac=[transactions[transaction_id].mac],
+                                                                               duid=transactions[transaction_id].duid,
                                                                                aclass=c.NAME)
                                 # see above
                                 filtered_class[c.NAME] = c
@@ -153,10 +153,10 @@ class Client:
                         if c.FILTER_HOSTNAME != '':
                             pattern = re.compile(c.FILTER_HOSTNAME)
                             # if hostname filter fits client hostname address add client config
-                            if len(pattern.findall(transactions[transaction_id].Hostname)) > 0:
-                                client_config = config_store.get_client_config(hostname=transactions[transaction_id].Hostname,
-                                                                               mac=[transactions[transaction_id].MAC],
-                                                                               duid=transactions[transaction_id].DUID,
+                            if len(pattern.findall(transactions[transaction_id].hostname)) > 0:
+                                client_config = config_store.get_client_config(hostname=transactions[transaction_id].hostname,
+                                                                               mac=[transactions[transaction_id].mac],
+                                                                               duid=transactions[transaction_id].duid,
                                                                                aclass=c.NAME)
                                 # see above
                                 filtered_class[c.NAME] = c
@@ -221,7 +221,7 @@ class Client:
                     client_config = None
 
             # If client gave some addresses for RENEW or REBIND consider them
-            if transactions[transaction_id].LastMessageReceivedType in (5, 6) and\
+            if transactions[transaction_id].last_message_received_type in (5, 6) and\
                 not (len(transactions[transaction_id].Addresses) == 0 and \
                      len(transactions[transaction_id].Prefixes) == 0):
                 if not client_config == None:
@@ -232,13 +232,13 @@ class Client:
                     transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
                 else:
                     # use default class if host is unknown
-                    self.hostname = transactions[transaction_id].Hostname
-                    self.client_class = 'default_' + transactions[transaction_id].Interface
+                    self.hostname = transactions[transaction_id].hostname
+                    self.client_class = 'default_' + transactions[transaction_id].interface
                     # apply answer type of client to transaction - useful if no answer or no address available is configured
                     transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
 
                 if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE and \
-                    (3 or 4) in transactions[transaction_id].IA_Options:
+                    (3 or 4) in transactions[transaction_id].ia_options:
                     for address in transactions[transaction_id].Addresses:
                         # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
                         answer = volatile_store.check_lease(address, transaction_id)
@@ -248,12 +248,12 @@ class Client:
                                     a = dict(list(zip(('hostname', 'address', 'type', 'category', 'ia_type', 'class', 'preferred_until'), item)))
                                     # if lease exists but no configured client set class to default
                                     if client_config == None:
-                                        self.hostname = transactions[transaction_id].Hostname
-                                        self.client_class = 'default_' + transactions[transaction_id].Interface
+                                        self.hostname = transactions[transaction_id].hostname
+                                        self.client_class = 'default_' + transactions[transaction_id].interface
                                     # check if address type of lease still exists in configuration
                                     # and if request interface matches that of class
                                     if a['class'] in cfg.CLASSES and self.client_class == a['class'] and\
-                                       transactions[transaction_id].Interface in cfg.CLASSES[self.client_class].INTERFACE:
+                                       transactions[transaction_id].interface in cfg.CLASSES[self.client_class].INTERFACE:
                                         # type of address must be defined in addresses for this class
                                         # or fixed/dns - in which case it is not class related
                                         if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed']:
@@ -351,7 +351,7 @@ class Client:
                                                       valid_lifetime=0))
 
                 if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE and \
-                   25 in transactions[transaction_id].IA_Options:
+                   25 in transactions[transaction_id].ia_options:
                     for prefix in transactions[transaction_id].Prefixes:
                         # split prefix of prefix from length, separated by /
                         prefix_prefix, prefix_length = split_prefix(prefix)
@@ -365,12 +365,12 @@ class Client:
                                     p = dict(list(zip(('hostname', 'prefix', 'length', 'type', 'category', 'class', 'preferred_until'), item)))
                                     # if lease exists but no configured client set class to default
                                     if client_config == None:
-                                        self.hostname = transactions[transaction_id].Hostname
-                                        self.client_class = 'default_' + transactions[transaction_id].Interface
+                                        self.hostname = transactions[transaction_id].hostname
+                                        self.client_class = 'default_' + transactions[transaction_id].interface
                                     # check if address type of lease still exists in configuration
                                     # and if request interface matches that of class
                                     if p['class'] in cfg.CLASSES and self.client_class == p['class'] and\
-                                       transactions[transaction_id].Interface in cfg.CLASSES[self.client_class].INTERFACE:
+                                       transactions[transaction_id].interface in cfg.CLASSES[self.client_class].INTERFACE:
                                         # type of address must be defined in addresses for this class
                                         # or fixed/dns - in which case it is not class related
                                         if p['type'] in cfg.CLASSES[p['class']].PREFIXES:
@@ -440,7 +440,7 @@ class Client:
                 # apply answer type of client to transaction - useful if no answer or no address available is configured
                 transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
                 # continue only if request interface matches class interfaces
-                if transactions[transaction_id].Interface in cfg.CLASSES[client.Class].INTERFACE:
+                if transactions[transaction_id].interface in cfg.CLASSES[client.Class].INTERFACE:
                     # if fixed addresses are given build them
                     if not client_config.ADDRESS == None:
                         for address in client_config.ADDRESS:
@@ -489,15 +489,15 @@ class Client:
 
                             # check if transaction attributes matches the bootfile defintion
                             if (not client_architecture or \
-                                transactions[transaction_id].ClientArchitecture == client_architecture or \
-                                transactions[transaction_id].KnownClientArchitecture == client_architecture) and \
+                                transactions[transaction_id].client_architecture == client_architecture or \
+                                transactions[transaction_id].known_client_architecture == client_architecture) and \
                                (not user_class or \
                                 transactions[transaction_id].UserClass == user_class):
                                 self.bootfiles.append(cfg.BOOTFILES[bootfile])
 
 
                         if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                           25 in transactions[transaction_id].IA_Options:
+                           25 in transactions[transaction_id].ia_options:
                             for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
                                 p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
                                 # in case range has been exceeded p will be None
@@ -514,8 +514,8 @@ class Client:
 
                     if client_config.ADDRESS == client_config.CLASS == '':
                         # use default class if no class or address is given
-                        for address in cfg.CLASSES['default_' + transactions[transaction_id].Interface].ADDRESSES:
-                            self.client_class = 'default_' + transactions[transaction_id].Interface
+                        for address in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADDRESSES:
+                            self.client_class = 'default_' + transactions[transaction_id].interface
                             # addresses of category 'dns' will be searched in DNS
                             if cfg.ADDRESSES[address].CATEGORY == 'dns':
                                 a = get_ip_from_dns(self.hostname)
@@ -534,27 +534,27 @@ class Client:
                                              dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                                 self.addresses.append(ia)
 
-                        for bootfile in cfg.CLASSES['default_' + transactions[transaction_id].Interface].BOOTFILES:
+                        for bootfile in cfg.CLASSES['default_' + transactions[transaction_id].interface].BOOTFILES:
                             client_architecture = bootfile.CLIENT_ARCHITECTURE
                             user_class = bootfile.USER_CLASS
 
                             # check if transaction attributes matches the bootfile defintion
                             if (not client_architecture or \
-                                transactions[transaction_id].ClientArchitecture == client_architecture or \
-                                transactions[transaction_id].KnownClientArchitecture == client_architecture) and \
+                                transactions[transaction_id].client_architecture == client_architecture or \
+                                transactions[transaction_id].known_client_architecture == client_architecture) and \
                                (not user_class or \
                                 transactions[transaction_id].UserClass == user_class):
                                 self.bootfiles.append(bootfile)
             else:
                 # use default class if host is unknown
-                self.hostname = transactions[transaction_id].Hostname
-                self.client_class = 'default_' + transactions[transaction_id].Interface
+                self.hostname = transactions[transaction_id].hostname
+                self.client_class = 'default_' + transactions[transaction_id].interface
                 # apply answer type of client to transaction - useful if no answer or no address available is configured
                 transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
 
-                if 'addresses' in cfg.CLASSES['default_' + transactions[transaction_id].Interface].ADVERTISE and \
-                    (3 or 4) in transactions[transaction_id].IA_Options:
-                    for address in cfg.CLASSES['default_' + transactions[transaction_id].Interface].ADDRESSES:
+                if 'addresses' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
+                    (3 or 4) in transactions[transaction_id].ia_options:
+                    for address in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADDRESSES:
                         # addresses of category 'dns' will be searched in DNS
                         if cfg.ADDRESSES[address].CATEGORY == 'dns':
                             a = get_ip_from_dns(self.hostname)
@@ -573,10 +573,10 @@ class Client:
                                          dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                             self.addresses.append(ia)
 
-                if 'prefixes' in cfg.CLASSES['default_' + transactions[transaction_id].Interface].ADVERTISE and \
-                    25 in transactions[transaction_id].IA_Options:
+                if 'prefixes' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
+                    25 in transactions[transaction_id].ia_options:
 
-                    for prefix in cfg.CLASSES['default_' + transactions[transaction_id].Interface].PREFIXES:
+                    for prefix in cfg.CLASSES['default_' + transactions[transaction_id].interface].PREFIXES:
                         p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
                         # in case range has been exceeded p will be None
                         if p:

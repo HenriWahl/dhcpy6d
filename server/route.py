@@ -38,19 +38,19 @@ def modify_route(transaction_id, mode):
         called when route has to be set - calls itself any external script or something like that
     """
     # check if client is already set - otherwise crashes
-    if transactions[transaction_id].Client != None:
+    if transactions[transaction_id].client != None:
         # only do anything if class of client has something defined to be called
-        if (mode == 'up' and cfg.CLASSES[transactions[transaction_id].Client.client_class].CALL_UP != '') or \
-           (mode == 'down' and cfg.CLASSES[transactions[transaction_id].Client.client_class].CALL_DOWN != ''):
+        if (mode == 'up' and cfg.CLASSES[transactions[transaction_id].client.client_class].CALL_UP != '') or \
+           (mode == 'down' and cfg.CLASSES[transactions[transaction_id].client.client_class].CALL_DOWN != ''):
             # collect possible prefixes, lengths and router ip addresses in list
             routes = list()
-            for prefix in transactions[transaction_id].Client.prefixes:
+            for prefix in transactions[transaction_id].client.prefixes:
                 # use LinkLocal Address of client if wanted
                 if prefix.ROUTE_LINK_LOCAL:
-                    router = transactions[transaction_id].ClientLLIP
+                    router = transactions[transaction_id].client_llip
                 else:
-                    if len(transactions[transaction_id].Client.addresses) == 1:
-                        router = transactions[transaction_id].Client.addresses[0].ADDRESS
+                    if len(transactions[transaction_id].client.addresses) == 1:
+                        router = transactions[transaction_id].client.addresses[0].ADDRESS
                     else:
                         router = None
                         log.error('modify_route: client needs exactly 1 address to be used as router to delegated prefix')
@@ -58,9 +58,9 @@ def modify_route(transaction_id, mode):
                     routes.append(Route(prefix.PREFIX, prefix.LENGTH, router))
 
             if mode == 'up':
-                call = cfg.CLASSES[transactions[transaction_id].Client.client_class].CALL_UP
+                call = cfg.CLASSES[transactions[transaction_id].client.client_class].CALL_UP
             elif mode == 'down':
-                call = cfg.CLASSES[transactions[transaction_id].Client.client_class].CALL_DOWN
+                call = cfg.CLASSES[transactions[transaction_id].client.client_class].CALL_DOWN
 
             # call executables here
             for route in routes:

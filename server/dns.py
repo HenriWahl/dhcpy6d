@@ -41,17 +41,17 @@ def dns_update(transaction_id, action='update'):
         - client wants server to update DNS -> sends 0 0 1
         - client wants no server DNS update -> sends 1 0 0
     """
-    if transactions[transaction_id].Client:
+    if transactions[transaction_id].client:
         # if allowed use client supplied hostname, otherwise that from config
         if cfg.DNS_USE_CLIENT_HOSTNAME:
             # hostname from transaction
-            hostname = transactions[transaction_id].Hostname
+            hostname = transactions[transaction_id].hostname
         else:
             # hostname from client info built from configuration
-            hostname = transactions[transaction_id].Client.hostname
+            hostname = transactions[transaction_id].client.hostname
 
         # if address should be updated in DNS update it
-        for a in transactions[transaction_id].Client.addresses:
+        for a in transactions[transaction_id].client.addresses:
             if a.DNS_UPDATE and hostname != '' and a.VALID:
                 if cfg.DNS_IGNORE_CLIENT or transactions[transaction_id].DNS_S == 1:
                     # put query into DNS query queue
@@ -76,12 +76,12 @@ def dns_delete(transaction_id, address='', action='release'):
         # if there is any address type which prototype matches use its DNS ZONE
         if a.matches_prototype(address):
             # kind of RCF-compliant security measure - check if hostname and DUID from transaction fits them of store
-            if duid == transactions[transaction_id].DUID and\
+            if duid == transactions[transaction_id].duid and\
                iaid == transactions[transaction_id].IAID:
                 delete = True
                 # also check MAC address if MAC counts in general - not RFCish
                 if 'mac' in cfg.IDENTIFICATION:
-                    if not mac == transactions[transaction_id].MAC:
+                    if not mac == transactions[transaction_id].mac:
                         delete = False
 
             if hostname != '' and delete:

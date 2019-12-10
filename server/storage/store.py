@@ -21,7 +21,9 @@ import traceback
 
 from ..config import cfg
 from ..globals import transactions
-from ..helpers import (listify_option,
+from ..helpers import (decompress_ip6,
+                       error_exit,
+                       listify_option,
                        NeighborCacheRecord)
 
 class ClientConfig:
@@ -119,8 +121,8 @@ class Store:
         store lease in lease DB
         """
         # only if client exists
-        if transaction.Client:
-            for a in transaction.Client.addresses:
+        if transaction.client:
+            for a in transaction.client.addresses:
                 if not a.ADDRESS is None:
                     query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
                     answer = self.query(query)
@@ -134,17 +136,17 @@ class Store:
                                   (self.table_leases,
                                    a.ADDRESS,
                                    1,
-                                   transaction.LastMessageReceivedType,
+                                   transaction.last_message_received_type,
                                    a.PREFERRED_LIFETIME,
                                    a.VALID_LIFETIME,
-                                   transaction.Client.hostname,
+                                   transaction.client.hostname,
                                    a.TYPE,
                                    a.CATEGORY,
                                    a.IA_TYPE,
-                                   transaction.Client.client_class,
-                                   transaction.MAC,
-                                   transaction.DUID,
-                                   transaction.IAID,
+                                   transaction.client.client_class,
+                                   transaction.mac,
+                                   transaction.duid,
+                                   transaction.iaid,
                                    now,
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME))
@@ -164,17 +166,17 @@ class Store:
                                      last_update = '%s', preferred_until = '%s', valid_until = '%s'\
                                      WHERE address = '%s'" % \
                                   (self.table_leases,
-                                   transaction.LastMessageReceivedType,
+                                   transaction.last_message_received_type,
                                    a.PREFERRED_LIFETIME,
                                    a.VALID_LIFETIME,
-                                   transaction.Client.hostname,
+                                   transaction.client.hostname,
                                    a.TYPE,
                                    a.CATEGORY,
                                    a.IA_TYPE,
-                                   transaction.Client.client_class,
-                                   transaction.MAC,
-                                   transaction.DUID,
-                                   transaction.IAID,
+                                   transaction.client.client_class,
+                                   transaction.mac,
+                                   transaction.duid,
+                                   transaction.iaid,
                                    now,
                                    now + int(a.PREFERRED_LIFETIME),
                                    now + int(a.VALID_LIFETIME),
@@ -183,11 +185,11 @@ class Store:
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
-                                     (self.table_leases, transaction.LastMessageReceivedType,
+                                     (self.table_leases, transaction.last_message_received_type,
                                       a.ADDRESS)
                             self.query(query)
 
-            for p in transaction.Client.prefixes:
+            for p in transaction.client.prefixes:
                 if not p.PREFIX is None:
                     query = "SELECT prefix FROM %s WHERE prefix = '%s'" % (self.table_prefixes, p.PREFIX)
                     answer = self.query(query)
@@ -202,16 +204,16 @@ class Store:
                                    p.PREFIX,
                                    p.LENGTH,
                                    1,
-                                   transaction.LastMessageReceivedType,
+                                   transaction.last_message_received_type,
                                    p.PREFERRED_LIFETIME,
                                    p.VALID_LIFETIME,
-                                   transaction.Client.hostname,
+                                   transaction.client.hostname,
                                    p.TYPE,
                                    p.CATEGORY,
-                                   transaction.Client.client_class,
-                                   transaction.MAC,
-                                   transaction.DUID,
-                                   transaction.IAID,
+                                   transaction.client.client_class,
+                                   transaction.mac,
+                                   transaction.duid,
+                                   transaction.iaid,
                                    now,
                                    now + int(p.PREFERRED_LIFETIME),
                                    now + int(p.VALID_LIFETIME))
@@ -229,16 +231,16 @@ class Store:
                                      last_update = '%s', preferred_until = '%s', valid_until = '%s'\
                                      WHERE prefix = '%s'" % \
                                   (self.table_prefixes,
-                                   transaction.LastMessageReceivedType,
+                                   transaction.last_message_received_type,
                                    p.PREFERRED_LIFETIME,
                                    p.VALID_LIFETIME,
-                                   transaction.Client.hostname,
+                                   transaction.client.hostname,
                                    p.TYPE,
                                    p.CATEGORY,
-                                   transaction.Client.client_class,
-                                   transaction.MAC,
-                                   transaction.DUID,
-                                   transaction.IAID,
+                                   transaction.client.client_class,
+                                   transaction.mac,
+                                   transaction.duid,
+                                   transaction.iaid,
                                    now,
                                    now + int(p.PREFERRED_LIFETIME),
                                    now + int(p.VALID_LIFETIME),
@@ -247,7 +249,7 @@ class Store:
                         else:
                             # set last message type of random address
                             query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
-                                     (self.table_prefixes, transaction.LastMessageReceivedType,
+                                     (self.table_prefixes, transaction.last_message_received_type,
                                       p.PREFIX)
                             self.query(query)
             return True
@@ -485,15 +487,15 @@ class Store:
                      AND address = '%s' AND mac = '%s' AND duid = '%s'" % \
                     (self.table_leases,
                      address,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID)
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid)
         else:
             query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
                      AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
                     (self.table_leases,
                      address,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID,
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid,
                      transactions[transaction_id].IAID)
 
         return self.query(query)
@@ -509,16 +511,16 @@ class Store:
                     (self.table_prefixes,
                      prefix,
                      length,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID)
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid)
         else:
             query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
                      AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
                     (self.table_prefixes,
                      prefix,
                      length,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID,
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid,
                      transactions[transaction_id].IAID)
         return self.query(query)
 
@@ -533,8 +535,8 @@ class Store:
                      AND mac = '%s' AND duid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_leases,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID,
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid,
                      category,
                      atype)
         else:
@@ -543,8 +545,8 @@ class Store:
                      AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_leases,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID,
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid,
                      transactions[transaction_id].IAID,
                      category,
                      atype)
@@ -568,8 +570,8 @@ class Store:
                      AND mac = '%s' AND duid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_prefixes,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID,
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid,
                      category,
                      ptype)
         else:
@@ -578,8 +580,8 @@ class Store:
                      AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_prefixes,
-                     transactions[transaction_id].MAC,
-                     transactions[transaction_id].DUID,
+                     transactions[transaction_id].mac,
+                     transactions[transaction_id].duid,
                      transactions[transaction_id].IAID,
                      category,
                      ptype)
@@ -641,17 +643,17 @@ class Store:
         """
         get client config from db and build the appropriate config objects and indices
         """
-        if transactions[transaction_id].ClientConfigDB == None:
+        if transactions[transaction_id].client_config_db == None:
             query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
                     hostname = '%s' OR mac LIKE '%%%s%%' OR duid = '%s'" % \
                     (self.table_hosts,\
-                     transactions[transaction_id].Hostname,\
-                     transactions[transaction_id].MAC,\
-                     transactions[transaction_id].DUID)
+                     transactions[transaction_id].hostname,\
+                     transactions[transaction_id].mac,\
+                     transactions[transaction_id].duid)
             answer = self.query(query)
 
             # add client config which seems to fit to transaction
-            transactions[transaction_id].ClientConfigDB = ClientConfigDB()
+            transactions[transaction_id].client_config_db = ClientConfigDB()
 
             # read all sections of config file
             # a section here is a host
@@ -663,7 +665,7 @@ class Store:
                 if duid: duid = duid.lower()
                 if address: address = listify_option(address.lower())
 
-                transactions[transaction_id].ClientConfigDB.Hosts[hostname] = ClientConfig(hostname=hostname,
+                transactions[transaction_id].client_config_db.Hosts[hostname] = ClientConfig(hostname=hostname,
                                                                                                 mac=mac,
                                                                                                 duid=duid,
                                                                                                 aclass=aclass,
@@ -671,19 +673,19 @@ class Store:
                                                                                                 id=id)
 
                 # and put the host objects into index
-                if transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
-                    for m in transactions[transaction_id].ClientConfigDB.Hosts[hostname].MAC:
-                        if not m in transactions[transaction_id].ClientConfigDB.IndexMAC:
-                            transactions[transaction_id].ClientConfigDB.IndexMAC[m] = [transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
+                if transactions[transaction_id].client_config_db.Hosts[hostname].MAC:
+                    for m in transactions[transaction_id].client_config_db.Hosts[hostname].MAC:
+                        if not m in transactions[transaction_id].client_config_db.IndexMAC:
+                            transactions[transaction_id].client_config_db.IndexMAC[m] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
                         else:
-                            transactions[transaction_id].ClientConfigDB.IndexMAC[m].append(transactions[transaction_id].ClientConfigDB.Hosts[hostname])
+                            transactions[transaction_id].client_config_db.IndexMAC[m].append(transactions[transaction_id].client_config_db.Hosts[hostname])
 
                 # add DUIDs to IndexDUID
-                if not transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID == '':
-                    if not transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID in transactions[transaction_id].ClientConfigDB.IndexDUID:
-                        transactions[transaction_id].ClientConfigDB.IndexDUID[transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID] = [transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
+                if not transactions[transaction_id].client_config_db.Hosts[hostname].DUID == '':
+                    if not transactions[transaction_id].client_config_db.Hosts[hostname].DUID in transactions[transaction_id].client_config_db.IndexDUID:
+                        transactions[transaction_id].client_config_db.IndexDUID[transactions[transaction_id].client_config_db.Hosts[hostname].DUID] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
                     else:
-                        transactions[transaction_id].ClientConfigDB.IndexDUID[transactions[transaction_id].ClientConfigDB.Hosts[hostname].DUID].append(transactions[transaction_id].ClientConfigDB.Hosts[hostname])
+                        transactions[transaction_id].client_config_db.IndexDUID[transactions[transaction_id].client_config_db.Hosts[hostname].DUID].append(transactions[transaction_id].client_config_db.Hosts[hostname])
 
                 # some cleaning
                 del host, mac, duid, address, aclass, id
@@ -693,10 +695,10 @@ class Store:
         get host and its information belonging to that mac
         """
         hosts = list()
-        mac = transactions[transaction_id].MAC
+        mac = transactions[transaction_id].mac
 
-        if mac in transactions[transaction_id].ClientConfigDB.IndexMAC:
-            hosts.extend(transactions[transaction_id].ClientConfigDB.IndexMAC[mac])
+        if mac in transactions[transaction_id].client_config_db.IndexMAC:
+            hosts.extend(transactions[transaction_id].client_config_db.IndexMAC[mac])
             return hosts
         else:
             return None
@@ -708,10 +710,10 @@ class Store:
         """
         # get client config that most probably seems to fit
         hosts = list()
-        duid = transactions[transaction_id].DUID
+        duid = transactions[transaction_id].duid
 
-        if duid in transactions[transaction_id].ClientConfigDB.IndexDUID:
-            hosts.extend(transactions[transaction_id].ClientConfigDB.IndexDUID[duid])
+        if duid in transactions[transaction_id].client_config_db.IndexDUID:
+            hosts.extend(transactions[transaction_id].client_config_db.IndexDUID[duid])
             return hosts
         else:
             return None
@@ -721,9 +723,9 @@ class Store:
         """
             get host and its information by hostname
         """
-        hostname = transactions[transaction_id].Hostname
-        if hostname in transactions[transaction_id].ClientConfigDB.Hosts:
-            return [transactions[transaction_id].ClientConfigDB.Hosts[hostname]]
+        hostname = transactions[transaction_id].hostname
+        if hostname in transactions[transaction_id].client_config_db.Hosts:
+            return [transactions[transaction_id].client_config_db.Hosts[hostname]]
         else:
             return None
 

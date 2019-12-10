@@ -39,11 +39,11 @@ def parse_pattern_address(address, client_config, transaction_id):
 
     # check different client address categories - to be extended!
     if address.CATEGORY == 'mac':
-        macraw = ''.join(transactions[transaction_id].MAC.split(':'))
+        macraw = ''.join(transactions[transaction_id].mac.split(':'))
         a = a.replace('$mac$', ':'.join((macraw[0:4], macraw[4:8], macraw[8:12])))
     elif address.CATEGORY == 'eui64':
         # https://tools.ietf.org/html/rfc4291#section-2.5.1
-        mac = transactions[transaction_id].MAC
+        mac = transactions[transaction_id].mac
         a = a.replace('$eui64$', convert_mac_to_eui64(mac))
     elif address.CATEGORY in ['fixed', 'dns']:
         # No patterns for fixed address, let's bail
@@ -87,8 +87,8 @@ def parse_pattern_address(address, client_config, transaction_id):
         else:
             # check if requesting client still has an active lease that could be reused
             lease = volatile_store.get_range_lease_for_recycling(prefix=prefix, frange=frange, trange=trange, \
-                                                                 duid=transactions[transaction_id].DUID, \
-                                                                 mac=transactions[transaction_id].MAC)
+                                                                 duid=transactions[transaction_id].duid, \
+                                                                 mac=transactions[transaction_id].mac)
             # the found lease has to be in range - important after changed range boundaries
             if not lease is None and frange <= lease[28:].lower() <= trange:
                 a = ':'.join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
@@ -178,8 +178,8 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
                                                                    length=pattern.LENGTH,
                                                                    frange=frange,
                                                                    trange=trange,
-                                                                   duid=transactions[transaction_id].DUID,
-                                                                   mac=transactions[transaction_id].MAC)
+                                                                   duid=transactions[transaction_id].duid,
+                                                                   mac=transactions[transaction_id].mac)
             # the found prefix has to be in range - important after changed range boundaries
             if not prefix is None:
                 if frange <= prefix[prefix_range_index:prefix_range_index+4].lower() <= trange:
