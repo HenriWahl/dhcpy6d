@@ -308,6 +308,7 @@ def get_neighbor_cache_linux(if_number, now):
 
     return result
 
+
 def collect_macs(now):
     """
     collect MAC address from clients to link local addresses with MACs

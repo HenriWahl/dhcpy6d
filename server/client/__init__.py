@@ -72,7 +72,7 @@ class Client:
         """
             all attributes in a string for logging
         """
-        optionsstring = ''
+        options_string = ''
         # put own attributes into a string
         options = sorted(list(self.__dict__.keys()))
         # options.sort()
@@ -80,27 +80,27 @@ class Client:
             # ignore some attributes
             if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
-                if o == 'Addresses':
+                if o == 'addresses':
                     if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE:
                         option = 'Addresses:'
                         for a in self.__dict__[o]:
                             option += ' ' + colonify_ip6(a.ADDRESS)
-                        optionsstring = optionsstring + ' | '  + option
-                elif o == 'Bootfiles':
+                        options_string = options_string + ' | '  + option
+                elif o == 'bootfiles':
                     option = 'Bootfiles:'
                     for a in self.__dict__[o]:
                         option += ' ' + a.BOOTFILE_URL
-                    optionsstring = optionsstring + ' | '  + option
-                elif o == 'Prefixes':
+                    options_string = options_string + ' | '  + option
+                elif o == 'prefixes':
                     if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE:
                         option = 'Prefixes:'
                         for p in self.__dict__[o]:
                             option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
-                        optionsstring = optionsstring + ' | '  + option
+                        options_string = options_string + ' | '  + option
                 else:
                     option = o + ': ' + str(self.__dict__[o])
-                    optionsstring = optionsstring + ' | '  + option
-        return optionsstring
+                    options_string = options_string + ' | '  + option
+        return options_string
 
     def build(self, transaction_id):
         """
@@ -222,24 +222,24 @@ class Client:
 
             # If client gave some addresses for RENEW or REBIND consider them
             if transactions[transaction_id].last_message_received_type in (5, 6) and\
-                not (len(transactions[transaction_id].Addresses) == 0 and \
+                not (len(transactions[transaction_id].addresses) == 0 and \
                      len(transactions[transaction_id].Prefixes) == 0):
                 if not client_config == None:
                     # give client hostname
                     self.hostname = client_config.HOSTNAME
                     self.client_class = client_config.CLASS
                     # apply answer type of client to transaction - useful if no answer or no address available is configured
-                    transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
+                    transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
                 else:
                     # use default class if host is unknown
                     self.hostname = transactions[transaction_id].hostname
                     self.client_class = 'default_' + transactions[transaction_id].interface
                     # apply answer type of client to transaction - useful if no answer or no address available is configured
-                    transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
+                    transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
 
                 if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE and \
                     (3 or 4) in transactions[transaction_id].ia_options:
-                    for address in transactions[transaction_id].Addresses:
+                    for address in transactions[transaction_id].addresses:
                         # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
                         answer = volatile_store.check_lease(address, transaction_id)
                         if answer:
@@ -344,7 +344,7 @@ class Client:
                     # important indent here, has to match for...addresses-loop!
                     # look for addresses in transaction that are invalid and add them
                     # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                    for a in set(transactions[transaction_id].Addresses).difference([decompress_ip6(x.ADDRESS) for x in client.Addresses]):
+                    for a in set(transactions[transaction_id].addresses).difference([decompress_ip6(x.ADDRESS) for x in self.addresses]):
                         self.addresses.append(Address(address=a,
                                                       valid=False,
                                                       preferred_lifetime=0,
@@ -421,7 +421,7 @@ class Client:
                     # look for prefixes in transaction that are invalid and add them
                     # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
                     if len(self.prefixes) > 0:
-                        for p in set(transactions[transaction_id].Prefixes).difference([decompress_prefix(x.PREFIX, x.LENGTH) for x in client.Prefixes]):
+                        for p in set(transactions[transaction_id].Prefixes).difference([decompress_prefix(x.PREFIX, x.LENGTH) for x in self.Prefixes]):
                             prefix, length = split_prefix(p)
                             self.prefixes.append(Prefix(prefix=prefix,
                                                         length=length,
@@ -438,9 +438,9 @@ class Client:
                 self.hostname = client_config.HOSTNAME
                 self.client_class = client_config.CLASS
                 # apply answer type of client to transaction - useful if no answer or no address available is configured
-                transactions[transaction_id].Answer = cfg.CLASSES[client.Class].ANSWER
+                transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
                 # continue only if request interface matches class interfaces
-                if transactions[transaction_id].interface in cfg.CLASSES[client.Class].INTERFACE:
+                if transactions[transaction_id].interface in cfg.CLASSES[self.client_class].INTERFACE:
                     # if fixed addresses are given build them
                     if not client_config.ADDRESS == None:
                         for address in client_config.ADDRESS:

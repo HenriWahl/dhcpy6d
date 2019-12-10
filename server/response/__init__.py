@@ -301,9 +301,9 @@ class Handler(socketserver.DatagramRequestHandler):
                                         # transactions[transaction_id].client = build_client(transaction_id)
                                         transactions[transaction_id].client = Client(transaction_id)
                                     if cfg.DNS_UPDATE:
-                                        for a in transactions[transaction_id].Addresses:
+                                        for a in transactions[transaction_id].addresses:
                                             dns_delete(transaction_id, address=a, action='release')
-                                    for a in transactions[transaction_id].Addresses:
+                                    for a in transactions[transaction_id].addresses:
                                         # free lease
                                         volatile_store.release_lease(a, timer)
                                     for p in transactions[transaction_id].Prefixes:
@@ -426,7 +426,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                             t1 = '%08x' % (int(cfg.T1))
                                             t2 = '%08x' % (int(cfg.T2))
 
-                                        response_ascii += build_option(3, transactions[transaction_id].IAID + t1 + t2 + ia_addresses)
+                                        response_ascii += build_option(3, transactions[transaction_id].iaid + t1 + t2 + ia_addresses)
                                     # options in answer to be logged
                                     options_answer.append(3)
                                 except:
@@ -487,7 +487,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                                 valid_lifetime = '%08x' % (0)
                                             ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
                                     if not ia_addresses == '':
-                                        response_ascii += build_option(4, transactions[transaction_id].IAID + ia_addresses)
+                                        response_ascii += build_option(4, transactions[transaction_id].iaid + ia_addresses)
                                     # options in answer to be logged
                                     options_answer.append(4)
                                 except:
@@ -627,7 +627,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                         t2 = '%08x' % (int(cfg.T2))
 
                                     # even if there anre no prefixes server has to deliver an empty PD
-                                    response_ascii += build_option(25, transactions[transaction_id].IAID + t1 + t2 + ia_prefixes)
+                                    response_ascii += build_option(25, transactions[transaction_id].iaid + t1 + t2 + ia_prefixes)
                                     # if no prefixes available a NoPrefixAvail status code has to be sent
                                     if ia_prefixes == '':
                                         # REBIND not possible
@@ -825,8 +825,8 @@ class Handler(socketserver.DatagramRequestHandler):
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             log.error('Response(): ' + str(err))
-            print(transaction_id)
-            print(transactions[transaction_id].client.__dict__)
+            # print(transaction_id)
+            # print(transactions[transaction_id].client.__dict__)
 
             # clear any response
             self.response = ''

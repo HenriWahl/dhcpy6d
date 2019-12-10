@@ -19,12 +19,11 @@
 import random
 
 from ..config import cfg
-from ..globals import (transactions,
-                       volatile_store)
+from ..globals import transactions
 from ..helpers import (convert_mac_to_eui64,
                        decompress_ip6)
 from ..log import log
-
+from ..storage import volatile_store
 
 def parse_pattern_address(address, client_config, transaction_id):
     """

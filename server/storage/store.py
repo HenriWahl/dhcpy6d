@@ -496,7 +496,7 @@ class Store:
                      address,
                      transactions[transaction_id].mac,
                      transactions[transaction_id].duid,
-                     transactions[transaction_id].IAID)
+                     transactions[transaction_id].iaid)
 
         return self.query(query)
 
@@ -521,7 +521,7 @@ class Store:
                      length,
                      transactions[transaction_id].mac,
                      transactions[transaction_id].duid,
-                     transactions[transaction_id].IAID)
+                     transactions[transaction_id].iaid)
         return self.query(query)
 
     def check_advertised_lease(self, transaction_id='', category='', atype=''):
@@ -547,7 +547,7 @@ class Store:
                     (self.table_leases,
                      transactions[transaction_id].mac,
                      transactions[transaction_id].duid,
-                     transactions[transaction_id].IAID,
+                     transactions[transaction_id].iaid,
                      category,
                      atype)
         result = self.query(query)
@@ -582,7 +582,7 @@ class Store:
                     (self.table_prefixes,
                      transactions[transaction_id].mac,
                      transactions[transaction_id].duid,
-                     transactions[transaction_id].IAID,
+                     transactions[transaction_id].iaid,
                      category,
                      ptype)
         result = self.query(query)

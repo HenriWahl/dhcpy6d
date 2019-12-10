@@ -77,7 +77,7 @@ def dns_delete(transaction_id, address='', action='release'):
         if a.matches_prototype(address):
             # kind of RCF-compliant security measure - check if hostname and DUID from transaction fits them of store
             if duid == transactions[transaction_id].duid and\
-               iaid == transactions[transaction_id].IAID:
+               iaid == transactions[transaction_id].iaid:
                 delete = True
                 # also check MAC address if MAC counts in general - not RFCish
                 if 'mac' in cfg.IDENTIFICATION:
