@@ -83,18 +83,18 @@ class Client:
                not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'addresses':
                     if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE:
-                        option = 'Addresses:'
+                        option = o + ':'
                         for a in self.__dict__[o]:
                             option += ' ' + colonify_ip6(a.ADDRESS)
                         options_string = options_string + ' | '  + option
                 elif o == 'bootfiles':
-                    option = 'Bootfiles:'
+                    option = o + ':'
                     for a in self.__dict__[o]:
                         option += ' ' + a.BOOTFILE_URL
                     options_string = options_string + ' | '  + option
                 elif o == 'prefixes':
                     if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE:
-                        option = 'Prefixes:'
+                        option = o + ':'
                         for p in self.__dict__[o]:
                             option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
                         options_string = options_string + ' | '  + option

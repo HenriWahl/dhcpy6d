@@ -242,18 +242,18 @@ class Transaction:
                not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'addresses':
                     if (3 or 4) in self.ia_options:
-                        option = 'Addresses:'
+                        option = o + ':'
                         for a in self.__dict__[o]:
                             option += ' ' + colonify_ip6(a)
                         options_string = options_string + ' | '  + option
                 elif o == 'prefixes':
                     if 25 in self.ia_options:
-                        option = 'Prefixes:'
+                        option = o + ':'
                         for p in self.__dict__[o]:
                             prefix, length = split_prefix(p)
                             option += combine_prefix_length(colonify_ip6(prefix), length)
                 elif o == 'client_llip':
-                    option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
+                    option = o + ':' + colonify_ip6(self.__dict__[o])
                     options_string = options_string + ' | '  + option
                 elif o == 'mac':
                     if self.__dict__[o] != DUMMY_MAC:
