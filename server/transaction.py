@@ -228,11 +228,11 @@ class Transaction:
             if client_architecture_short in ARCHITECTURE_TYPE:
                 self.known_client_architecture = ARCHITECTURE_TYPE[client_architecture_short]
 
-    def _get_options_string(self):
+    def get_options_string(self):
         """
             get all options in one string for debugging
         """
-        optionsstring = ''
+        options_string = ''
         # put own attributes into a string
         options = sorted(list(self.__dict__.keys()))
         # options.sort()
@@ -240,23 +240,27 @@ class Transaction:
             # ignore some attributes
             if not o in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
-                if o == 'Addresses':
+                if o == 'addresses':
                     if (3 or 4) in self.ia_options:
                         option = 'Addresses:'
                         for a in self.__dict__[o]:
                             option += ' ' + colonify_ip6(a)
-                        optionsstring = optionsstring + ' | '  + option
-                elif o == 'Prefixes':
+                        options_string = options_string + ' | '  + option
+                elif o == 'prefixes':
                     if 25 in self.ia_options:
                         option = 'Prefixes:'
                         for p in self.__dict__[o]:
                             prefix, length = split_prefix(p)
                             option += combine_prefix_length(colonify_ip6(prefix), length)
-                elif o == 'ClientLLIP':
+                elif o == 'client_llip':
                     option = 'ClientLLIP: ' + colonify_ip6(self.__dict__['ClientLLIP'])
-                    optionsstring = optionsstring + ' | '  + option
+                    options_string = options_string + ' | '  + option
+                elif o == 'mac':
+                    if self.__dict__[o] != DUMMY_MAC:
+                        option = o + ': ' + str(self.__dict__[o])
+                        options_string = options_string + ' | ' + option
                 else:
                     option = o + ': ' + str(self.__dict__[o])
-                    optionsstring = optionsstring + ' | '  + option
+                    options_string = options_string + ' | '  + option
 
-        return optionsstring
+        return options_string

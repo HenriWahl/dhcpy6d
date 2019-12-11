@@ -29,7 +29,9 @@ from socket import gethostname
 
 from .config import cfg
 
+# globally available logging instace
 log = getLogger('dhcpy6d')
+
 if cfg.LOG:
     formatter = Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
     log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
@@ -48,7 +50,7 @@ if cfg.LOG:
         hostname = gethostname().split('.')[0]
         formatter = Formatter(hostname + ' %(name)s %(levelname)s %(message)s')
         # if /socket/file is given use this as addres
-        if cfg.LOG_SYSLOG_DESTINATION.startswith('/') == True:
+        if cfg.LOG_SYSLOG_DESTINATION.startswith('/'):
             destination = cfg.LOG_SYSLOG_DESTINATION
         # if host and port are defined use them...
         elif cfg.LOG_SYSLOG_DESTINATION.count(':') == 1:

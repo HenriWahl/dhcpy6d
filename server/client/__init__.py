@@ -24,7 +24,8 @@ from ..config import (Address,
                       cfg,
                       Prefix)
 from ..dns import get_ip_from_dns
-from ..globals import (EMPTY_OPTIONS,
+from ..globals import (DUMMY_MAC,
+                       EMPTY_OPTIONS,
                        IGNORED_LOG_OPTIONS,
                        timer,
                        transactions)
@@ -68,7 +69,7 @@ class Client:
         if not transaction_id is None:
             self.build(transaction_id)
 
-    def _get_options_string(self):
+    def get_options_string(self):
         """
             all attributes in a string for logging
         """
@@ -97,6 +98,10 @@ class Client:
                         for p in self.__dict__[o]:
                             option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
                         options_string = options_string + ' | '  + option
+                elif o == 'mac':
+                    if self.__dict__[o] != DUMMY_MAC:
+                        option = o + ': ' + str(self.__dict__[o])
+                        options_string = options_string + ' | ' + option
                 else:
                     option = o + ': ' + str(self.__dict__[o])
                     options_string = options_string + ' | '  + option

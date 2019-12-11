@@ -176,7 +176,7 @@ class Handler(socketserver.DatagramRequestHandler):
                         transactions[transaction_id].last_message_received_type = message_type
 
                     # log incoming messages
-                    log.info('%s | TransactionID: %s%s' % (MESSAGE_TYPES[message_type], transaction_id, transactions[transaction_id]._get_options_string()))
+                    log.info('%s | TransactionID: %s%s' % (MESSAGE_TYPES[message_type], transaction_id, transactions[transaction_id].get_options_string()))
 
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
@@ -809,7 +809,7 @@ class Handler(socketserver.DatagramRequestHandler):
                     elif 3 in options_request or 4 in options_request or 13 in options_request or 25 in options_request:
                         # options_answer.sort()
                         options_answer = sorted(options_answer)
-                        log.info('%s | TransactionID: %s | Options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, transactions[transaction_id].client._get_options_string()))
+                        log.info('%s | TransactionID: %s | Options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, transactions[transaction_id].client.get_options_string()))
                     else:
                         print(options_request)
                         log.info('what else should I do?')
