@@ -16,7 +16,7 @@ MAC address aware DHCPv6 server
 Synopsis
 ========
 
-**dhcpy6d** [**-c** *file*] [**-u** *user*] [**-g** *group*] [**-p** *prefix*] [**-r** *yes|no*] [**-d** *duid*] [**-G**]
+**dhcpy6d** [**-c** *file*] [**-u** *user*] [**-g** *group*] [**-p** *prefix*] [**-r** *yes|no*] [**-d** *duid*] [**-m** *message*] [**-G**]
 
 
 Description
