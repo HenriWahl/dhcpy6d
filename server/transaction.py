@@ -210,7 +210,7 @@ class Transaction:
             self.hostname = self.fqdn.split('.')[0].lower()
             # test if hostname is valid
             n = re.compile('^([a-z0-9\-\_]+)*$')
-            if n.match(self.hostname) == None:
+            if n.match(self.hostname) is None:
                 self.hostname = ''
             del n
 

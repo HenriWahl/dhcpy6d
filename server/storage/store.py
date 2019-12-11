@@ -105,7 +105,7 @@ class Store:
             answer = method(self, *args, **kwargs)
             # clean answer
             # SQLite returns list, MySQL tuple - in case someone wonders here...
-            if not (answer == [] or answer == () or answer == None):
+            if not (answer == [] or answer == () or answer is None):
                 return answer[0][0]
             else:
                 return None
@@ -275,7 +275,7 @@ class Store:
             return None
 
     @clean_query_answer
-    def get_range_lease_for_recycling(self, prefix='', frange='', trange='', duid='', mac=''):
+    def get_range_lease_for_recycling(self, prefix='', range_from='', range_to='', duid='', mac=''):
         """
         ask DB for last known leases of an already known host to be recycled
         this is most useful for CONFIRM-requests that will get a not-available-answer but get an
@@ -290,11 +290,11 @@ class Store:
                 "mac = '%s' AND "\
                 "last_message != 1 "\
                 "ORDER BY last_update DESC LIMIT 1" %\
-                (self.table_leases, prefix+frange, prefix+trange, duid, mac)
+                (self.table_leases, prefix+range_from, prefix+range_to, duid, mac)
         return self.query(query)
 
     @clean_query_answer
-    def get_range_prefix_for_recycling(self, prefix='', length='', frange='', trange='', duid='', mac=''):
+    def get_range_prefix_for_recycling(self, prefix='', length='', range_from='', range_to='', duid='', mac=''):
         """
         ask DB for last known prefixes of an already known host to be recycled
         this is most useful for CONFIRM-requests that will get a not-available-answer but get an
@@ -311,15 +311,15 @@ class Store:
                 "last_message != 1 "\
                 "ORDER BY last_update DESC LIMIT 1" %\
                 (self.table_prefixes,
-                 prefix+frange+((128-int(length))//4)*'0',
-                 prefix+trange+((128-int(length))//4)*'0',
+                 prefix+range_from+((128-int(length))//4)*'0',
+                 prefix+range_to+((128-int(length))//4)*'0',
                  length,
                  duid,
                  mac)
         return self.query(query)
 
     @clean_query_answer
-    def get_highest_range_lease(self, prefix='', frange='', trange=''):
+    def get_highest_range_lease(self, prefix='', range_from='', range_to=''):
         """
         ask DB for highest known leases - if necessary range sensitive
         """
@@ -327,12 +327,12 @@ class Store:
                 "category = 'range' AND "\
                 "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
                 (self.table_leases,
-                 prefix+frange,
-                 prefix+trange)
+                 prefix+range_from,
+                 prefix+range_to)
         return self.query(query)
 
     @clean_query_answer
-    def get_highest_range_prefix(self, prefix='', length='', frange='', trange=''):
+    def get_highest_range_prefix(self, prefix='', length='', range_from='', range_to=''):
         """
         ask DB for highest known prefix - if necessary range sensitive
         """
@@ -341,13 +341,13 @@ class Store:
                 "'%s' <= prefix AND prefix <= '%s' AND "\
                 "length = '%s' ORDER BY prefix DESC LIMIT 1" %\
                 (self.table_prefixes,
-                    prefix+frange+((128-int(length))//4)*'0',
-                    prefix+trange+((128-int(length))//4)*'0',
+                    prefix+range_from+((128-int(length))//4)*'0',
+                    prefix+range_to+((128-int(length))//4)*'0',
                     length)
         return self.query(query)
 
     @clean_query_answer
-    def get_oldest_inactive_range_lease(self, prefix='', frange='', trange=''):
+    def get_oldest_inactive_range_lease(self, prefix='', range_from='', range_to=''):
         """
         ask DB for oldest known inactive lease to minimize chance of collisions
         ordered by valid_until to get leases that are free as long as possible
@@ -355,12 +355,12 @@ class Store:
         query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
                 "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
                 (self.table_leases,
-                 prefix+frange,
-                 prefix+trange)
+                 prefix+range_from,
+                 prefix+range_to)
         return self.query(query)
 
     @clean_query_answer
-    def get_oldest_inactive_range_prefix(self, prefix='', length='', frange='', trange=''):
+    def get_oldest_inactive_range_prefix(self, prefix='', length='', range_from='', range_to=''):
         """
         ask DB for oldest known inactive prefix to minimize chance of collisions
         ordered by valid_until to get leases that are free as long as possible
@@ -371,8 +371,8 @@ class Store:
                 "length = '%s' "\
                 "ORDER BY valid_until ASC LIMIT 1" %\
                 (self.table_prefixes,
-                 prefix+frange+((128-int(length))/4)*'0',
-                 prefix+trange+((128-int(length))/4)*'0',
+                 prefix+range_from+((128-int(length))/4)*'0',
+                 prefix+range_to+((128-int(length))/4)*'0',
                  length)
         return self.query(query)
 
@@ -455,27 +455,27 @@ class Store:
         self.query(query)
 
     @clean_query_answer
-    def check_number_of_leases(self, prefix='', frange='', trange=''):
+    def check_number_of_leases(self, prefix='', range_from='', range_to=''):
         """
         check how many leases are stored - used to find out if address range has been exceeded
         """
         query = "SELECT COUNT(address) FROM %s WHERE address LIKE '%s%%' AND "\
                 "'%s' <= address AND address <= '%s'" % (self.table_leases,
                                                          prefix,
-                                                         prefix+frange,
-                                                         prefix+trange)
+                                                         prefix+range_from,
+                                                         prefix+range_to)
         return self.query(query)
 
     @clean_query_answer
-    def check_number_of_prefixes(self, prefix='', length='', frange='', trange=''):
+    def check_number_of_prefixes(self, prefix='', length='', range_from='', range_to=''):
         """
         check how many leases are stored - used to find out if address range has been exceeded
         """
         query = "SELECT COUNT(prefix) FROM %s WHERE prefix LIKE '%s%%' AND "\
                 "'%s' <= prefix AND prefix <= '%s'" % (self.table_prefixes,
                                                        prefix,
-                                                       prefix+frange+((128-int(length))//4)*'0',
-                                                       prefix+trange+((128-int(length))//4)*'0')
+                                                       prefix+range_from+((128-int(length))//4)*'0',
+                                                       prefix+range_to+((128-int(length))//4)*'0')
         return self.query(query)
 
     def check_lease(self, address, transaction_id):
@@ -644,7 +644,7 @@ class Store:
         """
         get client config from db and build the appropriate config objects and indices
         """
-        if transactions[transaction_id].client_config_db == None:
+        if transactions[transaction_id].client_config_db is None:
             query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
                     hostname = '%s' OR mac LIKE '%%%s%%' OR duid = '%s'" % \
                     (self.table_hosts,\
@@ -805,7 +805,7 @@ class Store:
             adjust some existing data to work with newer versions of dhcpy6d
         """
         try:
-            if self.query('SELECT last_message FROM leases LIMIT 1') == None:
+            if self.query('SELECT last_message FROM leases LIMIT 1') is None:
                 # row 'last_message' in tables 'leases' does not exist yet, comes with version 0.1.6
                 self.query('ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0')
                 print("Adding row 'last_message' to table 'leases' in volatile storage succeeded.")
@@ -820,7 +820,7 @@ class Store:
         try:
             try:
                 # only newer databases contain a version number - starting with 1
-                if self.get_db_version() == None:
+                if self.get_db_version() is None:
                     # add table containing meta information like version of database scheme
                     db_operations = ['CREATE TABLE meta (item_key varchar(255) NOT NULL,\
                                       item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))',

@@ -299,7 +299,7 @@ class Config:
             print(USAGE)
             sys.exit(1)
 
-        if configfile == None:
+        if configfile is None:
             error_exit('No config file given - please use --config <config.file>')
 
         if os.path.exists(configfile):
@@ -551,13 +551,13 @@ class Config:
             self.PREFIXES[p].build_prototype()
 
         # check if some options are set by cli options
-        if not self.cli_user == None:
+        if not self.cli_user is None:
             self.USER = self.cli_user
-        if not self.cli_group == None:
+        if not self.cli_group is None:
             self.GROUP = self.cli_group
-        if not self.cli_duid == None:
+        if not self.cli_duid is None:
             self.SERVERDUID = self.cli_duid
-        if not self.cli_really_do_it == None:
+        if not self.cli_really_do_it is None:
             self.REALLY_DO_IT = BOOLPOOL[self.cli_really_do_it.lower()]
 
         # check config
@@ -1022,7 +1022,7 @@ class ConfigObject:
         """
 
         # if called with de-$prefix$-ed pattern use it
-        if pattern == None:
+        if pattern is None:
             prototype = self.PATTERN
         else:
             prototype = pattern

@@ -166,7 +166,7 @@ class Client:
                 client_config = None
 
             # if filters did not get a result try it the hard way
-            if client_config == None:
+            if client_config is None:
                 # check all given identification criteria - if they all match each other the client is identified
                 id_attributes = list()
 
@@ -224,7 +224,7 @@ class Client:
             if transactions[transaction_id].last_message_received_type in (5, 6) and\
                 not (len(transactions[transaction_id].addresses) == 0 and \
                      len(transactions[transaction_id].Prefixes) == 0):
-                if not client_config == None:
+                if not client_config is None:
                     # give client hostname
                     self.hostname = client_config.HOSTNAME
                     self.client_class = client_config.CLASS
@@ -247,7 +247,7 @@ class Client:
                                 for item in answer:
                                     a = dict(list(zip(('hostname', 'address', 'type', 'category', 'ia_type', 'class', 'preferred_until'), item)))
                                     # if lease exists but no configured client set class to default
-                                    if client_config == None:
+                                    if client_config is None:
                                         self.hostname = transactions[transaction_id].hostname
                                         self.client_class = 'default_' + transactions[transaction_id].interface
                                     # check if address type of lease still exists in configuration
@@ -267,7 +267,7 @@ class Client:
                                                        cfg.ADDRESSES[a['type']].PROTOTYPE[identification] != 'x':
                                                         use_lease = False
                                                         break
-                                            elif a['category'] == 'fixed' and not client_config.ADDRESS == None:
+                                            elif a['category'] == 'fixed' and not client_config.ADDRESS is None:
                                                 if not address in client_config.ADDRESS:
                                                     use_lease = False
                                             elif a['category'] == 'dns':
@@ -278,17 +278,17 @@ class Client:
                                                 # when category is range, test if it still applies
                                                 if a['category'] == 'range':
                                                     # borrowed from parse_pattern_address to find out if lease is still in a meanwhile maybe changed range
-                                                    frange, trange = cfg.ADDRESSES[a['type']].RANGE.split('-')
+                                                    range_from, range_to = cfg.ADDRESSES[a['type']].RANGE.split('-')
 
                                                     # correct possible misconfiguration
-                                                    if len(frange)<4:
-                                                        frange ='0'*(4-len(frange)) + frange
-                                                    if len(trange)<4:
-                                                        trange ='0'*(4-len(trange)) + trange
-                                                    if frange > trange:
-                                                        frange, trange = trange, frange
+                                                    if len(range_from)<4:
+                                                        range_from ='0'*(4-len(range_from)) + range_from
+                                                    if len(range_to)<4:
+                                                        range_to ='0'*(4-len(range_to)) + range_to
+                                                    if range_from > range_to:
+                                                        range_from, range_to = range_to, range_from
                                                     # if lease is still inside range boundaries use it
-                                                    if frange <= address[28:].lower() < trange:
+                                                    if range_from <= address[28:].lower() < range_to:
                                                         # build IA partly of leases db, partly of config db
                                                         ia = Address(address=a['address'],
                                                                      atype=a['type'],
@@ -309,7 +309,7 @@ class Client:
                                                     random_address = parse_pattern_address(cfg.ADDRESSES[a['type']], client_config, transaction_id)
                                                     # create new random address if old one is de-preferred
                                                     # do not wait until it is invalid
-                                                    if not random_address == None:
+                                                    if not random_address is None:
                                                         ia = Address(address=random_address, ia_type=cfg.ADDRESSES[a['type']].IA_TYPE,
                                                                      preferred_lifetime=cfg.ADDRESSES[a['type']].PREFERRED_LIFETIME,
                                                                      valid_lifetime=cfg.ADDRESSES[a['type']].VALID_LIFETIME,
@@ -364,7 +364,7 @@ class Client:
                                 for item in answer:
                                     p = dict(list(zip(('hostname', 'prefix', 'length', 'type', 'category', 'class', 'preferred_until'), item)))
                                     # if lease exists but no configured client set class to default
-                                    if client_config == None:
+                                    if client_config is None:
                                         self.hostname = transactions[transaction_id].hostname
                                         self.client_class = 'default_' + transactions[transaction_id].interface
                                     # check if address type of lease still exists in configuration
@@ -387,15 +387,15 @@ class Client:
                                                 # when category is range, test if it still applies
                                                 if p['category'] == 'range':
                                                     # borrowed from parse_pattern_prefix to find out if lease is still in a meanwhile maybe changed range
-                                                    frange, trange = cfg.PREFIXES[p['type']].RANGE.split('-')
+                                                    range_from, range_to = cfg.PREFIXES[p['type']].RANGE.split('-')
 
                                                     # correct possible misconfiguration
-                                                    if len(frange)<4:
-                                                        frange ='0'*(4-len(frange)) + frange
-                                                    if len(trange)<4:
-                                                        trange ='0'*(4-len(trange)) + trange
-                                                    if frange > trange:
-                                                        frange, trange = trange, frange
+                                                    if len(range_from)<4:
+                                                        range_from ='0'*(4-len(range_from)) + range_from
+                                                    if len(range_to)<4:
+                                                        range_to ='0'*(4-len(range_to)) + range_to
+                                                    if range_from > range_to:
+                                                        range_from, range_to = range_to, range_from
 
                                                     # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
                                                     # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
@@ -405,7 +405,7 @@ class Client:
                                                     prefix_prefix = decompress_ip6(p['prefix'].replace('$range$', '0000'))[:prefix_range_index + 4]
 
                                                     # if lease is still inside range boundaries use it
-                                                    if frange <= prefix_prefix[prefix_range_index:prefix_range_index + 4].lower() < trange:
+                                                    if range_from <= prefix_prefix[prefix_range_index:prefix_range_index + 4].lower() < range_to:
                                                         # build IA partly of leases db, partly of config db
                                                         ia = Prefix(prefix=p['prefix'],
                                                                     length=p['length'],
@@ -442,7 +442,7 @@ class Client:
                 # continue only if request interface matches class interfaces
                 if transactions[transaction_id].interface in cfg.CLASSES[self.client_class].INTERFACE:
                     # if fixed addresses are given build them
-                    if not client_config.ADDRESS == None:
+                    if not client_config.ADDRESS is None:
                         for address in client_config.ADDRESS:
                             if len(address) > 0:
                                 # fixed addresses are assumed to be non-temporary

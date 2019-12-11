@@ -34,7 +34,7 @@ def parse_pattern_address(address, client_config, transaction_id):
     a = address.PATTERN
 
     # if dhcpy6d got a new (mostly dynamic) prefix at start insert it here
-    if not cfg.PREFIX == None:
+    if cfg.PREFIX is not None:
         a = a.replace('$prefix$', cfg.PREFIX)
 
     # check different client address categories - to be extended!
@@ -56,7 +56,9 @@ def parse_pattern_address(address, client_config, transaction_id):
             return None
     elif address.CATEGORY == 'random':
         # first check if address already has been advertised
-        advertised_address = volatile_store.check_advertised_lease(transaction_id, category='random', atype=address.TYPE)
+        advertised_address = volatile_store.check_advertised_lease(transaction_id,
+                                                                   category='random',
+                                                                   atype=address.TYPE)
         # when address already has been advertised for this client use it
         if advertised_address:
             a = advertised_address
@@ -66,13 +68,13 @@ def parse_pattern_address(address, client_config, transaction_id):
             # subject to change....
             a = a.replace('$random64$', ra)
     elif address.CATEGORY == 'range':
-        frange, trange = address.RANGE.split('-')
-        if len(frange)<4:
-            frange ='0'*(4-len(frange)) + frange
-        if len(trange)<4:
-            trange ='0'*(4-len(trange)) + trange
-        if frange > trange:
-            frange, trange = trange, frange
+        range_from, range_to = address.RANGE.split('-')
+        if len(range_from) < 4:
+            range_from = '0' * (4-len(range_from)) + range_from
+        if len(range_to) < 4:
+            range_to = '0' * (4-len(range_to)) + range_to
+        if range_from > range_to:
+            range_from, range_to = range_to, range_from
 
         # expecting range-range at the last octet, 'prefix' means the first seven octets here
         # - is just shorter than the_first_seven_octets
@@ -86,25 +88,29 @@ def parse_pattern_address(address, client_config, transaction_id):
             a = advertised_address
         else:
             # check if requesting client still has an active lease that could be reused
-            lease = volatile_store.get_range_lease_for_recycling(prefix=prefix, frange=frange, trange=trange, \
-                                                                 duid=transactions[transaction_id].duid, \
+            lease = volatile_store.get_range_lease_for_recycling(prefix=prefix,
+                                                                 range_from=range_from,
+                                                                 range_to=range_to,
+                                                                 duid=transactions[transaction_id].duid,
                                                                  mac=transactions[transaction_id].mac)
             # the found lease has to be in range - important after changed range boundaries
-            if not lease is None and frange <= lease[28:].lower() <= trange:
-                a = ':'.join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],\
+            if lease is not None and range_from <= lease[28:].lower() <= range_to:
+                a = ':'.join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],
                               lease[16:20], lease[20:24], lease[24:28], lease[28:32]))
             else:
                 # get highest active lease to increment address about 1
-                lease = volatile_store.get_highest_range_lease(prefix=prefix, frange=frange, trange=trange)
+                lease = volatile_store.get_highest_range_lease(prefix=prefix, range_from=range_from, range_to=range_to)
                 # check if highest active lease still fits into range
-                if not lease is None and frange <= lease[28:].lower() < trange:
+                if lease is not None and range_from <= lease[28:].lower() < range_to:
                     # if highest lease + 1 would not fit range limit is reached
-                    if lease[28:].lower() >= trange:
+                    if lease[28:].lower() >= range_to:
                         # try to get one of the inactive old leases
-                        lease = volatile_store.get_oldest_inactive_range_lease(prefix=prefix, frange=frange, trange=trange)
+                        lease = volatile_store.get_oldest_inactive_range_lease(prefix=prefix,
+                                                                               range_from=range_from,
+                                                                               range_to=range_to)
                         if lease is None:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, frange,trange))
+                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, range_from, range_to))
                             return None
                         else:
                             # if lease is OK use it
@@ -114,16 +120,18 @@ def parse_pattern_address(address, client_config, transaction_id):
                         a = a.replace('$range$', str(hex(int(lease[28:], 16) + 1)).split('x')[1])
                 else:
                     # if there is no lease yet or range limit is reached try to reactivate an old inactive lease
-                    lease = volatile_store.get_oldest_inactive_range_lease(prefix=prefix, frange=frange, trange=trange)
+                    lease = volatile_store.get_oldest_inactive_range_lease(prefix=prefix,
+                                                                           range_from=range_from,
+                                                                           range_to=range_to)
                     if lease is None:
                         # if there are no leases stored yet initiate lease storage
                         # this will be done only once - the first time if there is no other lease yet
-                        # so it is safe to start from frange
-                        if volatile_store.check_number_of_leases(prefix, frange, trange) <= 1:
-                            a = a.replace('$range$', frange)
+                        # so it is safe to start from range_from
+                        if volatile_store.check_number_of_leases(prefix, range_from, range_to) <= 1:
+                            a = a.replace('$range$', range_from)
                         else:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, frange,trange))
+                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, range_from, range_to))
                             return None
                     else:
                         # if there is a lease it might be used
@@ -150,15 +158,16 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
             return None
 
     elif pattern.CATEGORY == 'range':
-        frange, trange = pattern.RANGE.split('-')
-        if len(frange)<4:
-            frange ='0'*(4-len(frange)) + frange
-        if len(trange)<4:
-            trange ='0'*(4-len(trange)) + trange
-        if frange > trange:
-            frange, trange = trange, frange
+        range_from, range_to = pattern.RANGE.split('-')
+        if len(range_from) < 4:
+            range_from = '0' * (4-len(range_from)) + range_from
+        if len(range_to) < 4:
+            range_to = '0' * (4-len(range_to)) + range_to
+        if range_from > range_to:
+            range_from, range_to = range_to, range_from
 
-        # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
+        # contrary to addresses the prefix $range$ part of the pattern is expected
+        # somewhere at the left part of the pattern
         # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
         # as first character of range part of prefix - assuming steps of width 4
         prefix_range_index = int(pattern.LENGTH)//4-4
@@ -176,65 +185,69 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
             # check if requesting client still has an active prefix that could be reused
             prefix = volatile_store.get_range_prefix_for_recycling(prefix=prefix_prefix,
                                                                    length=pattern.LENGTH,
-                                                                   frange=frange,
-                                                                   trange=trange,
+                                                                   range_from=range_from,
+                                                                   range_to=range_to,
                                                                    duid=transactions[transaction_id].duid,
                                                                    mac=transactions[transaction_id].mac)
             # the found prefix has to be in range - important after changed range boundaries
-            if not prefix is None:
-                if frange <= prefix[prefix_range_index:prefix_range_index+4].lower() <= trange:
+            if prefix is not None:
+                if range_from <= prefix[prefix_range_index:prefix_range_index+4].lower() <= range_to:
                     p = ':'.join((prefix[0:4], prefix[4:8], prefix[8:12], prefix[12:16],
                                   prefix[16:20], prefix[20:24], prefix[24:28], prefix[28:32]))
                 else:
                     # if prefixes are exceeded or something went wrong with from/to ranges return none
-                    log.critical('Prefix address space %s[%s-%s] exceeded or something is wrong with from/to ranges' % (prefix_prefix, frange, trange))
+                    log.critical('Prefix address space %s[%s-%s] exceeded or something is wrong with from/to ranges' %
+                                 (prefix_prefix, range_from, range_to))
                     return None
             else:
                 # get highest active lease to increment address about 1
                 prefix = volatile_store.get_highest_range_prefix(prefix=prefix_prefix,
                                                                  length=pattern.LENGTH,
-                                                                 frange=frange,
-                                                                 trange=trange)
+                                                                 range_from=range_from,
+                                                                 range_to=range_to)
                 # check if highest active lease still fits into range
-                if not prefix is None:
-                    if frange <= prefix[prefix_range_index:prefix_range_index+4].lower() < trange:
+                if prefix is not None:
+                    if range_from <= prefix[prefix_range_index:prefix_range_index+4].lower() < range_to:
                         # if highest lease + 1 would not fit range limit is reached
-                        if prefix[prefix_range_index:prefix_range_index+4].lower() >= trange:
+                        if prefix[prefix_range_index:prefix_range_index+4].lower() >= range_to:
                             # try to get one of the inactive old leases
                             prefix = volatile_store.get_oldest_inactive_range_prefix(prefix=prefix_prefix,
                                                                                      length=pattern.LENGTH,
-                                                                                     frange=frange,
-                                                                                     trange=trange)
+                                                                                     range_from=range_from,
+                                                                                     range_to=range_to)
                             if prefix is None:
                                 # if none is available limit is reached and nothing returned
-                                log.critical('Prefix address space %s[%s-%s] exceeded' % (prefix_prefix, frange,trange))
+                                log.critical('Prefix address space %s[%s-%s] exceeded' % (prefix_prefix,
+                                                                                          range_from, range_to))
                                 return None
                             else:
                                 # if lease is OK use it
                                 p = prefix
                         else:
                             # otherwise increase current maximum range limit by 1
-                            p = p.replace('$range$', str(hex(int(prefix[prefix_range_index:prefix_range_index+4].lower(), 16) + 1)).split('x')[1])
+                            p = p.replace('$range$',
+                                          str(hex(int(prefix[prefix_range_index:prefix_range_index+4].lower(), 16)
+                                                  + 1)).split('x')[1])
 
                     else:
                         # if there is no lease yet or range limit is reached try to reactivate an old inactive lease
                         prefix = volatile_store.get_oldest_inactive_range_prefix(prefix=prefix_prefix,
                                                                                  length=pattern.LENGTH,
-                                                                                 frange=frange,
-                                                                                 trange=trange)
+                                                                                 range_from=range_from,
+                                                                                 range_to=range_to)
                         if prefix is None:
                             # if there are no leases stored yet initiate lease storage
                             # this will be done only once - the first time if there is no other lease yet
-                            # so it is safe to start from frange
+                            # so it is safe to start from range_from
                             if volatile_store.check_number_of_prefixes(prefix=prefix_prefix,
                                                                        length=pattern.LENGTH,
-                                                                       frange=frange,
-                                                                       trange=trange) <= 1:
-                                p = p.replace('$range$', frange)
+                                                                       range_from=range_from,
+                                                                       range_to=range_to) <= 1:
+                                p = p.replace('$range$', range_from)
                             else:
                                 # if none is available limit is reached and nothing returned
                                 log.critical(
-                                    'Prefix address space %s[%s-%s] exceeded' % (prefix_prefix, frange, trange))
+                                    'Prefix address space %s[%s-%s] exceeded' % (prefix_prefix, range_from, range_to))
                                 return None
                         else:
                             # if there is a lease it might be used
@@ -244,20 +257,22 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
                     # if there is no lease yet or range limit is reached try to reactivate an old inactive lease
                     prefix = volatile_store.get_oldest_inactive_range_prefix(prefix=prefix_prefix,
                                                                              length=pattern.LENGTH,
-                                                                             frange=frange,
-                                                                             trange=trange)
+                                                                             range_from=range_from,
+                                                                             range_to=range_to)
                     if prefix is None:
                         # if there are no leases stored yet initiate lease storage
                         # this will be done only once - the first time if there is no other lease yet
-                        # so it is safe to start from frange
+                        # so it is safe to start from range_from
                         if volatile_store.check_number_of_prefixes(prefix=prefix_prefix,
                                                                    length=pattern.LENGTH,
-                                                                   frange=frange,
-                                                                   trange=trange) <= 1:
-                            p = p.replace('$range$', frange)
+                                                                   range_from=range_from,
+                                                                   range_to=range_to) <= 1:
+                            p = p.replace('$range$', range_from)
                         else:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Prefix address space %s[%s-%s] exceeded' % (prefix_prefix, frange, trange))
+                            log.critical('Prefix address space %s[%s-%s] exceeded' % (prefix_prefix,
+                                                                                      range_from,
+                                                                                      range_to))
                             return None
                     else:
                         # if there is a lease it might be used

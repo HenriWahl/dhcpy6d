@@ -77,7 +77,7 @@ class Handler(socketserver.DatagramRequestHandler):
         try:
             interface = socket.if_indextoname(self.client_address[3])
         except OSError:
-            # strangely the interface index is 0 if sent to localhost -
+            # srange_toly the interface index is 0 if sent to localhost -
             # even if 'lo' has the index 1
             interface = ''
 
@@ -297,7 +297,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
                                 elif transactions[transaction_id].last_message_received_type == 8:
                                     #  build client to be able to delete it from DNS
-                                    if transactions[transaction_id].client == None:
+                                    if transactions[transaction_id].client is None:
                                         # transactions[transaction_id].client = build_client(transaction_id)
                                         transactions[transaction_id].client = Client(transaction_id)
                                     if cfg.DNS_UPDATE:
@@ -373,7 +373,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 # check if MAC of LLIP is really known
                 if transactions[transaction_id].client_llip in collected_macs or cfg.IGNORE_MAC:
                     # collect client information
-                    if transactions[transaction_id].client == None:
+                    if transactions[transaction_id].client is None:
                         # transactions[transaction_id].client = build_client(transaction_id)
                         transactions[transaction_id].client = Client(transaction_id)
 
@@ -445,7 +445,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 # check if MAC of LLIP is really known
                 if transactions[transaction_id].client_llip in collected_macs or cfg.IGNORE_MAC:
                     # collect client information
-                    if transactions[transaction_id].client == None:
+                    if transactions[transaction_id].client is None:
                         # transactions[transaction_id].client = build_client(transaction_id)
                         transactions[transaction_id].client = Client(transaction_id)
 
@@ -581,7 +581,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 # check if MAC of LLIP is really known
                 if transactions[transaction_id].client_llip in collected_macs or cfg.IGNORE_MAC:
                     # collect client information
-                    if transactions[transaction_id].client == None:
+                    if transactions[transaction_id].client is None:
                         # transactions[transaction_id].client = build_client(transaction_id)
                         transactions[transaction_id].client = Client(transaction_id)
 
@@ -734,7 +734,7 @@ class Handler(socketserver.DatagramRequestHandler):
             # https://tools.ietf.org/html/rfc5970
             if 59 in options_request:
                 # build client if not done yet
-                if transactions[transaction_id].client == None:
+                if transactions[transaction_id].client is None:
                     # transactions[transaction_id].client = build_client(transaction_id)
                     transactions[transaction_id].client = Client(transaction_id)
 
