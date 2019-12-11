@@ -18,7 +18,9 @@
 
 import configparser
 
-from ..globals import transactions
+from ..config import cfg
+from ..globals import (collected_macs,
+                       transactions)
 from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option)
@@ -31,8 +33,8 @@ class Textfile(Store):
     """
         client config in text files
     """
-    def __init__(self, cfg, query_queue, answer_queue, transactions, collected_macs):
-        Store.__init__(self, cfg, query_queue, answer_queue, transactions, collected_macs)
+    def __init__(self, query_queue, answer_queue):
+        Store.__init__(self, query_queue, answer_queue)
         self.connection = None
 
         # store config information of hosts

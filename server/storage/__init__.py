@@ -16,10 +16,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-import grp
-import configparser
-import os
-import pwd
 import sys
 import threading
 import traceback
@@ -31,6 +27,7 @@ from ..globals import (config_answer_queue,
                        volatile_answer_queue,
                        volatile_query_queue,
                        volatile_store)
+from ..helpers import error_exit
 
 from .mysql import DBMySQL
 from .postgresql import DBPostgreSQL
@@ -45,12 +42,12 @@ class QueryQueue(threading.Thread):
     """
     Pump queries around
     """
-    def __init__(self, name='', store=None, query_queue=None, answer_queue=None):
+    def __init__(self, name='', store_type=None, query_queue=None, answer_queue=None):
         threading.Thread.__init__(self, name=name)
         self.query_queue = query_queue
         self.answer_queue = answer_queue
-        self.store = store
-        self.setDaemon(1)
+        self.store = store_type
+        self.setDaemon(True)
 
     def run(self):
         """
@@ -68,7 +65,7 @@ class QueryQueue(threading.Thread):
 
             self.answer_queue.put({query: answer})
 
-# store
+
 # because of thread trouble there should not be too much db connections at once
 # so we need to use the queryqueue way - subject to change
 # source of configuration of hosts
@@ -98,8 +95,6 @@ if cfg.STORE_VOLATILE == 'sqlite':
 
 # do not start if no database connection exists
 if not config_store.connected:
-    print('\nConfiguration database is not connected!\n')
-    sys.exit(1)
+    error_exit('Configuration database is not connected!')
 if not volatile_store.connected:
-    print('\nDatabase for volatile data is not connected!\n')
-    sys.exit(1)
+    error_exit('Database for volatile data is not connected!')

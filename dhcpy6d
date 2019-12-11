@@ -65,12 +65,12 @@ if __name__ == '__main__':
 
     # start query queue watcher
     config_query_queue_watcher = QueryQueue(name='config_query_queue',
-                                            store=config_store,
+                                            store_type=config_store,
                                             query_queue=config_query_queue,
                                             answer_queue=config_answer_queue)
     config_query_queue_watcher.start()
     volatile_query_queue_watcher = QueryQueue(name='volatile_query_queue',
-                                              store=volatile_store,
+                                              store_type=volatile_store,
                                               query_queue=volatile_query_queue,
                                               answer_queue=volatile_answer_queue)
     volatile_query_queue_watcher.start()

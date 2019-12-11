@@ -25,6 +25,7 @@ from ..helpers import (convert_mac_to_eui64,
 from ..log import log
 from ..storage import volatile_store
 
+
 def parse_pattern_address(address, client_config, transaction_id):
     """
         parse address pattern and replace variables with current values
