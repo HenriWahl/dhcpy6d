@@ -66,7 +66,7 @@ class SQLite(Store):
             return None
 
 
-    def DBQuery(self, query):
+    def db_query(self, query):
         """
             execute query on DB
         """

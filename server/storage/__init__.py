@@ -60,7 +60,7 @@ class QueryQueue(threading.Thread):
         while True:
             query = self.query_queue.get()
             try:
-                answer = self.store.DBQuery(query)
+                answer = self.store.db_query(query)
             except Exception as error:
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()

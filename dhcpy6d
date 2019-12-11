@@ -88,11 +88,11 @@ if __name__ == '__main__':
         cfg.PREFIXES[p].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
 
     # adjust old data to match newer versions of dhcpy6d
-    volatile_store.LegacyAdjustments()
+    volatile_store.legacy_adjustments()
 
     # collect all known MAC addresses from database
     if cfg.CACHE_MAC_LLIP:
-        volatile_store.CollectMACsFromDB()
+        volatile_store.collect_macs_from_db()
 
     # start timer
     timer_thread = TimerThread()

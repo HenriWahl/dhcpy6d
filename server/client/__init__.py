@@ -118,7 +118,7 @@ class Client:
 
             # list to collect filtered client information
             # if there are more than one entries that do not match the class is not uniquely identified
-            filtered_class = dict()
+            filtered_class = {}
 
             # check if there are identification attributes of any class - classes are sorted by filter types
             for f in cfg.FILTERS:

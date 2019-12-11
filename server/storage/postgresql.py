@@ -27,7 +27,7 @@ from .store import DB
 
 class DBPostgreSQL(DB):
 
-    def DBConnect(self):
+    def db_connect(self):
         """
             Connect to database server according to database type
         """
@@ -52,13 +52,13 @@ class DBPostgreSQL(DB):
             self.connected = False
         return self.connected
 
-    def DBQuery(self, query):
+    def db_query(self, query):
         try:
             self.cursor.execute(query)
         except Exception as err:
             # try to reestablish database connection
             print('Error: {0}'.format(str(err)))
-            if not self.DBConnect():
+            if not self.db_connect():
                 return None
             else:
                 try:

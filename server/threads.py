@@ -113,7 +113,7 @@ class TidyUpThread(Thread):
 
                 # if disconnected try reconnect
                 if not volatile_store.connected:
-                    volatile_store.DBConnect()
+                    volatile_store.db_connect()
                 else:
                     # cleaning database once per minute should be enough
                     if dbcount > 60//cfg.CLEANING_INTERVAL:

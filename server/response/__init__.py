@@ -754,10 +754,10 @@ class Handler(socketserver.DatagramRequestHandler):
                 dberror = []
                 if not config_store.connected:
                     dberror.append('config')
-                    config_store.DBConnect()
+                    config_store.db_connect()
                 if not volatile_store.connected:
                     dberror.append('volatile')
-                    volatile_store.DBConnect()
+                    volatile_store.db_connect()
 
                 # create error response - headers have to be recreated because
                 # problems may have arisen while processing and these information

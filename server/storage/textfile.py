@@ -36,12 +36,12 @@ class Textfile(Store):
         self.connection = None
 
         # store config information of hosts
-        self.Hosts = dict()
-        self.index_mac = dict()
-        self.index_duid = dict()
+        self.hosts = {}
+        self.index_mac = {}
+        self.index_duid = {}
 
         # store IDs for ID-based hosts to check if there are duplicates
-        self.IDs = dict()
+        self.ids = {}
 
         # instantiate a Configparser
         config = configparser.ConfigParser()
@@ -50,52 +50,52 @@ class Textfile(Store):
         # read all sections of config file
         # a section here is a host
         for section in config.sections():
-            self.Hosts[section] = ClientConfig()
+            self.hosts[section] = ClientConfig()
             for item in config.items(section):
                 # lowercase all MAC addresses, DUIDs and IPv6 addresses
                 if item[0].upper() in ['MAC', 'DUID', 'ADDRESS']:
-                    self.Hosts[section].__setattr__(item[0].upper(), str(item[1]).lower())
+                    self.hosts[section].__setattr__(item[0].upper(), str(item[1]).lower())
                 else:
-                    self.Hosts[section].__setattr__(item[0].upper(), str(item[1]))
+                    self.hosts[section].__setattr__(item[0].upper(), str(item[1]))
 
             # Test if host has ID
-            if self.Hosts[section].CLASS in cfg.CLASSES:
-                for a in cfg.CLASSES[self.Hosts[section].CLASS].ADDRESSES:
-                    if cfg.ADDRESSES[a].CATEGORY == 'id' and self.Hosts[section].ID == '':
-                        error_exit("Textfile client configuration: No ID given for client '%s'" % (self.Hosts[section].HOSTNAME))
+            if self.hosts[section].CLASS in cfg.CLASSES:
+                for a in cfg.CLASSES[self.hosts[section].CLASS].ADDRESSES:
+                    if cfg.ADDRESSES[a].CATEGORY == 'id' and self.hosts[section].ID == '':
+                        error_exit("Textfile client configuration: No ID given for client '%s'" % (self.hosts[section].HOSTNAME))
             else:
-                error_exit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.Hosts[section].CLASS, self.Hosts[section].HOSTNAME))
+                error_exit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.hosts[section].CLASS, self.hosts[section].HOSTNAME))
 
-            if self.Hosts[section].ID != '':
-                if self.Hosts[section].ID in list(self.IDs.keys()):
-                    error_exit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.Hosts[section].ID, self.Hosts[section].HOSTNAME, self.IDs[self.Hosts[section].ID]))
+            if self.hosts[section].ID != '':
+                if self.hosts[section].ID in list(self.ids.keys()):
+                    error_exit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.hosts[section].ID, self.hosts[section].HOSTNAME, self.ids[self.hosts[section].ID]))
                 else:
-                    self.IDs[self.Hosts[section].ID] = self.Hosts[section].HOSTNAME
+                    self.ids[self.hosts[section].ID] = self.hosts[section].HOSTNAME
 
             # in case of various MAC addresses split them...
-            self.Hosts[section].MAC = listify_option(self.Hosts[section].MAC)
+            self.hosts[section].MAC = listify_option(self.hosts[section].MAC)
 
             # in case of various fixed addresses split them and avoid decompressing of ':'...
-            self.Hosts[section].ADDRESS = listify_option(self.Hosts[section].ADDRESS)
+            self.hosts[section].ADDRESS = listify_option(self.hosts[section].ADDRESS)
 
             # Decompress IPv6-Addresses
-            if self.Hosts[section].ADDRESS != None:
-                self.Hosts[section].ADDRESS =  [decompress_ip6(x) for x in self.Hosts[section].ADDRESS]
+            if self.hosts[section].ADDRESS != None:
+                self.hosts[section].ADDRESS =  [decompress_ip6(x) for x in self.hosts[section].ADDRESS]
 
             # and put the host objects into index
-            if self.Hosts[section].MAC:
-                for m in self.Hosts[section].MAC:
+            if self.hosts[section].MAC:
+                for m in self.hosts[section].MAC:
                     if not m in self.index_mac:
-                        self.index_mac[m] = [self.Hosts[section]]
+                        self.index_mac[m] = [self.hosts[section]]
                     else:
-                        self.index_mac[m].append(self.Hosts[section])
+                        self.index_mac[m].append(self.hosts[section])
 
             # add DUIDs to IndexDUID
-            if not self.Hosts[section].DUID == '':
-                if not self.Hosts[section].DUID in self.index_duid:
-                    self.index_duid[self.Hosts[section].DUID] = [self.Hosts[section]]
+            if not self.hosts[section].DUID == '':
+                if not self.hosts[section].DUID in self.index_duid:
+                    self.index_duid[self.hosts[section].DUID] = [self.hosts[section]]
                 else:
-                    self.index_duid[self.Hosts[section].DUID].append(self.Hosts[section])
+                    self.index_duid[self.hosts[section].DUID].append(self.hosts[section])
 
         # not very meaningful in case of databaseless textfile config but for completeness
         self.connected = True
@@ -132,8 +132,8 @@ class Textfile(Store):
             get host and its information by hostname
         """
         hostname = transactions[transaction_id].hostname
-        if hostname in self.Hosts:
-            return [self.Hosts[hostname]]
+        if hostname in self.hosts:
+            return [self.hosts[hostname]]
         else:
             return None
 

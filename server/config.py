@@ -198,10 +198,10 @@ class Config:
         self.CLEANING_INTERVAL = 5
 
         # sddress, bootfile and class schemes
-        self.ADDRESSES = dict()
-        self.BOOTFILES = dict()
-        self.CLASSES = dict()
-        self.PREFIXES = dict()
+        self.ADDRESSES = {}
+        self.BOOTFILES = {}
+        self.CLASSES = {}
+        self.PREFIXES = {}
 
         # how to identify clients
         self.IDENTIFICATION = 'mac'

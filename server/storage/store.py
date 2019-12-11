@@ -56,9 +56,9 @@ class ClientConfigDB:
         class for storing client config snippet from DB - used in SQLite and MySQL Storage
     """
     def __init__(self):
-        self.hosts = dict()
-        self.index_mac = dict()
-        self.index_duid = dict()
+        self.hosts = {}
+        self.index_mac = {}
+        self.index_duid = {}
 
 class Store:
     """
@@ -77,7 +77,7 @@ class Store:
         # flag to check if connection is OK
         self.connected = False
         # storage of query answers
-        self.results = dict()
+        self.results = {}
 
     def query(self, query):
         """
@@ -666,7 +666,7 @@ class Store:
                 if duid: duid = duid.lower()
                 if address: address = listify_option(address.lower())
 
-                transactions[transaction_id].client_config_db.Hosts[hostname] = ClientConfig(hostname=hostname,
+                transactions[transaction_id].client_config_db.hosts[hostname] = ClientConfig(hostname=hostname,
                                                                                                 mac=mac,
                                                                                                 duid=duid,
                                                                                                 aclass=aclass,
@@ -674,19 +674,19 @@ class Store:
                                                                                                 id=id)
 
                 # and put the host objects into index
-                if transactions[transaction_id].client_config_db.Hosts[hostname].MAC:
-                    for m in transactions[transaction_id].client_config_db.Hosts[hostname].MAC:
+                if transactions[transaction_id].client_config_db.hosts[hostname].MAC:
+                    for m in transactions[transaction_id].client_config_db.hosts[hostname].MAC:
                         if not m in transactions[transaction_id].client_config_db.index_mac:
-                            transactions[transaction_id].client_config_db.index_mac[m] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
+                            transactions[transaction_id].client_config_db.index_mac[m] = [transactions[transaction_id].client_config_db.hosts[hostname]]
                         else:
-                            transactions[transaction_id].client_config_db.index_mac[m].append(transactions[transaction_id].client_config_db.Hosts[hostname])
+                            transactions[transaction_id].client_config_db.index_mac[m].append(transactions[transaction_id].client_config_db.hosts[hostname])
 
                 # add DUIDs to IndexDUID
-                if not transactions[transaction_id].client_config_db.Hosts[hostname].DUID == '':
-                    if not transactions[transaction_id].client_config_db.Hosts[hostname].DUID in transactions[transaction_id].client_config_db.index_duid:
-                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.Hosts[hostname].DUID] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
+                if not transactions[transaction_id].client_config_db.hosts[hostname].DUID == '':
+                    if not transactions[transaction_id].client_config_db.hosts[hostname].DUID in transactions[transaction_id].client_config_db.index_duid:
+                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.hosts[hostname].DUID] = [transactions[transaction_id].client_config_db.hosts[hostname]]
                     else:
-                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.Hosts[hostname].DUID].append(transactions[transaction_id].client_config_db.Hosts[hostname])
+                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.hosts[hostname].DUID].append(transactions[transaction_id].client_config_db.hosts[hostname])
 
                 # some cleaning
                 del host, mac, duid, address, aclass, id
@@ -725,8 +725,8 @@ class Store:
             get host and its information by hostname
         """
         hostname = transactions[transaction_id].hostname
-        if hostname in transactions[transaction_id].client_config_db.Hosts:
-            return [transactions[transaction_id].client_config_db.Hosts[hostname]]
+        if hostname in transactions[transaction_id].client_config_db.hosts:
+            return [transactions[transaction_id].client_config_db.hosts[hostname]]
         else:
             return None
 
@@ -774,8 +774,7 @@ class Store:
             query = "UPDATE meta SET item_value = '%s' WHERE item_key = 'dynamic_prefix'" % (prefix)
             self.query(query)
 
-
-    def CollectMACsFromDB(self):
+    def collect_macs_from_db(self):
         """
             collect all known MACs and link local addresses from database at startup
             to reduce attempts to read neighbor cache
@@ -794,16 +793,14 @@ class Store:
                     sys.stdout.flush()
                     return None
 
-
-    def DBQuery(self, query):
+    def db_query(self, query):
         """
             no not execute query on DB - dummy
         """
         # return empty tuple as dummy
         return ()
 
-
-    def LegacyAdjustments(self):
+    def legacy_adjustments(self):
         """
             adjust some existing data to work with newer versions of dhcpy6d
         """
@@ -1035,12 +1032,11 @@ class DB(Store):
         Store.__init__(self, query_queue, answer_queue)
         self.connection = None
         try:
-            self.DBConnect()
+            self.db_connect()
         except Exception as err:
             print(err)
 
-
-    def DBConnect(self):
+    def db_connect(self):
         """
             Connect to database server according to database type
         """

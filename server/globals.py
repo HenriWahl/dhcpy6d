@@ -97,9 +97,9 @@ NC = {'BSD': {'call' : '/usr/sbin/ndp -a -n',
 # LIBC = get_libc()
 
 # index IF name > number, gets filled in UDPMulticastIPv6
-IF_NAME = dict()
+IF_NAME = {}
 # index IF number > name
-IF_NUMBER = dict()
+IF_NUMBER = {}
 
 # IA_NA, IA_TA and IA_PD Options referred here in handler
 IA_OPTIONS = (3, 4, 25)
