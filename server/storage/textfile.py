@@ -37,8 +37,8 @@ class Textfile(Store):
 
         # store config information of hosts
         self.Hosts = dict()
-        self.IndexMAC = dict()
-        self.IndexDUID = dict()
+        self.index_mac = dict()
+        self.index_duid = dict()
 
         # store IDs for ID-based hosts to check if there are duplicates
         self.IDs = dict()
@@ -85,17 +85,17 @@ class Textfile(Store):
             # and put the host objects into index
             if self.Hosts[section].MAC:
                 for m in self.Hosts[section].MAC:
-                    if not m in self.IndexMAC:
-                        self.IndexMAC[m] = [self.Hosts[section]]
+                    if not m in self.index_mac:
+                        self.index_mac[m] = [self.Hosts[section]]
                     else:
-                        self.IndexMAC[m].append(self.Hosts[section])
+                        self.index_mac[m].append(self.Hosts[section])
 
             # add DUIDs to IndexDUID
             if not self.Hosts[section].DUID == '':
-                if not self.Hosts[section].DUID in self.IndexDUID:
-                    self.IndexDUID[self.Hosts[section].DUID] = [self.Hosts[section]]
+                if not self.Hosts[section].DUID in self.index_duid:
+                    self.index_duid[self.Hosts[section].DUID] = [self.Hosts[section]]
                 else:
-                    self.IndexDUID[self.Hosts[section].DUID].append(self.Hosts[section])
+                    self.index_duid[self.Hosts[section].DUID].append(self.Hosts[section])
 
         # not very meaningful in case of databaseless textfile config but for completeness
         self.connected = True
@@ -107,8 +107,8 @@ class Textfile(Store):
         """
         hosts = list()
         mac = transactions[transaction_id].mac
-        if mac in self.IndexMAC:
-            hosts.extend(self.IndexMAC[mac])
+        if mac in self.index_mac:
+            hosts.extend(self.index_mac[mac])
             return hosts
         else:
             return None
@@ -120,8 +120,8 @@ class Textfile(Store):
         """
         hosts = list()
         duid = transactions[transaction_id].duid
-        if duid in self.IndexDUID:
-            hosts.extend(self.IndexDUID[duid])
+        if duid in self.index_duid:
+            hosts.extend(self.index_duid[duid])
             return hosts
         else:
             return None

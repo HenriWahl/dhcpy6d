@@ -20,7 +20,8 @@ import sys
 import traceback
 
 from ..config import cfg
-from ..globals import transactions
+from ..globals import (collected_macs,
+                       transactions)
 from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option,
@@ -55,9 +56,9 @@ class ClientConfigDB:
         class for storing client config snippet from DB - used in SQLite and MySQL Storage
     """
     def __init__(self):
-        self.Hosts = dict()
-        self.IndexMAC = dict()
-        self.IndexDUID = dict()
+        self.hosts = dict()
+        self.index_mac = dict()
+        self.index_duid = dict()
 
 class Store:
     """
@@ -675,17 +676,17 @@ class Store:
                 # and put the host objects into index
                 if transactions[transaction_id].client_config_db.Hosts[hostname].MAC:
                     for m in transactions[transaction_id].client_config_db.Hosts[hostname].MAC:
-                        if not m in transactions[transaction_id].client_config_db.IndexMAC:
-                            transactions[transaction_id].client_config_db.IndexMAC[m] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
+                        if not m in transactions[transaction_id].client_config_db.index_mac:
+                            transactions[transaction_id].client_config_db.index_mac[m] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
                         else:
-                            transactions[transaction_id].client_config_db.IndexMAC[m].append(transactions[transaction_id].client_config_db.Hosts[hostname])
+                            transactions[transaction_id].client_config_db.index_mac[m].append(transactions[transaction_id].client_config_db.Hosts[hostname])
 
                 # add DUIDs to IndexDUID
                 if not transactions[transaction_id].client_config_db.Hosts[hostname].DUID == '':
-                    if not transactions[transaction_id].client_config_db.Hosts[hostname].DUID in transactions[transaction_id].client_config_db.IndexDUID:
-                        transactions[transaction_id].client_config_db.IndexDUID[transactions[transaction_id].client_config_db.Hosts[hostname].DUID] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
+                    if not transactions[transaction_id].client_config_db.Hosts[hostname].DUID in transactions[transaction_id].client_config_db.index_duid:
+                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.Hosts[hostname].DUID] = [transactions[transaction_id].client_config_db.Hosts[hostname]]
                     else:
-                        transactions[transaction_id].client_config_db.IndexDUID[transactions[transaction_id].client_config_db.Hosts[hostname].DUID].append(transactions[transaction_id].client_config_db.Hosts[hostname])
+                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.Hosts[hostname].DUID].append(transactions[transaction_id].client_config_db.Hosts[hostname])
 
                 # some cleaning
                 del host, mac, duid, address, aclass, id
@@ -697,8 +698,8 @@ class Store:
         hosts = list()
         mac = transactions[transaction_id].mac
 
-        if mac in transactions[transaction_id].client_config_db.IndexMAC:
-            hosts.extend(transactions[transaction_id].client_config_db.IndexMAC[mac])
+        if mac in transactions[transaction_id].client_config_db.index_mac:
+            hosts.extend(transactions[transaction_id].client_config_db.index_mac[mac])
             return hosts
         else:
             return None
@@ -712,8 +713,8 @@ class Store:
         hosts = list()
         duid = transactions[transaction_id].duid
 
-        if duid in transactions[transaction_id].client_config_db.IndexDUID:
-            hosts.extend(transactions[transaction_id].client_config_db.IndexDUID[duid])
+        if duid in transactions[transaction_id].client_config_db.index_duid:
+            hosts.extend(transactions[transaction_id].client_config_db.index_duid[duid])
             return hosts
         else:
             return None
@@ -786,7 +787,7 @@ class Store:
                 try:
                     # m[0] is LLIP, m[1] is the matching MAC
                     # interface is ignored
-                    self.collected_macs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1], now=m[2])
+                    collected_macs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1], now=m[2])
                 except Exception as err:
                     print(err)
                     traceback.print_exc(file=sys.stdout)
