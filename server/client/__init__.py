@@ -20,22 +20,14 @@ import re
 import sys
 import traceback
 
-from ..config import (Address,
-                      cfg,
-                      Prefix)
-from ..dns import get_ip_from_dns
+from ..config import cfg
 from ..globals import (DUMMY_MAC,
                        EMPTY_OPTIONS,
                        IGNORED_LOG_OPTIONS,
-                       timer,
                        transactions)
-from ..helpers import (colonify_ip6,
-                       decompress_ip6,
-                       decompress_prefix,
-                       split_prefix)
+from ..helpers import colonify_ip6
 from ..log import log
-from ..storage import (config_store,
-                       volatile_store)
+from ..storage import config_store
 
 from .default import default
 from .from_config import from_config
