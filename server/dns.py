@@ -53,7 +53,7 @@ def dns_update(transaction_id, action='update'):
         # if address should be updated in DNS update it
         for a in transactions[transaction_id].client.addresses:
             if a.DNS_UPDATE and hostname != '' and a.VALID:
-                if cfg.DNS_IGNORE_CLIENT or transactions[transaction_id].DNS_S == 1:
+                if cfg.DNS_IGNORE_CLIENT or transactions[transaction_id].dns_s == 1:
                     # put query into DNS query queue
                     dns_query_queue.put((action, hostname, a))
         return True

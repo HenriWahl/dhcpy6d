@@ -228,7 +228,7 @@ class Client:
             # If client gave some addresses for RENEW or REBIND consider them
             if transactions[transaction_id].last_message_received_type in (5, 6) and\
                 not (len(transactions[transaction_id].addresses) == 0 and \
-                     len(transactions[transaction_id].Prefixes) == 0):
+                     len(transactions[transaction_id].prefixes) == 0):
                 if not client_config is None:
                     # give client hostname
                     self.hostname = client_config.HOSTNAME
@@ -357,7 +357,7 @@ class Client:
 
                 if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE and \
                    25 in transactions[transaction_id].ia_options:
-                    for prefix in transactions[transaction_id].Prefixes:
+                    for prefix in transactions[transaction_id].prefixes:
                         # split prefix of prefix from length, separated by /
                         prefix_prefix, prefix_length = split_prefix(prefix)
 
@@ -426,7 +426,7 @@ class Client:
                     # look for prefixes in transaction that are invalid and add them
                     # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
                     if len(self.prefixes) > 0:
-                        for p in set(transactions[transaction_id].Prefixes).difference([decompress_prefix(x.PREFIX, x.LENGTH) for x in self.Prefixes]):
+                        for p in set(transactions[transaction_id].prefixes).difference([decompress_prefix(x.PREFIX, x.LENGTH) for x in self.prefixes]):
                             prefix, length = split_prefix(p)
                             self.prefixes.append(Prefix(prefix=prefix,
                                                         length=length,

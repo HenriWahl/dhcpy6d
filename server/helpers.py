@@ -84,7 +84,7 @@ def convert_binary_to_dns(binary):
         # RFC 1035 - domain names are sequences of labels separated by length octets
         length = int(binary_parts[0:2], 16)
         # lenght*2 because 2 charse represent a byte
-        label = binascii.a2b_hex(binary_parts[2:2 + length * 2])
+        label = binascii.a2b_hex(binary_parts[2:2 + length * 2]).decode()
         binary_parts = binary_parts[2 + length * 2:]
         name += label
         # insert '.' if this is not the last label of FQDN

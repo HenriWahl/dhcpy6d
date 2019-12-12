@@ -306,7 +306,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                     for a in transactions[transaction_id].addresses:
                                         # free lease
                                         volatile_store.release_lease(a, timer)
-                                    for p in transactions[transaction_id].Prefixes:
+                                    for p in transactions[transaction_id].prefixes:
                                         # free prefix - without length
                                         volatile_store.release_prefix(p.split('/')[0], timer)
                                         # delete route to formerly requesting client
@@ -689,15 +689,15 @@ class Handler(socketserver.DatagramRequestHandler):
                             O = 1
                         else:
                             # honor the client's request for the server to initiate DNS updates
-                            if transactions[transaction_id].DNS_S == 1:
+                            if transactions[transaction_id].dns_s == 1:
                                 S = 1
                             # honor the client's request for no server-initiated DNS update
-                            elif  transactions[transaction_id].DNS_N == 1:
+                            elif  transactions[transaction_id].dns_n == 1:
                                 N = 1
                     else:
                         # no DNS update at all, not for server and not for client
-                        if transactions[transaction_id].DNS_N == 1 or\
-                           transactions[transaction_id].DNS_S == 1:
+                        if transactions[transaction_id].dns_n == 1 or\
+                           transactions[transaction_id].dns_s == 1:
                             O = 1
 
                     # sum of flags
