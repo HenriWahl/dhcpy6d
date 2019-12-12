@@ -401,7 +401,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 try:
                                     for address in transactions[transaction_id].client.addresses:
                                         if address.IA_TYPE == 'na':
-                                            ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
+                                            ipv6_address = binascii.hexlify(socket.inet_pton(socket.AF_INET6,
                                                                                              colonify_ip6(address.ADDRESS))).decode()
                                             # if a transaction consists of too many requests from client -
                                             # - might be caused by going wild Windows clients -
@@ -473,7 +473,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 try:
                                     for address in transactions[transaction_id].client.addresses:
                                         if address.IA_TYPE == 'ta':
-                                            ipv6_address = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
+                                            ipv6_address = binascii.hexlify(socket.inet_pton(socket.AF_INET6,
                                                                                              colonify_ip6(address.ADDRESS))).decode()
                                             # if a transaction consists of too many requests from client -
                                             # - might be caused by going wild Windows clients -
@@ -529,7 +529,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
             # Option 12 Server Unicast Option
             if 12 in options_request:
-                response_ascii += build_option(12, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)).decode())
+                response_ascii += build_option(12, binascii.hexlify(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)).decode())
                 # options in answer to be logged
                 options_answer.append(12)
 
@@ -554,7 +554,7 @@ class Handler(socketserver.DatagramRequestHandler):
                         nameserver = ''
                         for ns in cfg.CLASSES[transactions[transaction_id].client.client_class].NAMESERVER:
                             nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                        response_ascii += build_option(23, binascii.b2a_hex(nameserver).decode())
+                        response_ascii += build_option(23, binascii.hexlify(nameserver).decode())
                         # options in answer to be logged
                         options_answer.append(23)
 
@@ -563,7 +563,7 @@ class Handler(socketserver.DatagramRequestHandler):
                     nameserver = ''
                     for ns in cfg.NAMESERVER:
                         nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                    response_ascii += build_option(23, binascii.b2a_hex(nameserver).decode())
+                    response_ascii += build_option(23, binascii.hexlify(nameserver).decode())
                     # options in answer to be logged
                     options_answer.append(23)
 
@@ -608,7 +608,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                 ia_prefixes = ''
                                 try:
                                     for prefix in transactions[transaction_id].client.prefixes:
-                                        ipv6_prefix = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6,
+                                        ipv6_prefix = binascii.hexlify(socket.inet_pton(socket.AF_INET6,
                                                                                         colonify_ip6(prefix.PREFIX))).decode()
                                         if prefix.VALID:
                                             preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
@@ -656,7 +656,7 @@ class Handler(socketserver.DatagramRequestHandler):
             if 31 in options_request and cfg.SNTP_SERVERS != '':
                 sntp_servers = ''
                 for s in cfg.SNTP_SERVERS:
-                    sntp_server = binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, s)).decode()
+                    sntp_server = binascii.hexlify(socket.inet_pton(socket.AF_INET6, s)).decode()
                     sntp_servers += sntp_server
                 response_ascii += build_option(31, sntp_servers)
 
@@ -720,9 +720,9 @@ class Handler(socketserver.DatagramRequestHandler):
                         for ntp_server in cfg.NTP_SERVER_dict[ntp_server_type]:
                             ntp_server_suboption = ''
                             if ntp_server_type == 'SRV':
-                                ntp_server_suboption = build_option(1, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ntp_server)).decode())
+                                ntp_server_suboption = build_option(1, binascii.hexlify(socket.inet_pton(socket.AF_INET6, ntp_server)).decode())
                             elif ntp_server_type == 'MC':
-                                ntp_server_suboption = build_option(2, binascii.b2a_hex(socket.inet_pton(socket.AF_INET6, ntp_server)).decode())
+                                ntp_server_suboption = build_option(2, binascii.hexlify(socket.inet_pton(socket.AF_INET6, ntp_server)).decode())
                             elif ntp_server_type == 'FQDN':
                                 ntp_server_suboption = build_option(3, convert_dns_to_binary(ntp_server))
                             ntp_server_options += ntp_server_suboption
@@ -743,7 +743,7 @@ class Handler(socketserver.DatagramRequestHandler):
                     # TODO add preference logic
                     bootfile_url = bootfiles[0].BOOTFILE_URL
                     transactions[transaction_id].client.ChosenBootFile = bootfile_url
-                    bootfile_options = binascii.b2a_hex(bootfile_url).decode()
+                    bootfile_options = binascii.hexlify(bootfile_url).decode()
                     response_ascii += build_option(59, bootfile_options)
                     # options in answer to be logged
                     options_answer.append(59)
@@ -819,7 +819,7 @@ class Handler(socketserver.DatagramRequestHandler):
                     log.info('%s | TransactionID: %s | Options: %s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer))
 
             # response
-            self.response = binascii.a2b_hex(response_ascii)
+            self.response = binascii.unhexlify(response_ascii)
 
         except Exception as err:
             traceback.print_exc(file=sys.stdout)

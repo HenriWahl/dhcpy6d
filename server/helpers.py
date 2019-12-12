@@ -68,7 +68,7 @@ def convert_dns_to_binary(name):
     domain_parts = name.split('.')
     for p in domain_parts:
         binary += '%02x' % (len(p))  # length of Domain Name Segments
-        binary += binascii.b2a_hex(p.encode()).decode()
+        binary += binascii.hexlify(p.encode()).decode()
     # final zero size octet following RFC 1035
     binary += '00'
     return binary
@@ -84,7 +84,7 @@ def convert_binary_to_dns(binary):
         # RFC 1035 - domain names are sequences of labels separated by length octets
         length = int(binary_parts[0:2], 16)
         # lenght*2 because 2 charse represent a byte
-        label = binascii.a2b_hex(binary_parts[2:2 + length * 2]).decode()
+        label = binascii.unhexlify(binary_parts[2:2 + length * 2]).decode()
         binary_parts = binary_parts[2 + length * 2:]
         name += label
         # insert '.' if this is not the last label of FQDN
@@ -323,7 +323,7 @@ def listify_option(option):
 #             # if log.getEffectiveLevel() <= logging.DEBUG:
 #             #    log.debug('nlm[%i:%i]%s: %s' % (answer_pos, answer_pos+nlmsg_len, \
 #             #              str(struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)), \
-#             #              binascii.b2a_hex(nlmsg_data)))
+#             #              binascii.hexlify(nlmsg_data)))
 #
 #             if nlmsg_type == NLMSG_DONE:
 #                 break
@@ -369,7 +369,7 @@ def listify_option(option):
 #                               'data size: {0}, data[{1}:{2}] =  {3}'.format(answer_len,
 #                                                                             answer_pos + nlmsg_header_len,
 #                                                                             answer_pos + nlmsg_len,
-#                                                                             binascii.b2a_hex(nlmsg_data)))
+#                                                                             binascii.hexlify(nlmsg_data)))
 #                     break
 #
 #                 # data for this Routing/device hook record attribute
@@ -377,17 +377,17 @@ def listify_option(option):
 #                 # if log.getEffectiveLevel() <= logging.DEBUG:
 #                 #    log.debug('nla[%i:]%s: %s' % (nlmsg_data_pos, \
 #                 #              str(struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
-#                 #              binascii.b2a_hex(nla_data)))
+#                 #              binascii.hexlify(nla_data)))
 #
 #                 nda_type_key = NDA.get(nla_type, str(nla_type))
 #                 if nda_type_key == 'NDA_DST':
-#                     nda[nda_type_key] = colonify_ip6(binascii.b2a_hex(nla_data))
+#                     nda[nda_type_key] = colonify_ip6(binascii.hexlify(nla_data))
 #                 elif nda_type_key == 'NDA_LLADDR':
-#                     nda[nda_type_key] = colonify_mac(binascii.b2a_hex(nla_data))
+#                     nda[nda_type_key] = colonify_mac(binascii.hexlify(nla_data))
 #                 elif nda_type_key == 'NDA_CACHEINFO':
 #                     nda[nda_type_key] = struct.unpack_from('<IIII', nla_data)
 #                 elif nda_type_key == 'NDA_VLAN':
-#                     nda[nda_type_key] = binascii.b2a_hex(nla_data)
+#                     nda[nda_type_key] = binascii.hexlify(nla_data)
 #                 else:
 #                     nda[nda_type_key] = nla_data
 #
@@ -424,7 +424,7 @@ def listify_option(option):
 #                  'data[{1}:{2}] = {3}...): {4}'.format(answer_pos,
 #                                                        curr_pos,
 #                                                        answer_len,
-#                                                        binascii.b2a_hex(answer[curr_pos:curr_pos + 8]),
+#                                                        binascii.hexlify(answer[curr_pos:curr_pos + 8]),
 #                                                        str(e)))
 #
 #     # clean up

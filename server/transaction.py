@@ -168,12 +168,12 @@ class Transaction:
         if 15 in options:
             user_class_raw = options[15]
             # raw user class is prefixed with null byte (00 in hex) and eot (04 in hex)
-            self.user_class = binascii.a2b_hex(user_class_raw[4:])
+            self.user_class = binascii.unhexlify(user_class_raw[4:])
 
         # 16 Vendor Class Option
         if 16 in options:
             self.vendor_class_en = int(options[16][0:8], 16)
-            self.vendor_class_data = binascii.unhexlify(options[16][12:])
+            self.vendor_class_data = binascii.unhexlify(options[16][12:]).decode()
 
         # Identity Association for Prefix Delegation
         # 25 Identity Association for Prefix Delegation
