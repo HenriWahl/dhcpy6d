@@ -139,7 +139,7 @@ class TidyUpThread(Thread):
                     for record in list(collected_macs.values()):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP:
-                                log.info('Deleted MAC %s for LinkLocalIP %s' % (record.mac, colonify_ip6(record.llip)))
+                                log.info('deleted mac %s for llip %s' % (record.mac, colonify_ip6(record.llip)))
                             collected_macs.pop(record.llip)
                     del timestamp
                 time.sleep(cfg.CLEANING_INTERVAL)

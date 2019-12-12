@@ -380,8 +380,8 @@ class Handler(socketserver.DatagramRequestHandler):
                     if 'addresses' in cfg.CLASSES[transactions[transaction_id].client.client_class].ADVERTISE and \
                                     (3 or 4) in transactions[transaction_id].ia_options:
                         # check if only a short NoAddrAvail answer or none at all is to be returned
-                        if not transactions[transaction_id].Answer == 'normal':
-                            if transactions[transaction_id].Answer == 'noaddress':
+                        if not transactions[transaction_id].answer == 'normal':
+                            if transactions[transaction_id].answer == 'noaddress':
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                                 response_ascii += build_option(13, '%04x' % (2))
                                 # clean client addresses which not be deployed anyway
@@ -452,8 +452,8 @@ class Handler(socketserver.DatagramRequestHandler):
                     if 'addresses' in cfg.CLASSES[transactions[transaction_id].client.client_class].ADVERTISE and \
                         (3 or 4) in transactions[transaction_id].ia_options:
                         # check if only a short NoAddrAvail answer or none at all ist t be returned
-                        if not transactions[transaction_id].Answer == 'normal':
-                            if transactions[transaction_id].Answer == 'noaddress':
+                        if not transactions[transaction_id].answer == 'normal':
+                            if transactions[transaction_id].answer == 'noaddress':
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                                 response_ascii += build_option(13, '%04x' % (2))
                                 # clean client addresses which not be deployed anyway
@@ -588,8 +588,8 @@ class Handler(socketserver.DatagramRequestHandler):
                     # Only if prefixes are provided
                     if 'prefixes' in cfg.CLASSES[transactions[transaction_id].client.client_class].ADVERTISE:
                         # check if only a short NoPrefixAvail answer or none at all is to be returned
-                        if not transactions[transaction_id].Answer == 'normal':
-                            if transactions[transaction_id].Answer == 'noprefix':
+                        if not transactions[transaction_id].answer == 'normal':
+                            if transactions[transaction_id].answer == 'noprefix':
                                 # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                                 response_ascii += build_option(13, '%04x' % (6))
                                 # clean client prefixes which not be deployed anyway
@@ -782,7 +782,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 if not transactions[transaction_id].client is None:
                     if len(transactions[transaction_id].client.addresses) == 0 and\
                        len(transactions[transaction_id].client.prefixes) == 0 and\
-                       transactions[transaction_id].Answer == 'normal' and\
+                       transactions[transaction_id].answer == 'normal' and\
                        transactions[transaction_id].last_message_received_type in [1, 3, 5, 6]:
                         # create error response - headers have to be recreated because
                         # problems may have arisen while processing and these information

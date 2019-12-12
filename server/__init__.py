@@ -325,7 +325,7 @@ def collect_macs(now):
                     if host.llip.startswith('fe80'):
                         collected_macs[host.llip] = host
                         if cfg.LOG_MAC_LLIP:
-                            log.info('Collected MAC %s for LinkLocalIP %s' % (host.mac, colonify_ip6(host.llip)))
+                            log.info('collected mac %s for llip %s' % (host.mac, colonify_ip6(host.llip)))
                         if cfg.CACHE_MAC_LLIP:
                             volatile_store.store_mac_llip(host.mac, host.llip, timer)
         else:
@@ -349,7 +349,7 @@ def collect_macs(now):
                                                                                 interface=f[NC[OS]['dev']],
                                                                                 now=now)
                         if cfg.LOG_MAC_LLIP:
-                            log.info('Collected MAC %s for LinkLocalIP %s' % (
+                            log.info('collected mac %s for llip %s' % (
                                 f[NC[OS]['mac']], colonify_ip6(f[NC[OS]['llip']])))
                         volatile_store.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']], timer)
     except Exception as err:

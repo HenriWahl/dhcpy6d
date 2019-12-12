@@ -37,8 +37,11 @@ from ..log import log
 from ..storage import (config_store,
                        volatile_store)
 
+from .default import default
+from .from_config import from_config
 from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
+from .reuse_lease import reuse_lease
 
 
 class Client:
@@ -66,7 +69,7 @@ class Client:
         self.last_update = ''
 
         # when an transaction_id is given build the client
-        if not transaction_id is None:
+        if transaction_id is not None:
             self.build(transaction_id)
 
     def get_options_string(self):
@@ -79,8 +82,7 @@ class Client:
         # options.sort()
         for o in options:
             # ignore some attributes
-            if not o in IGNORED_LOG_OPTIONS and \
-               not self.__dict__[o] in EMPTY_OPTIONS:
+            if o not in IGNORED_LOG_OPTIONS and self.__dict__[o] not in EMPTY_OPTIONS:
                 if o == 'addresses':
                     if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE:
                         option = o + ':'
@@ -115,9 +117,6 @@ class Client:
             check if invalid addresses need to get deleted with lifetime 0
         """
         try:
-            # create client object
-            #client = Client()
-
             # configuration from client deriving from general config or filters - defaults to none
             client_config = None
 
@@ -226,376 +225,18 @@ class Client:
                     client_config = None
 
             # If client gave some addresses for RENEW or REBIND consider them
-            if transactions[transaction_id].last_message_received_type in (5, 6) and\
-                not (len(transactions[transaction_id].addresses) == 0 and \
+            if transactions[transaction_id].last_message_received_type in (5, 6) and \
+                not (len(transactions[transaction_id].addresses) == 0 and
                      len(transactions[transaction_id].prefixes) == 0):
-                if not client_config is None:
-                    # give client hostname
-                    self.hostname = client_config.HOSTNAME
-                    self.client_class = client_config.CLASS
-                    # apply answer type of client to transaction - useful if no answer or no address available is configured
-                    transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
-                else:
-                    # use default class if host is unknown
-                    self.hostname = transactions[transaction_id].hostname
-                    self.client_class = 'default_' + transactions[transaction_id].interface
-                    # apply answer type of client to transaction - useful if no answer or no address available is configured
-                    transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
-
-                if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE and \
-                    (3 or 4) in transactions[transaction_id].ia_options:
-                    for address in transactions[transaction_id].addresses:
-                        # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
-                        answer = volatile_store.check_lease(address, transaction_id)
-                        if answer:
-                            if len(answer) > 0:
-                                for item in answer:
-                                    a = dict(list(zip(('hostname', 'address', 'type', 'category', 'ia_type', 'class', 'preferred_until'), item)))
-                                    # if lease exists but no configured client set class to default
-                                    if client_config is None:
-                                        self.hostname = transactions[transaction_id].hostname
-                                        self.client_class = 'default_' + transactions[transaction_id].interface
-                                    # check if address type of lease still exists in configuration
-                                    # and if request interface matches that of class
-                                    if a['class'] in cfg.CLASSES and self.client_class == a['class'] and\
-                                       transactions[transaction_id].interface in cfg.CLASSES[self.client_class].INTERFACE:
-                                        # type of address must be defined in addresses for this class
-                                        # or fixed/dns - in which case it is not class related
-                                        if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed']:
-                                            # flag for lease usage
-                                            use_lease = True
-                                            # test lease validity against address prototype pattern only if not fixed or from DNS
-                                            if not a['category'] in ['fixed', 'dns']:
-                                                # test if address matches pattern
-                                                for identification in range(len(address)):
-                                                    if address[identification] != cfg.ADDRESSES[a['type']].PROTOTYPE[identification] and \
-                                                       cfg.ADDRESSES[a['type']].PROTOTYPE[identification] != 'x':
-                                                        use_lease = False
-                                                        break
-                                            elif a['category'] == 'fixed' and not client_config.ADDRESS is None:
-                                                if not address in client_config.ADDRESS:
-                                                    use_lease = False
-                                            elif a['category'] == 'dns':
-                                                use_lease = False
-
-                                            # only use lease if it still matches prototype
-                                            if use_lease:
-                                                # when category is range, test if it still applies
-                                                if a['category'] == 'range':
-                                                    # borrowed from parse_pattern_address to find out if lease is still in a meanwhile maybe changed range
-                                                    range_from, range_to = cfg.ADDRESSES[a['type']].RANGE.split('-')
-
-                                                    # correct possible misconfiguration
-                                                    if len(range_from)<4:
-                                                        range_from ='0'*(4-len(range_from)) + range_from
-                                                    if len(range_to)<4:
-                                                        range_to ='0'*(4-len(range_to)) + range_to
-                                                    if range_from > range_to:
-                                                        range_from, range_to = range_to, range_from
-                                                    # if lease is still inside range boundaries use it
-                                                    if range_from <= address[28:].lower() < range_to:
-                                                        # build IA partly of leases db, partly of config db
-                                                        ia = Address(address=a['address'],
-                                                                     atype=a['type'],
-                                                                     preferred_lifetime=cfg.ADDRESSES[a['type']].PREFERRED_LIFETIME,
-                                                                     valid_lifetime=cfg.ADDRESSES[a['type']].VALID_LIFETIME,
-                                                                     category=a['category'],
-                                                                     ia_type=a['ia_type'],
-                                                                     aclass=a['class'],
-                                                                     dns_update=cfg.ADDRESSES[a['type']].DNS_UPDATE,
-                                                                     dns_zone=cfg.ADDRESSES[a['type']].DNS_ZONE,
-                                                                     dns_rev_zone=cfg.ADDRESSES[a['type']].DNS_REV_ZONE,
-                                                                     dns_ttl=cfg.ADDRESSES[a['type']].DNS_TTL)
-                                                        self.addresses.append(ia)
-
-                                                # de-preferred random address has to be deleted and replaced
-                                                elif a['category'] == 'random' and timer > a['preferred_until']:
-                                                    # create new random address if old one is depreferred
-                                                    random_address = parse_pattern_address(cfg.ADDRESSES[a['type']], client_config, transaction_id)
-                                                    # create new random address if old one is de-preferred
-                                                    # do not wait until it is invalid
-                                                    if not random_address is None:
-                                                        ia = Address(address=random_address, ia_type=cfg.ADDRESSES[a['type']].IA_TYPE,
-                                                                     preferred_lifetime=cfg.ADDRESSES[a['type']].PREFERRED_LIFETIME,
-                                                                     valid_lifetime=cfg.ADDRESSES[a['type']].VALID_LIFETIME,
-                                                                     category='random',
-                                                                     aclass=cfg.ADDRESSES[a['type']].CLASS,
-                                                                     atype=cfg.ADDRESSES[a['type']].TYPE,
-                                                                     dns_update=cfg.ADDRESSES[a['type']].DNS_UPDATE,
-                                                                     dns_zone=cfg.ADDRESSES[a['type']].DNS_ZONE,
-                                                                     dns_rev_zone=cfg.ADDRESSES[a['type']].DNS_REV_ZONE,
-                                                                     dns_ttl=cfg.ADDRESSES[a['type']].DNS_TTL)
-                                                        self.addresses.append(ia)
-                                                        # set de-preferred address invalid
-                                                        self.addresses.append(Address(address=a['address'], valid=False,
-                                                                                      preferred_lifetime=0,
-                                                                                      valid_lifetime=0))
-
-                                                else:
-                                                    # build IA partly of leases db, partly of config db
-                                                    ia = Address(address=a['address'],
-                                                                 atype=a['type'],
-                                                                 preferred_lifetime=cfg.ADDRESSES[a['type']].PREFERRED_LIFETIME,
-                                                                 valid_lifetime=cfg.ADDRESSES[a['type']].VALID_LIFETIME,
-                                                                 category=a['category'],
-                                                                 ia_type=a['ia_type'],
-                                                                 aclass=a['class'],
-                                                                 dns_update=cfg.ADDRESSES[a['type']].DNS_UPDATE,
-                                                                 dns_zone=cfg.ADDRESSES[a['type']].DNS_ZONE,
-                                                                 dns_rev_zone=cfg.ADDRESSES[a['type']].DNS_REV_ZONE,
-                                                                 dns_ttl=cfg.ADDRESSES[a['type']].DNS_TTL)
-                                                    self.addresses.append(ia)
-
-                    # important indent here, has to match for...addresses-loop!
-                    # look for addresses in transaction that are invalid and add them
-                    # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-                    for a in set(transactions[transaction_id].addresses).difference([decompress_ip6(x.ADDRESS) for x in self.addresses]):
-                        self.addresses.append(Address(address=a,
-                                                      valid=False,
-                                                      preferred_lifetime=0,
-                                                      valid_lifetime=0))
-
-                if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE and \
-                   25 in transactions[transaction_id].ia_options:
-                    for prefix in transactions[transaction_id].prefixes:
-                        # split prefix of prefix from length, separated by /
-                        prefix_prefix, prefix_length = split_prefix(prefix)
-
-                        # check_prefix returns hostname, prefix, length, type, category, class, preferred_until of leased address
-                        answer = volatile_store.check_prefix(prefix_prefix, prefix_length, transaction_id)
-
-                        if answer:
-                            if len(answer) > 0:
-                                for item in answer:
-                                    p = dict(list(zip(('hostname', 'prefix', 'length', 'type', 'category', 'class', 'preferred_until'), item)))
-                                    # if lease exists but no configured client set class to default
-                                    if client_config is None:
-                                        self.hostname = transactions[transaction_id].hostname
-                                        self.client_class = 'default_' + transactions[transaction_id].interface
-                                    # check if address type of lease still exists in configuration
-                                    # and if request interface matches that of class
-                                    if p['class'] in cfg.CLASSES and self.client_class == p['class'] and\
-                                       transactions[transaction_id].interface in cfg.CLASSES[self.client_class].INTERFACE:
-                                        # type of address must be defined in addresses for this class
-                                        # or fixed/dns - in which case it is not class related
-                                        if p['type'] in cfg.CLASSES[p['class']].PREFIXES:
-                                            # flag for lease usage
-                                            use_lease = True
-                                            # test if prefix matches pattern
-                                            for identification in range(len(prefix_prefix)):
-                                                if prefix_prefix[identification] != cfg.PREFIXES[p['type']].PROTOTYPE[identification] and \
-                                                   cfg.PREFIXES[p['type']].PROTOTYPE[identification] != 'x':
-                                                    use_lease = False
-                                                    break
-                                            # only use prefix if it still matches prototype
-                                            if use_lease:
-                                                # when category is range, test if it still applies
-                                                if p['category'] == 'range':
-                                                    # borrowed from parse_pattern_prefix to find out if lease is still in a meanwhile maybe changed range
-                                                    range_from, range_to = cfg.PREFIXES[p['type']].RANGE.split('-')
-
-                                                    # correct possible misconfiguration
-                                                    if len(range_from)<4:
-                                                        range_from ='0'*(4-len(range_from)) + range_from
-                                                    if len(range_to)<4:
-                                                        range_to ='0'*(4-len(range_to)) + range_to
-                                                    if range_from > range_to:
-                                                        range_from, range_to = range_to, range_from
-
-                                                    # contrary to addresses the prefix $range$ part of the pattern is expected somewhere at the left part of the pattern
-                                                    # here the 128 Bit sum up to 32 characters in address/prefix string so prefix_range_index has to be calculated
-                                                    # as first character of range part of prefix - assuming steps of width 4
-                                                    prefix_range_index = int(cfg.PREFIXES[p['type']].LENGTH) // 4 - 4
-                                                    # prefix itself has a prefix - the first part of the prefix pattern
-                                                    prefix_prefix = decompress_ip6(p['prefix'].replace('$range$', '0000'))[:prefix_range_index + 4]
-
-                                                    # if lease is still inside range boundaries use it
-                                                    if range_from <= prefix_prefix[prefix_range_index:prefix_range_index + 4].lower() < range_to:
-                                                        # build IA partly of leases db, partly of config db
-                                                        ia = Prefix(prefix=p['prefix'],
-                                                                    length=p['length'],
-                                                                    ptype=p['type'],
-                                                                    preferred_lifetime=cfg.PREFIXES[p['type']].PREFERRED_LIFETIME,
-                                                                    valid_lifetime=cfg.PREFIXES[p['type']].VALID_LIFETIME,
-                                                                    category=p['category'],
-                                                                    pclass=p['class'],
-                                                                    route_link_local=cfg.PREFIXES[p['type']].ROUTE_LINK_LOCAL)
-                                                        self.prefixes.append(ia)
-
-                    # important indent here, has to match for...prefixes-loop!
-                    # look for prefixes in transaction that are invalid and add them
-                    # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
-                    if len(self.prefixes) > 0:
-                        for p in set(transactions[transaction_id].prefixes).difference([decompress_prefix(x.PREFIX, x.LENGTH) for x in self.prefixes]):
-                            prefix, length = split_prefix(p)
-                            self.prefixes.append(Prefix(prefix=prefix,
-                                                        length=length,
-                                                        valid=False,
-                                                        preferred_lifetime=0,
-                                                        valid_lifetime=0))
-                            del(prefix, length)
-
-                # return client
-
+                # use already existing lease
+                reuse_lease(client=self, client_config=client_config, transaction_id=transaction_id)
             # build IA addresses from config - fixed ones and dynamic
-            if client_config != None:
-                # give client hostname + class
-                self.hostname = client_config.HOSTNAME
-                self.client_class = client_config.CLASS
-                # apply answer type of client to transaction - useful if no answer or no address available is configured
-                transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
-                # continue only if request interface matches class interfaces
-                if transactions[transaction_id].interface in cfg.CLASSES[self.client_class].INTERFACE:
-                    # if fixed addresses are given build them
-                    if not client_config.ADDRESS is None:
-                        for address in client_config.ADDRESS:
-                            if len(address) > 0:
-                                # fixed addresses are assumed to be non-temporary
-                                #
-                                # todo: lifetime of address should be set by config too
-                                #
-                                ia = Address(address=address,
-                                             ia_type='na',
-                                             preferred_lifetime=cfg.PREFERRED_LIFETIME,
-                                             valid_lifetime=cfg.VALID_LIFETIME,
-                                             category='fixed',
-                                             aclass='fixed',
-                                             atype='fixed')
-
-                                self.addresses.append(ia)
-
-                    if not client_config.CLASS == '':
-                        # add all addresses which belong to that class
-                        for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
-                            # addresses of category 'dns' will be searched in DNS
-                            if cfg.ADDRESSES[address].CATEGORY == 'dns':
-                                a = get_ip_from_dns(self.hostname)
-                            else:
-                                a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
-                            # in case range has been exceeded a will be None
-                            if a:
-                                ia = Address(address=a,
-                                             ia_type=cfg.ADDRESSES[address].IA_TYPE,
-                                             preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
-                                             valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
-                                             category=cfg.ADDRESSES[address].CATEGORY,
-                                             aclass=cfg.ADDRESSES[address].CLASS,
-                                             atype=cfg.ADDRESSES[address].TYPE,
-                                             dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
-                                             dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
-                                             dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
-                                             dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                                self.addresses.append(ia)
-
-                        # add all bootfiles which belong to that class
-                        for bootfile in cfg.CLASSES[client_config.CLASS].BOOTFILES:
-                            client_architecture = cfg.BOOTFILES[bootfile].CLIENT_ARCHITECTURE
-                            user_class = cfg.BOOTFILES[bootfile].USER_CLASS
-
-                            # check if transaction attributes matches the bootfile defintion
-                            if (not client_architecture or \
-                                transactions[transaction_id].client_architecture == client_architecture or \
-                                transactions[transaction_id].known_client_architecture == client_architecture) and \
-                               (not user_class or \
-                                transactions[transaction_id].UserClass == user_class):
-                                self.bootfiles.append(cfg.BOOTFILES[bootfile])
-
-
-                        if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                           25 in transactions[transaction_id].ia_options:
-                            for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
-                                p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
-                                # in case range has been exceeded p will be None
-                                if p:
-                                    ia_pd = Prefix(prefix=p,
-                                                   length=cfg.PREFIXES[prefix].LENGTH,
-                                                   preferred_lifetime=cfg.PREFIXES[prefix].PREFERRED_LIFETIME,
-                                                   valid_lifetime=cfg.PREFIXES[prefix].VALID_LIFETIME,
-                                                   category=cfg.PREFIXES[prefix].CATEGORY,
-                                                   pclass=cfg.PREFIXES[prefix].CLASS,
-                                                   ptype=cfg.PREFIXES[prefix].TYPE,
-                                                   route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
-                                    self.prefixes.append(ia_pd)
-
-                    if client_config.ADDRESS == client_config.CLASS == '':
-                        # use default class if no class or address is given
-                        for address in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADDRESSES:
-                            self.client_class = 'default_' + transactions[transaction_id].interface
-                            # addresses of category 'dns' will be searched in DNS
-                            if cfg.ADDRESSES[address].CATEGORY == 'dns':
-                                a = get_ip_from_dns(self.hostname)
-                            else:
-                                a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
-                            if a:
-                                ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
-                                             preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
-                                             valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
-                                             category=cfg.ADDRESSES[address].CATEGORY,
-                                             aclass=cfg.ADDRESSES[address].CLASS,
-                                             atype=cfg.ADDRESSES[address].TYPE,
-                                             dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
-                                             dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
-                                             dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
-                                             dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                                self.addresses.append(ia)
-
-                        for bootfile in cfg.CLASSES['default_' + transactions[transaction_id].interface].BOOTFILES:
-                            client_architecture = bootfile.CLIENT_ARCHITECTURE
-                            user_class = bootfile.USER_CLASS
-
-                            # check if transaction attributes matches the bootfile defintion
-                            if (not client_architecture or \
-                                transactions[transaction_id].client_architecture == client_architecture or \
-                                transactions[transaction_id].known_client_architecture == client_architecture) and \
-                               (not user_class or \
-                                transactions[transaction_id].UserClass == user_class):
-                                self.bootfiles.append(bootfile)
+            elif client_config is not None:
+                # build client from config
+                from_config(client=self, client_config=client_config, transaction_id=transaction_id)
             else:
                 # use default class if host is unknown
-                self.hostname = transactions[transaction_id].hostname
-                self.client_class = 'default_' + transactions[transaction_id].interface
-                # apply answer type of client to transaction - useful if no answer or no address available is configured
-                transactions[transaction_id].Answer = cfg.CLASSES[self.client_class].ANSWER
-
-                if 'addresses' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
-                    (3 or 4) in transactions[transaction_id].ia_options:
-                    for address in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADDRESSES:
-                        # addresses of category 'dns' will be searched in DNS
-                        if cfg.ADDRESSES[address].CATEGORY == 'dns':
-                            a = get_ip_from_dns(self.hostname)
-                        else:
-                            a = parse_pattern_address(cfg.ADDRESSES[address], self, transaction_id)
-                        if a:
-                            ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
-                                         preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
-                                         valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
-                                         category=cfg.ADDRESSES[address].CATEGORY,
-                                         aclass=cfg.ADDRESSES[address].CLASS,
-                                         atype=cfg.ADDRESSES[address].TYPE,
-                                         dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
-                                         dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
-                                         dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
-                                         dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                            self.addresses.append(ia)
-
-                if 'prefixes' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
-                    25 in transactions[transaction_id].ia_options:
-
-                    for prefix in cfg.CLASSES['default_' + transactions[transaction_id].interface].PREFIXES:
-                        p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
-                        # in case range has been exceeded p will be None
-                        if p:
-                            ia_pd = Prefix(prefix=p,
-                                           length=cfg.PREFIXES[prefix].LENGTH,
-                                           preferred_lifetime=cfg.PREFIXES[prefix].PREFERRED_LIFETIME,
-                                           valid_lifetime=cfg.PREFIXES[prefix].VALID_LIFETIME,
-                                           category=cfg.PREFIXES[prefix].CATEGORY,
-                                           pclass=cfg.PREFIXES[prefix].CLASS,
-                                           ptype=cfg.PREFIXES[prefix].TYPE,
-                                           route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
-                            self.prefixes.append(ia_pd)
-
-            # return client
+                default(client=self, client_config=client_config, transaction_id=transaction_id)
 
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
