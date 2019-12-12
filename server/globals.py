@@ -107,7 +107,7 @@ IA_OPTIONS = (3, 4, 25)
 # options to be ignored when logging
 # IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'DUIDLLAddress', 'DUIDType', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old']
 # IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old']
-IGNORED_LOG_OPTIONS = ['options_raw', 'client', 'client_config_db', 'timestamp', 'iat1', 'iat2', 'IP6_old', 'LLIP_old']
+IGNORED_LOG_OPTIONS = ['options_raw', 'client', 'client_config_db', 'timestamp', 'iat1', 'iat2', 'id']
 
 # empty options string test
 EMPTY_OPTIONS = [None, False, '', []]

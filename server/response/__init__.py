@@ -176,14 +176,14 @@ class Handler(socketserver.DatagramRequestHandler):
                         transactions[transaction_id].last_message_received_type = message_type
 
                     # log incoming messages
-                    log.info('%s | TransactionID: %s%s' % (MESSAGE_TYPES[message_type], transaction_id, transactions[transaction_id].get_options_string()))
+                    log.info('%s | transaction_id: %s%s' % (MESSAGE_TYPES[message_type], transaction_id, transactions[transaction_id].get_options_string()))
 
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
                     if transactions[transaction_id].duid.isalnum():
                         # if request was not addressed to multicast do nothing but logging
                         if transactions[transaction_id].interface == '':
-                            log.info('TransactionID: %s | %s' % (transaction_id, 'Multicast necessary but message came from %s' % (colonify_ip6(transactions[transaction_id].client_llip))))
+                            log.info('transaction_id: %s | %s' % (transaction_id, 'Multicast necessary but message came from %s' % (colonify_ip6(transactions[transaction_id].client_llip))))
                             # reset transaction counter
                             transactions[transaction_id].counter = 0
                         else:
@@ -215,7 +215,7 @@ class Handler(socketserver.DatagramRequestHandler):
                                     except:
                                         # MAC not yet found :-(
                                         if cfg.LOG_MAC_LLIP:
-                                            log.info('TransactionID: %s | %s' % (transaction_id, 'MAC address for LinkLocalIP %s unknown' % (colonify_ip6(transactions[transaction_id].client_llip))))
+                                            log.info('transaction_id: %s | %s' % (transaction_id, 'mac address for llip %s unknown' % (colonify_ip6(transactions[transaction_id].client_llip))))
 
                             # if finally there is some info about the client or MACs play no role try to answer the request
                             if transactions[transaction_id].client_llip in collected_macs or cfg.IGNORE_MAC:
@@ -775,7 +775,7 @@ class Handler(socketserver.DatagramRequestHandler):
                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                 response_ascii += build_option(13, '%04x' % (2))
 
-                log.error('%s| TransactionID: %s | DatabaseError: %s' % (MESSAGE_TYPES[response_type], transaction_id, ' '.join(dberror)))
+                log.error('%s| transaction_id: %s | DatabaseError: %s' % (MESSAGE_TYPES[response_type], transaction_id, ' '.join(dberror)))
 
             else:
                 # log response
@@ -803,20 +803,20 @@ class Handler(socketserver.DatagramRequestHandler):
                         options_answer.append(13)
 
                         # log warning message about unavailable addresses
-                        log.warning('REPLY | No addresses or prefixes available | TransactionID: %s | ClientLLIP: %s' % \
+                        log.warning('REPLY | no addresses or prefixes available | transaction_id: %s | client_llip: %s' % \
                                     (transaction_id, colonify_ip6(transactions[transaction_id].client_llip)))
 
                     elif 3 in options_request or 4 in options_request or 13 in options_request or 25 in options_request:
                         # options_answer.sort()
                         options_answer = sorted(options_answer)
-                        log.info('%s | TransactionID: %s | Options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, transactions[transaction_id].client.get_options_string()))
+                        log.info('%s | transaction_id: %s | options: %s%s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer, transactions[transaction_id].client.get_options_string()))
                     else:
                         print(options_request)
                         log.info('what else should I do?')
                 else:
                     # options_answer.sort()
                     options_answer = sorted(options_answer)
-                    log.info('%s | TransactionID: %s | Options: %s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer))
+                    log.info('%s | transaction_id: %s | options: %s' % (MESSAGE_TYPES[response_type], transaction_id, options_answer))
 
             # response
             self.response = binascii.unhexlify(response_ascii)
@@ -824,10 +824,7 @@ class Handler(socketserver.DatagramRequestHandler):
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            log.error('Response(): ' + str(err))
-            # print(transaction_id)
-            # print(transactions[transaction_id].client.__dict__)
-
+            log.error('response: ' + str(err))
             # clear any response
             self.response = ''
 
