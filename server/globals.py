@@ -20,7 +20,7 @@ import queue
 import platform
 import time
 
-import dns
+import dns.resolver
 
 from .config import cfg
 
