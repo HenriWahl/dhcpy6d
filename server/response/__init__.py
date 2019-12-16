@@ -77,7 +77,7 @@ class Handler(socketserver.DatagramRequestHandler):
         self.response = ''
 
         # raw address+interface, used for requests monitoring
-        client_address = deepcopy(self.client_address[0])
+        client_address = deepcopy(self.client_address[0].split('%')[0])
         try:
             interface = socket.if_indextoname(self.client_address[3])
         except OSError:
