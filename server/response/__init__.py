@@ -49,6 +49,8 @@ from ..storage import (config_store,
                        volatile_store)
 from ..transaction import Transaction
 
+from . import (option_7,
+               option_23)
 
 class Request:
     """
@@ -503,7 +505,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
             # Option 7 Server Preference
             if 7 in options_request:
-                response_ascii += build_option(7, '%02x' % (int(cfg.SERVER_PREFERENCE)))
+                option_7.build(response_ascii)
                 # options in answer to be logged
                 options_answer.append(7)
 
@@ -547,24 +549,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
             # Option 23 DNS recursive name server
             if 23 in options_request:
-                # should not be necessary to check if Transactions[transaction_id].client exists but there are
-                # crazy clients out in the wild which might become silent this way
-                if transactions[transaction_id].client:
-                    if len(cfg.CLASSES[transactions[transaction_id].client.client_class].NAMESERVER) > 0:
-                        nameserver = ''
-                        for ns in cfg.CLASSES[transactions[transaction_id].client.client_class].NAMESERVER:
-                            nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                        response_ascii += build_option(23, binascii.hexlify(nameserver).decode())
-                        # options in answer to be logged
-                        options_answer.append(23)
-
-                elif len(cfg.NAMESERVER) > 0:
-                    # in case several nameservers are given convert them all and add them
-                    nameserver = ''
-                    for ns in cfg.NAMESERVER:
-                        nameserver += socket.inet_pton(socket.AF_INET6, ns)
-                    response_ascii += build_option(23, binascii.hexlify(nameserver).decode())
-                    # options in answer to be logged
+                if option_23.build(response_ascii, transaction_id):
                     options_answer.append(23)
 
             # Option 24 Domain Search List
