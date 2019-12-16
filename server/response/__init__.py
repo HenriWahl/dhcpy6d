@@ -50,7 +50,9 @@ from ..storage import (config_store,
 from ..transaction import Transaction
 
 from . import (option_7,
-               option_23)
+               option_14,
+               option_23,
+               option_24)
 
 class Request:
     """
@@ -292,7 +294,6 @@ class Handler(socketserver.DatagramRequestHandler):
                                     self.build_response(7, transaction_id, transactions[transaction_id].ia_options + [7] + \
                                                         transactions[transaction_id].options_request)
                                     # store leases for addresses
-                                    #volatilestore.store(transaction_id, timer)
                                     volatile_store.store(deepcopy(transactions[transaction_id]), timer)
 
                                 # RELEASE
@@ -509,25 +510,25 @@ class Handler(socketserver.DatagramRequestHandler):
                 # options in answer to be logged
                 options_answer.append(7)
 
-            # Option 11 Authentication Option
-            # seems to be pretty unused at the moment - to be done
-            if 11 in options_request:
-                # '3' for Reconfigure Key Authentication Protocol
-                protocol = '%02x' % (3)
-                # '1' for algorithm
-                algorithm = '%02x' % (1)
-                # assuming '0' as valid Replay Detection method
-                rdm = '%02x' % (0)
-                # Replay Detection - current time for example
-                replay_detection = '%016x' % (int(time.time()))
-                # Authentication Information Type
-                # first 1, later with HMAC-MD5  2
-                ai_type = '%02x' % (1)
-                authentication_information = cfg.AUTHENTICATION_INFORMATION
-                # stuffed together
-                response_ascii += build_option(11, protocol + algorithm + rdm + replay_detection + ai_type + authentication_information)
-                # options in answer to be logged
-                options_answer.append(11)
+            # # Option 11 Authentication Option
+            # # seems to be pretty unused at the moment - to be done
+            # if 11 in options_request:
+            #     # '3' for Reconfigure Key Authentication Protocol
+            #     protocol = '%02x' % (3)
+            #     # '1' for algorithm
+            #     algorithm = '%02x' % (1)
+            #     # assuming '0' as valid Replay Detection method
+            #     rdm = '%02x' % (0)
+            #     # Replay Detection - current time for example
+            #     replay_detection = '%016x' % (int(time.time()))
+            #     # Authentication Information Type
+            #     # first 1, later with HMAC-MD5  2
+            #     ai_type = '%02x' % (1)
+            #     authentication_information = cfg.AUTHENTICATION_INFORMATION
+            #     # stuffed together
+            #     response_ascii += build_option(11, protocol + algorithm + rdm + replay_detection + ai_type + authentication_information)
+            #     # options in answer to be logged
+            #     options_answer.append(11)
 
             # Option 12 Server Unicast Option
             if 12 in options_request:
@@ -543,7 +544,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
             # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
             if 14 in options_request:
-                response_ascii += build_option(14, '')
+                option_14.build(response_ascii)
                 # options in answer to be logged
                 options_answer.append(14)
 
@@ -554,10 +555,7 @@ class Handler(socketserver.DatagramRequestHandler):
 
             # Option 24 Domain Search List
             if 24 in options_request:
-                converted_domain_search_list = ''
-                for d in cfg.DOMAIN_SEARCH_LIST:
-                    converted_domain_search_list += convert_dns_to_binary(d)
-                response_ascii += build_option(24, converted_domain_search_list)
+                option_24.build(response_ascii)
                 # options in answer to be logged
                 options_answer.append(24)
 
