@@ -26,6 +26,7 @@ import dns
 
 from .config import cfg
 from .globals import (collected_macs,
+                      keyring,
                       requests,
                       requests_blacklist,
                       route_queue,
@@ -54,7 +55,7 @@ class DNSQueryThread(Thread):
             address = colonify_ip6(a.ADDRESS)
             try:
                 # update AAAA record, delete old entry first
-                update = dns.update.Update(a.DNS_ZONE, keyring=Keyring)
+                update = dns.update.Update(a.DNS_ZONE, keyring=keyring)
                 update.delete(hostname, 'AAAA')
                 # if DNS should be updated do it - not the case if IP is released
                 if action == 'update':
@@ -63,7 +64,7 @@ class DNSQueryThread(Thread):
 
                 # the reverse record will be first checked if it points
                 # to the current hostname, if not, it will be deleted first
-                update_rev = dns.update.Update(a.DNS_REV_ZONE, keyring=Keyring)
+                update_rev = dns.update.Update(a.DNS_REV_ZONE, keyring=keyring)
                 try:
                     answer = resolver_update.query(dns.reversename.from_address(address), 'PTR')
                     for rdata in answer:

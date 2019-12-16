@@ -28,8 +28,8 @@ from .. import collect_macs
 from ..client import Client
 from ..config import cfg
 from ..constants import MESSAGE_TYPES
-from ..dns import (dns_delete,
-                   dns_update)
+from ..domain import (dns_delete,
+                      dns_update)
 from ..globals import (collected_macs,
                        DUMMY_MAC,
                        IA_OPTIONS,

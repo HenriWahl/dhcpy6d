@@ -19,7 +19,7 @@
 from ..config import (Address,
                       cfg,
                       Prefix)
-from ..dns import get_ip_from_dns
+from ..domain import get_ip_from_dns
 from ..globals import transactions
 
 from .parse_pattern import (parse_pattern_address,

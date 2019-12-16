@@ -37,7 +37,7 @@ if cfg.DNS_UPDATE:
     import dns.update
     import dns.tsigkeyring
 
-    Keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY : cfg.DNS_RNDC_SECRET})
+    keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY : cfg.DNS_RNDC_SECRET})
 
     # resolver for DNS updates
     resolver_update = dns.resolver.Resolver()
