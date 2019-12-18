@@ -91,7 +91,6 @@ def dns_delete(transaction_id, address='', action='release'):
                 dns_address.ADDRESS = address
                 # put query into DNS query queue
                 dns_query_queue.put((action, hostname, dns_address))
-                #dns_query_queue.put((action, hostname, address))
             # enough
             break
 

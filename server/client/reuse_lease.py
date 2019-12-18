@@ -137,8 +137,8 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
                                                          dns_ttl=cfg.ADDRESSES[a['type']].DNS_TTL)
                                             client.addresses.append(ia)
                                             # set de-preferred address invalid
-                                            client.addresses.append(Address(address=a['address'], valid=False,
-
+                                            client.addresses.append(Address(address=a['address'],
+                                                                            valid=False,
                                                                             preferred_lifetime=0,
                                                                             valid_lifetime=0))
 
