@@ -77,7 +77,7 @@ class Handler(socketserver.DatagramRequestHandler):
         self.response = ''
 
         # raw address+interface, used for requests monitoring
-        client_address = deepcopy(self.client_address[0])
+        client_address = deepcopy(self.client_address[0].split('%')[0])
         try:
             interface = socket.if_indextoname(self.client_address[3])
         except OSError:
@@ -107,7 +107,6 @@ class Handler(socketserver.DatagramRequestHandler):
                     requests[client_address].count += 1
             # otherwise a MAC address
             else:
-                # llip = decompress_ip6(client_address.split('%')[0])
                 llip = decompress_ip6(client_address)
                 if llip in collected_macs:
                     mac = deepcopy(collected_macs[llip].mac)

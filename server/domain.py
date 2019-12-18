@@ -88,9 +88,10 @@ def dns_delete(transaction_id, address='', action='release'):
                 # use address from address types as template for the real
                 # address to be deleted from DNS
                 dns_address = copy.copy(a)
-                dns_address.ADDRESS = colonify_ip6(address)
+                dns_address.ADDRESS = address
                 # put query into DNS query queue
                 dns_query_queue.put((action, hostname, dns_address))
+                #dns_query_queue.put((action, hostname, address))
             # enough
             break
 

@@ -68,11 +68,11 @@ class Transaction:
         self.iat2 = cfg.T2
         # IA option - NA, TA or PD -> DHCPv6 option 3, 4 or 25
         # to be used in option_requests in Handler.build_response()
-        self.ia_options = list()
+        self.ia_options = []
         # Addresses given by client, for example for RENEW or RELEASE requests
-        self.addresses = list()
+        self.addresses = []
         # same with prefixes
-        self.prefixes = list()
+        self.prefixes = []
         # might be used against clients that are running wild
         # initial 1 as being increased after handling
         self.counter = 1
@@ -106,6 +106,7 @@ class Transaction:
         # 1 Client Identifier Option
         if 1 in options:
             self.duid = options[1]
+            # See https://github.com/HenriWahl/dhcpy6d/issues/25 and DUID type is not used at all so just remove it
             # self.DUIDType = int(options[1][0:4], 16)
             # # DUID-EN can be retrieved from DUID
             # if self.DUIDType == 2:

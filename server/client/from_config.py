@@ -49,7 +49,6 @@ def from_config(client=None, client_config=None, transaction_id=None):
                                  category='fixed',
                                  aclass='fixed',
                                  atype='fixed')
-
                     client.addresses.append(ia)
 
         if not client_config.CLASS == '':
