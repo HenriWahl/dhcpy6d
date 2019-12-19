@@ -19,7 +19,7 @@
 from ..helpers import build_option
 
 
-# Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
-def build(response_ascii=None, options_answer=None):
-    response_ascii += build_option(14, '')
-    options_answer.append(14)
+# Option 13 Status Code Option - statuscode is taken from dictionary
+def build(response_ascii=None, options_answer=None, status=None):
+    response_ascii += build_option(13, '%04x' % (status))
+    options_answer.append(13)

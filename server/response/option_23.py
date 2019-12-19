@@ -25,7 +25,7 @@ from ..helpers import build_option
 
 
 # Option 23 DNS recursive name server
-def build(response_ascii, transaction_id):
+def build(response_ascii=None, options_answer=None, transaction_id=None):
     # should not be necessary to check if Transactions[transaction_id].client exists but there are
     # crazy clients out in the wild which might become silent this way
     if transactions[transaction_id].client:
@@ -34,7 +34,7 @@ def build(response_ascii, transaction_id):
             for ns in cfg.CLASSES[transactions[transaction_id].client.client_class].NAMESERVER:
                 nameserver += socket.inet_pton(socket.AF_INET6, ns)
             response_ascii += build_option(23, binascii.hexlify(nameserver).decode())
-            return True
+            options_answer.append(23)
 
     elif len(cfg.NAMESERVER) > 0:
         # in case several nameservers are given convert them all and add them
@@ -42,7 +42,4 @@ def build(response_ascii, transaction_id):
         for ns in cfg.NAMESERVER:
             nameserver += socket.inet_pton(socket.AF_INET6, ns)
         response_ascii += build_option(23, binascii.hexlify(nameserver).decode())
-        return True
-
-    # if no condition applied just return false to avoid option being added to options_answer
-    return False
+        options_answer.append(23)

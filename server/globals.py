@@ -44,6 +44,7 @@ if cfg.DNS_UPDATE:
     resolver_update.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
 else:
     resolver_update = None
+    keyring = None
 
 # dictionary to store transactions - key is transaction ID, value a transaction object
 transactions =  {}

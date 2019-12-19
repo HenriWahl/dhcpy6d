@@ -20,6 +20,6 @@ from ..config import cfg
 from ..helpers import build_option
 
 # Option 7 Server Preference
-def build(response_ascii):
+def build(response_ascii=None, options_answer=None):
     response_ascii += build_option(7, '%02x' % (int(cfg.SERVER_PREFERENCE)))
-    return True
+    options_answer.append(7)

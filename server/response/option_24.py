@@ -22,8 +22,9 @@ from ..helpers import (build_option,
 
 
 # Option 24 Domain Search List
-def build(response_ascii):
+def build(response_ascii=None, options_answer=None):
     converted_domain_search_list = ''
     for d in cfg.DOMAIN_SEARCH_LIST:
         converted_domain_search_list += convert_dns_to_binary(d)
     response_ascii += build_option(24, converted_domain_search_list)
+    options_answer.append(24)

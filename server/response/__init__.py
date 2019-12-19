@@ -50,9 +50,12 @@ from ..storage import (config_store,
 from ..transaction import Transaction
 
 from . import (option_7,
+               option_12,
+               option_13,
                option_14,
                option_23,
-               option_24)
+               option_24,
+               option_25)
 
 class Request:
     """
@@ -252,7 +255,6 @@ class Handler(socketserver.DatagramRequestHandler):
                                         self.build_response(7, transaction_id, transactions[transaction_id].ia_options + \
                                                             [7] + [14] + transactions[transaction_id].options_request)
                                     # store leases for addresses
-                                    #volatilestore.store(transaction_id, timer)
                                     volatile_store.store(deepcopy(transactions[transaction_id]), timer)
 
                                     # run external script for setting a route to the delegated prefix
@@ -357,7 +359,6 @@ class Handler(socketserver.DatagramRequestHandler):
             # Header
             # response type + transaction id
             response_ascii = '%02x' % (response_type)
-            #response_ascii += transaction_id.encode()
             response_ascii += transaction_id
 
             # these options are always useful
@@ -505,134 +506,44 @@ class Handler(socketserver.DatagramRequestHandler):
 
             # Option 7 Server Preference
             if 7 in options_request:
-                option_7.build(response_ascii)
-                # options in answer to be logged
-                options_answer.append(7)
-
-            # # Option 11 Authentication Option
-            # # seems to be pretty unused at the moment - to be done
-            # if 11 in options_request:
-            #     # '3' for Reconfigure Key Authentication Protocol
-            #     protocol = '%02x' % (3)
-            #     # '1' for algorithm
-            #     algorithm = '%02x' % (1)
-            #     # assuming '0' as valid Replay Detection method
-            #     rdm = '%02x' % (0)
-            #     # Replay Detection - current time for example
-            #     replay_detection = '%016x' % (int(time.time()))
-            #     # Authentication Information Type
-            #     # first 1, later with HMAC-MD5  2
-            #     ai_type = '%02x' % (1)
-            #     authentication_information = cfg.AUTHENTICATION_INFORMATION
-            #     # stuffed together
-            #     response_ascii += build_option(11, protocol + algorithm + rdm + replay_detection + ai_type + authentication_information)
-            #     # options in answer to be logged
-            #     options_answer.append(11)
+                option_7.build(response_ascii=response_ascii,
+                               options_answer=options_answer)
 
             # Option 12 Server Unicast Option
             if 12 in options_request:
-                response_ascii += build_option(12, binascii.hexlify(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)).decode())
-                # options in answer to be logged
-                options_answer.append(12)
+                # response_ascii += build_option(12, binascii.hexlify(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)).decode())
+                option_12.build(response_ascii=response_ascii,
+                                options_answer=options_answer)
 
             # Option 13 Status Code Option - statuscode is taken from dictionary
             if 13 in options_request:
-                response_ascii += build_option(13, '%04x' % (status))
-                # options in answer to be logged
-                options_answer.append(13)
+                #response_ascii += build_option(13, '%04x' % (status))
+                option_13.build(response_ascii=response_ascii,
+                                options_answer=options_answer,
+                                status=status)
 
             # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
             if 14 in options_request:
-                option_14.build(response_ascii)
-                # options in answer to be logged
-                options_answer.append(14)
+                option_14.build(response_ascii=response_ascii,
+                                options_answer=options_answer)
 
             # Option 23 DNS recursive name server
             if 23 in options_request:
-                if option_23.build(response_ascii, transaction_id):
-                    options_answer.append(23)
+                option_23.build(response_ascii=response_ascii,
+                                options_answer=options_answer,
+                                transaction_id=transaction_id)
 
             # Option 24 Domain Search List
             if 24 in options_request:
-                option_24.build(response_ascii)
-                # options in answer to be logged
-                options_answer.append(24)
+                option_24.build(response_ascii=response_ascii,
+                                options_answer=options_answer)
 
             # Option 25 Prefix Delegation
             if 25 in options_request:
-                # check if MAC of LLIP is really known
-                if transactions[transaction_id].client_llip in collected_macs or cfg.IGNORE_MAC:
-                    # collect client information
-                    if transactions[transaction_id].client is None:
-                        # transactions[transaction_id].client = build_client(transaction_id)
-                        transactions[transaction_id].client = Client(transaction_id)
-
-                    # Only if prefixes are provided
-                    if 'prefixes' in cfg.CLASSES[transactions[transaction_id].client.client_class].ADVERTISE:
-                        # check if only a short NoPrefixAvail answer or none at all is to be returned
-                        if not transactions[transaction_id].answer == 'normal':
-                            if transactions[transaction_id].answer == 'noprefix':
-                                # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                response_ascii += build_option(13, '%04x' % (6))
-                                # clean client prefixes which not be deployed anyway
-                                transactions[transaction_id].client.prefixes[:] = []
-                                # options in answer to be logged
-                                options_answer.append(13)
-                            else:
-                                # clean response as there is nothing to respond in case of answer = none
-                                self.response = ''
-                                return None
-                        else:
-                            # if client could not be built because of database problems send
-                            # status message back
-                            if transactions[transaction_id].client:
-                                # embed option 26 into option 25 - several if necessary
-                                ia_prefixes = ''
-                                try:
-                                    for prefix in transactions[transaction_id].client.prefixes:
-                                        ipv6_prefix = binascii.hexlify(socket.inet_pton(socket.AF_INET6,
-                                                                                        colonify_ip6(prefix.PREFIX))).decode()
-                                        if prefix.VALID:
-                                            preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
-                                            valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
-                                        else:
-                                            preferred_lifetime = '%08x' % (0)
-                                            valid_lifetime = '%08x' % (0)
-                                        length = '%02x' % (int(prefix.LENGTH))
-                                        ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
-
-                                    if transactions[transaction_id].client.client_class != '':
-                                        t1 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].client.client_class].T1))
-                                        t2 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].client.client_class].T2))
-                                    else:
-                                        t1 = '%08x' % (int(cfg.T1))
-                                        t2 = '%08x' % (int(cfg.T2))
-
-                                    # even if there anre no prefixes server has to deliver an empty PD
-                                    response_ascii += build_option(25, transactions[transaction_id].iaid + t1 + t2 + ia_prefixes)
-                                    # if no prefixes available a NoPrefixAvail status code has to be sent
-                                    if ia_prefixes == '':
-                                        # REBIND not possible
-                                        if transactions[transaction_id].last_message_received_type == 6:
-                                            # Option 13 Status Code Option - statuscode is 3: 'NoBinding'
-                                            response_ascii += build_option(13, '%04x' % (3))
-                                        else:
-                                            # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                            response_ascii += build_option(13, '%04x' % (6))
-                                    # options in answer to be logged
-                                    options_answer.append(25)
-
-                                except Exception as err:
-                                    print(err)
-                                    # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                    response_ascii += build_option(13, '%04x' % (6))
-                                    # options in answer to be logged
-                                    options_answer.append(25)
-                            else:
-                                # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                response_ascii += build_option(13, '%04x' % (6))
-                                # options in answer to be logged
-                                options_answer.append(25)
+                option_25.build(response_ascii=response_ascii,
+                                options_answer=options_answer,
+                                transaction_id=transaction_id,
+                                response=self.response)
 
             # Option 31 OPTION_SNTP_SERVERS
             if 31 in options_request and cfg.SNTP_SERVERS != '':
