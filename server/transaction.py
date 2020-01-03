@@ -180,14 +180,12 @@ class Transaction:
         # 25 Identity Association for Prefix Delegation
         if 25 in options:
             for payload in options[25]:
+                # iaid        t1        t2       ia_prefix   opt_length       preferred validlt    length    prefix
+                # 00000001    ffffffff  ffffffff  001a        0019             00000e10   00001518    30     fd661234000000000000000000000000
+                # 8               16      24      28          32                  40      48          50      82
                 self.iaid = payload[0:8]
                 self.iat1 = int(payload[8:16], 16)
                 self.iat2 = int(payload[16:24], 16)
-
-                # iaid        t1        t2       ia_prefix   opt_length       preferred validlt    length    prefix
-                #00000001    ffffffff  ffffffff  001a        0019             00000e10   00001518    30     fd661234000000000000000000000000
-                #8               16      24      28          32                  40      48          50      82
-
                 # Prefixes given by client if any
                 for p in range(len(payload[32:])//50):
                     prefix = payload[50:][(p*58):(p*58)+32]
@@ -220,12 +218,9 @@ class Transaction:
         if 61 in options:
             # raw client architecture is supplied as a 16-bit integer (e. g. 0007)
             # See https://tools.ietf.org/html/rfc4578#section-2.1
-            client_architecture_raw = options[61]
+            self.client_architecture = options[61]
             # short number (0007 => 7 for dictionary usage)
-            client_architecture_short = int(client_architecture_raw)
-
-            self.client_architecture = client_architecture_raw
-
+            client_architecture_short = int(self.client_architecture)
             if client_architecture_short in ARCHITECTURE_TYPE:
                 self.known_client_architecture = ARCHITECTURE_TYPE[client_architecture_short]
 
@@ -239,7 +234,7 @@ class Transaction:
         # options.sort()
         for o in options:
             # ignore some attributes
-            if not o in IGNORED_LOG_OPTIONS and \
+            if o not in IGNORED_LOG_OPTIONS and \
                not self.__dict__[o] in EMPTY_OPTIONS:
                 if o == 'addresses':
                     if (3 or 4) in self.ia_options:

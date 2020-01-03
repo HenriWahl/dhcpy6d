@@ -43,7 +43,7 @@ from server.globals import (config_answer_queue,
                             volatile_answer_queue,
                             volatile_query_queue)
 from server.log import log
-from server.response import Handler
+from server.response import RequestHandler
 from server.route import manage_prefixes_routes
 from server.storage import (config_store,
                             QueryQueue,
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     # configure SocketServer
     UDPMulticastIPv6.address_family = socket.AF_INET6
-    udp_server = UDPMulticastIPv6(('', 547), Handler)
+    udp_server = UDPMulticastIPv6(('', 547), RequestHandler)
 
     # start query queue watcher
     config_query_queue_watcher = QueryQueue(name='config_query_queue',
