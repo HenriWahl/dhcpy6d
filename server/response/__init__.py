@@ -71,6 +71,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
     """
         manage all incoming datagrams, builds clients from config and previous leases
     """
+    # empty dummy response
+    response = ''
 
     def handle(self):
         """
