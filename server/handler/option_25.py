@@ -33,7 +33,6 @@ def build(response_ascii=None, transaction_id=None, options_answer=None, respons
     if transactions[transaction_id].client_llip in collected_macs or cfg.IGNORE_MAC:
         # collect client information
         if transactions[transaction_id].client is None:
-            # transactions[transaction_id].client = build_client(transaction_id)
             transactions[transaction_id].client = Client(transaction_id)
 
         # Only if prefixes are provided
@@ -42,13 +41,13 @@ def build(response_ascii=None, transaction_id=None, options_answer=None, respons
             if not transactions[transaction_id].answer == 'normal':
                 if transactions[transaction_id].answer == 'noprefix':
                     # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                    response_ascii += build_option(13, '%04x' % (6))
+                    response_ascii += build_option(13, '%04x' % 6)
                     # clean client prefixes which not be deployed anyway
                     transactions[transaction_id].client.prefixes[:] = []
                     # options in answer to be logged
                     options_answer.append(13)
                 else:
-                    # clean response as there is nothing to respond in case of answer = none
+                    # clean handler as there is nothing to respond in case of answer = none
                     response = ''
             else:
                 # if client could not be built because of database problems send
@@ -61,21 +60,20 @@ def build(response_ascii=None, transaction_id=None, options_answer=None, respons
                             ipv6_prefix = binascii.hexlify(socket.inet_pton(socket.AF_INET6,
                                                                             colonify_ip6(prefix.PREFIX))).decode()
                             if prefix.VALID:
-                                preferred_lifetime = '%08x' % (int(prefix.PREFERRED_LIFETIME))
-                                valid_lifetime = '%08x' % (int(prefix.VALID_LIFETIME))
+                                preferred_lifetime = '%08x' % int(prefix.PREFERRED_LIFETIME)
+                                valid_lifetime = '%08x' % int(prefix.VALID_LIFETIME)
                             else:
-                                preferred_lifetime = '%08x' % (0)
-                                valid_lifetime = '%08x' % (0)
-                            length = '%02x' % (int(prefix.LENGTH))
-                            ia_prefixes += build_option(26,
-                                                        preferred_lifetime + valid_lifetime + length + ipv6_prefix)
+                                preferred_lifetime = '%08x' % 0
+                                valid_lifetime = '%08x' % 0
+                            length = '%02x' % int(prefix.LENGTH)
+                            ia_prefixes += build_option(26, preferred_lifetime + valid_lifetime + length + ipv6_prefix)
 
                         if transactions[transaction_id].client.client_class != '':
-                            t1 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].client.client_class].T1))
-                            t2 = '%08x' % (int(cfg.CLASSES[transactions[transaction_id].client.client_class].T2))
+                            t1 = '%08x' % int(cfg.CLASSES[transactions[transaction_id].client.client_class].T1)
+                            t2 = '%08x' % int(cfg.CLASSES[transactions[transaction_id].client.client_class].T2)
                         else:
-                            t1 = '%08x' % (int(cfg.T1))
-                            t2 = '%08x' % (int(cfg.T2))
+                            t1 = '%08x' % int(cfg.T1)
+                            t2 = '%08x' % int(cfg.T2)
 
                         # even if there anre no prefixes server has to deliver an empty PD
                         response_ascii += build_option(25, transactions[transaction_id].iaid + t1 + t2 + ia_prefixes)
@@ -84,17 +82,17 @@ def build(response_ascii=None, transaction_id=None, options_answer=None, respons
                             # REBIND not possible
                             if transactions[transaction_id].last_message_received_type == 6:
                                 # Option 13 Status Code Option - statuscode is 3: 'NoBinding'
-                                response_ascii += build_option(13, '%04x' % (3))
+                                response_ascii += build_option(13, '%04x' % 3)
                             else:
                                 # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                response_ascii += build_option(13, '%04x' % (6))
+                                response_ascii += build_option(13, '%04x' % 6)
                         # options in answer to be logged
                         options_answer.append(25)
 
                     except Exception as err:
                         print(err)
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                        response_ascii += build_option(13, '%04x' % (6))
+                        response_ascii += build_option(13, '%04x' % 6)
                         # options in answer to be logged
                         options_answer.append(25)
                 else:

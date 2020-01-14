@@ -1181,7 +1181,7 @@ class Class:
         # at which interface this class of clients is served
         self.INTERFACE = ''
         # in certain cases it might be useful not to give any address to clients, for example if only a defined group
-        # of hosts should get IPv6 addresses and others not. They will get a 'NoAddrsAvail' response if this option
+        # of hosts should get IPv6 addresses and others not. They will get a 'NoAddrsAvail' handler if this option
         # is set to 'noaddress' or no answer at all if set to 'none'
         self.ANSWER = 'normal'
         # which IA_* should this class supply - addresses, prefixes or both?

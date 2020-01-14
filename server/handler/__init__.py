@@ -71,14 +71,14 @@ class RequestHandler(socketserver.DatagramRequestHandler):
     """
         manage all incoming datagrams, builds clients from config and previous leases
     """
-    # empty dummy response
+    # empty dummy handler
     response = ''
 
     def handle(self):
         """
         request handling happens here
         """
-        # empty dummy response
+        # empty dummy handler
         self.response = ''
 
         # raw address+interface, used for requests monitoring
@@ -354,21 +354,21 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
     def build_response(self, response_type, transaction_id, options_request, status=0):
         """
-            creates answer and puts it into self.response
+            creates answer and puts it into self.handler
             arguments:
                 response_type - mostly 2 or 7
                 transaction_id
                 option_request
                 status - mostly 0 (OK)
-            response will be sent by self.finish()
+            handler will be sent by self.finish()
         """
         try:
             # shortcut to transactions[transaction_id]
             transaction = transactions[transaction_id]
 
             # Header
-            # response type + transaction id
-            response_ascii = '%02x' % (response_type)
+            # handler type + transaction id
+            response_ascii = '%02x' % response_type
             response_ascii += transaction_id
 
             # these options are always useful
@@ -395,13 +395,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         if not transaction.answer == 'normal':
                             if transaction.answer == 'noaddress':
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += build_option(13, '%04x' % (2))
+                                response_ascii += build_option(13, '%04x' % 2)
                                 # clean client addresses which not be deployed anyway
                                 transaction.client.addresses[:] = []
                                 # options in answer to be logged
                                 options_answer.append(13)
                             else:
-                                # clean response as there is nothing to respond in case of answer = none
+                                # clean handler as there is nothing to respond in case of answer = none
                                 self.response = ''
                                 return None
                         else:
@@ -420,8 +420,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                             # reset all addresses with lifetime 0
                                             # lets start with maximal transaction count of 10
                                             if transaction.counter < 10:
-                                                preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
-                                                valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
+                                                preferred_lifetime = '%08x' % int(address.PREFERRED_LIFETIME)
+                                                valid_lifetime = '%08x' % int(address.VALID_LIFETIME)
                                             else:
                                                 preferred_lifetime = '%08x' % 0
                                                 valid_lifetime = '%08x' % 0
@@ -432,23 +432,23 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                         # todo: default clients sometimes seem to have class ''
                                         #
                                         if transaction.client.client_class != '':
-                                            t1 = '%08x' % (int(cfg.CLASSES[transaction.client.client_class].T1))
-                                            t2 = '%08x' % (int(cfg.CLASSES[transaction.client.client_class].T2))
+                                            t1 = '%08x' % int(cfg.CLASSES[transaction.client.client_class].T1)
+                                            t2 = '%08x' % int(cfg.CLASSES[transaction.client.client_class].T2)
                                         else:
-                                            t1 = '%08x' % (int(cfg.T1))
-                                            t2 = '%08x' % (int(cfg.T2))
+                                            t1 = '%08x' % int(cfg.T1)
+                                            t2 = '%08x' % int(cfg.T2)
 
                                         response_ascii += build_option(3, transaction.iaid + t1 + t2 + ia_addresses)
                                     # options in answer to be logged
                                     options_answer.append(3)
                                 except:
                                     # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                    response_ascii += build_option(13, '%04x' % (2))
+                                    response_ascii += build_option(13, '%04x' % 2)
                                     # options in answer to be logged
                                     options_answer.append(13)
                             else:
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += build_option(13, '%04x' % (2))
+                                response_ascii += build_option(13, '%04x' % 2)
                                 # options in answer to be logged
                                 options_answer.append(13)
 
@@ -467,13 +467,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         if not transaction.answer == 'normal':
                             if transaction.answer == 'noaddress':
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += build_option(13, '%04x' % (2))
+                                response_ascii += build_option(13, '%04x' % 2)
                                 # clean client addresses which not be deployed anyway
                                 transaction.client.addresses[:] = []
                                 # options in answer to be logged
                                 options_answer.append(13)
                             else:
-                                # clean response as there is nothing to respond in case of answer = none
+                                # clean handler as there is nothing to respond in case of answer = none
                                 self.response = ''
                                 return None
                         else:
@@ -492,11 +492,11 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                             # reset all addresses with lifetime 0
                                             # lets start with maximal transaction count of 10
                                             if transaction.counter < 10:
-                                                preferred_lifetime = '%08x' % (int(address.PREFERRED_LIFETIME))
-                                                valid_lifetime = '%08x' % (int(address.VALID_LIFETIME))
+                                                preferred_lifetime = '%08x' % int(address.PREFERRED_LIFETIME)
+                                                valid_lifetime = '%08x' % int(address.VALID_LIFETIME)
                                             else:
-                                                preferred_lifetime = '%08x' % (0)
-                                                valid_lifetime = '%08x' % (0)
+                                                preferred_lifetime = '%08x' % 0
+                                                valid_lifetime = '%08x' % 0
                                             ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
                                     if not ia_addresses == '':
                                         response_ascii += build_option(4, transaction.iaid + ia_addresses)
@@ -504,12 +504,12 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     options_answer.append(4)
                                 except:
                                     # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                    response_ascii += build_option(13, '%04x' % (2))
+                                    response_ascii += build_option(13, '%04x' % 2)
                                     # options in answer to be logged
                                     options_answer.append(13)
                             else:
                                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += build_option(13, '%04x' % (2))
+                                response_ascii += build_option(13, '%04x' % 2)
                                 # options in answer to be logged
                                 options_answer.append(13)
 
@@ -520,13 +520,11 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
             # Option 12 Server Unicast Option
             if 12 in options_request:
-                # response_ascii += build_option(12, binascii.hexlify(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)).decode())
                 option_12.build(response_ascii=response_ascii,
                                 options_answer=options_answer)
 
             # Option 13 Status Code Option - statuscode is taken from dictionary
             if 13 in options_request:
-                #response_ascii += build_option(13, '%04x' % (status))
                 option_13.build(response_ascii=response_ascii,
                                 options_answer=options_answer,
                                 status=status)
@@ -605,10 +603,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     # sum of flags
                     nos_flags = N*4 + O*2 + S*1
 
-                    response_ascii += build_option(39, '%02x' % (nos_flags) + convert_dns_to_binary(hostname + '.' + cfg.DOMAIN))
+                    response_ascii += build_option(39, '%02x' % nos_flags + convert_dns_to_binary(hostname + '.' + cfg.DOMAIN))
                 else:
                     # if no hostname given put something in and force client override
-                    response_ascii += build_option(39, '%02x' % (3) + convert_dns_to_binary('invalid-hostname'))
+                    response_ascii += build_option(39, '%02x' % 3 + convert_dns_to_binary('invalid-hostname'))
                 # options in answer to be logged
                 options_answer.append(39)
 
@@ -660,10 +658,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     db_error.append('volatile')
                     volatile_store.db_connect()
 
-                # create error response - headers have to be recreated because
+                # create error handler - headers have to be recreated because
                 # problems may have arisen while processing and these information
                 # is not valid anymore
-                # response type + transaction id
+                # handler type + transaction id
                 response_ascii = '%02x' % (7)
                 response_ascii += transaction.id
 
@@ -674,22 +672,22 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 response_ascii += build_option(2, cfg.SERVERDUID)
 
                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                response_ascii += build_option(13, '%04x' % (2))
+                response_ascii += build_option(13, '%04x' % 2)
 
                 log.error('%s| transaction_id: %s | DatabaseError: %s' % (MESSAGE_TYPES[response_type], transaction.id, ' '.join(db_error)))
 
             else:
-                # log response
+                # log handler
                 if not transaction.client is None:
                     if len(transaction.client.addresses) == 0 and\
                        len(transaction.client.prefixes) == 0 and\
                        transaction.answer == 'normal' and\
                        transaction.last_message_received_type in [1, 3, 5, 6]:
-                        # create error response - headers have to be recreated because
+                        # create error handler - headers have to be recreated because
                         # problems may have arisen while processing and these information
                         # is not valid anymore
-                        # response type + transaction id
-                        response_ascii = '%02x' % (7)
+                        # handler type + transaction id
+                        response_ascii = '%02x' % 7
                         response_ascii += transaction.id
 
                         # always of interest
@@ -699,7 +697,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         response_ascii += build_option(2, cfg.SERVERDUID)
 
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                        response_ascii += build_option(13, '%04x' % (2))
+                        response_ascii += build_option(13, '%04x' % 2)
                         # options in answer to be logged
                         options_answer.append(13)
 
@@ -722,21 +720,21 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                                         transaction.id,
                                                                         options_answer))
 
-            # response
+            # handler
             self.response = binascii.unhexlify(response_ascii)
 
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            log.error('response: ' + str(err))
-            # clear any response
+            log.error('handler: ' + str(err))
+            # clear any handler
             self.response = ''
 
             return None
 
     def finish(self):
         """
-        send response from self.response
+        send handler from self.handler
         """
         # send only if there is anything to send
         if cfg.REALLY_DO_IT:

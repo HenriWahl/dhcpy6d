@@ -43,7 +43,7 @@ from server.globals import (config_answer_queue,
                             volatile_answer_queue,
                             volatile_query_queue)
 from server.log import log
-from server.response import RequestHandler
+from server.handler import RequestHandler
 from server.route import manage_prefixes_routes
 from server.storage import (config_store,
                             QueryQueue,

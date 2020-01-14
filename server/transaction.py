@@ -89,10 +89,8 @@ class Transaction:
         # answer type - take from class definition, one of 'normal', 'noaddress', 'noprefix' or 'none'
         # defaults to 'normal' as this is the main purpose of dhcpy6d
         self.answer = 'normal'
-        # default DUID values
+        # default DUID value
         self.duid = ''
-        # self.DUIDType = 1
-        # self.DUID_EN = 0
         # Elapsed Time - option 8, at least sent by WIDE dhcp6c when requesting delegated prefix
         self.elapsed_time = 0
         # Client architecture type (RFC 5970)
@@ -200,7 +198,7 @@ class Transaction:
         # FQDN
         # 39 FQDN Option
         if 39 in options:
-            bits = ('%4s' % (str(bin(int(options[39][1:2]))).strip('0b'))).replace(' ', '0')
+            bits = ('%4s' % str(bin(int(options[39][1:2]))).strip('0b')).replace(' ', '0')
             self.dns_n = int(bits[1])
             self.dns_o = int(bits[2])
             self.dns_s = int(bits[3])
