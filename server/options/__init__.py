@@ -30,16 +30,6 @@ class OptionTemplate:
     def __init__(self, number):
         self.number = number
 
-    # def build(self,
-    #           response_ascii=None,
-    #           transaction_id=None,
-    #           options_answer=None,
-    #           status=None):
-    #     self._build(response_ascii,
-    #                 transaction_id,
-    #                 options_answer,
-    #                 status)
-
     def build(self, **kwargs):
         pass
 
@@ -48,13 +38,13 @@ class OptionTemplate:
         glue option with payload
         """
         # option number and length take 2 byte each so the string has to be 4 chars long
-        #option = '{:04x}'.format(number)  # option number
         option = f'{number:04x}'  # option number
-        # option += '{:04x}'.format(len(payload) // 2)  # payload length, /2 because 2 chars are 1 byte
         option += f'{(len(payload)//2):04x}'  # payload length, /2 because 2 chars are 1 byte
         option += payload
         return option
 
+
+# globally available options
 options = {}
 options_path = pathlib.Path(__file__).parent
 pattern = re.compile('option_[0-9]{1,3}$')

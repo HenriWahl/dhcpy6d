@@ -51,8 +51,7 @@ from ..storage import (config_store,
                        volatile_store)
 from ..transaction import Transaction
 
-from . import (option_7,
-               option_12,
+from . import (option_12,
                option_13,
                option_14,
                option_23,
@@ -521,15 +520,15 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             #     option_7.build(response_ascii=response_ascii,
             #                    options_answer=options_answer)
 
+            # # Option 12 Server Unicast Option
+            # if 12 in options_request:
+            #     option_12.build(response_ascii=response_ascii,
+            #                     options_answer=options_answer)
+
             for number in options_request:
                 if number in options:
                     options[number].build(response_ascii=response_ascii,
                                  options_answer=options_answer)
-
-            # Option 12 Server Unicast Option
-            if 12 in options_request:
-                option_12.build(response_ascii=response_ascii,
-                                options_answer=options_answer)
 
             # Option 13 Status Code Option - statuscode is taken from dictionary
             if 13 in options_request:

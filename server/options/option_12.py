@@ -16,13 +16,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+from binascii import hexlify
+from socket import (AF_INET6,
+                    inet_pton)
+
 from server.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 7 Server Preference
+    Option 12 Server Unicast Option
     """
     def build(self, response_ascii=None, options_answer=None, **kwargs):
-        response_ascii += self.build_option(self.number, f'{int(self.cfg.SERVER_PREFERENCE):02x}')
+        response_ascii += self.build_option(self.number, hexlify(inet_pton(AF_INET6, self.cfg.ADDRESS)).decode())
         options_answer.append(self.number)
