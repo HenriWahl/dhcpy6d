@@ -16,11 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from ..config import cfg
-from ..helpers import build_option
+from server.options import OptionTemplate
 
 
-# Option 7 Server Preference
-def build(response_ascii=None, options_answer=None):
-    response_ascii += build_option(7, '%02x' % int(cfg.SERVER_PREFERENCE))
-    options_answer.append(7)
+class Option(OptionTemplate):
+    # Option 7 Server Preference
+    def build(self, response_ascii=None, options_answer=None, **kwargs):
+        response_ascii += self.build_option(self.number, '%02x' % int(self.cfg.SERVER_PREFERENCE))
+        options_answer.append(self.number)

@@ -34,6 +34,10 @@ MESSAGE_TYPES = {1: 'SOLICIT',
                  12: 'RELAY-FORW',
                  13: 'RELAY-REPL'}
 
+# response message_types hardcoded for better readability
+MESSAGE_TYPE_ADVERTISE = 2
+MESSAGE_TYPE_REPLY = 7
+
 # DUID               
 DUID_TYPES = {1: 'DUID-LLT',
               2: 'DUID-EN',

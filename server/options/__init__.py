@@ -15,3 +15,60 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
+import importlib
+import pathlib
+import re
+
+from ..config import cfg
+
+
+class OptionTemplate:
+    number = 0
+    cfg = cfg
+
+    def __init__(self, number):
+        self.number = number
+
+    # def build(self,
+    #           response_ascii=None,
+    #           transaction_id=None,
+    #           options_answer=None,
+    #           status=None):
+    #     self._build(response_ascii,
+    #                 transaction_id,
+    #                 options_answer,
+    #                 status)
+
+    def build(self, **kwargs):
+        pass
+
+    def build_option(self, number, payload):
+        """
+        glue option with payload
+        """
+        # option number and length take 2 byte each so the string has to be 4 chars long
+        #option = '{:04x}'.format(number)  # option number
+        option = f'{number:04x}'  # option number
+        # option += '{:04x}'.format(len(payload) // 2)  # payload length, /2 because 2 chars are 1 byte
+        option += f'{(len(payload)//2):04x}'  # payload length, /2 because 2 chars are 1 byte
+        option += payload
+        return option
+
+options = {}
+options_path = pathlib.Path(__file__).parent
+pattern = re.compile('option_[0-9]{1,3}$')
+
+for path in options_path.glob('option_*.py'):
+    name = path.name.rstrip(path.suffix)
+    if re.match(pattern, name):
+        spec = importlib.util.spec_from_file_location(name, path)
+        option = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(option)
+        number = int(name.split('_')[1])
+        options[number] = option.Option(number)
+
+for option in options.values():
+    print(dir(option))
+
+pass

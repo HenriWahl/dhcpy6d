@@ -28,7 +28,7 @@ from ..helpers import (build_option,
 
 
 # Option 25 Prefix Delegation
-def build(response_ascii=None, transaction_id=None, options_answer=None, response=None):
+def build(response_ascii=None, transaction_id=None, options_answer=None):
     # check if MAC of LLIP is really known
     if transactions[transaction_id].client_llip in collected_macs or cfg.IGNORE_MAC:
         # collect client information
