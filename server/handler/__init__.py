@@ -525,16 +525,17 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             #     option_12.build(response_ascii=response_ascii,
             #                     options_answer=options_answer)
 
+            # # Option 13 Status Code Option - statuscode is taken from dictionary
+            # if 13 in options_request:
+            #     option_13.build(response_ascii=response_ascii,
+            #                     options_answer=options_answer,
+            #                     status=status)
+
             for number in options_request:
                 if number in options:
                     options[number].build(response_ascii=response_ascii,
-                                 options_answer=options_answer)
-
-            # Option 13 Status Code Option - statuscode is taken from dictionary
-            if 13 in options_request:
-                option_13.build(response_ascii=response_ascii,
-                                options_answer=options_answer,
-                                status=status)
+                                          options_answer=options_answer,
+                                          status=status)
 
             # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
             if 14 in options_request:
