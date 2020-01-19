@@ -1,6 +1,6 @@
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2019 Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright (C) 2009-2020 Henri Wahl <h.wahl@ifw-dresden.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

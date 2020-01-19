@@ -15,15 +15,3 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
-
-import binascii
-import socket
-
-from ..config import cfg
-from ..helpers import build_option
-
-
-# Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
-def build(response_ascii=None, options_answer=None):
-    response_ascii += build_option(12, binascii.hexlify(socket.inet_pton(socket.AF_INET6, cfg.ADDRESS)).decode())
-    options_answer.append(12)
