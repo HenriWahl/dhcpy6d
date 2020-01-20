@@ -16,17 +16,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from binascii import hexlify
-from socket import (AF_INET6,
-                    inet_pton)
-
 from server.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 13 Status Code Option - statuscode is taken from dictionary
+    Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
     """
-    def build(self, response_ascii=None, options_answer=None, status=None, **kwargs):
-        response_ascii += self.build_option(self.number, f'{status:04x}')
+    def build(self, response_ascii=None, options_answer=None, **kwargs):
+        response_ascii += self.build_option(self.number, '')
         options_answer.append(self.number)

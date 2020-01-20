@@ -531,16 +531,16 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             #                     options_answer=options_answer,
             #                     status=status)
 
+            # # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
+            # if 14 in options_request:
+            #     option_14.build(response_ascii=response_ascii,
+            #                     options_answer=options_answer)
+
             for number in options_request:
                 if number in options:
                     options[number].build(response_ascii=response_ascii,
                                           options_answer=options_answer,
                                           status=status)
-
-            # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
-            if 14 in options_request:
-                option_14.build(response_ascii=response_ascii,
-                                options_answer=options_answer)
 
             # Option 23 DNS recursive name server
             if 23 in options_request:
