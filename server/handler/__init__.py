@@ -51,13 +51,6 @@ from ..storage import (config_store,
                        volatile_store)
 from ..transaction import Transaction
 
-from . import (option_12,
-               option_13,
-               option_14,
-               option_23,
-               option_24,
-               option_25)
-
 
 class Request:
     """
@@ -515,58 +508,22 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # options in answer to be logged
                                 options_answer.append(13)
 
-            # # Option 7 Server Preference
-            # if 7 in options_request:
-            #     option_7.build(response_ascii=response_ascii,
-            #                    options_answer=options_answer)
 
-            # # Option 12 Server Unicast Option
-            # if 12 in options_request:
-            #     option_12.build(response_ascii=response_ascii,
-            #                     options_answer=options_answer)
+            # # Option 31 OPTION_SNTP_SERVERS
+            # if 31 in options_request and cfg.SNTP_SERVERS != '':
+            #     sntp_servers = ''
+            #     for s in cfg.SNTP_SERVERS:
+            #         sntp_server = binascii.hexlify(socket.inet_pton(socket.AF_INET6, s)).decode()
+            #         sntp_servers += sntp_server
+            #     response_ascii += build_option(31, sntp_servers)
 
-            # # Option 13 Status Code Option - statuscode is taken from dictionary
-            # if 13 in options_request:
-            #     option_13.build(response_ascii=response_ascii,
-            #                     options_answer=options_answer,
-            #                     status=status)
-
-            # # Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
-            # if 14 in options_request:
-            #     option_14.build(response_ascii=response_ascii,
-            #                     options_answer=options_answer)
-
-            # # Option 23 DNS recursive name server
-            # if 23 in options_request:
-            #     option_23.build(response_ascii=response_ascii,
-            #                     options_answer=options_answer,
-            #                     transaction_id=transaction.id)
-
-            # # Option 24 Domain Search List
-            # if 24 in options_request:
-            #     option_24.build(response_ascii=response_ascii,
-            #                     options_answer=options_answer)
-
-            # # Option 25 Prefix Delegation
-            # if 25 in options_request:
-            #     option_25.build(response_ascii=response_ascii,
-            #                     options_answer=options_answer,
-            #                     transaction_id=transaction.id)
-
+            # build all requested options if they are handled
             for number in options_request:
                 if number in options:
                     options[number].build(response_ascii=response_ascii,
                                           options_answer=options_answer,
                                           transaction=transaction,
                                           status=status)
-
-            # Option 31 OPTION_SNTP_SERVERS
-            if 31 in options_request and cfg.SNTP_SERVERS != '':
-                sntp_servers = ''
-                for s in cfg.SNTP_SERVERS:
-                    sntp_server = binascii.hexlify(socket.inet_pton(socket.AF_INET6, s)).decode()
-                    sntp_servers += sntp_server
-                response_ascii += build_option(31, sntp_servers)
 
             # Option 32 Information Refresh Time
             if 32 in options_request:
