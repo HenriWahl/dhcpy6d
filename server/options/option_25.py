@@ -22,6 +22,7 @@ from socket import (AF_INET6,
 
 from server import collected_macs
 from server.client import Client
+from server.config import cfg
 from server.helpers import colonify_ip6
 from server.options import OptionTemplate
 
@@ -32,13 +33,13 @@ class Option(OptionTemplate):
     """
     def build(self, response_ascii=None, options_answer=None, transaction=None, **kwargs):
         # check if MAC of LLIP is really known
-        if transaction.client_llip in collected_macs or self.cfg.IGNORE_MAC:
+        if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
             # collect client information
             if transaction.client is None:
                 transaction.client = Client(transaction.id)
 
             # Only if prefixes are provided
-            if 'prefixes' in self.cfg.CLASSES[transaction.client.client_class].ADVERTISE:
+            if 'prefixes' in cfg.CLASSES[transaction.client.client_class].ADVERTISE:
                 # check if only a short NoPrefixAvail answer or none at all is to be returned
                 if not transaction.answer == 'normal':
                     if transaction.answer == 'noprefix':
@@ -74,11 +75,11 @@ class Option(OptionTemplate):
                                                                  ipv6_prefix)
 
                             if transaction.client.client_class != '':
-                                t1 = f'{int(self.cfg.CLASSES[transaction.client.client_class].T1):08x}'
-                                t2 = f'{int(self.cfg.CLASSES[transaction.client.client_class].T2):08x}'
+                                t1 = f'{int(cfg.CLASSES[transaction.client.client_class].T1):08x}'
+                                t2 = f'{int(cfg.CLASSES[transaction.client.client_class].T2):08x}'
                             else:
-                                t1 = f'{int(self.cfg.T1):08x}'
-                                t2 = f'{int(self.cfg.T2):08x}'
+                                t1 = f'{int(cfg.T1):08x}'
+                                t2 = f'{int(cfg.T2):08x}'
 
                             # even if there are no prefixes server has to deliver an empty PD
                             response_ascii += self.build_option(self.number, transaction.iaid + t1 + t2 + ia_prefixes)

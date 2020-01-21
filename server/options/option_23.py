@@ -20,6 +20,7 @@ from binascii import hexlify
 from socket import (AF_INET6,
                     inet_pton)
 
+from server.config import cfg
 from server.options import OptionTemplate
 
 
@@ -31,17 +32,17 @@ class Option(OptionTemplate):
         # should not be necessary to check if Transactions[transaction_id].client exists but there are
         # crazy clients out in the wild which might become silent this way
         if transaction.client:
-            if len(self.cfg.CLASSES[transaction.client.client_class].NAMESERVER) > 0:
+            if len(cfg.CLASSES[transaction.client.client_class].NAMESERVER) > 0:
                 nameserver = ''
-                for ns in self.cfg.CLASSES[transaction.client.client_class].NAMESERVER:
+                for ns in cfg.CLASSES[transaction.client.client_class].NAMESERVER:
                     nameserver += inet_pton(AF_INET6, ns)
                 response_ascii += self.build_option(self.number, hexlify(nameserver).decode())
                 options_answer.append(23)
 
-        elif len(self.cfg.NAMESERVER) > 0:
+        elif len(cfg.NAMESERVER) > 0:
             # in case several nameservers are given convert them all and add them
             nameserver = ''
-            for ns in self.cfg.NAMESERVER:
+            for ns in cfg.NAMESERVER:
                 nameserver += inet_pton(AF_INET6, ns)
             response_ascii += self.build_option(self.number, hexlify(nameserver).decode())
             options_answer.append(self.number)

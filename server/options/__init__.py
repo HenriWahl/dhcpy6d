@@ -20,12 +20,12 @@ import importlib
 import pathlib
 import re
 
-from ..config import cfg
-
 
 class OptionTemplate:
+    """
+    Template to be used by derived options - default and custom ones
+    """
     number = 0
-    cfg = cfg
 
     def __init__(self, number):
         self.number = number
@@ -57,8 +57,3 @@ for path in options_path.glob('option_*.py'):
         spec.loader.exec_module(option)
         number = int(name.split('_')[1])
         options[number] = option.Option(number)
-
-for option in options.values():
-    print(dir(option))
-
-pass

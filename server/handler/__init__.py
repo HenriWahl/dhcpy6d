@@ -547,18 +547,18 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             #     option_24.build(response_ascii=response_ascii,
             #                     options_answer=options_answer)
 
+            # # Option 25 Prefix Delegation
+            # if 25 in options_request:
+            #     option_25.build(response_ascii=response_ascii,
+            #                     options_answer=options_answer,
+            #                     transaction_id=transaction.id)
+
             for number in options_request:
                 if number in options:
                     options[number].build(response_ascii=response_ascii,
                                           options_answer=options_answer,
                                           transaction=transaction,
                                           status=status)
-
-            # Option 25 Prefix Delegation
-            if 25 in options_request:
-                option_25.build(response_ascii=response_ascii,
-                                options_answer=options_answer,
-                                transaction_id=transaction.id)
 
             # Option 31 OPTION_SNTP_SERVERS
             if 31 in options_request and cfg.SNTP_SERVERS != '':
