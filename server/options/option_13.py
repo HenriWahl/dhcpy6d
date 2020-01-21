@@ -23,6 +23,7 @@ class Option(OptionTemplate):
     """
     Option 13 Status Code Option - statuscode is taken from dictionary
     """
-    def build(self, response_ascii=None, options_answer=None, status=None, **kwargs):
-        response_ascii += self.build_option(self.number, f'{status:04x}')
+    def build(self, options_answer=None, status=None, **kwargs):
+        response_ascii_part = self.build_option(self.number, f'{status:04x}')
         options_answer.append(self.number)
+        return response_ascii_part

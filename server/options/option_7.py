@@ -24,6 +24,7 @@ class Option(OptionTemplate):
     """
     Option 7 Server Preference
     """
-    def build(self, response_ascii=None, options_answer=None, **kwargs):
-        response_ascii += self.build_option(self.number, f'{int(cfg.SERVER_PREFERENCE):02x}')
+    def build(self, options_answer=None, **kwargs):
+        response_ascii_part = self.build_option(self.number, f'{int(cfg.SERVER_PREFERENCE):02x}')
         options_answer.append(self.number)
+        return response_ascii_part

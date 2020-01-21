@@ -25,9 +25,10 @@ class Option(OptionTemplate):
     """
     Option 24 Domain Search List
     """
-    def build(self, response_ascii=None, options_answer=None, **kwargs):
+    def build(self, options_answer=None, **kwargs):
         converted_domain_search_list = ''
         for d in cfg.DOMAIN_SEARCH_LIST:
             converted_domain_search_list += convert_dns_to_binary(d)
-        response_ascii += self.build_option(self.number, converted_domain_search_list)
+        response_ascii_part = self.build_option(self.number, converted_domain_search_list)
         options_answer.append(self.number)
+        return response_ascii_part

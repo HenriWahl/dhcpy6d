@@ -363,7 +363,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
             # Header
             # handler type + transaction id
-            response_ascii = '%02x' % message_type_response
+            response_ascii = f'{message_type_response:02x}'
             response_ascii += transaction_id
 
             # these options are always useful
@@ -520,10 +520,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             # build all requested options if they are handled
             for number in options_request:
                 if number in options:
-                    options[number].build(response_ascii=response_ascii,
-                                          options_answer=options_answer,
-                                          transaction=transaction,
-                                          status=status)
+                    dummy = options[number].build(options_answer=options_answer,
+                                                            transaction=transaction,
+                                                            status=status)
+
+                    response_ascii += options[number].build(options_answer=options_answer,
+                                                            transaction=transaction,
+                                                            status=status)
 
             # Option 32 Information Refresh Time
             if 32 in options_request:

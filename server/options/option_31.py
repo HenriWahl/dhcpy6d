@@ -16,6 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+from binascii import hexlify
+from socket import (AF_INET6,
+                    inet_pton)
+
 from server.config import cfg
 from server.options import OptionTemplate
 
@@ -24,7 +28,23 @@ class Option(OptionTemplate):
     """
     Option 31 SNTP Servers
     """
-    def build(self, response_ascii=None, options_answer=None, **kwargs):
-        response_ascii += self.build_option(self.number, f'{int(cfg.INFORMATION_REFRESH_TIME):08x}')
-        # options in answer to be logged
-        options_answer.append(self.number)
+    def build(self, options_answer=None, transaction=None, **kwargs):
+        # dummy empty return value
+        response_ascii_part = ''
+        # should not be necessary to check if Transactions[transaction_id].client exists but there are
+        # crazy clients out in the wild which might become silent this way
+        if transaction.client:
+            if len(cfg.CLASSES[transaction.client.client_class].NAMESERVER) > 0:
+                nameserver = ''
+                for ns in cfg.CLASSES[transaction.client.client_class].NAMESERVER:
+                    nameserver += inet_pton(AF_INET6, ns)
+                response_ascii_part = self.build_option(self.number, hexlify(nameserver).decode())
+                options_answer.append(self.number)
+        elif len(cfg.NAMESERVER) > 0:
+            # in case several nameservers are given convert them all and add them
+            nameserver = ''
+            for ns in cfg.NAMESERVER:
+                nameserver += inet_pton(AF_INET6, ns)
+            response_ascii_part = self.build_option(self.number, hexlify(nameserver).decode())
+            options_answer.append(self.number)
+        return response_ascii_part
