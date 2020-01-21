@@ -542,17 +542,17 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             #                     options_answer=options_answer,
             #                     transaction_id=transaction.id)
 
+            # # Option 24 Domain Search List
+            # if 24 in options_request:
+            #     option_24.build(response_ascii=response_ascii,
+            #                     options_answer=options_answer)
+
             for number in options_request:
                 if number in options:
                     options[number].build(response_ascii=response_ascii,
                                           options_answer=options_answer,
                                           transaction=transaction,
                                           status=status)
-
-            # Option 24 Domain Search List
-            if 24 in options_request:
-                option_24.build(response_ascii=response_ascii,
-                                options_answer=options_answer)
 
             # Option 25 Prefix Delegation
             if 25 in options_request:
