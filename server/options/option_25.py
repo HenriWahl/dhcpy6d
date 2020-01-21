@@ -29,7 +29,7 @@ from server.options import OptionTemplate
 
 class Option(OptionTemplate):
     """
-    Option 24 Domain Search List
+    Option 25 Prefix Delegation
     """
     def build(self, response_ascii=None, options_answer=None, transaction=None, **kwargs):
         # check if MAC of LLIP is really known

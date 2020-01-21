@@ -20,6 +20,7 @@ from binascii import hexlify
 from socket import (AF_INET6,
                     inet_pton)
 
+from server.config import cfg
 from server.options import OptionTemplate
 
 

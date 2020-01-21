@@ -37,7 +37,7 @@ class Option(OptionTemplate):
                 for ns in cfg.CLASSES[transaction.client.client_class].NAMESERVER:
                     nameserver += inet_pton(AF_INET6, ns)
                 response_ascii += self.build_option(self.number, hexlify(nameserver).decode())
-                options_answer.append(23)
+                options_answer.append(self.number)
 
         elif len(cfg.NAMESERVER) > 0:
             # in case several nameservers are given convert them all and add them
