@@ -526,11 +526,11 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         traceback.print_exc(file=sys.stdout)
                         sys.stdout.flush()
 
-            # Option 32 Information Refresh Time
-            if 32 in options_request:
-                response_ascii += build_option(32, '%08x' % int(cfg.INFORMATION_REFRESH_TIME))
-                # options in answer to be logged
-                options_answer.append(32)
+            # # Option 32 Information Refresh Time
+            # if 32 in options_request:
+            #     response_ascii += build_option(32, '%08x' % int(cfg.INFORMATION_REFRESH_TIME))
+            #     # options in answer to be logged
+            #     options_answer.append(32)
 
             # Option 39 FQDN
             # http://tools.ietf.org/html/rfc4704#page-5
