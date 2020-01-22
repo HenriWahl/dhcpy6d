@@ -31,7 +31,11 @@ class Option(OptionTemplate):
     """
     Option 25 Prefix Delegation
     """
-    def build(self, response_ascii=None, options_answer=None, transaction=None, **kwargs):
+    def build(self, transaction=None, **kwargs):
+        # dummy empty defaults
+        response_ascii_part = ''
+        options_answer_part = None
+
         # check if MAC of LLIP is really known
         if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
             # collect client information
@@ -44,14 +48,11 @@ class Option(OptionTemplate):
                 if not transaction.answer == 'normal':
                     if transaction.answer == 'noprefix':
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                        response_ascii += self.build_option(13, f'{6:04x}')
+                        response_ascii_part = self.build_option(13, f'{6:04x}')
                         # clean client prefixes which not be deployed anyway
                         transaction.client.prefixes[:] = []
                         # options in answer to be logged
-                        options_answer.append(13)
-                    else:
-                        # clean handler as there is nothing to respond in case of answer = none
-                        response = ''
+                        options_answer_part = self.number
                 else:
                     # if client could not be built because of database problems send
                     # status message back
@@ -82,27 +83,29 @@ class Option(OptionTemplate):
                                 t2 = f'{int(cfg.T2):08x}'
 
                             # even if there are no prefixes server has to deliver an empty PD
-                            response_ascii += self.build_option(self.number, transaction.iaid + t1 + t2 + ia_prefixes)
+                            response_ascii_part = self.build_option(self.number, transaction.iaid + t1 + t2 + ia_prefixes)
                             # if no prefixes available a NoPrefixAvail status code has to be sent
                             if ia_prefixes == '':
                                 # REBIND not possible
                                 if transaction.last_message_received_type == 6:
                                     # Option 13 Status Code Option - statuscode is 3: 'NoBinding'
-                                    response_ascii += self.build_option(13, f'{3:04x}')
+                                    response_ascii_part += self.build_option(13, f'{3:04x}')
                                 else:
                                     # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                    response_ascii += self.build_option(13, f'{6:04x}')
+                                    response_ascii_part += self.build_option(13, f'{6:04x}')
                             # options in answer to be logged
-                            options_answer.append(self.number)
+                            options_answer_part = self.number
 
                         except Exception as err:
                             print(err)
                             # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                            response_ascii += self.build_option(13, f'{6:04x}')
+                            response_ascii_part = self.build_option(13, f'{6:04x}')
                             # options in answer to be logged
-                            options_answer.append(self.number)
+                            options_answer_part = self.number
                     else:
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                        response_ascii += self.build_option(13, f'{6:04x}')
+                        response_ascii_part = self.build_option(13, f'{6:04x}')
                         # options in answer to be logged
-                        options_answer.append(self.number)
+                        options_answer_part = self.number
+
+        return response_ascii_part, options_answer_part

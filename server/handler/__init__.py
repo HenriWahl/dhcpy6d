@@ -361,6 +361,11 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             # shortcut to transactions[transaction_id]
             transaction = transactions[transaction_id]
 
+            # should be asked before any responses are built
+            if transaction.answer == 'none':
+                self.response = ''
+                return None
+
             # Header
             # handler type + transaction id
             response_ascii = f'{message_type_response:02x}'
@@ -508,25 +513,18 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # options in answer to be logged
                                 options_answer.append(13)
 
-
-            # # Option 31 OPTION_SNTP_SERVERS
-            # if 31 in options_request and cfg.SNTP_SERVERS != '':
-            #     sntp_servers = ''
-            #     for s in cfg.SNTP_SERVERS:
-            #         sntp_server = binascii.hexlify(socket.inet_pton(socket.AF_INET6, s)).decode()
-            #         sntp_servers += sntp_server
-            #     response_ascii += build_option(31, sntp_servers)
-
             # build all requested options if they are handled
             for number in options_request:
                 if number in options:
-                    dummy = options[number].build(options_answer=options_answer,
-                                                            transaction=transaction,
-                                                            status=status)
-
-                    response_ascii += options[number].build(options_answer=options_answer,
-                                                            transaction=transaction,
-                                                            status=status)
+                    try:
+                        response_ascii_part, options_answer_part = options[number].build(transaction=transaction,
+                                                                                         status=status)
+                        response_ascii += response_ascii_part
+                        if options_answer_part:
+                            options_answer.append(options_answer_part)
+                    except Exception as err:
+                        traceback.print_exc(file=sys.stdout)
+                        sys.stdout.flush()
 
             # Option 32 Information Refresh Time
             if 32 in options_request:

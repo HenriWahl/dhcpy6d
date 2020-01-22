@@ -28,9 +28,10 @@ class Option(OptionTemplate):
     """
     Option 23 DNS recursive name server
     """
-    def build(self, options_answer=None, transaction=None, **kwargs):
-        # dummy empty default
+    def build(self, transaction=None, **kwargs):
+        # dummy empty defaults
         response_ascii_part = ''
+        options_answer_part = None
         # should not be necessary to check if Transactions[transaction_id].client exists but there are
         # crazy clients out in the wild which might become silent this way
         if transaction.client:
@@ -39,12 +40,12 @@ class Option(OptionTemplate):
                 for ns in cfg.CLASSES[transaction.client.client_class].NAMESERVER:
                     nameserver += inet_pton(AF_INET6, ns)
                 response_ascii_part = self.build_option(self.number, hexlify(nameserver).decode())
-                options_answer.append(self.number)
+                options_answer_part = self.number
         elif len(cfg.NAMESERVER) > 0:
             # in case several nameservers are given convert them all and add them
             nameserver = ''
             for ns in cfg.NAMESERVER:
                 nameserver += inet_pton(AF_INET6, ns)
             response_ascii_part = self.build_option(self.number, hexlify(nameserver).decode())
-            options_answer.append(self.number)
-        return response_ascii_part
+            options_answer_part = self.number
+        return response_ascii_part, options_answer_part

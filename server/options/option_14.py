@@ -23,7 +23,6 @@ class Option(OptionTemplate):
     """
     Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
     """
-    def build(self, options_answer=None, **kwargs):
+    def build(self, **kwargs):
         response_ascii_part = self.build_option(self.number, '')
-        options_answer.append(self.number)
-        return response_ascii_part
+        return response_ascii_part, self.number
