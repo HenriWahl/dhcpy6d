@@ -526,56 +526,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         traceback.print_exc(file=sys.stdout)
                         sys.stdout.flush()
 
-            # # Option 32 Information Refresh Time
-            # if 32 in options_request:
-            #     response_ascii += build_option(32, '%08x' % int(cfg.INFORMATION_REFRESH_TIME))
-            #     # options in answer to be logged
-            #     options_answer.append(32)
-
-            # Option 39 FQDN
-            # http://tools.ietf.org/html/rfc4704#page-5
-            # regarding RFC 4704 5. there are 3 kinds of client behaviour for N O S:
-            # - client wants to update DNS itself -> sends 0 0 0
-            # - client wants server to update DNS -> sends 0 0 1
-            # - client wants no server DNS update -> sends 1 0 0
-            if 39 in options_request and transaction.client:
-                # flags for answer
-                N, O, S = 0, 0, 0
-                # use hostname supplied by client
-                if cfg.DNS_USE_CLIENT_HOSTNAME:
-                    hostname = transaction.hostname
-                # use hostname from config
-                else:
-                    hostname = transaction.client.hostname
-                if not hostname == '':
-                    if cfg.DNS_UPDATE == 1:
-                        # DNS update done by server - don't care what client wants
-                        if cfg.DNS_IGNORE_CLIENT:
-                            S = 1
-                            O = 1
-                        else:
-                            # honor the client's request for the server to initiate DNS updates
-                            if transaction.dns_s == 1:
-                                S = 1
-                            # honor the client's request for no server-initiated DNS update
-                            elif transaction.dns_n == 1:
-                                N = 1
-                    else:
-                        # no DNS update at all, not for server and not for client
-                        if transaction.dns_n == 1 or\
-                           transaction.dns_s == 1:
-                            O = 1
-
-                    # sum of flags
-                    nos_flags = N*4 + O*2 + S*1
-
-                    response_ascii += build_option(39, '%02x' % nos_flags + convert_dns_to_binary(hostname + '.' + cfg.DOMAIN))
-                else:
-                    # if no hostname given put something in and force client override
-                    response_ascii += build_option(39, '%02x' % 3 + convert_dns_to_binary('invalid-hostname'))
-                # options in answer to be logged
-                options_answer.append(39)
-
             # Option 56 NTP server
             # https://tools.ietf.org/html/rfc5908
             if 56 in options_request:

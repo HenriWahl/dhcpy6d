@@ -21,6 +21,7 @@ from socket import (AF_INET6,
                     inet_pton)
 
 from server.config import cfg
+from server.helpers import convert_dns_to_binary
 from server.options import OptionTemplate
 
 
@@ -37,8 +38,6 @@ class Option(OptionTemplate):
     def build(self, transaction=None, **kwargs):
         # dummy empty return value
         response_ascii_part = ''
-        options_answer_part = None
-
 
         # http://tools.ietf.org/html/rfc4704#page-5
         # regarding RFC 4704 5. there are 3 kinds of client behaviour for N O S:
@@ -72,17 +71,13 @@ class Option(OptionTemplate):
                     if transaction.dns_n == 1 or \
                             transaction.dns_s == 1:
                         O = 1
-
                 # sum of flags
                 nos_flags = N * 4 + O * 2 + S * 1
-
-                response_ascii += build_option(39,
-                                               '%02x' % nos_flags + convert_dns_to_binary(hostname + '.' + cfg.DOMAIN))
+                fqdn_binary = convert_dns_to_binary(f'{hostname}.{cfg.DOMAIN}')
+                response_ascii_part = self.build_option(self.number, f'{nos_flags:02x}{fqdn_binary}')
             else:
                 # if no hostname given put something in and force client override
-                response_ascii += build_option(39, '%02x' % 3 + convert_dns_to_binary('invalid-hostname'))
-            # options in answer to be logged
-            options_answer.append(39)
+                fqdn_binary = convert_dns_to_binary(f'invalid-hostname.{cfg.DOMAIN}')
+                response_ascii_part = self.build_option(self.number, f'{3:02x}{fqdn_binary}')
 
-
-        return response_ascii_part, options_answer_part
+        return response_ascii_part, self.number
