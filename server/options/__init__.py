@@ -49,9 +49,12 @@ options = {}
 options_path = pathlib.Path(__file__).parent
 pattern = re.compile('option_[0-9]{1,3}$')
 
+# get all option files in path and put them into options dict
 for path in options_path.glob('option_*.py'):
+    # get rid of ".py" because this suffix won't be in option dict anyway
     name = path.name.rstrip(path.suffix)
     if re.match(pattern, name):
+        # load option module
         spec = importlib.util.spec_from_file_location(name, path)
         option = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(option)
