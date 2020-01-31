@@ -38,6 +38,7 @@ class Option(OptionTemplate):
     def build(self, transaction=None, **kwargs):
         # dummy empty return value
         response_ascii_part = ''
+        options_answer_part = None
 
         # http://tools.ietf.org/html/rfc4704#page-5
         # regarding RFC 4704 5. there are 3 kinds of client behaviour for N O S:
@@ -79,5 +80,7 @@ class Option(OptionTemplate):
                 # if no hostname given put something in and force client override
                 fqdn_binary = convert_dns_to_binary(f'invalid-hostname.{cfg.DOMAIN}')
                 response_ascii_part = self.build_option(self.number, f'{3:02x}{fqdn_binary}')
+            # options in answer to be logged
+            options_answer_part = self.number
 
-        return response_ascii_part, self.number
+        return response_ascii_part, options_answer_part
