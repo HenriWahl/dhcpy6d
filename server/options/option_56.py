@@ -30,7 +30,7 @@ class Option(OptionTemplate):
     Option 56 NTP server
     https://tools.ietf.org/html/rfc5908
     """
-    def build(self, transaction=None, **kwargs):
+    def build(self, **kwargs):
         # dummy empty defaults
         response_ascii_part = ''
         options_answer_part = None

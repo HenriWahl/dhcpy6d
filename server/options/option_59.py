@@ -17,26 +17,34 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 from binascii import hexlify
-from socket import (AF_INET6,
-                    inet_pton)
 
-from server.config import cfg
+from server.client import Client
+from server.helpers import build_option
 from server.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 31 SNTP Servers
+    Option 59 Network Boot
+    https://tools.ietf.org/html/rfc5970
     """
-    def build(self, **kwargs):
-        # dummy empty return value
+    def build(self, transaction=None, **kwargs):
+        # dummy empty defaults
         response_ascii_part = ''
+        options_answer_part = None
 
-        if cfg.SNTP_SERVERS != '':
-            sntp_servers = ''
-            for s in cfg.SNTP_SERVERS:
-                sntp_server = hexlify(inet_pton(AF_INET6, s)).decode()
-                sntp_servers += sntp_server
-            response_ascii_part = self.build_option(self.number, sntp_servers)
+        # build client if not done yet
+        if transaction.client is None:
+            transaction.client = Client(transaction.id)
 
-        return response_ascii_part, self.number
+        bootfiles = transaction.client.bootfiles
+        if len(bootfiles) > 0:
+            # TODO add preference logic
+            bootfile_url = bootfiles[0].BOOTFILE_URL
+            transaction.client.chosen_boot_file = bootfile_url
+            bootfile_options = hexlify(bootfile_url).decode()
+            response_ascii_part += build_option(self.number, bootfile_options)
+            # options in answer to be logged
+            options_answer_part = self.number
+
+        return response_ascii_part, options_answer_part

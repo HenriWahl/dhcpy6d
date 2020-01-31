@@ -526,26 +526,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         traceback.print_exc(file=sys.stdout)
                         sys.stdout.flush()
 
-            # Option 56 NTP server
-            # https://tools.ietf.org/html/rfc5908
-            if 56 in options_request:
-                ntp_server_options = ''
-                if len(cfg.NTP_SERVER) > 0:
-                    for ntp_server_type in list(cfg.NTP_SERVER_dict.keys()):
-                        # ntp_server_suboption
-                        for ntp_server in cfg.NTP_SERVER_dict[ntp_server_type]:
-                            ntp_server_suboption = ''
-                            if ntp_server_type == 'SRV':
-                                ntp_server_suboption = build_option(1, binascii.hexlify(socket.inet_pton(socket.AF_INET6, ntp_server)).decode())
-                            elif ntp_server_type == 'MC':
-                                ntp_server_suboption = build_option(2, binascii.hexlify(socket.inet_pton(socket.AF_INET6, ntp_server)).decode())
-                            elif ntp_server_type == 'FQDN':
-                                ntp_server_suboption = build_option(3, convert_dns_to_binary(ntp_server))
-                            ntp_server_options += ntp_server_suboption
-                    response_ascii += build_option(56, ntp_server_options)
-                    # options in answer to be logged
-                    options_answer.append(56)
-
             # Option 59 Network Boot
             # https://tools.ietf.org/html/rfc5970
             if 59 in options_request:
