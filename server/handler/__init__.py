@@ -205,7 +205,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                         # if not known send status code option failure to get
                                         # LLIP/MAC mapping from neighbor cache
                                         # status code 'Success' sounds silly but works best
-                                        self.build_response(MESSAGE_TYPE_REPLY, transaction.id, [13], status=0)
+                                        self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                                            transaction.id,
+                                                            [CONST.OPTIONS.STATUS_CODE],
+                                                            status=CONST.STATUS_CODES.SUCCESS)
                                         # complete MAC collection
                                         collect_macs(timer)
                                         # if client cannot be found in collected MACs
@@ -286,7 +289,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     # solicit addresses again via answering 'NotOnLink'
                                     # thus client is forced in every case to solicit a new address which
                                     # might as well be the old one or a new if prefix has changed
-                                    self.build_response(MESSAGE_TYPE_REPLY,
+                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
                                                         transaction.id,
                                                         [CONST.OPTIONS.STATUS_CODE],
                                                         status=CONST.STATUS_CODES.PREFIX_NOT_APPROPRIATE_FOR_LINK)
@@ -294,7 +297,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # RENEW
                                 # if last request was a RENEW (type 5) send a REPLY (type 7) back
                                 elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.RENEW:
-                                    self.build_response(MESSAGE_TYPE_REPLY,
+                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
                                                         transaction.id,
                                                         transaction.ia_options +
                                                         [CONST.OPTIONS.PREFERENCE] +
@@ -307,7 +310,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # REBIND
                                 # if last request was a REBIND (type 6) send a REPLY (type 7) back
                                 elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.REBIND:
-                                    self.build_response(MESSAGE_TYPE_REPLY,
+                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
                                                         transaction.id,
                                                         transaction.ia_options +
                                                         [CONST.OPTIONS.PREFERENCE] +
