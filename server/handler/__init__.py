@@ -38,7 +38,6 @@ from ..globals import (collected_macs,
                        transactions)
 from ..helpers import (build_option,
                        colonify_ip6,
-                       convert_dns_to_binary,
                        decompress_ip6,
                        LOCALHOST,
                        LOCALHOST_INTERFACES)
@@ -254,7 +253,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     # preference option (7) is for free
                                     # if RapidCommit was set give it back
                                     if not transaction.rapid_commit:
-                                        self.build_response(MESSAGE_TYPE_REPLY,
+                                        self.build_response(CONST.MESSAGE_TYPES.REPLY,
                                                             transaction.id,
                                                             transaction.ia_options +
                                                             [CONST.OPTIONS.PREFERENCE] +

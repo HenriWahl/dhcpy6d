@@ -128,7 +128,7 @@ class Config:
         # NTP server Option 56
         self.NTP_SERVER = ''
         # Auxiliary options, derived from self.NTP_SERVER
-        self.NTP_SERVER_dict = {'SRV': [], 'MC': [], 'FQDN': []}
+        self.NTP_SERVER_DICT = {'SRV': [], 'MC': [], 'FQDN': []}
 
         # INFORMATION REFRESH TIME option 32 for option 11 (INFORMATION REQUEST)
         # see RFC http://tools.ietf.org/html/rfc4242
@@ -619,12 +619,12 @@ class Config:
                 decompress_ip6(ntp_server)
                 # if decompressing worked it must be an address
                 if ntp_server.lower().startswith('ff'):
-                    self.NTP_SERVER_dict['MC'].append(ntp_server.lower())
+                    self.NTP_SERVER_DICT['MC'].append(ntp_server.lower())
                 else:
-                    self.NTP_SERVER_dict['SRV'].append(ntp_server.lower())
+                    self.NTP_SERVER_DICT['SRV'].append(ntp_server.lower())
             except Exception as err:
                 if re.match('^[a-z0-9.-]*$', ntp_server, re.IGNORECASE):
-                    self.NTP_SERVER_dict['FQDN'].append(ntp_server.lower())
+                    self.NTP_SERVER_DICT['FQDN'].append(ntp_server.lower())
                 else:
                     error_exit("%s NTP server address '%s' is invalid." % (msg_prefix, ntp_server))
 

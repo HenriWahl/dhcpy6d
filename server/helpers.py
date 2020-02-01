@@ -24,9 +24,6 @@ import sys
 # whitespace for options with more than one value
 WHITESPACE = ' ,'
 
-# needed for NTP server option 56 and its suboptions
-NTP_SERVER_TYPES = {'SRV': 1, 'MC': 2, 'FQDN': 3}
-
 # define address characters once - for decompress_ipv6
 ADDRESS_CHARS_STRICT = ':0123456789abcdef'
 ADDRESS_CHARS_NON_STRICT = ':0123456789abcdefx'
