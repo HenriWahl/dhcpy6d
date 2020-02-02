@@ -23,30 +23,30 @@ import socketserver
 import sys
 import traceback
 
-from .. import collect_macs
-from ..client import Client
-from ..config import cfg
-from ..constants import CONST
-from ..domain import (dns_delete,
+from . import collect_macs
+from .client import Client
+from .config import cfg
+from .constants import CONST
+from .domain import (dns_delete,
                       dns_update)
-from ..globals import (collected_macs,
+from .globals import (collected_macs,
                        DUMMY_MAC,
                        IA_OPTIONS,
                        requests,
                        requests_blacklist,
                        timer,
                        transactions)
-from ..helpers import (build_option,
+from .helpers import (build_option,
                        colonify_ip6,
                        decompress_ip6,
                        LOCALHOST,
                        LOCALHOST_INTERFACES)
-from ..log import log
-from ..options import options
-from ..route import modify_route
-from ..storage import (config_store,
+from .log import log
+from .options import options
+from .route import modify_route
+from .storage import (config_store,
                        volatile_store)
-from ..transaction import Transaction
+from .transaction import Transaction
 
 
 class Request:
@@ -410,67 +410,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             # list of options in answer to be logged
             options_answer = []
 
-            # IA_TA temporary addresses
-            if 4 in options_request:
-                # check if MAC of LLIP is really known
-                if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
-                    # collect client information
-                    if transaction.client is None:
-                        # transactions[transaction_id].client = build_client(transaction_id)
-                        transaction.client = Client(transaction.id)
-
-                    if 'addresses' in cfg.CLASSES[transaction.client.client_class].ADVERTISE and \
-                        (3 or 4) in transaction.ia_options:
-                        # check if only a short NoAddrAvail answer or none at all ist t be returned
-                        if not transaction.answer == 'normal':
-                            if transaction.answer == 'noaddress':
-                                # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += build_option(13, '%04x' % 2)
-                                # clean client addresses which not be deployed anyway
-                                transaction.client.addresses[:] = []
-                                # options in answer to be logged
-                                options_answer.append(13)
-                            else:
-                                # clean handler as there is nothing to respond in case of answer = none
-                                self.response = ''
-                                return None
-                        else:
-                            # if client could not be built because of database problems send
-                            # status message back
-                            if transaction.client:
-                                # embed option 5 into option 4 - several if necessary
-                                ia_addresses = ''
-                                try:
-                                    for address in transaction.client.addresses:
-                                        if address.IA_TYPE == 'ta':
-                                            ipv6_address = binascii.hexlify(socket.inet_pton(socket.AF_INET6,
-                                                                                             colonify_ip6(address.ADDRESS))).decode()
-                                            # if a transaction consists of too many requests from client -
-                                            # - might be caused by going wild Windows clients -
-                                            # reset all addresses with lifetime 0
-                                            # lets start with maximal transaction count of 10
-                                            if transaction.counter < 10:
-                                                preferred_lifetime = '%08x' % int(address.PREFERRED_LIFETIME)
-                                                valid_lifetime = '%08x' % int(address.VALID_LIFETIME)
-                                            else:
-                                                preferred_lifetime = '%08x' % 0
-                                                valid_lifetime = '%08x' % 0
-                                            ia_addresses += build_option(5, ipv6_address + preferred_lifetime + valid_lifetime)
-                                    if not ia_addresses == '':
-                                        response_ascii += build_option(4, transaction.iaid + ia_addresses)
-                                    # options in answer to be logged
-                                    options_answer.append(4)
-                                except:
-                                    # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                    response_ascii += build_option(13, '%04x' % 2)
-                                    # options in answer to be logged
-                                    options_answer.append(13)
-                            else:
-                                # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                                response_ascii += build_option(13, '%04x' % 2)
-                                # options in answer to be logged
-                                options_answer.append(13)
-
             # build all requested options if they are handled
             for number in options_request:
                 if number in options:
@@ -480,7 +419,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         response_ascii += response_ascii_part
                         if options_answer_part:
                             options_answer.append(options_answer_part)
-                    except Exception as err:
+                    except Exception:
                         traceback.print_exc(file=sys.stdout)
                         sys.stdout.flush()
 
