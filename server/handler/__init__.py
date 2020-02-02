@@ -162,7 +162,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     raw_bytes_options = raw_bytes_options[8 + length*2:]
 
                 # only valid messages will be processed
-                if message_type in CONST.MESSAGE_TYPES_DICT:
+                if message_type in CONST.MESSAGE_DICT:
                     # 2. create Transaction object if not yet done
                     if transaction_id not in transactions:
                         client_llip = decompress_ip6(client_address)
@@ -183,7 +183,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         transaction.last_message_received_type = message_type
 
                     # log incoming messages
-                    log.info('%s | transaction_id: %s%s' % (CONST.MESSAGE_TYPES_DICT[message_type], transaction.id, transaction.get_options_string()))
+                    log.info('%s | transaction_id: %s%s' % (CONST.MESSAGE_DICT[message_type], transaction.id, transaction.get_options_string()))
 
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
@@ -205,10 +205,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                         # if not known send status code option failure to get
                                         # LLIP/MAC mapping from neighbor cache
                                         # status code 'Success' sounds silly but works best
-                                        self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                        self.build_response(CONST.MESSAGE.REPLY,
                                                             transaction.id,
-                                                            [CONST.OPTIONS.STATUS_CODE],
-                                                            status=CONST.STATUS_CODES.SUCCESS)
+                                                            [CONST.OPTION.STATUS_CODE],
+                                                            status=CONST.STATUS.SUCCESS)
                                         # complete MAC collection
                                         collect_macs(timer)
                                         # if client cannot be found in collected MACs
@@ -236,13 +236,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # ADVERTISE
                                 # if last request was a SOLICIT send an ADVERTISE (type 2) back
                                 #if transaction.last_message_received_type == 1 \
-                                if transaction.last_message_received_type == CONST.MESSAGE_TYPES.SOLICIT \
+                                if transaction.last_message_received_type == CONST.MESSAGE.SOLICIT \
                                    and not transaction.rapid_commit:
                                     # preference option (7) is for free
-                                    self.build_response(CONST.MESSAGE_TYPES.ADVERTISE,
+                                    self.build_response(CONST.MESSAGE.ADVERTISE,
                                                         transaction.id,
                                                         transaction.ia_options +
-                                                        [CONST.OPTIONS.PREFERENCE] +
+                                                        [CONST.OPTION.PREFERENCE] +
                                                         transaction.options_request)
 
                                     # store leases for addresses and lock advertised address
@@ -250,28 +250,28 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
-                                elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.REQUEST or \
-                                     (transaction.last_message_received_type == CONST.MESSAGE_TYPES.SOLICIT and
+                                elif transaction.last_message_received_type == CONST.MESSAGE.REQUEST or \
+                                     (transaction.last_message_received_type == CONST.MESSAGE.SOLICIT and
                                       transaction.rapid_commit):
                                     # preference option (7) is for free
                                     # if RapidCommit was set give it back
                                     if not transaction.rapid_commit:
-                                        self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                        self.build_response(CONST.MESSAGE.REPLY,
                                                             transaction.id,
                                                             transaction.ia_options +
-                                                            [CONST.OPTIONS.PREFERENCE] +
+                                                            [CONST.OPTION.PREFERENCE] +
                                                             transaction.options_request)
                                     else:
-                                        self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                        self.build_response(CONST.MESSAGE.REPLY,
                                                             transaction.id,
                                                             transaction.ia_options +
-                                                            [CONST.OPTIONS.PREFERENCE] +
-                                                            [CONST.OPTIONS.RAPID_COMMIT] + transaction.options_request)
+                                                            [CONST.OPTION.PREFERENCE] +
+                                                            [CONST.OPTION.RAPID_COMMIT] + transaction.options_request)
                                     # store leases for addresses
                                     volatile_store.store(deepcopy(transaction), timer)
 
                                     # run external script for setting a route to the delegated prefix
-                                    if CONST.OPTIONS.IA_PD in transaction.ia_options:
+                                    if CONST.OPTION.IA_PD in transaction.ia_options:
                                         modify_route(transaction.id, 'up')
 
                                     if cfg.DNS_UPDATE:
@@ -283,24 +283,24 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # but the next ADVERTISE will offer them the last known and still active
                                 # lease. This makes sense in case of fixed MAC-based, addresses, ranges and
                                 # ID-based addresses, Random addresses will be recalculated
-                                elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.CONFIRM:
+                                elif transaction.last_message_received_type == CONST.MESSAGE.CONFIRM:
                                     # the RFC 3315 is a little bit confusing regarding CONFIRM
                                     # messages so it won't hurt to simply let the client
                                     # solicit addresses again via answering 'NotOnLink'
                                     # thus client is forced in every case to solicit a new address which
                                     # might as well be the old one or a new if prefix has changed
-                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                    self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,
-                                                        [CONST.OPTIONS.STATUS_CODE],
-                                                        status=CONST.STATUS_CODES.PREFIX_NOT_APPROPRIATE_FOR_LINK)
+                                                        [CONST.OPTION.STATUS_CODE],
+                                                        status=CONST.STATUS.PREFIX_NOT_APPROPRIATE_FOR_LINK)
 
                                 # RENEW
                                 # if last request was a RENEW (type 5) send a REPLY (type 7) back
-                                elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.RENEW:
-                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                elif transaction.last_message_received_type == CONST.MESSAGE.RENEW:
+                                    self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,
                                                         transaction.ia_options +
-                                                        [CONST.OPTIONS.PREFERENCE] +
+                                                        [CONST.OPTION.PREFERENCE] +
                                                         transaction.options_request)
                                     # store leases for addresses
                                     volatile_store.store(deepcopy(transaction), timer)
@@ -309,18 +309,18 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                                 # REBIND
                                 # if last request was a REBIND (type 6) send a REPLY (type 7) back
-                                elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.REBIND:
-                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                elif transaction.last_message_received_type == CONST.MESSAGE.REBIND:
+                                    self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,
                                                         transaction.ia_options +
-                                                        [CONST.OPTIONS.PREFERENCE] +
+                                                        [CONST.OPTION.PREFERENCE] +
                                                         transaction.options_request)
                                     # store leases for addresses
                                     volatile_store.store(deepcopy(transaction), timer)
 
                                 # RELEASE
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
-                                elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.RELEASE:
+                                elif transaction.last_message_received_type == CONST.MESSAGE.RELEASE:
                                     #  build client to be able to delete it from DNS
                                     if transaction.client is None:
                                         # transactions[transaction_id].client = build_client(transaction_id)
@@ -337,34 +337,34 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                         # delete route to formerly requesting client
                                         modify_route(transaction.id, 'down')
                                     # send status code option (type 13) with success (type 0)
-                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                    self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,
-                                                        [CONST.OPTIONS.STATUS_CODE],
-                                                        status=CONST.STATUS_CODES.SUCCESS)
+                                                        [CONST.OPTION.STATUS_CODE],
+                                                        status=CONST.STATUS.SUCCESS)
 
                                 # DECLINE
                                 # if last request was a DECLINE (type 9) send a REPLY (type 7) back
-                                elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.DECLINE:
+                                elif transaction.last_message_received_type == CONST.MESSAGE.DECLINE:
                                     # maybe has to be refined - now only a status code 'NoBinding' is answered
-                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                    self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,
-                                                        [CONST.OPTIONS.STATUS_CODE],
-                                                        status=CONST.STATUS_CODES.NO_BINDING)
+                                                        [CONST.OPTION.STATUS_CODE],
+                                                        status=CONST.STATUS.NO_BINDING)
 
                                 # INFORMATION-REQUEST
                                 # if last request was an INFORMATION-REQUEST (type 11) send a REPLY (type 7) back
-                                elif transaction.last_message_received_type == CONST.MESSAGE_TYPES.INFORMATION_REQUEST:
-                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                elif transaction.last_message_received_type == CONST.MESSAGE.INFORMATION_REQUEST:
+                                    self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,
                                                         transaction.options_request)
 
                                 # general error - statuscode 1 'Failure'
                                 else:
                                     # send Status Code Option (type 13) with status code 'UnspecFail'
-                                    self.build_response(CONST.MESSAGE_TYPES.REPLY,
+                                    self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,
-                                                        [CONST.OPTIONS.STATUS_CODE],
-                                                        status=CONST.STATUS_CODES.FAILURE)
+                                                        [CONST.OPTION.STATUS_CODE],
+                                                        status=CONST.STATUS.FAILURE)
 
                     # count requests of transaction
                     # if there will be too much something went wrong
@@ -403,9 +403,9 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
             # these options are always useful
             # Option 1 client identifier
-            response_ascii += build_option(1, transaction.duid)
+            response_ascii += build_option(CONST.OPTION.CLIENTID, transaction.duid)
             # Option 2 server identifier
-            response_ascii += build_option(2, cfg.SERVERDUID)
+            response_ascii += build_option(CONST.OPTION.SERVERID, cfg.SERVERDUID)
 
             # list of options in answer to be logged
             options_answer = []
@@ -583,7 +583,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                 response_ascii += build_option(13, '%04x' % 2)
 
-                log.error('%s| transaction_id: %s | DatabaseError: %s' % (CONST.MESSAGE_TYPES_DICT[message_type_response], transaction.id, ' '.join(db_error)))
+                log.error('%s| transaction_id: %s | DatabaseError: %s' % (CONST.MESSAGE_DICT[message_type_response], transaction.id, ' '.join(db_error)))
 
             else:
                 # log handler
@@ -616,7 +616,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                     elif 3 in options_request or 4 in options_request or 13 in options_request or 25 in options_request:
                         options_answer = sorted(options_answer)
-                        log.info('%s | transaction_id: %s | options: %s%s' % (CONST.MESSAGE_TYPES_DICT[message_type_response],
+                        log.info('%s | transaction_id: %s | options: %s%s' % (CONST.MESSAGE_DICT[message_type_response],
                                                                               transaction.id,
                                                                               options_answer,
                                                                               transaction.client.get_options_string()))
@@ -625,7 +625,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         log.info('what else should I do?')
                 else:
                     options_answer = sorted(options_answer)
-                    log.info('%s | transaction_id: %s | options: %s' % (CONST.MESSAGE_TYPES_DICT[message_type_response],
+                    log.info('%s | transaction_id: %s | options: %s' % (CONST.MESSAGE_DICT[message_type_response],
                                                                         transaction.id,
                                                                         options_answer))
 

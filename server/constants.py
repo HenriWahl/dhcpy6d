@@ -20,88 +20,88 @@ import socket
 import struct
 
 # DHCPv6
-MESSAGE_TYPES = {1: 'SOLICIT',
-                 2: 'ADVERTISE',
-                 3: 'REQUEST',
-                 4: 'CONFIRM',
-                 5: 'RENEW',
-                 6: 'REBIND',
-                 7: 'REPLY',
-                 8: 'RELEASE',
-                 9: 'DECLINE',
-                 10: 'RECONFIGURE',
-                 11: 'INFORMATION-REQUEST',
-                 12: 'RELAY-FORW',
-                 13: 'RELAY-REPL'}
+MESSAGE = {1: 'SOLICIT',
+           2: 'ADVERTISE',
+           3: 'REQUEST',
+           4: 'CONFIRM',
+           5: 'RENEW',
+           6: 'REBIND',
+           7: 'REPLY',
+           8: 'RELEASE',
+           9: 'DECLINE',
+           10: 'RECONFIGURE',
+           11: 'INFORMATION-REQUEST',
+           12: 'RELAY-FORW',
+           13: 'RELAY-REPL'}
 
 # see http://www.iana.org/assignments/dhcpv6-parameters/
-OPTIONS = {1: 'CLIENTID',
-           2: 'SERVERID',
-           3: 'IA_NA',
-           4: 'IA_TA',
-           5: 'IAADDR',
-           6: 'ORO',
-           7: 'PREFERENCE',
-           8: 'ELAPSED_TIME',
-           9: 'RELAY_MSG',
-           11: 'AUTH',
-           12: 'UNICAST',
-           13: 'STATUS_CODE',
-           14: 'RAPID_COMMIT',
-           15: 'USER_CLASS',
-           16: 'VENDOR_CLASS',
-           17: 'VENDOR_OPTS',
-           18: 'INTERFACE_ID',
-           19: 'RECONF_MSG',
-           20: 'RECONF_ACCEPT',
-           21: 'SIP_SERVER_D',
-           22: 'SIP_SERVER_A',
-           23: 'DNS_SERVERS',
-           24: 'DOMAIN_LIST',
-           25: 'IA_PD',
-           26: 'IAPREFIX',
-           27: 'NIS_SERVERS',
-           28: 'NISP_SERVERS',
-           29: 'NIS_DOMAIN_NAME',
-           30: 'NISP_DOMAIN_NAME',
-           31: 'SNTP_SERVERS',
-           32: 'INFORMATION_REFRESH_TIME',
-           33: 'BCMCS_SERVER_D',
-           34: 'BCMCS_SERVER_A',
-           36: 'GEOCONF_CIVIC',
-           37: 'REMOTE_ID',
-           38: 'SUBSCRIBER_ID',
-           39: 'CLIENT_FQDN',
-           40: 'PANA_AGENT',
-           41: 'NEW_POSIX_TIMEZONE',
-           42: 'NEW_TZDB_TIMEZONE',
-           43: 'ERO',
-           44: 'LQ_QUERY',
-           45: 'CLIENT_DATA',
-           46: 'CLT_TIME',
-           47: 'LQ_RELAY_DATA',
-           48: 'LQ_CLIENT_LINK',
-           49: 'MIP6_HNINF',
-           50: 'MIP6_RELAY',
-           51: 'V6_LOST',
-           52: 'CAPWAP_AC_V6',
-           53: 'RELAY_ID',
-           54: 'IPv6_Address_MoS',
-           55: 'Pv6_FQDN_MoS',
-           56: 'NTP_SERVER',
-           57: 'V6_ACCESS_DOMAIN',
-           58: 'SIP_UA_CS_LIST',
-           59: 'BOOTFILE_URL',
-           }
+OPTION = {1: 'CLIENTID',
+          2: 'SERVERID',
+          3: 'IA_NA',
+          4: 'IA_TA',
+          5: 'IAADDR',
+          6: 'ORO',
+          7: 'PREFERENCE',
+          8: 'ELAPSED_TIME',
+          9: 'RELAY_MSG',
+          11: 'AUTH',
+          12: 'UNICAST',
+          13: 'STATUS_CODE',
+          14: 'RAPID_COMMIT',
+          15: 'USER_CLASS',
+          16: 'VENDOR_CLASS',
+          17: 'VENDOR_OPTS',
+          18: 'INTERFACE_ID',
+          19: 'RECONF_MSG',
+          20: 'RECONF_ACCEPT',
+          21: 'SIP_SERVER_D',
+          22: 'SIP_SERVER_A',
+          23: 'DNS_SERVERS',
+          24: 'DOMAIN_LIST',
+          25: 'IA_PD',
+          26: 'IAPREFIX',
+          27: 'NIS_SERVERS',
+          28: 'NISP_SERVERS',
+          29: 'NIS_DOMAIN_NAME',
+          30: 'NISP_DOMAIN_NAME',
+          31: 'SNTP_SERVERS',
+          32: 'INFORMATION_REFRESH_TIME',
+          33: 'BCMCS_SERVER_D',
+          34: 'BCMCS_SERVER_A',
+          36: 'GEOCONF_CIVIC',
+          37: 'REMOTE_ID',
+          38: 'SUBSCRIBER_ID',
+          39: 'CLIENT_FQDN',
+          40: 'PANA_AGENT',
+          41: 'NEW_POSIX_TIMEZONE',
+          42: 'NEW_TZDB_TIMEZONE',
+          43: 'ERO',
+          44: 'LQ_QUERY',
+          45: 'CLIENT_DATA',
+          46: 'CLT_TIME',
+          47: 'LQ_RELAY_DATA',
+          48: 'LQ_CLIENT_LINK',
+          49: 'MIP6_HNINF',
+          50: 'MIP6_RELAY',
+          51: 'V6_LOST',
+          52: 'CAPWAP_AC_V6',
+          53: 'RELAY_ID',
+          54: 'IPv6_Address_MoS',
+          55: 'Pv6_FQDN_MoS',
+          56: 'NTP_SERVER',
+          57: 'V6_ACCESS_DOMAIN',
+          58: 'SIP_UA_CS_LIST',
+          59: 'BOOTFILE_URL',
+          }
 
-STATUS_CODES = {0: 'Success',
-                1: 'Failure',
-                2: 'No Addresses available',
-                3: 'No Binding',
-                4: 'Prefix not appropriate for link',
-                5: 'Use Multicast',
-                6: 'No Prefix available'
-                }
+STATUS = {0: 'Success',
+          1: 'Failure',
+          2: 'No Addresses available',
+          3: 'No Binding',
+          4: 'Prefix not appropriate for link',
+          5: 'Use Multicast',
+          6: 'No Prefix available'
+          }
 
 # see https://tools.ietf.org/html/rfc4578#section-2.1
 ARCHITECTURE_TYPE = {0: 'Intel x86PC',
@@ -126,7 +126,7 @@ NLM_F_REQUEST = 1
 NLM_F_ROOT = 0x100
 NLM_F_MATCH = 0x200
 NLM_F_DUMP = (NLM_F_ROOT | NLM_F_MATCH)
-# NETLINK message is alsways the same except header seq
+# NETLINK message is always the same except header seq
 MSG = struct.pack('B', socket.AF_INET6)
 # always the same length...
 MSG_HEADER_LENGTH = 17
@@ -165,7 +165,7 @@ NLMSG_ALIGNTO = 4
 NLA_ALIGNTO = 4
 
 
-# collect all constants in a class for easier handling by calling numeric values via class properties
+# collect most constants in a class for easier handling by calling numeric values via class properties
 # at the same time still available with integer keys and string values
 class Constants:
     """
@@ -180,11 +180,11 @@ class Constants:
                 self.__dict__[value.replace('-', '_').replace(' ', '_').upper()] = key
 
     def __init__(self):
-        self.MESSAGE_TYPES = self.Category(MESSAGE_TYPES)
-        self.STATUS_CODES = self.Category(STATUS_CODES)
-        self.OPTIONS = self.Category(OPTIONS)
-        # needed for logging
-        self.MESSAGE_TYPES_DICT = MESSAGE_TYPES
+        self.MESSAGE = self.Category(MESSAGE)
+        self.STATUS = self.Category(STATUS)
+        self.OPTION = self.Category(OPTION)
+        # needed for logging - use original dict
+        self.MESSAGE_DICT = MESSAGE
 
 
 # Add constants for global access

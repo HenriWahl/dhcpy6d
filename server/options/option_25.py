@@ -23,6 +23,7 @@ from socket import (AF_INET6,
 from server import collected_macs
 from server.client import Client
 from server.config import cfg
+from server.constants import CONST
 from server.helpers import colonify_ip6
 from server.options import OptionTemplate
 
@@ -48,7 +49,8 @@ class Option(OptionTemplate):
                 if not transaction.answer == 'normal':
                     if transaction.answer == 'noprefix':
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                        response_ascii_part = self.build_option(13, f'{6:04x}')
+                        response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                                                                f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                         # clean client prefixes which not be deployed anyway
                         transaction.client.prefixes[:] = []
                         # options in answer to be logged
@@ -69,7 +71,7 @@ class Option(OptionTemplate):
                                     preferred_lifetime = f'{0:08x}'
                                     valid_lifetime = f'{0:08x}'
                                 length = f'{int(prefix.LENGTH):02x}'
-                                ia_prefixes += self.build_option(26,
+                                ia_prefixes += self.build_option(CONST.OPTION.IAPREFIX,
                                                                  preferred_lifetime +
                                                                  valid_lifetime +
                                                                  length +
@@ -87,24 +89,28 @@ class Option(OptionTemplate):
                             # if no prefixes available a NoPrefixAvail status code has to be sent
                             if ia_prefixes == '':
                                 # REBIND not possible
-                                if transaction.last_message_received_type == 6:
+                                if transaction.last_message_received_type == CONST.MESSAGE.REBIND:
                                     # Option 13 Status Code Option - statuscode is 3: 'NoBinding'
-                                    response_ascii_part += self.build_option(13, f'{3:04x}')
+                                    response_ascii_part += self.build_option(CONST.OPTION.STATUS_CODE,
+                                                                             f'{CONST.STATUS.NO_BINDING:04x}')
                                 else:
                                     # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                    response_ascii_part += self.build_option(13, f'{6:04x}')
+                                    response_ascii_part += self.build_option(CONST.OPTION.STATUS_CODE,
+                                                                             f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                             # options in answer to be logged
                             options_answer_part = self.number
 
                         except Exception as err:
                             print(err)
                             # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                            response_ascii_part = self.build_option(13, f'{6:04x}')
+                            response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                                                                    f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                             # options in answer to be logged
                             options_answer_part = self.number
                     else:
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                        response_ascii_part = self.build_option(13, f'{6:04x}')
+                        response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                                                                f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                         # options in answer to be logged
                         options_answer_part = self.number
 
