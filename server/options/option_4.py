@@ -30,7 +30,7 @@ from server.options import OptionTemplate
 
 class Option(OptionTemplate):
     """
-    Option 3 + 5 Identity Association for Non-temporary Address
+    Option 4 + 5 Identity Association for Temporary Address
     """
     def build(self, transaction=None, **kwargs):
         # dummy empty defaults
@@ -44,8 +44,8 @@ class Option(OptionTemplate):
                 transaction.client = Client(transaction.id)
 
             if 'addresses' in cfg.CLASSES[transaction.client.client_class].ADVERTISE and \
-                    CONST.OPTION.IA_NA in transaction.ia_options:
-                # check if only a short NoAddrAvail answer or none at all is to be returned
+                    CONST.OPTION.IA_TA in transaction.ia_options:
+                # check if only a short NoAddrAvail answer or none at all ist t be returned
                 if not transaction.answer == 'normal':
                     if transaction.answer == 'noaddress':
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
@@ -59,11 +59,11 @@ class Option(OptionTemplate):
                     # if client could not be built because of database problems send
                     # status message back
                     if transaction.client:
-                        # embed option 5 into option 3 - several if necessary
+                        # embed option 5 into option 4 - several if necessary
                         ia_addresses = ''
                         try:
                             for address in transaction.client.addresses:
-                                if address.IA_TYPE == 'na':
+                                if address.IA_TYPE == 'ta':
                                     ipv6_address = hexlify(inet_pton(AF_INET6, colonify_ip6(address.ADDRESS))).decode()
                                     # if a transaction consists of too many requests from client -
                                     # - might be caused by going wild Windows clients -
@@ -80,23 +80,11 @@ class Option(OptionTemplate):
                                                                       preferred_lifetime +
                                                                       valid_lifetime)
                             if ia_addresses != '':
-                                #
-                                # todo: default clients sometimes seem to have class ''
-                                #
-                                if transaction.client.client_class != '':
-                                    t1 = '%08x' % int(cfg.CLASSES[transaction.client.client_class].T1)
-                                    t2 = '%08x' % int(cfg.CLASSES[transaction.client.client_class].T2)
-                                else:
-                                    t1 = '%08x' % int(cfg.T1)
-                                    t2 = '%08x' % int(cfg.T2)
-
-                                response_ascii_part = self.build_option(CONST.OPTION.IA_NA,
+                                response_ascii_part = self.build_option(CONST.OPTION.IA_TA,
                                                                         transaction.iaid +
-                                                                        t1 +
-                                                                        t2 +
                                                                         ia_addresses)
                             # options in answer to be logged
-                            options_answer_part = CONST.OPTION.IA_NA
+                            options_answer_part = CONST.OPTION.IA_TA
                         except:
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                             response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
@@ -106,7 +94,7 @@ class Option(OptionTemplate):
                     else:
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
-                                                                     f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
+                                                                f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                         # options in answer to be logged
                         options_answer_part = CONST.OPTION.STATUS_CODE
 

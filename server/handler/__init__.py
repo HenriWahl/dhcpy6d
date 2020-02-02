@@ -557,8 +557,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                                         transaction.id,
                                                                         options_answer))
             # handler
-            if transaction.answer != 'none':
-                self.response = binascii.unhexlify(response_ascii)
+            self.response = binascii.unhexlify(response_ascii)
 
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
