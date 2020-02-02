@@ -55,10 +55,6 @@ class Option(OptionTemplate):
                         transaction.client.addresses[:] = []
                         # options in answer to be logged
                         options_answer_part = CONST.OPTION.STATUS_CODE
-                    else:
-                        # clean handler as there is nothing to respond in case of answer = none
-                        self.response = ''
-                        return None
                 else:
                     # if client could not be built because of database problems send
                     # status message back
@@ -68,9 +64,7 @@ class Option(OptionTemplate):
                         try:
                             for address in transaction.client.addresses:
                                 if address.IA_TYPE == 'na':
-                                    ipv6_address = binascii.hexlify(socket.inet_pton(socket.AF_INET6,
-                                                                                     colonify_ip6(
-                                                                                         address.ADDRESS))).decode()
+                                    ipv6_address = hexlify(inet_pton(AF_INET6, colonify_ip6(address.ADDRESS))).decode()
                                     # if a transaction consists of too many requests from client -
                                     # - might be caused by going wild Windows clients -
                                     # reset all addresses with lifetime 0
@@ -81,10 +75,11 @@ class Option(OptionTemplate):
                                     else:
                                         preferred_lifetime = '%08x' % 0
                                         valid_lifetime = '%08x' % 0
-                                    ia_addresses += build_option(5,
-                                                                 ipv6_address + preferred_lifetime + valid_lifetime)
-
-                            if not ia_addresses == '':
+                                    ia_addresses += self.build_option(CONST.OPTION.IAADDR,
+                                                                      ipv6_address +
+                                                                      preferred_lifetime +
+                                                                      valid_lifetime)
+                            if ia_addresses != '':
                                 #
                                 # todo: default clients sometimes seem to have class ''
                                 #
@@ -95,18 +90,21 @@ class Option(OptionTemplate):
                                     t1 = '%08x' % int(cfg.T1)
                                     t2 = '%08x' % int(cfg.T2)
 
-                                response_ascii += build_option(3, transaction.iaid + t1 + t2 + ia_addresses)
+                                response_ascii_part = self.build_option(CONST.OPTION.IA_NA,
+                                                                        transaction.iaid + t1 + t2 + ia_addresses)
                             # options in answer to be logged
-                            options_answer.append(3)
+                            options_answer_part = CONST.OPTION.IA_NA
                         except:
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii += build_option(13, '%04x' % 2)
+                            response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                                                                     f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                             # options in answer to be logged
-                            options_answer.append(13)
+                            options_answer_part = CONST.OPTION.STATUS_CODE
                     else:
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                        response_ascii += build_option(13, '%04x' % 2)
+                        response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                                                                     f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                         # options in answer to be logged
-                        options_answer.append(13)
+                        options_answer_part = CONST.OPTION.STATUS_CODE
 
         return response_ascii_part, options_answer_part
