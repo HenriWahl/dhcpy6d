@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 
 # dhcpy6d - DHCPv6 server 
@@ -56,10 +56,12 @@ data_files_custom = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),
 # /tmp/DHCPY6D_BUILDING_RPM has been touched by build.sh
 if os.path.exists('/tmp/DHCPY6D_BUILDING_RPM'):
     scripts_custom = ''
-    data_files_custom.append(('/usr/sbin', ['dhcpy6d']))	
+    data_files_custom.append(('/usr/sbin', ['dhcpy6d']))
     data_files_custom.append(('/etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
 else:
-    scripts_custom = ['dhcpy6d']
+    #scripts_custom = ['main.py']
+    scripts_custom = ''
+    entry_points = {'console_scripts': ['dhcpy6d = main']}
 
 setup(name = 'dhcpy6d',
       version = '0.7.99',
@@ -71,8 +73,25 @@ setup(name = 'dhcpy6d',
       author_email = 'h.wahl@ifw-dresden.de',
       url = 'https://dhcpy6d.ifw-dresden.de/',
       download_url = 'https://dhcpy6d.ifw-dresden.de/download',
-      py_modules = ['server.helpers', 'server.constants',
-                'server.config', 'server.storage'],
+      py_modules = ['dhcpy6d.client.default',
+                    'dhcpy6d.client.from_config',
+                    'dhcpy6d.client.parse_pattern',
+                    'dhcpy6d.client.reuse_lease',
+                    'dhcpy6d.config',
+                    'dhcpy6d.constants',
+                    'dhcpy6d.domain',
+                    'dhcpy6d.globals',
+                    'dhcpy6d.handler',
+                    'dhcpy6d.helpers',
+                    'dhcpy6d.log',
+                    'dhcpy6d.route',
+                    'dhcpy6d.storage.mysql',
+                    'dhcpy6d.storage.postgresql',
+                    'dhcpy6d.storage.sqlite',
+                    'dhcpy6d.storage.store',
+                    'dhcpy6d.storage.textfile',
+                    'dhcpy6d.threads',
+                    'dhcpy6d.transaction'],
       data_files = data_files_custom,
       scripts = scripts_custom, requires=['distro', 'dns']
       )
