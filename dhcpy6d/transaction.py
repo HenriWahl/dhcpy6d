@@ -20,7 +20,8 @@ import binascii
 import re
 
 from .config import cfg
-from .constants import ARCHITECTURE_TYPE
+from .constants import (ARCHITECTURE_TYPE,
+                        CONST)
 from .globals import (DUMMY_IAID,
                       DUMMY_MAC,
                       EMPTY_OPTIONS,
@@ -102,8 +103,8 @@ class Transaction:
 
         # DUID of client
         # 1 Client Identifier Option
-        if 1 in options:
-            self.duid = options[1]
+        if CONST.OPTION.CLIENTID in options:
+            self.duid = options[CONST.OPTION.CLIENTID]
             # See https://github.com/HenriWahl/dhcpy6d/issues/25 and DUID type is not used at all so just remove it
             # self.DUIDType = int(options[1][0:4], 16)
             # # DUID-EN can be retrieved from DUID
@@ -114,8 +115,8 @@ class Transaction:
 
         # Identity Association for Non-temporary Addresses
         # 3 Identity Association for Non-temporary Address Option
-        if 3 in options:
-            for payload in options[3]:
+        if CONST.OPTION.IA_NA in options:
+            for payload in options[CONST.OPTION.IA_NA]:
                 self.iaid = payload[0:8]
                 self.iat1 = int(payload[8:16], 16)
                 self.iat2 = int(payload[16:24], 16)
@@ -130,8 +131,8 @@ class Transaction:
 
         # Identity Association for Temporary Addresses
         # 4 Identity Association for Temporary Address Option
-        if 4 in options:
-            for payload in options[4]:
+        if CONST.OPTION.IA_TA in options:
+            for payload in options[CONST.OPTION.IA_TA]:
                 self.iaid = payload[0:8]
                 self.iat1 = int(payload[8:16], 16)
                 self.iat2 = int(payload[16:24], 16)
@@ -146,9 +147,9 @@ class Transaction:
 
         # Options Requested
         # 6 Option Request Option
-        if 6 in options:
+        if CONST.OPTION.ORO in options:
             options_request = list()
-            opts = options[6][:]
+            opts = options[CONST.OPTION.ORO][:]
             while len(opts) > 0:
                 options_request.append(int(opts[0:4], 16))
                 opts = opts[4:]

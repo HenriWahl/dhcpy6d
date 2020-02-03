@@ -16,18 +16,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from server.config import cfg
-from server.helpers import convert_dns_to_binary
-from server.options import OptionTemplate
+from binascii import hexlify
+from socket import (AF_INET6,
+                    inet_pton)
+
+from dhcpy6d.config import cfg
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 24 Domain Search List
+    Option 12 Server Unicast Option
     """
     def build(self, **kwargs):
-        converted_domain_search_list = ''
-        for d in cfg.DOMAIN_SEARCH_LIST:
-            converted_domain_search_list += convert_dns_to_binary(d)
-        response_ascii_part = self.build_option(self.number, converted_domain_search_list)
+        response_ascii_part = self.build_option(self.number, hexlify(inet_pton(AF_INET6, cfg.ADDRESS)).decode())
         return response_ascii_part, self.number

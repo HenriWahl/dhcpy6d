@@ -18,9 +18,9 @@
 
 from binascii import hexlify
 
-from server.client import Client
-from server.helpers import build_option
-from server.options import OptionTemplate
+from dhcpy6d.client import Client
+from dhcpy6d.helpers import build_option
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):

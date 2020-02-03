@@ -16,13 +16,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from server.options import OptionTemplate
+from dhcpy6d.config import cfg
+from dhcpy6d.helpers import convert_dns_to_binary
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 13 Status Code Option - statuscode is taken from dictionary
+    Option 24 Domain Search List
     """
-    def build(self, status=None, **kwargs):
-        response_ascii_part = self.build_option(self.number, f'{status:04x}')
+    def build(self, **kwargs):
+        converted_domain_search_list = ''
+        for d in cfg.DOMAIN_SEARCH_LIST:
+            converted_domain_search_list += convert_dns_to_binary(d)
+        response_ascii_part = self.build_option(self.number, converted_domain_search_list)
         return response_ascii_part, self.number

@@ -20,8 +20,8 @@ from binascii import hexlify
 from socket import (AF_INET6,
                     inet_pton)
 
-from server.config import cfg
-from server.options import OptionTemplate
+from dhcpy6d.config import cfg
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):

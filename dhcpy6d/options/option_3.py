@@ -20,12 +20,12 @@ from binascii import hexlify
 from socket import (AF_INET6,
                     inet_pton)
 
-from server import collected_macs
-from server.client import Client
-from server.config import cfg
-from server.constants import CONST
-from server.helpers import colonify_ip6
-from server.options import OptionTemplate
+from dhcpy6d import collected_macs
+from dhcpy6d.client import Client
+from dhcpy6d.config import cfg
+from dhcpy6d.constants import CONST
+from dhcpy6d.helpers import colonify_ip6
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):

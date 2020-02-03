@@ -21,6 +21,7 @@
 
 import distro
 import sys
+
 # access /usr/share/pyshared on Debian
 # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715010
 
@@ -32,29 +33,27 @@ import pwd
 import os
 import socket
 
-from server import UDPMulticastIPv6
-from server.config import cfg
+from dhcpy6d import UDPMulticastIPv6
+from dhcpy6d.config import cfg
 
-from server.globals import (config_answer_queue,
-                            config_query_queue,
-                            dns_query_queue,
-                            IF_NAME,
-                            route_queue,
-                            volatile_answer_queue,
-                            volatile_query_queue)
-from server.log import log
-from server.handler import RequestHandler
+from dhcpy6d.globals import (config_answer_queue,
+                             config_query_queue,
+                             dns_query_queue,
+                             IF_NAME,
+                             route_queue,
+                             volatile_answer_queue,
+                             volatile_query_queue)
+from dhcpy6d.log import log
+from dhcpy6d.handler import RequestHandler
 
-import server.options
-
-from server.route import manage_prefixes_routes
-from server.storage import (config_store,
-                            QueryQueue,
-                            volatile_store)
-from server.threads import (DNSQueryThread,
-                            RouteThread,
-                            TidyUpThread,
-                            TimerThread)
+from dhcpy6d.route import manage_prefixes_routes
+from dhcpy6d.storage import (config_store,
+                             QueryQueue,
+                             volatile_store)
+from dhcpy6d.threads import (DNSQueryThread,
+                             RouteThread,
+                             TidyUpThread,
+                             TimerThread)
 
 ### MAIN ###
 

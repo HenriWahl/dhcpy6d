@@ -20,9 +20,9 @@ from binascii import hexlify
 from socket import (AF_INET6,
                     inet_pton)
 
-from server.config import cfg
-from server.helpers import convert_dns_to_binary
-from server.options import OptionTemplate
+from dhcpy6d.config import cfg
+from dhcpy6d.helpers import convert_dns_to_binary
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):

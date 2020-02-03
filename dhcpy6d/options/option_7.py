@@ -16,13 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from server.options import OptionTemplate
+from dhcpy6d.config import cfg
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
+    Option 7 Server Preference
     """
     def build(self, **kwargs):
-        response_ascii_part = self.build_option(self.number, '')
+        response_ascii_part = self.build_option(self.number, f'{int(cfg.SERVER_PREFERENCE):02x}')
         return response_ascii_part, self.number

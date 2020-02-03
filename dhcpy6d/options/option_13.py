@@ -16,14 +16,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from server.config import cfg
-from server.options import OptionTemplate
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 7 Server Preference
+    Option 13 Status Code Option - statuscode is taken from dictionary
     """
-    def build(self, **kwargs):
-        response_ascii_part = self.build_option(self.number, f'{int(cfg.SERVER_PREFERENCE):02x}')
+    def build(self, status=None, **kwargs):
+        response_ascii_part = self.build_option(self.number, f'{status:04x}')
         return response_ascii_part, self.number

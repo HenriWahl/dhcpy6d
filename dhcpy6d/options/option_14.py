@@ -16,18 +16,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from binascii import hexlify
-from socket import (AF_INET6,
-                    inet_pton)
-
-from server.config import cfg
-from server.options import OptionTemplate
+from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 12 Server Unicast Option
+    Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
     """
     def build(self, **kwargs):
-        response_ascii_part = self.build_option(self.number, hexlify(inet_pton(AF_INET6, cfg.ADDRESS)).decode())
+        response_ascii_part = self.build_option(self.number, '')
         return response_ascii_part, self.number
