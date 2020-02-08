@@ -117,7 +117,7 @@ class Option(OptionTemplate):
 
         return response_string_part, options_answer_part
 
-    def extend_transaction(self, transaction=None, option=None, **kwargs):
+    def fill_transaction(self, transaction=None, option=None, **kwargs):
         for payload in option:
             # iaid        t1        t2       ia_prefix   opt_length       preferred validlt    length    prefix
             # 00000001    ffffffff  ffffffff  001a        0019             00000e10   00001518    30     fd661234000000000000000000000000

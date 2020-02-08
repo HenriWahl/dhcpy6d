@@ -103,7 +103,7 @@ class Transaction:
         # if the options have some treatment for transactions just apply it
         for option in options:
             if option in OPTIONS:
-                OPTIONS[option].extend_transaction(transaction=self, option=options[option])
+                OPTIONS[option].fill_transaction(transaction=self, option=options[option])
 
     def get_options_string(self):
         """
@@ -111,34 +111,34 @@ class Transaction:
         """
         options_string = ''
         # put own attributes into a string
-        #options = sorted(list(self.__dict__.keys()))
         options = sorted(self.__dict__.keys())
         # options.sort()
-        for o in options:
+        for option in options:
             # ignore some attributes
-            if o not in IGNORED_LOG_OPTIONS and \
-               not self.__dict__[o] in EMPTY_OPTIONS:
-                if o == 'addresses':
+            if option not in IGNORED_LOG_OPTIONS and \
+               not self.__dict__[option] in EMPTY_OPTIONS:
+                if option == 'addresses':
                     if (3 or 4) in self.ia_options:
-                        option = o + ':'
-                        for a in self.__dict__[o]:
-                            option += ' ' + colonify_ip6(a)
-                        options_string = options_string + ' | '  + option
-                elif o == 'prefixes':
+                        option_string = f'{option}:'
+                        for a in self.__dict__[option]:
+                            option_string += f' {colonify_ip6(a)}'
+                        options_string = f'{options_string} | {option_string}'
+                elif option == 'prefixes':
                     if 25 in self.ia_options:
-                        option = o + ':'
-                        for p in self.__dict__[o]:
+                        option_string = f'{option}:'
+                        for p in self.__dict__[option]:
                             prefix, length = split_prefix(p)
-                            option += combine_prefix_length(colonify_ip6(prefix), length)
-                elif o == 'client_llip':
-                    option = o + ':' + colonify_ip6(self.__dict__[o])
-                    options_string = options_string + ' | '  + option
-                elif o == 'mac':
-                    if self.__dict__[o] != DUMMY_MAC:
-                        option = o + ': ' + str(self.__dict__[o])
-                        options_string = options_string + ' | ' + option
+                            option_string += combine_prefix_length(colonify_ip6(prefix), length)
+                elif option == 'client_llip':
+                    option_string = f'{option}: {colonify_ip6(self.__dict__[option])}'
+                    options_string = f'{options_string} | {option_string}'
+
+                elif option == 'mac':
+                    if self.__dict__[option] != DUMMY_MAC:
+                        option_string = f'{option}: {str(self.__dict__[option])}'
+                        options_string = f'{options_string} | {option_string}'
                 else:
-                    option = o + ': ' + str(self.__dict__[o])
-                    options_string = options_string + ' | '  + option
+                    option_string = f'{option}: {str(self.__dict__[option])}'
+                    options_string = f'{options_string} | {option_string}'
 
         return options_string

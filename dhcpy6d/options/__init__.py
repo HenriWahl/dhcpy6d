@@ -36,7 +36,7 @@ class OptionTemplate:
         """
         pass
 
-    def extend_transaction(self, **kwargs):
+    def fill_transaction(self, **kwargs):
         """
         to be filled with life by every single option
         """

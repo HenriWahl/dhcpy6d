@@ -87,8 +87,7 @@ class Option(OptionTemplate):
 
         return response_string_part, options_answer_part
 
-    def extend_transaction(self, transaction=None, option=None, **kwargs):
-        # bits = ('%4s' % str(bin(int(option[1:2]))).strip('0b')).replace(' ', '0')
+    def fill_transaction(self, transaction=None, option=None, **kwargs):
         bits = f'{int(option[1:2]):04d}'
         transaction.dns_n = int(bits[1])
         transaction.dns_o = int(bits[2])

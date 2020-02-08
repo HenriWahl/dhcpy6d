@@ -112,7 +112,7 @@ class Option(OptionTemplate):
 
         return response_string_part, options_answer_part
 
-    def extend_transaction(self, transaction=None, option=None, **kwargs):
+    def fill_transaction(self, transaction=None, option=None, **kwargs):
         """
         IA NA addresses of client
         """
