@@ -91,7 +91,7 @@ class Client:
                     if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE:
                         option = o + ':'
                         for p in self.__dict__[o]:
-                            option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
+                            option += f' {colonify_ip6(p.PREFIX)}/{p.LENGTH}'
                         options_string = options_string + ' | ' + option
                 elif o == 'mac':
                     if self.__dict__[o] != DUMMY_MAC:

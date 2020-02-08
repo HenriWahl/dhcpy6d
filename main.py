@@ -59,7 +59,7 @@ from dhcpy6d.threads import (DNSQueryThread,
 
 if __name__ == '__main__':
     log.info('Starting dhcpy6d daemon...')
-    log.info('Server DUID: %s' % (cfg.SERVERDUID))
+    log.info(f'Server DUID: {cfg.SERVERDUID}')
 
     # configure SocketServer
     UDPMulticastIPv6.address_family = socket.AF_INET6
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     dnsquery_thread.start()
 
     # set user and group
-    log.info('Running as user %s (UID %s) and group %s (GID %s)' % (cfg.USER, pwd.getpwnam(cfg.USER).pw_uid, cfg.GROUP, grp.getgrnam(cfg.GROUP).gr_gid))
+    log.info(f'Running as user {cfg.USER} (UID {pwd.getpwnam(cfg.USER).pw_uid}) and group {cfg.GROUP} (GID {grp.getgrnam(cfg.GROUP).gr_gid})')
     # first set group because otherwise the freshly unprivileged user could not modify its groups itself
     os.setgid(grp.getgrnam(cfg.GROUP).gr_gid)
     os.setuid(pwd.getpwnam(cfg.USER).pw_uid)

@@ -96,8 +96,8 @@ def build_option(number, payload):
     glue option with payload
     """
     # option number and length take 2 byte each so the string has to be 4 chars long
-    option = '{:04x}'.format(number)  # option number
-    option += '{:04x}'.format(len(payload) // 2)  # payload length, /2 because 2 chars are 1 byte
+    option = f'{number:04x}'  # option number
+    option += f'{len(payload)//2:04x}'  # payload length, /2 because 2 chars are 1 byte
     option += payload
     return option
 
@@ -135,23 +135,23 @@ def decompress_ip6(ip6, strict=True):
     if strict:
         for c in ip6:
             if c not in ADDRESS_CHARS_STRICT:
-                raise Exception('{} should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f'.format(ip6))
+                raise Exception(f'{ip6} should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f')
     else:
         # used for comparison of leases with address pattern - X replace the dynamic part of the address
         for c in ip6:
             if c not in ADDRESS_CHARS_NON_STRICT:
-                raise Exception('{} should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f x'.format(ip6))
+                raise Exception(f'{ip6} should consist only of : 0 1 2 3 4 5 6 7 8 9 a b c d e f x')
     # nothing to do
     if len(ip6) == 32 and colon_count1 == 0:
         return ip6
 
     # larger heaps of :: smell like something wrong
     if colon_count2 > 1 or colon_count3 >= 1:
-        raise Exception("{} has too many accumulated ':'".format(ip6))
+        raise Exception(f"{ip6} has too many accumulated ':'")
 
     # less than 7 ':' but no '::' also make a bad impression
     if colon_count1 < 7 and colon_count2 != 1:
-        raise Exception("{} is missing some ':'".format(ip6))
+        raise Exception(f"{ip6} is missing some ':'")
 
     # replace :: with :0000:: - the last ':' will be cut of finally
     while ip6.count(':') < 8 and ip6.count('::') == 1:
@@ -169,7 +169,7 @@ def decompress_ip6(ip6, strict=True):
     ip6_segments_target = list()
     for s in ip6_segments_source:
         if len(s) > 4:
-            raise Exception("{} has segment with more than 4 digits".format(ip6))
+            raise Exception(f"{ip6} has segment with more than 4 digits")
         else:
             ip6_segments_target.append(s.zfill(4))
 
@@ -194,7 +194,7 @@ def combine_prefix_length(prefix, length):
     """
     add prefix and length to 'prefix/length' string
     """
-    return '{0}/{1}'.format(prefix, length)
+    return f'{prefix}/{length}'
 
 
 def split_prefix(prefix):
@@ -216,7 +216,7 @@ def error_exit(message='An error occured.', status=1):
     exit with given error message
     allow prefix, especially for spitting out section of configuration errors
     """
-    sys.stderr.write('\n{}\n\n'.format(message))
+    sys.stderr.write(f'\n{message}\n\n')
     sys.exit(status)
 
 

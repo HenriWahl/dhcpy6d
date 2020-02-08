@@ -110,7 +110,7 @@ def parse_pattern_address(address, client_config, transaction_id):
                                                                                range_to=range_to)
                         if lease is None:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, range_from, range_to))
+                            log.critical(f'Address space {prefix}[{range_from}-{range_to}] exceeded')
                             return None
                         else:
                             # if lease is OK use it
@@ -131,7 +131,7 @@ def parse_pattern_address(address, client_config, transaction_id):
                             a = a.replace('$range$', range_from)
                         else:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Address space %s[%s-%s] exceeded' % (prefix, range_from, range_to))
+                            log.critical(f'Address space {prefix}[{range_from}-{range_to}] exceeded')
                             return None
                     else:
                         # if there is a lease it might be used
@@ -247,7 +247,7 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
                             else:
                                 # if none is available limit is reached and nothing returned
                                 log.critical(
-                                    'Prefix address space %s[%s-%s] exceeded' % (prefix_prefix, range_from, range_to))
+                                    f'Prefix address space {prefix_prefix}[{range_from}-{range_to}] exceeded')
                                 return None
                         else:
                             # if there is a lease it might be used

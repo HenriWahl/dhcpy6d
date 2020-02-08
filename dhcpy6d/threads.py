@@ -140,7 +140,7 @@ class TidyUpThread(Thread):
                     for record in list(collected_macs.values()):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP:
-                                log.info('deleted mac %s for llip %s' % (record.mac, colonify_ip6(record.llip)))
+                                log.info(f'deleted mac {record.mac} for llip {colonify_ip6(record.llip)}')
                             collected_macs.pop(record.llip)
                     del timestamp
                 time.sleep(cfg.CLEANING_INTERVAL)
@@ -169,14 +169,14 @@ class TidyUpThread(Thread):
         # clean blacklist
         for client in list(requests_blacklist.keys()):
             if now > requests_blacklist[client].timestamp + cfg.REQUEST_LIMIT_RELEASE_TIME:
-                log.info("Releasing client {0} from blacklist".format(client))
+                log.info(f"Releasing client {client} from blacklist")
                 requests_blacklist.pop(client)
 
         # clean default requests list
         for client in list(requests.keys()):
             if now > requests[client].timestamp + cfg.REQUEST_LIMIT_TIME:
                 if requests[client].count > cfg.REQUEST_LIMIT_COUNT:
-                    log.info("Blacklisting client {0} after {1} requests".format(client, requests[client].count))
+                    log.info(f"Blacklisting client {client} after {requests[client].count} requests")
                     requests_blacklist[client] = requests.pop(client)
                 else:
                     requests.pop(client)
@@ -213,7 +213,7 @@ class RouteThread(Thread):
                 volatile_store.store_route(prefix, length, router, timer)
             if mode == 'down':
                 volatile_store.remove_route(prefix)
-            log.info("Called '{0}' to modify route - result: {1}".format(call_real, result))
+            log.info(f"Called '{call_real}' to modify route - result: {result}")
 
 
 class TimerThread(Thread):

@@ -57,7 +57,7 @@ class DBPostgreSQL(DB):
             self.cursor.execute(query)
         except Exception as err:
             # try to reestablish database connection
-            print('Error: {0}'.format(str(err)))
+            print(f'Error: {str(err)}')
             if not self.db_connect():
                 return None
             else:

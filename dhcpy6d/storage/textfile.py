@@ -64,13 +64,13 @@ class Textfile(Store):
             if self.hosts[section].CLASS in cfg.CLASSES:
                 for a in cfg.CLASSES[self.hosts[section].CLASS].ADDRESSES:
                     if cfg.ADDRESSES[a].CATEGORY == 'id' and self.hosts[section].ID == '':
-                        error_exit("Textfile client configuration: No ID given for client '%s'" % (self.hosts[section].HOSTNAME))
+                        error_exit(f"Textfile client configuration: No ID given for client '{self.hosts[section].HOSTNAME}'")
             else:
-                error_exit("Textfile client configuration: Class '%s' of host '%s' is not defined" % (self.hosts[section].CLASS, self.hosts[section].HOSTNAME))
+                error_exit(f"Textfile client configuration: Class '{self.hosts[section].CLASS}' of host '{self.hosts[section].HOSTNAME}' is not defined")
 
             if self.hosts[section].ID != '':
                 if self.hosts[section].ID in list(self.ids.keys()):
-                    error_exit("Textfile client configuration: ID '%s' of client '%s' is already used by '%s'." % (self.hosts[section].ID, self.hosts[section].HOSTNAME, self.ids[self.hosts[section].ID]))
+                    error_exit(f"Textfile client configuration: ID '{self.hosts[section].ID}' of client '{self.hosts[section].HOSTNAME}' is already used by '{self.ids[self.hosts[section].ID]}'.")
                 else:
                     self.ids[self.hosts[section].ID] = self.hosts[section].HOSTNAME
 

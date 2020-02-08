@@ -183,7 +183,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         transaction.last_message_received_type = message_type
 
                     # log incoming messages
-                    log.info('%s | transaction_id: %s%s' % (CONST.MESSAGE_DICT[message_type], transaction.id, transaction.get_options_string()))
+                    log.info(f'{CONST.MESSAGE_DICT[message_type]} | transaction_id: {transaction.id}{transaction.get_options_string()}')
 
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
@@ -216,7 +216,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                             if cfg.IGNORE_UNKNOWN_CLIENTS and client_address in requests:
                                                 if requests[client_address].count > 1:
                                                     requests_blacklist[client_address] = Request(client_address)
-                                                    log.info("Blacklisting unknown client {0}".format(client_address))
+                                                    log.info(f"Blacklisting unknown client {client_address}")
                                                     return False
 
                                     # try to add client MAC address to transaction object
@@ -374,7 +374,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            log.error('handle(): %s | Caused by: %s | Transaction: %s' % (str(err), client_address, transaction.id))
+            log.error(f'handle(): {str(err)} | Caused by: {client_address} | Transaction: {transaction.id}')
             return None
 
     def build_response(self, message_type_response, transaction_id, options_request, status=0):

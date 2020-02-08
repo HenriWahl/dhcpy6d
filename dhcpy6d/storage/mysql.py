@@ -58,8 +58,8 @@ class DBMySQL(DB):
             return 'IntegrityError'
         except Exception as err:
             # try to reestablish database connection
-            print('Error: {0}'.format(str(err)))
-            print('Query: {0}'.format(query))
+            print(f'Error: {str(err)}')
+            print(f'Query: {query}')
             if not self.db_connect():
                 return None
             else:

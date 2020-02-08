@@ -166,16 +166,16 @@ def get_neighbor_cache_linux(if_number, now):
             # if log.getEffectiveLevel() <= logging.DEBUG:
             #    log.debug('nlm[%i:]: parsing up to %i...' % (answer_pos, answer_len))
 
-            nlmsg_len, nlmsg_type, nlmsg_flags, nlmsg_seq, nlmsg_pid = struct.unpack_from('<{}'.format(nlmsghdr_fmt),
+            nlmsg_len, nlmsg_type, nlmsg_flags, nlmsg_seq, nlmsg_pid = struct.unpack_from(f'<{nlmsghdr_fmt}',
                                                                                           answer,
                                                                                           answer_pos)
 
             # basic safety checks for received data (imitates NLMSG_OK)
-            if nlmsg_len < struct.calcsize('<{}'.format(nlmsghdr_fmt)):
+            if nlmsg_len < struct.calcsize(f'<{nlmsghdr_fmt}'):
                 log.warn('broken data from netlink (position {0}, nlmsg_len {1}): '
                          'nlmsg_len is smaller than structure size'.format(answer_pos, nlmsg_len))
                 break
-            if answer_len - answer_pos < struct.calcsize('<%s' % nlmsghdr_fmt):
+            if answer_len - answer_pos < struct.calcsize(f'<{nlmsghdr_fmt}'):
                 log.warn('broken data from netlink (position {0}, length avail %{1}): '
                          'received data size is smaller than structure size'.format(answer_pos,
                                                                                     answer_len - answer_pos))
@@ -221,7 +221,7 @@ def get_neighbor_cache_linux(if_number, now):
 
             curr_pos = answer_pos + nlmsg_header_len
             ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type = \
-                struct.unpack_from('<{}'.format(ndmsg_fmt), nlmsg_data, 0)
+                struct.unpack_from(f'<{ndmsg_fmt}', nlmsg_data, 0)
             # if log.getEffectiveLevel() <= logging.DEBUG:
             #    log.debug('nlm[%i:%i]: family %s, pad1 %s, pad2 %s, ifindex %s, state %s, flags %s, type %s' % \
             #              (answer_pos, answer_pos+nlmsg_len, ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type))
@@ -238,10 +238,10 @@ def get_neighbor_cache_linux(if_number, now):
                 #    log.debug('nla[%i:]: parsing up to %i...' % (nlmsg_data_pos, nlmsg_data_len))
 
                 nla_len, nla_type = \
-                    struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)
+                    struct.unpack_from(f'<{nlattr_fmt}', nlmsg_data, nlmsg_data_pos)
 
                 # basic safety checks for received data (imitates RTA_OK)
-                if nla_len < struct.calcsize('<{}'.format(nlattr_fmt)):
+                if nla_len < struct.calcsize(f'<{nlattr_fmt}'):
                     log.debug('This is normal for last record, but we should not get here (because of NLMSG_DONE); '
                               'data size: {0}, data[{1}:{2}] =  {3}'.format(answer_len,
                                                                             answer_pos + nlmsg_header_len,
@@ -281,9 +281,9 @@ def get_neighbor_cache_linux(if_number, now):
                 if not nda['NDM_IFINDEX'] in if_number:
                     log.debug("can't find device for interface index {}}".format(nda['NDM_IFINDEX']))
                 elif not 'NDA_DST' in nda:
-                    log.warn("can't find destination address (wrong entry state: {}?!)".format(nda['NDM_STATE']))
+                    log.warn(f"can't find destination address (wrong entry state: {nda['NDM_STATE']}?!)")
                 elif not 'NDA_LLADDR' in nda:
-                    log.warn("can't find local hardware address (wrong entry state: {}?!)".format(nda['NDM_STATE']))
+                    log.warn(f"can't find local hardware address (wrong entry state: {nda['NDM_STATE']}?!)")
                 else:
                     if if_number[nda['NDM_IFINDEX']] in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
                         # store neighbor caches entries
@@ -326,7 +326,7 @@ def collect_macs(now):
                     if host.llip.startswith('fe80'):
                         collected_macs[host.llip] = host
                         if cfg.LOG_MAC_LLIP:
-                            log.info('collected mac %s for llip %s' % (host.mac, colonify_ip6(host.llip)))
+                            log.info(f'collected mac {host.mac} for llip {colonify_ip6(host.llip)}')
                         if cfg.CACHE_MAC_LLIP:
                             volatile_store.store_mac_llip(host.mac, host.llip, timer)
         else:

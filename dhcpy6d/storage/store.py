@@ -125,7 +125,7 @@ class Store:
         if transaction.client:
             for a in transaction.client.addresses:
                 if not a.ADDRESS is None:
-                    query = "SELECT address FROM %s WHERE address = '%s'" % (self.table_leases, a.ADDRESS)
+                    query = f"SELECT address FROM {self.table_leases} WHERE address = '{a.ADDRESS}'"
                     answer = self.query(query)
                     if answer != None:
                         # if address is not leased yet add it
@@ -192,7 +192,7 @@ class Store:
 
             for p in transaction.client.prefixes:
                 if not p.PREFIX is None:
-                    query = "SELECT prefix FROM %s WHERE prefix = '%s'" % (self.table_prefixes, p.PREFIX)
+                    query = f"SELECT prefix FROM {self.table_prefixes} WHERE prefix = '{p.PREFIX}'"
                     answer = self.query(query)
                     if answer != None:
                         # if address is not leased yet add it
@@ -262,10 +262,10 @@ class Store:
         """
         store route in database to keep track of routes and be able to delete them later
         """
-        query = "SELECT prefix FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
+        query = f"SELECT prefix FROM {self.table_routes} WHERE prefix = '{prefix}'"
         if self.query is not None:
             if len(self.query(query)) == 0:
-                query = "INSERT INTO {0} VALUES ('{1}', {2}, '{3}', {4})".format(self.table_routes, prefix, length, router, now)
+                query = f"INSERT INTO {self.table_routes} VALUES ('{prefix}', {length}, '{router}', {now})"
                 return self.query(query)
             elif len(self.query(query)) == 1:
                 query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, now)
@@ -380,7 +380,7 @@ class Store:
         """
         get the hostname, DUID, MAC and IAID to verify a lease to delete its address in the DNS
         """
-        query = "SELECT DISTINCT hostname, duid, mac, iaid FROM {0} WHERE address='{1}'".format(self.table_leases, address)
+        query = f"SELECT DISTINCT hostname, duid, mac, iaid FROM {self.table_leases} WHERE address='{address}'"
         answer = self.query(query)
         if answer != None:
             if len(answer)>0:
@@ -442,7 +442,7 @@ class Store:
         release a lease via setting its active flag to False
         set last_message to 8 because of RELEASE messages having this message id
         """
-        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE address = '%s'" % (self.table_leases, now, address)
+        query = f"UPDATE {self.table_leases} SET active = 0, last_message = 8, last_update = '{now}' WHERE address = '{address}'"
         self.query(query)
 
     @clean_query_answer
@@ -451,7 +451,7 @@ class Store:
         release a prefix via setting its active flag to False
         set last_message to 8 because of RELEASE messages having this message id
         """
-        query = "UPDATE %s SET active = 0, last_message = 8, last_update = '%s' WHERE prefix = '%s'" % (self.table_prefixes, now, prefix)
+        query = f"UPDATE {self.table_prefixes} SET active = 0, last_message = 8, last_update = '{now}' WHERE prefix = '{prefix}'"
         self.query(query)
 
     @clean_query_answer
@@ -599,14 +599,14 @@ class Store:
         """
         release all invalid leases via setting their active flag to False
         """
-        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_leases, now)
+        query = f"UPDATE {self.table_leases} SET active = 0, last_message = 0 WHERE valid_until < '{now}'"
         return self.query(query)
 
     def release_free_prefixes(self, now):
         """
             release all invalid prefixes via setting their active flag to False
         """
-        query = "UPDATE %s SET active = 0, last_message = 0 WHERE valid_until < '%s'" % (self.table_prefixes, now)
+        query = f"UPDATE {self.table_prefixes} SET active = 0, last_message = 0 WHERE valid_until < '{now}'"
         return self.query(query)
 
     def remove_leases(self, now, category="random"):
@@ -614,14 +614,14 @@ class Store:
         remove all leases of a certain category like random - they will grow the database
         but be of no further use
         """
-        query = "DELETE FROM %s WHERE active = 0 AND category = '%s' AND valid_until < '%s'" % (self.table_leases, category, now)
+        query = f"DELETE FROM {self.table_leases} WHERE active = 0 AND category = '{category}' AND valid_until < '{now}'"
         return self.query(query)
 
     def remove_route(self, prefix):
         """
         remove a route which is not used anymore
         """
-        query = "DELETE FROM {0} WHERE prefix = '{1}'".format(self.table_routes, prefix)
+        query = f"DELETE FROM {self.table_routes} WHERE prefix = '{prefix}'"
         return self.query(query)
 
     def unlock_unused_advertised_leases(self, now):
@@ -742,7 +742,7 @@ class Store:
         """
             store MAC-link-local-ip-mapping
         """
-        query = "SELECT mac FROM macs_llips WHERE mac='%s'" % (mac)
+        query = f"SELECT mac FROM macs_llips WHERE mac='{mac}'"
         db_entry = self.query(query)
         # if known already update timestamp of MAC-link-local-ip-mapping
         if not db_entry or db_entry == []:
@@ -750,7 +750,7 @@ class Store:
                   (mac, link_local_ip, now)
             self.query(query)
         else:
-            query = "UPDATE macs_llips SET link_local_ip = '%s', last_update = '%s' WHERE mac = '%s'" % (link_local_ip, now, mac)
+            query = f"UPDATE macs_llips SET link_local_ip = '{link_local_ip}', last_update = '{now}' WHERE mac = '{mac}'"
             self.query(query)
 
     @clean_query_answer
@@ -768,10 +768,10 @@ class Store:
 
         # if already existing just update dynamic prefix
         if not db_entry or db_entry == []:
-            query = "INSERT INTO meta (item_key, item_value) VALUES ('%s', '%s')" % ('dynamic_prefix', prefix)
+            query = f"INSERT INTO meta (item_key, item_value) VALUES ('{'dynamic_prefix'}', '{prefix}')"
             self.query(query)
         else:
-            query = "UPDATE meta SET item_value = '%s' WHERE item_key = 'dynamic_prefix'" % (prefix)
+            query = f"UPDATE meta SET item_value = '{prefix}' WHERE item_key = 'dynamic_prefix'"
             self.query(query)
 
     def collect_macs_from_db(self):
@@ -779,7 +779,7 @@ class Store:
             collect all known MACs and link local addresses from database at startup
             to reduce attempts to read neighbor cache
         """
-        query = 'SELECT link_local_ip, mac, last_update FROM %s' % (self.table_macs_llips)
+        query = f'SELECT link_local_ip, mac, last_update FROM {self.table_macs_llips}'
         answer = self.query(query)
         if answer:
             for m in answer:
@@ -827,9 +827,9 @@ class Store:
                                      "INSERT INTO meta (item_key, item_value) VALUES ('version', '1')"]
                     for db_operation in db_operations:
                         self.query(db_operation)
-                        print('{0} in volatile storage succeded.'.format(db_operation))
+                        print(f'{db_operation} in volatile storage succeded.')
             except:
-                print("\n{0} on volatile database failed.".format(db_operation))
+                print(f"\n{db_operation} on volatile database failed.")
                 print('Please apply manually or grant necessary permissions.\n')
                 sys.exit(1)
         except:
@@ -862,8 +862,8 @@ class Store:
                     if update_type == 'mysql':
                         for table in db_tables:
                             for column in db_tables[table]:
-                                self.query('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL'.format(table, column))
-                                print('ALTER TABLE {0} ADD COLUMN {1}_new bigint NOT NULL succeeded'.format(table, column))
+                                self.query(f'ALTER TABLE {table} ADD COLUMN {column}_new bigint NOT NULL')
+                                print(f'ALTER TABLE {table} ADD COLUMN {column}_new bigint NOT NULL succeeded')
                         # get old timestamps
                         timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases')
                         for timestamp_old in timestamps_old:
@@ -895,9 +895,9 @@ class Store:
                         print('Converting timestamps of macs_llips succeeded')
                         for table in db_tables:
                             for column in db_tables[table]:
-                                self.query('ALTER TABLE {0} DROP COLUMN {1}'.format(table, column))
+                                self.query(f'ALTER TABLE {table} DROP COLUMN {column}')
                                 self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
-                                print('Moving column {0} of table {1} succeeded'.format(column, table))
+                                print(f'Moving column {column} of table {table} succeeded')
 
                     if update_type == 'sqlite':
                         for table in db_tables:
@@ -913,7 +913,7 @@ class Store:
                         # add timestamp columns in bigint format instead of datetime
                         for table in db_tables:
                             for column in db_tables[table]:
-                                self.query('ALTER TABLE {0} ADD COLUMN {1} bigint'.format(table, column))
+                                self.query(f'ALTER TABLE {table} ADD COLUMN {column} bigint')
 
                         # get old timestamps
                         timestamps_old = self.query('SELECT address, last_update, preferred_until, valid_until FROM leases_old')
