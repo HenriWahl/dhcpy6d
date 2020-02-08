@@ -31,6 +31,7 @@ import sys
 import time
 import uuid
 
+from .constants import CONST
 from .helpers import (decompress_ip6,
                       error_exit,
                       get_interfaces,
@@ -812,7 +813,9 @@ class Config:
         # more checks to come...
         for c in self.CLASSES:
             msg_prefix = f"Class '{c}':"
-            if not self.CLASSES[c].ANSWER in ['normal', 'noaddress', 'none']:
+            if not self.CLASSES[c].ANSWER in [CONST.ANSWER.NORMAL,
+                                              CONST.ANSWER.NOADDRESS,
+                                              CONST.ANSWER.NONE]:
                 error_exit(f"{msg_prefix} answer type must be one of 'normal', 'noaddress' and 'none'.")
 
             # check interface
@@ -1183,7 +1186,7 @@ class Class:
         # in certain cases it might be useful not to give any address to clients, for example if only a defined group
         # of hosts should get IPv6 addresses and others not. They will get a 'NoAddrsAvail' handler if this option
         # is set to 'noaddress' or no answer at all if set to 'none'
-        self.ANSWER = 'normal'
+        self.ANSWER = CONST.ANSWER.NORMAL
         # which IA_* should this class supply - addresses, prefixes or both?
         # shouldn't be an empty list because in this case the class would not make sense at all
         # as default only addresses will be advertised

@@ -24,6 +24,6 @@ class Option(OptionTemplate):
     """
     Option 15 User Class
     """
-    def fill_transaction(self, transaction=None, option=None, **kwargs):
+    def apply(self, transaction=None, option=None, **kwargs):
         # raw user class aka option is prefixed with null byte (00 in hex) and eot (04 in hex)
         transaction.user_class = unhexlify(option[4:])

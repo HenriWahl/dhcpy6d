@@ -24,6 +24,6 @@ class Option(OptionTemplate):
     """
     Option 16 Vendor Class
     """
-    def fill_transaction(self, transaction=None, option=None, **kwargs):
+    def apply(self, transaction=None, option=None, **kwargs):
         transaction.vendor_class_en = int(option[0:8], 16)
         transaction.vendor_class_data = unhexlify(option[12:]).decode()

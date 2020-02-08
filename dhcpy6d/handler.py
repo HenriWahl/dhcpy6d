@@ -392,7 +392,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             transaction = transactions[transaction_id]
 
             # should be asked before any responses are built
-            if transaction.answer == 'none':
+            if transaction.answer == CONST.ANSWER.NONE:
                 self.response = ''
                 return None
 
@@ -457,7 +457,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 if not transaction.client is None:
                     if len(transaction.client.addresses) == 0 and\
                        len(transaction.client.prefixes) == 0 and\
-                       transaction.answer == 'normal' and\
+                       transaction.answer == CONST.ANSWER.NORMAL and\
                        transaction.last_message_received_type in [1, 3, 5, 6]:
                         # create error handler - headers have to be recreated because
                         # problems may have arisen while processing and these information

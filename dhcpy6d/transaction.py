@@ -16,10 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-import binascii
-import re
-
 from .config import cfg
+from .constants import CONST
 from .globals import (DUMMY_IAID,
                       DUMMY_MAC,
                       EMPTY_OPTIONS,
@@ -27,7 +25,6 @@ from .globals import (DUMMY_IAID,
                       timer)
 from .helpers import (colonify_ip6,
                       combine_prefix_length,
-                      convert_binary_to_dns,
                       split_prefix)
 from .options import OPTIONS
 
@@ -88,7 +85,7 @@ class Transaction:
         self.rapid_commit = False
         # answer type - take from class definition, one of 'normal', 'noaddress', 'noprefix' or 'none'
         # defaults to 'normal' as this is the main purpose of dhcpy6d
-        self.answer = 'normal'
+        self.answer = CONST.ANSWER.NORMAL
         # default DUID value
         self.duid = ''
         # Elapsed Time - option 8, at least sent by WIDE dhcp6c when requesting delegated prefix
@@ -100,10 +97,10 @@ class Transaction:
         # UserClass (https://tools.ietf.org/html/rfc3315#section-22.15)
         self.user_class = ''
 
-        # if the options have some treatment for transactions just apply it
+        # if the options have some treatment for transactions just apply it if there is an defined option
         for option in options:
             if option in OPTIONS:
-                OPTIONS[option].fill_transaction(transaction=self, option=options[option])
+                OPTIONS[option].apply(transaction=self, option=options[option])
 
     def get_options_string(self):
         """
@@ -117,14 +114,14 @@ class Transaction:
             # ignore some attributes
             if option not in IGNORED_LOG_OPTIONS and \
                not self.__dict__[option] in EMPTY_OPTIONS:
-                if option == 'addresses':
-                    if (3 or 4) in self.ia_options:
+                if option == CONST.ADVERTISE.ADDRESSES:
+                    if (CONST.OPTION.IA_NA or CONST.OPTION.IA_TA) in self.ia_options:
                         option_string = f'{option}:'
-                        for a in self.__dict__[option]:
-                            option_string += f' {colonify_ip6(a)}'
+                        for address in self.__dict__[option]:
+                            option_string += f' {colonify_ip6(address.ADDRESS)}'
                         options_string = f'{options_string} | {option_string}'
-                elif option == 'prefixes':
-                    if 25 in self.ia_options:
+                elif option == CONST.ADVERTISE.PREFIXES:
+                    if CONST.OPTION.IA_PD in self.ia_options:
                         option_string = f'{option}:'
                         for p in self.__dict__[option]:
                             prefix, length = split_prefix(p)
@@ -135,10 +132,12 @@ class Transaction:
 
                 elif option == 'mac':
                     if self.__dict__[option] != DUMMY_MAC:
-                        option_string = f'{option}: {str(self.__dict__[option])}'
+                        # option_string = f'{option}: {str(self.__dict__[option])}'
+                        option_string = f'{option}: {self.__dict__[option]}'
                         options_string = f'{options_string} | {option_string}'
                 else:
-                    option_string = f'{option}: {str(self.__dict__[option])}'
+                    # option_string = f'{option}: {str(self.__dict__[option])}'
+                    option_string = f'{option}: {self.__dict__[option]}'
                     options_string = f'{options_string} | {option_string}'
 
         return options_string

@@ -19,6 +19,7 @@
 from ..config import (Address,
                       cfg,
                       Prefix)
+from ..constants import CONST
 from ..domain import get_ip_from_dns
 from ..globals import transactions
 
@@ -87,7 +88,7 @@ def from_config(client=None, client_config=None, transaction_id=None):
                          transactions[transaction_id].UserClass == user_class):
                     client.bootfiles.append(cfg.BOOTFILES[bootfile])
 
-            if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
+            if CONST.ADVERTISE.PREFIXES in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
                     25 in transactions[transaction_id].ia_options:
                 for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
                     p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)

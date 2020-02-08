@@ -21,6 +21,7 @@ import sys
 import traceback
 
 from ..config import cfg
+from ..constants import CONST
 from ..globals import (DUMMY_MAC,
                        EMPTY_OPTIONS,
                        IGNORED_LOG_OPTIONS,
@@ -73,33 +74,33 @@ class Client:
         #options = sorted(list(self.__dict__.keys()))
         options = sorted(self.__dict__.keys())
         # options.sort()
-        for o in options:
+        for option in options:
             # ignore some attributes
-            if o not in IGNORED_LOG_OPTIONS and self.__dict__[o] not in EMPTY_OPTIONS:
-                if o == 'addresses':
-                    if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE:
-                        option = o + ':'
-                        for a in self.__dict__[o]:
-                            option += ' ' + colonify_ip6(a.ADDRESS)
-                        options_string = options_string + ' | '  + option
-                elif o == 'bootfiles':
-                    option = o + ':'
-                    for a in self.__dict__[o]:
-                        option += ' ' + a.BOOTFILE_URL
-                    options_string = options_string + ' | '  + option
-                elif o == 'prefixes':
-                    if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE:
-                        option = o + ':'
-                        for p in self.__dict__[o]:
-                            option += f' {colonify_ip6(p.PREFIX)}/{p.LENGTH}'
-                        options_string = options_string + ' | ' + option
-                elif o == 'mac':
-                    if self.__dict__[o] != DUMMY_MAC:
-                        option = o + ': ' + str(self.__dict__[o])
-                        options_string = options_string + ' | ' + option
+            if option not in IGNORED_LOG_OPTIONS and self.__dict__[option] not in EMPTY_OPTIONS:
+                if option == CONST.ADVERTISE.ADDRESSES:
+                    if CONST.ADVERTISE.ADDRESSES in cfg.CLASSES[self.client_class].ADVERTISE:
+                        option_string = f'{option}:'
+                        for address in self.__dict__[option]:
+                            option_string +=  f' {colonify_ip6(address.ADDRESS)}'
+                        options_string = f'{options_string} | {option_string}'
+                elif option == 'bootfiles':
+                    option_string = f'{option}:'
+                    for bootfile in self.__dict__[option]:
+                        option_string += f' {bootfile.BOOTFILE_URL}'
+                    options_string = f'{options_string} | {option_string}'
+                elif option == CONST.ADVERTISE.PREFIXES:
+                    if CONST.ADVERTISE.PREFIXES in cfg.CLASSES[self.client_class].ADVERTISE:
+                        option_string = f'{option}:'
+                        for p in self.__dict__[option]:
+                            option_string += f' {colonify_ip6(p.PREFIX)}/{p.LENGTH}'
+                        options_string = f'{options_string} | {option_string}'
+                elif option == 'mac':
+                    if self.__dict__[option] != DUMMY_MAC:
+                        option_string = f'{option}: {self.__dict__[option]}'
+                        options_string = f'{options_string} | {option_string}'
                 else:
-                    option = o + ': ' + str(self.__dict__[o])
-                    options_string = options_string + ' | '  + option
+                    option_string = f'{option}: {self.__dict__[option]}'
+                    options_string = f'{options_string} | {option_string}'
         return options_string
 
     def build(self, transaction_id):

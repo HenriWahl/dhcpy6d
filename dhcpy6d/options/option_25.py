@@ -45,10 +45,10 @@ class Option(OptionTemplate):
                 transaction.client = Client(transaction.id)
 
             # Only if prefixes are provided
-            if 'prefixes' in cfg.CLASSES[transaction.client.client_class].ADVERTISE:
+            if CONST.ADVERTISE.PREFIXES in cfg.CLASSES[transaction.client.client_class].ADVERTISE:
                 # check if only a short NoPrefixAvail answer or none at all is to be returned
-                if not transaction.answer == 'normal':
-                    if transaction.answer == 'noprefix':
+                if not transaction.answer == CONST.ANSWER.NORMAL:
+                    if transaction.answer == CONST.ANSWER.NOPREFIX:
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                         response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
                                                                 f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
@@ -117,7 +117,7 @@ class Option(OptionTemplate):
 
         return response_string_part, options_answer_part
 
-    def fill_transaction(self, transaction=None, option=None, **kwargs):
+    def apply(self, transaction=None, option=None, **kwargs):
         for payload in option:
             # iaid        t1        t2       ia_prefix   opt_length       preferred validlt    length    prefix
             # 00000001    ffffffff  ffffffff  001a        0019             00000e10   00001518    30     fd661234000000000000000000000000

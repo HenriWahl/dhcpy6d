@@ -33,12 +33,14 @@ class OptionTemplate:
     def build(self, **kwargs):
         """
         to be filled with life by every single option
+        every option has its special treatment of input and output data
         """
         pass
 
-    def fill_transaction(self, **kwargs):
+    def apply(self, **kwargs):
         """
         to be filled with life by every single option
+        every transaction has the opportunity to add options, depending on request
         """
         pass
 
@@ -69,4 +71,5 @@ for path in options_path.glob('option_*.py'):
         option = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(option)
         number = int(name.split('_')[1])
+        # add to global options constant
         OPTIONS[number] = option.Option(number)

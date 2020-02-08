@@ -92,6 +92,8 @@ OPTION = {1: 'CLIENTID',
           57: 'V6_ACCESS_DOMAIN',
           58: 'SIP_UA_CS_LIST',
           59: 'BOOTFILE_URL',
+          60: 'OPT_BOOTFILE_PARAM',
+          61: 'OPTION_CLIENT_ARCH_TYPE'
           }
 
 STATUS = {0: 'Success',
@@ -103,6 +105,16 @@ STATUS = {0: 'Success',
           6: 'No Prefix available'
           }
 
+# using constants for different answer types to avoid strings
+ANSWER = {'none': 'none',
+          'noaddress': 'noaddress',
+          'noprefix': 'noprefix',
+          'normal': 'normal'}
+
+# advertise config setting could contain addresses and/or prefixes
+ADVERTISE = {'addresses': 'addresses',
+             'prefixes': 'prefixes'}
+
 # see https://tools.ietf.org/html/rfc4578#section-2.1
 ARCHITECTURE_TYPE = {0: 'Intel x86PC',
                      1: 'NEC / PC98',
@@ -113,9 +125,7 @@ ARCHITECTURE_TYPE = {0: 'Intel x86PC',
                      6: 'EFI IA32',
                      7: 'EFI BC',
                      8: 'EFI Xscale',
-                     9: 'EFI x86 - 64'
-                     }
-
+                     9: 'EFI x86 - 64'}
 
 # used for NETLINK in get_neighbor_cache_linux() access by Github/vokac
 RTM_NEWNEIGH = 28
@@ -174,21 +184,27 @@ class Constants:
     class Category:
         """
         category containing constants
+        'reverting' the dictionary because in certain parts for example the number of an option is referred to by
+        its name as property
         """
         def __init__(self, category):
             for key, value in category.items():
-                self.__dict__[value.replace('-', '_').replace(' ', '_').upper()] = key
+                self.__dict__[value.replace('-', '_').replace(' ', '_').replace('/', 'or').upper()] = key
+
+        def keys(self):
+            # return key
+            return self.__dict__.keys()
 
     def __init__(self):
         self.MESSAGE = self.Category(MESSAGE)
         self.STATUS = self.Category(STATUS)
         self.OPTION = self.Category(OPTION)
+        self.ANSWER = self.Category(ANSWER)
+        self.ADVERTISE = self.Category(ADVERTISE)
         # needed for logging - use original dict
         self.MESSAGE_DICT = MESSAGE
         # architecture types as dict
         self.ARCHITECTURE_TYPE_DICT = ARCHITECTURE_TYPE
 
-
 # Add constants for global access
 CONST = Constants()
-

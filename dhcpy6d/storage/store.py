@@ -20,6 +20,7 @@ import sys
 import traceback
 
 from ..config import cfg
+from ..constants import CONST
 from ..globals import (collected_macs,
                        transactions)
 from ..helpers import (decompress_ip6,
@@ -70,7 +71,7 @@ class Store:
         self.answer_queue = answer_queue
         # table names used for database storage - MySQL additionally needs the database name
         self.table_leases = 'leases'
-        self.table_prefixes = 'prefixes'
+        self.table_prefixes = CONST.ADVERTISE.PREFIXES
         self.table_macs_llips = 'macs_llips'
         self.table_hosts = 'hosts'
         self.table_routes = 'routes'

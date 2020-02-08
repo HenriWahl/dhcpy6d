@@ -43,11 +43,11 @@ class Option(OptionTemplate):
             if transaction.client is None:
                 transaction.client = Client(transaction.id)
 
-            if 'addresses' in cfg.CLASSES[transaction.client.client_class].ADVERTISE and \
+            if CONST.ADVERTISE.ADDRESSES in cfg.CLASSES[transaction.client.client_class].ADVERTISE and \
                     CONST.OPTION.IA_TA in transaction.ia_options:
                 # check if only a short NoAddrAvail answer or none at all ist t be returned
-                if not transaction.answer == 'normal':
-                    if transaction.answer == 'noaddress':
+                if not transaction.answer == CONST.ANSWER.NORMAL:
+                    if transaction.answer == CONST.ANSWER.NOADDRESS:
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
                                                                 f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
@@ -100,7 +100,7 @@ class Option(OptionTemplate):
 
         return response_string_part, options_answer_part
 
-    def fill_transaction(self, transaction=None, option=None, **kwargs):
+    def apply(self, transaction=None, option=None, **kwargs):
         """
         IA TA addresses of client
         """
