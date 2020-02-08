@@ -118,7 +118,7 @@ class Transaction:
                     if (CONST.OPTION.IA_NA or CONST.OPTION.IA_TA) in self.ia_options:
                         option_string = f'{option}:'
                         for address in self.__dict__[option]:
-                            option_string += f' {colonify_ip6(address.ADDRESS)}'
+                            option_string += f' {colonify_ip6(address)}'
                         options_string = f'{options_string} | {option_string}'
                 elif option == CONST.ADVERTISE.PREFIXES:
                     if CONST.OPTION.IA_PD in self.ia_options:

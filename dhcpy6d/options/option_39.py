@@ -22,6 +22,7 @@ from socket import (AF_INET6,
                     inet_pton)
 
 from dhcpy6d.config import cfg
+from dhcpy6d.constants import CONST
 from dhcpy6d.helpers import (convert_binary_to_dns,
                              convert_dns_to_binary)
 from dhcpy6d.options import OptionTemplate
@@ -80,7 +81,7 @@ class Option(OptionTemplate):
                 response_string_part = self.convert_to_string(self.number, f'{nos_flags:02x}{fqdn_binary}')
             else:
                 # if no hostname given put something in and force client override
-                fqdn_binary = convert_dns_to_binary(f'invalid-hostname.{cfg.DOMAIN}')
+                fqdn_binary = convert_dns_to_binary(f'{CONST.DNS.INVALID_HOSTNAME}.{cfg.DOMAIN}')
                 response_string_part = self.convert_to_string(self.number, f'{3:02x}{fqdn_binary}')
             # options in answer to be logged
             options_answer_part = self.number
