@@ -30,7 +30,7 @@ class Option(OptionTemplate):
     """
     def build(self, transaction=None, **kwargs):
         # dummy empty defaults
-        response_ascii_part = ''
+        response_string_part = ''
         options_answer_part = None
 
         # build client if not done yet
@@ -43,8 +43,8 @@ class Option(OptionTemplate):
             bootfile_url = bootfiles[0].BOOTFILE_URL
             transaction.client.chosen_boot_file = bootfile_url
             bootfile_options = hexlify(bootfile_url).decode()
-            response_ascii_part += build_option(self.number, bootfile_options)
+            response_string_part += build_option(self.number, bootfile_options)
             # options in answer to be logged
             options_answer_part = self.number
 
-        return response_ascii_part, options_answer_part
+        return response_string_part, options_answer_part

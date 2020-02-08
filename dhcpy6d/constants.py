@@ -185,6 +185,8 @@ class Constants:
         self.OPTION = self.Category(OPTION)
         # needed for logging - use original dict
         self.MESSAGE_DICT = MESSAGE
+        # architecture types as dict
+        self.ARCHITECTURE_TYPE_DICT = ARCHITECTURE_TYPE
 
 
 # Add constants for global access

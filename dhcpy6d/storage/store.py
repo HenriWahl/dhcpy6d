@@ -371,8 +371,8 @@ class Store:
                 "length = '%s' "\
                 "ORDER BY valid_until ASC LIMIT 1" %\
                 (self.table_prefixes,
-                 prefix+range_from+((128-int(length))/4)*'0',
-                 prefix+range_to+((128-int(length))/4)*'0',
+                 prefix+range_from+((128-int(length))//4)*'0',
+                 prefix+range_to+((128-int(length))//4)*'0',
                  length)
         return self.query(query)
 

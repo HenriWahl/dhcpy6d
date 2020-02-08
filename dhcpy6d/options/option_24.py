@@ -29,5 +29,5 @@ class Option(OptionTemplate):
         converted_domain_search_list = ''
         for d in cfg.DOMAIN_SEARCH_LIST:
             converted_domain_search_list += convert_dns_to_binary(d)
-        response_ascii_part = self.build_option(self.number, converted_domain_search_list)
-        return response_ascii_part, self.number
+        response_string_part = self.convert_to_string(self.number, converted_domain_search_list)
+        return response_string_part, self.number

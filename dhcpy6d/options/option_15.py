@@ -16,27 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from binascii import hexlify
-from socket import (AF_INET6,
-                    inet_pton)
-
-from dhcpy6d.config import cfg
+from binascii import unhexlify
 from dhcpy6d.options import OptionTemplate
 
 
 class Option(OptionTemplate):
     """
-    Option 31 SNTP Servers
+    Option 15 User Class
     """
-    def build(self, **kwargs):
-        # dummy empty return value
-        response_string_part = ''
-
-        if cfg.SNTP_SERVERS != '':
-            sntp_servers = ''
-            for s in cfg.SNTP_SERVERS:
-                sntp_server = hexlify(inet_pton(AF_INET6, s)).decode()
-                sntp_servers += sntp_server
-            response_string_part = self.convert_to_string(self.number, sntp_servers)
-
-        return response_string_part, self.number
+    def extend_transaction(self, transaction=None, option=None, **kwargs):
+        # raw user class aka option is prefixed with null byte (00 in hex) and eot (04 in hex)
+        transaction.user_class = unhexlify(option[4:])

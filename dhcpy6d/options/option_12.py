@@ -29,5 +29,5 @@ class Option(OptionTemplate):
     Option 12 Server Unicast Option
     """
     def build(self, **kwargs):
-        response_ascii_part = self.build_option(self.number, hexlify(inet_pton(AF_INET6, cfg.ADDRESS)).decode())
-        return response_ascii_part, self.number
+        response_string_part = self.convert_to_string(self.number, hexlify(inet_pton(AF_INET6, cfg.ADDRESS)).decode())
+        return response_string_part, self.number

@@ -28,21 +28,21 @@ from .client import Client
 from .config import cfg
 from .constants import CONST
 from .domain import (dns_delete,
-                      dns_update)
+                     dns_update)
 from .globals import (collected_macs,
-                       DUMMY_MAC,
-                       IA_OPTIONS,
-                       requests,
-                       requests_blacklist,
-                       timer,
-                       transactions)
+                      DUMMY_MAC,
+                      IA_OPTIONS,
+                      requests,
+                      requests_blacklist,
+                      timer,
+                      transactions)
 from .helpers import (build_option,
-                       colonify_ip6,
-                       decompress_ip6,
-                       LOCALHOST,
-                       LOCALHOST_INTERFACES)
+                      colonify_ip6,
+                      decompress_ip6,
+                      LOCALHOST,
+                      LOCALHOST_INTERFACES)
 from .log import log
-from .options import options
+from .options import OPTIONS
 from .route import modify_route
 from .storage import (config_store,
                        volatile_store)
@@ -398,25 +398,25 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
             # Header
             # handler type + transaction id
-            response_ascii = f'{message_type_response:02x}'
-            response_ascii += transaction_id
+            response_string = f'{message_type_response:02x}'
+            response_string += transaction_id
 
             # these options are always useful
             # Option 1 client identifier
-            response_ascii += build_option(CONST.OPTION.CLIENTID, transaction.duid)
+            response_string += build_option(CONST.OPTION.CLIENTID, transaction.duid)
             # Option 2 server identifier
-            response_ascii += build_option(CONST.OPTION.SERVERID, cfg.SERVERDUID)
+            response_string += build_option(CONST.OPTION.SERVERID, cfg.SERVERDUID)
 
             # list of options in answer to be logged
             options_answer = []
 
             # build all requested options if they are handled
             for number in options_request:
-                if number in options:
+                if number in OPTIONS:
                     try:
-                        response_ascii_part, options_answer_part = options[number].build(transaction=transaction,
-                                                                                         status=status)
-                        response_ascii += response_ascii_part
+                        response_string_part, options_answer_part = OPTIONS[number].build(transaction=transaction,
+                                                                                          status=status)
+                        response_string += response_string_part
                         if options_answer_part:
                             options_answer.append(options_answer_part)
                     except Exception:
@@ -438,17 +438,17 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 # problems may have arisen while processing and these information
                 # is not valid anymore
                 # handler type + transaction id
-                response_ascii = '%02x' % (7)
-                response_ascii += transaction.id
+                response_string = '%02x' % (7)
+                response_string += transaction.id
 
                 # always of interest
                 # option 1 client identifier
-                response_ascii += build_option(1, transaction.duid)
+                response_string += build_option(1, transaction.duid)
                 # option 2 server identifier
-                response_ascii += build_option(2, cfg.SERVERDUID)
+                response_string += build_option(2, cfg.SERVERDUID)
 
                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                response_ascii += build_option(13, '%04x' % 2)
+                response_string += build_option(13, '%04x' % 2)
 
                 log.error('%s| transaction_id: %s | DatabaseError: %s' % (CONST.MESSAGE_DICT[message_type_response], transaction.id, ' '.join(db_error)))
 
@@ -463,17 +463,17 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         # problems may have arisen while processing and these information
                         # is not valid anymore
                         # handler type + transaction id
-                        response_ascii = '%02x' % 7
-                        response_ascii += transaction.id
+                        response_string = '%02x' % 7
+                        response_string += transaction.id
 
                         # always of interest
                         # option 1 client identifier
-                        response_ascii += build_option(1, transaction.duid)
+                        response_string += build_option(1, transaction.duid)
                         # option 2 server identifier
-                        response_ascii += build_option(2, cfg.SERVERDUID)
+                        response_string += build_option(2, cfg.SERVERDUID)
 
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                        response_ascii += build_option(13, '%04x' % 2)
+                        response_string += build_option(13, '%04x' % 2)
                         # options in answer to be logged
                         options_answer.append(13)
 
@@ -496,7 +496,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                                         transaction.id,
                                                                         options_answer))
             # handler
-            self.response = binascii.unhexlify(response_ascii)
+            self.response = binascii.unhexlify(response_string)
 
         except Exception as err:
             traceback.print_exc(file=sys.stdout)

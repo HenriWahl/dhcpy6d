@@ -31,11 +31,21 @@ class OptionTemplate:
         self.number = number
 
     def build(self, **kwargs):
+        """
+        to be filled with life by every single option
+        """
         pass
 
-    def build_option(self, number, payload):
+    def extend_transaction(self, **kwargs):
         """
-        glue option with payload
+        to be filled with life by every single option
+        """
+        pass
+
+    @staticmethod
+    def convert_to_string(number, payload):
+        """
+        glue option number with payload
         """
         # option number and length take 2 byte each so the string has to be 4 chars long
         option = f'{number:04x}'  # option number
@@ -45,7 +55,7 @@ class OptionTemplate:
 
 
 # globally available options
-options = {}
+OPTIONS = {}
 options_path = pathlib.Path(__file__).parent
 pattern = re.compile('option_[0-9]{1,3}$')
 
@@ -59,4 +69,4 @@ for path in options_path.glob('option_*.py'):
         option = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(option)
         number = int(name.split('_')[1])
-        options[number] = option.Option(number)
+        OPTIONS[number] = option.Option(number)

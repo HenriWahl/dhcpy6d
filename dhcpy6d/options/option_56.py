@@ -32,7 +32,7 @@ class Option(OptionTemplate):
     """
     def build(self, **kwargs):
         # dummy empty defaults
-        response_ascii_part = ''
+        response_string_part = ''
         options_answer_part = None
 
         ntp_server_options = ''
@@ -42,14 +42,14 @@ class Option(OptionTemplate):
                 for ntp_server in cfg.NTP_SERVER_dict[ntp_server_type]:
                     ntp_server_suboption = ''
                     if ntp_server_type == 'SRV':
-                        ntp_server_suboption = self.build_option(1, hexlify(inet_pton(AF_INET6, ntp_server)).decode())
+                        ntp_server_suboption = self.convert_to_string(1, hexlify(inet_pton(AF_INET6, ntp_server)).decode())
                     elif ntp_server_type == 'MC':
-                        ntp_server_suboption = self.build_option(2, hexlify(inet_pton(AF_INET6, ntp_server)).decode())
+                        ntp_server_suboption = self.convert_to_string(2, hexlify(inet_pton(AF_INET6, ntp_server)).decode())
                     elif ntp_server_type == 'FQDN':
-                        ntp_server_suboption = self.build_option(3, convert_dns_to_binary(ntp_server))
+                        ntp_server_suboption = self.convert_to_string(3, convert_dns_to_binary(ntp_server))
                     ntp_server_options += ntp_server_suboption
-            response_ascii_part = self.build_option(self.number, ntp_server_options)
+            response_string_part = self.convert_to_string(self.number, ntp_server_options)
             # options in answer to be logged
             options_answer_part = self.number
 
-        return response_ascii_part, options_answer_part
+        return response_string_part, options_answer_part

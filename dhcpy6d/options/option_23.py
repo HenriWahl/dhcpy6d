@@ -30,7 +30,7 @@ class Option(OptionTemplate):
     """
     def build(self, transaction=None, **kwargs):
         # dummy empty defaults
-        response_ascii_part = ''
+        response_string_part = ''
         options_answer_part = None
         # should not be necessary to check if Transactions[transaction_id].client exists but there are
         # crazy clients out in the wild which might become silent this way
@@ -39,13 +39,13 @@ class Option(OptionTemplate):
                 nameserver = ''
                 for ns in cfg.CLASSES[transaction.client.client_class].NAMESERVER:
                     nameserver += inet_pton(AF_INET6, ns)
-                response_ascii_part = self.build_option(self.number, hexlify(nameserver).decode())
+                response_string_part = self.convert_to_string(self.number, hexlify(nameserver).decode())
                 options_answer_part = self.number
         elif len(cfg.NAMESERVER) > 0:
             # in case several nameservers are given convert them all and add them
             nameserver = ''
             for ns in cfg.NAMESERVER:
                 nameserver += inet_pton(AF_INET6, ns)
-            response_ascii_part = self.build_option(self.number, hexlify(nameserver).decode())
+            response_string_part = self.convert_to_string(self.number, hexlify(nameserver).decode())
             options_answer_part = self.number
-        return response_ascii_part, options_answer_part
+        return response_string_part, options_answer_part

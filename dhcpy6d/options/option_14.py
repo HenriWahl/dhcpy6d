@@ -24,5 +24,9 @@ class Option(OptionTemplate):
     Option 14 Rapid Commit Option - necessary for REPLY to SOLICIT message with Rapid Commit
     """
     def build(self, **kwargs):
-        response_ascii_part = self.build_option(self.number, '')
-        return response_ascii_part, self.number
+        # no real content - just the existence of this option makes it work
+        response_string_part = self.convert_to_string(self.number, '')
+        return response_string_part, self.number
+
+    def extend_transaction(self, transaction=None, **kwargs):
+        transaction.rapid_commit = True

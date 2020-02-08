@@ -70,7 +70,8 @@ class Client:
         """
         options_string = ''
         # put own attributes into a string
-        options = sorted(list(self.__dict__.keys()))
+        #options = sorted(list(self.__dict__.keys()))
+        options = sorted(self.__dict__.keys())
         # options.sort()
         for o in options:
             # ignore some attributes
@@ -91,7 +92,7 @@ class Client:
                         option = o + ':'
                         for p in self.__dict__[o]:
                             option += ' {0}/{1}'.format(colonify_ip6(p.PREFIX), p.LENGTH)
-                        options_string = options_string + ' | '  + option
+                        options_string = options_string + ' | ' + option
                 elif o == 'mac':
                     if self.__dict__[o] != DUMMY_MAC:
                         option = o + ': ' + str(self.__dict__[o])

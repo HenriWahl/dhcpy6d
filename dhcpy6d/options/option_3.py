@@ -34,7 +34,7 @@ class Option(OptionTemplate):
     """
     def build(self, transaction=None, **kwargs):
         # dummy empty defaults
-        response_ascii_part = ''
+        response_string_part = ''
         options_answer_part = None
 
         # check if MAC of LLIP is really known
@@ -49,7 +49,7 @@ class Option(OptionTemplate):
                 if not transaction.answer == 'normal':
                     if transaction.answer == 'noaddress':
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                        response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                        response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
                                                                 f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                         # clean client addresses which not be deployed anyway
                         transaction.client.addresses[:] = []
@@ -75,10 +75,10 @@ class Option(OptionTemplate):
                                     else:
                                         preferred_lifetime = '%08x' % 0
                                         valid_lifetime = '%08x' % 0
-                                    ia_addresses += self.build_option(CONST.OPTION.IAADDR,
-                                                                      ipv6_address +
-                                                                      preferred_lifetime +
-                                                                      valid_lifetime)
+                                    ia_addresses += self.convert_to_string(CONST.OPTION.IAADDR,
+                                                                           ipv6_address +
+                                                                           preferred_lifetime +
+                                                                           valid_lifetime)
                             if ia_addresses != '':
                                 #
                                 # todo: default clients sometimes seem to have class ''
@@ -90,24 +90,41 @@ class Option(OptionTemplate):
                                     t1 = '%08x' % int(cfg.T1)
                                     t2 = '%08x' % int(cfg.T2)
 
-                                response_ascii_part = self.build_option(CONST.OPTION.IA_NA,
-                                                                        transaction.iaid +
-                                                                        t1 +
-                                                                        t2 +
-                                                                        ia_addresses)
+                                response_string_part = self.convert_to_string(CONST.OPTION.IA_NA,
+                                                                             transaction.iaid +
+                                                                             t1 +
+                                                                             t2 +
+                                                                             ia_addresses)
                             # options in answer to be logged
                             options_answer_part = CONST.OPTION.IA_NA
                         except:
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                            response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                            response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
                                                                      f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                             # options in answer to be logged
                             options_answer_part = CONST.OPTION.STATUS_CODE
                     else:
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                        response_ascii_part = self.build_option(CONST.OPTION.STATUS_CODE,
+                        response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
                                                                      f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                         # options in answer to be logged
                         options_answer_part = CONST.OPTION.STATUS_CODE
 
-        return response_ascii_part, options_answer_part
+        return response_string_part, options_answer_part
+
+    def extend_transaction(self, transaction=None, option=None, **kwargs):
+        """
+        IA NA addresses of client
+        """
+        for payload in option:
+            transaction.iaid = payload[0:8]
+            transaction.iat1 = int(payload[8:16], 16)
+            transaction.iat2 = int(payload[16:24], 16)
+
+            # addresses given by client if any
+            for a in range(len(payload[32:]) // 44):
+                address = payload[32:][(a * 56):(a * 56) + 32]
+                # in case an address is asked for twice by one host ignore the twin
+                if not address in transaction.addresses:
+                    transaction.addresses.append(address)
+        transaction.ia_options.append(CONST.OPTION.IA_NA)

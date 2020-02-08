@@ -17,11 +17,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 from binascii import hexlify
+import re
 from socket import (AF_INET6,
                     inet_pton)
 
 from dhcpy6d.config import cfg
-from dhcpy6d.helpers import convert_dns_to_binary
+from dhcpy6d.helpers import (convert_binary_to_dns,
+                             convert_dns_to_binary)
 from dhcpy6d.options import OptionTemplate
 
 
@@ -37,7 +39,7 @@ class Option(OptionTemplate):
     """
     def build(self, transaction=None, **kwargs):
         # dummy empty return value
-        response_ascii_part = ''
+        response_string_part = ''
         options_answer_part = None
 
         # http://tools.ietf.org/html/rfc4704#page-5
@@ -75,12 +77,27 @@ class Option(OptionTemplate):
                 # sum of flags
                 nos_flags = N * 4 + O * 2 + S * 1
                 fqdn_binary = convert_dns_to_binary(f'{hostname}.{cfg.DOMAIN}')
-                response_ascii_part = self.build_option(self.number, f'{nos_flags:02x}{fqdn_binary}')
+                response_string_part = self.convert_to_string(self.number, f'{nos_flags:02x}{fqdn_binary}')
             else:
                 # if no hostname given put something in and force client override
                 fqdn_binary = convert_dns_to_binary(f'invalid-hostname.{cfg.DOMAIN}')
-                response_ascii_part = self.build_option(self.number, f'{3:02x}{fqdn_binary}')
+                response_string_part = self.convert_to_string(self.number, f'{3:02x}{fqdn_binary}')
             # options in answer to be logged
             options_answer_part = self.number
 
-        return response_ascii_part, options_answer_part
+        return response_string_part, options_answer_part
+
+    def extend_transaction(self, transaction=None, option=None, **kwargs):
+        # bits = ('%4s' % str(bin(int(option[1:2]))).strip('0b')).replace(' ', '0')
+        bits = f'{int(option[1:2]):04d}'
+        transaction.dns_n = int(bits[1])
+        transaction.dns_o = int(bits[2])
+        transaction.dns_s = int(bits[3])
+        # only hostname needed
+        transaction.fqdn = convert_binary_to_dns(option[2:])
+        transaction.hostname = transaction.fqdn.split('.')[0].lower()
+        # test if hostname is valid
+        n = re.compile('^([a-z0-9\-\_]+)*$')
+        if n.match(transaction.hostname) is None:
+            transaction.hostname = ''
+        del n
