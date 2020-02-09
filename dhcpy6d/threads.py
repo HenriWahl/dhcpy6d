@@ -105,7 +105,7 @@ class TidyUpThread(Thread):
                 # transaction data can be deleted after transaction is finished
                 for transaction in list(transactions.values()):
                     try:
-                        if timer > transactions.timestamp + cfg.CLEANING_INTERVAL * 10:
+                        if timer > transaction.timestamp + cfg.CLEANING_INTERVAL * 10:
                             log.info(f'TidyUp: deleted transaction {transaction.id} with timestamp {transaction.timestamp}')
                             transactions.pop(transaction.id)
                     except Exception as err:
