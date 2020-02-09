@@ -31,6 +31,7 @@ from .globals import (collected_macs,
                       requests_blacklist,
                       route_queue,
                       resolver_update,
+                      timer,
                       transactions)
 from .helpers import colonify_ip6
 from .log import log
@@ -45,7 +46,7 @@ class DNSQueryThread(Thread):
     def __init__(self, dnsquery_queue):
         Thread.__init__(self, name='DNSQuery')
         self.setDaemon(1)
-        self.dnsquery_queue=dnsquery_queue
+        self.dnsquery_queue = dnsquery_queue
 
     def run(self):
         # wait for new queries in queue until the end of the world
@@ -71,13 +72,15 @@ class DNSQueryThread(Thread):
                         hostname_ns = str(rdata).split('.')[0]
                         # if ip address is related to another host delete this one
                         if hostname_ns != hostname:
-                            update_rev.delete(dns.reversename.from_address(address), 'PTR', hostname_ns + '.' + a.DNS_ZONE + '.')
+                            update_rev.delete(dns.reversename.from_address(address), 'PTR',
+                                              hostname_ns + '.' + a.DNS_ZONE + '.')
 
                 except dns.resolver.NXDOMAIN:
                     pass
                 # if DNS should be updated do it - not the case if IP is released
                 if action == 'update':
-                    update_rev.add(dns.reversename.from_address(address), a.DNS_TTL, 'PTR', hostname + '.' + a.DNS_ZONE + '.')
+                    update_rev.add(dns.reversename.from_address(address), a.DNS_TTL, 'PTR',
+                                   hostname + '.' + a.DNS_ZONE + '.')
                 elif action == 'release':
                     update_rev.delete(dns.reversename.from_address(address), 'PTR')
                 dns.query.tcp(update_rev, cfg.DNS_UPDATE_NAMESERVER)
@@ -91,6 +94,7 @@ class TidyUpThread(Thread):
     """
         clean leases and transactions if obsolete
     """
+
     def __init__(self):
         Thread.__init__(self, name='TidyUp')
         self.setDaemon(1)
@@ -106,7 +110,8 @@ class TidyUpThread(Thread):
                 for transaction in list(transactions.values()):
                     try:
                         if timer > transaction.timestamp + cfg.CLEANING_INTERVAL * 10:
-                            log.info(f'TidyUp: deleted transaction {transaction.id} with timestamp {transaction.timestamp}')
+                            log.info(
+                                f'TidyUp: deleted transaction {transaction.id} with timestamp {transaction.timestamp}')
                             transactions.pop(transaction.id)
                     except Exception as err:
                         log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))
@@ -118,7 +123,7 @@ class TidyUpThread(Thread):
                     volatile_store.db_connect()
                 else:
                     # cleaning database once per minute should be enough
-                    if dbcount > 60//cfg.CLEANING_INTERVAL:
+                    if dbcount > 60 // cfg.CLEANING_INTERVAL:
                         # remove leases which might not be recycled like random addresses for example
                         volatile_store.remove_leases(timer, 'random')
                         # set leases and prefixes free whose valid lifetime is over
@@ -149,7 +154,6 @@ class TidyUpThread(Thread):
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
 
-
     def check_routes(self):
         """
             remove routes with inactive prefixes
@@ -159,7 +163,6 @@ class TidyUpThread(Thread):
             # hopefully the class stored in database still exists
             if pclass in cfg.CLASSES:
                 route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
-
 
     def check_requests(self, now):
         """
@@ -191,8 +194,7 @@ class RouteThread(Thread):
     def __init__(self, route_queue):
         Thread.__init__(self, name='Route')
         self.setDaemon(1)
-        self.route_queue=route_queue
-
+        self.route_queue = route_queue
 
     def run(self):
         """
@@ -200,9 +202,9 @@ class RouteThread(Thread):
         """
         while True:
             mode, call, prefix, length, router = self.route_queue.get()
-            call_real = call.replace('$prefix$', colonify_ip6(prefix)).\
-                             replace('$length$', str(length)).\
-                             replace('$router$', colonify_ip6(router))
+            call_real = call.replace('$prefix$', colonify_ip6(prefix)). \
+                replace('$length$', str(length)). \
+                replace('$router$', colonify_ip6(router))
             # subprocess needs list as argument which it gets by split()
             try:
                 result = subprocess.call(call_real.split(' '))
@@ -227,7 +229,7 @@ class TimerThread(Thread):
         self.setDaemon(1)
 
     def run(self):
-        global timer
         while True:
+            global timer
             timer = int(time.time())
             time.sleep(1)

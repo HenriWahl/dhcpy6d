@@ -47,7 +47,7 @@ else:
     keyring = None
 
 # dictionary to store transactions - key is transaction ID, value a transaction object
-transactions =  {}
+transactions = {}
 # collected MAC addresses from clients, mapping to link local IPs
 collected_macs = {}
 
