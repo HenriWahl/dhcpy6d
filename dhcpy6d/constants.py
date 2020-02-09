@@ -188,7 +188,6 @@ class Constants:
         self.MESSAGE = self.Category(MESSAGE)
         self.STATUS = self.Category(STATUS)
         self.OPTION = self.Category(OPTION)
-        self.ANSWER = self.Category(ANSWER)
         # needed for logging - use original dict
         self.MESSAGE_DICT = MESSAGE
         # architecture types as dict
