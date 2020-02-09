@@ -103,7 +103,7 @@ class TidyUpThread(Thread):
             # get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                for t in transactions.keys():
+                for t in list(transactions.keys()):
                     try:
                         if timer > transactions[t].timestamp + cfg.CLEANING_INTERVAL * 10:
                             transactions.pop(transactions[t].id)
