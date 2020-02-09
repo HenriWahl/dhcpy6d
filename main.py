@@ -113,7 +113,7 @@ if __name__ == '__main__':
     tidyup_thread.start()
 
     # start DNS query queue to care for DNS in background
-    dnsquery_thread = DNSQueryThread(dns_query_queue)
+    dnsquery_thread = DNSQueryThread()
     dnsquery_thread.start()
 
     # set user and group

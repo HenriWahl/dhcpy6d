@@ -26,6 +26,7 @@ import dns
 
 from .config import cfg
 from .globals import (collected_macs,
+                      dns_query_queue,
                       keyring,
                       requests,
                       requests_blacklist,
@@ -43,15 +44,14 @@ class DNSQueryThread(Thread):
         thread for updating DNS entries of valid leases without blocking main thread
     """
 
-    def __init__(self, dnsquery_queue):
+    def __init__(self):
         Thread.__init__(self, name='DNSQuery')
         self.setDaemon(1)
-        self.dnsquery_queue = dnsquery_queue
 
     def run(self):
         # wait for new queries in queue until the end of the world
         while True:
-            action, hostname, a = self.dnsquery_queue.get()
+            action, hostname, a = dns_query_queue.get()
             # colonify address for DNS
             address = colonify_ip6(a.ADDRESS)
             try:
@@ -74,9 +74,8 @@ class DNSQueryThread(Thread):
                         if hostname_ns != hostname:
                             update_rev.delete(dns.reversename.from_address(address), 'PTR',
                                               hostname_ns + '.' + a.DNS_ZONE + '.')
-
                 except dns.resolver.NXDOMAIN:
-                    pass
+                    log.error(f'Received NXDOMAIN when trying to resolve {address}')
                 # if DNS should be updated do it - not the case if IP is released
                 if action == 'update':
                     update_rev.add(dns.reversename.from_address(address), a.DNS_TTL, 'PTR',
