@@ -421,6 +421,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                             options_answer.append(options_answer_part)
                     except Exception:
                         traceback.print_exc(file=sys.stdout)
+                        print(transaction.get_options_string())
                         sys.stdout.flush()
 
             # if databases are not connected send error to client
