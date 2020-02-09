@@ -85,7 +85,7 @@ class Transaction:
         self.rapid_commit = False
         # answer type - take from class definition, one of 'normal', 'noaddress', 'noprefix' or 'none'
         # defaults to 'normal' as this is the main purpose of dhcpy6d
-        self.answer = CONST.ANSWER.NORMAL
+        self.answer = 'normal'
         # default DUID value
         self.duid = ''
         # Elapsed Time - option 8, at least sent by WIDE dhcp6c when requesting delegated prefix
@@ -114,13 +114,13 @@ class Transaction:
             # ignore some attributes
             if option not in IGNORED_LOG_OPTIONS and \
                not self.__dict__[option] in EMPTY_OPTIONS:
-                if option == CONST.ADVERTISE.ADDRESSES:
+                if option == 'addresses':
                     if (CONST.OPTION.IA_NA or CONST.OPTION.IA_TA) in self.ia_options:
                         option_string = f'{option}:'
                         for address in self.__dict__[option]:
                             option_string += f' {colonify_ip6(address)}'
                         options_string = f'{options_string} | {option_string}'
-                elif option == CONST.ADVERTISE.PREFIXES:
+                elif option == 'prefixes':
                     if CONST.OPTION.IA_PD in self.ia_options:
                         option_string = f'{option}:'
                         for p in self.__dict__[option]:

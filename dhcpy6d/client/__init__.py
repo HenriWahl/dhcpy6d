@@ -77,8 +77,8 @@ class Client:
         for option in options:
             # ignore some attributes
             if option not in IGNORED_LOG_OPTIONS and self.__dict__[option] not in EMPTY_OPTIONS:
-                if option == CONST.ADVERTISE.ADDRESSES:
-                    if CONST.ADVERTISE.ADDRESSES in cfg.CLASSES[self.client_class].ADVERTISE:
+                if option == 'addresses':
+                    if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE:
                         option_string = f'{option}:'
                         for address in self.__dict__[option]:
                             option_string +=  f' {colonify_ip6(address.ADDRESS)}'
@@ -88,8 +88,8 @@ class Client:
                     for bootfile in self.__dict__[option]:
                         option_string += f' {bootfile.BOOTFILE_URL}'
                     options_string = f'{options_string} | {option_string}'
-                elif option == CONST.ADVERTISE.PREFIXES:
-                    if CONST.ADVERTISE.PREFIXES in cfg.CLASSES[self.client_class].ADVERTISE:
+                elif option == 'prefixes':
+                    if 'prefixes' in cfg.CLASSES[self.client_class].ADVERTISE:
                         option_string = f'{option}:'
                         for p in self.__dict__[option]:
                             option_string += f' {colonify_ip6(p.PREFIX)}/{p.LENGTH}'

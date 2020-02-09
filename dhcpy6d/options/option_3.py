@@ -43,11 +43,11 @@ class Option(OptionTemplate):
             if transaction.client is None:
                 transaction.client = Client(transaction.id)
 
-            if CONST.ADVERTISE.ADDRESSES in cfg.CLASSES[transaction.client.client_class].ADVERTISE and \
+            if 'addresses' in cfg.CLASSES[transaction.client.client_class].ADVERTISE and \
                     CONST.OPTION.IA_NA in transaction.ia_options:
                 # check if only a short NoAddrAvail answer or none at all is to be returned
-                if not transaction.answer == CONST.ANSWER.NORMAL:
-                    if transaction.answer == CONST.ANSWER.NOADDRESS:
+                if not transaction.answer == 'normal':
+                    if transaction.answer == 'noaddress':
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
                                                                 f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')

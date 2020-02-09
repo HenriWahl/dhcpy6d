@@ -37,7 +37,7 @@ class OptionTemplate:
         every option has its special treatment of input and output data
         return default dummy values
         """
-        return CONST.DUMMY.EMPTY, False
+        return '', False
 
     def apply(self, **kwargs):
         """

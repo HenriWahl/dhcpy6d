@@ -47,7 +47,7 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
         # apply answer type of client to transaction - useful if no answer or no address available is configured
         transactions[transaction_id].answer = cfg.CLASSES[client.client_class].ANSWER
 
-    if CONST.ADVERTISE.ADDRESSES in cfg.CLASSES[client.client_class].ADVERTISE and \
+    if 'addresses' in cfg.CLASSES[client.client_class].ADVERTISE and \
             (3 or 4) in transactions[transaction_id].ia_options:
         for address in transactions[transaction_id].addresses:
             # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
@@ -168,7 +168,7 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
                                             preferred_lifetime=0,
                                             valid_lifetime=0))
 
-    if CONST.ADVERTISE.PREFIXES in cfg.CLASSES[client.client_class].ADVERTISE and \
+    if 'prefixes' in cfg.CLASSES[client.client_class].ADVERTISE and \
             25 in transactions[transaction_id].ia_options:
         for prefix in transactions[transaction_id].prefixes:
             # split prefix of prefix from length, separated by /

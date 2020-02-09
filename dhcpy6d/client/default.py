@@ -34,7 +34,7 @@ def default(client=None, client_config=None, transaction_id=None):
     # apply answer type of client to transaction - useful if no answer or no address available is configured
     transactions[transaction_id].answer = cfg.CLASSES[client.client_class].ANSWER
 
-    if CONST.ADVERTISE.ADDRESSES in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
+    if 'addresses' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
             (3 or 4) in transactions[transaction_id].ia_options:
         for address in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADDRESSES:
             # addresses of category 'dns' will be searched in DNS
@@ -55,7 +55,7 @@ def default(client=None, client_config=None, transaction_id=None):
                              dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                 client.addresses.append(ia)
 
-    if CONST.ADVERTISE.PREFIXES in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
+    if 'prefixes' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
             25 in transactions[transaction_id].ia_options:
 
         for prefix in cfg.CLASSES['default_' + transactions[transaction_id].interface].PREFIXES:

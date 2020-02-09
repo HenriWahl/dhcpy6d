@@ -102,24 +102,7 @@ STATUS = {0: 'Success',
           3: 'No Binding',
           4: 'Prefix not appropriate for link',
           5: 'Use Multicast',
-          6: 'No Prefix available'
-          }
-
-# using constants for different answer types to avoid strings
-ANSWER = {'none': 'none',
-          'noaddress': 'noaddress',
-          'noprefix': 'noprefix',
-          'normal': 'normal'}
-
-# advertise config setting could contain addresses and/or prefixes
-ADVERTISE = {'addresses': 'addresses',
-             'prefixes': 'prefixes'}
-
-# DNS repeating values
-DNS = {'invalid-hostname': 'invalid-hostname'}
-
-# Dummy default values
-DUMMY = {'': 'empty'}
+          6: 'No Prefix available'}
 
 # see https://tools.ietf.org/html/rfc4578#section-2.1
 ARCHITECTURE_TYPE = {0: 'Intel x86PC',
@@ -206,9 +189,6 @@ class Constants:
         self.STATUS = self.Category(STATUS)
         self.OPTION = self.Category(OPTION)
         self.ANSWER = self.Category(ANSWER)
-        self.ADVERTISE = self.Category(ADVERTISE)
-        self.DNS = self.Category(DNS)
-        self.DUMMY = self.Category(DUMMY)
         # needed for logging - use original dict
         self.MESSAGE_DICT = MESSAGE
         # architecture types as dict
