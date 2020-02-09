@@ -33,10 +33,10 @@ class Option(OptionTemplate):
         response_string_part = ''
 
         if cfg.SNTP_SERVERS != '':
-            sntp_servers = ''
+            sntp_servers = b''
             for s in cfg.SNTP_SERVERS:
-                sntp_server = hexlify(inet_pton(AF_INET6, s)).decode()
+                sntp_server = inet_pton(AF_INET6, s)
                 sntp_servers += sntp_server
-            response_string_part = self.convert_to_string(self.number, sntp_servers)
+            response_string_part = self.convert_to_string(self.number, hexlify(sntp_servers).decode())
 
         return response_string_part, self.number

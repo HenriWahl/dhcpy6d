@@ -124,7 +124,7 @@ class Config:
 
         # SNTP SERVERS Option 31
         # Unused!
-        self.SNTP_SERVERS = [self.ADDRESS]
+        self.SNTP_SERVERS = ''
 
         # NTP server Option 56
         self.NTP_SERVER = ''
@@ -472,6 +472,13 @@ class Config:
         # get nameservers as list
         if len(self.NAMESERVER) > 0:
             self.NAMESERVER = listify_option(self.NAMESERVER)
+
+        # option 31 quite probably is obsolete but might still be used, so just take its values from newer option 56
+        # client dhcpcd for example uses this option when asking for NTP server
+        if len(self.SNTP_SERVERS) > 0:
+            self.SNTP_SERVERS = listify_option(self.SNTP_SERVERS)
+        elif len(self.NTP_SERVER) > 0:
+            self.SNTP_SERVERS = listify_option(self.NTP_SERVER)
 
         # get NTP servers as list
         if len(self.NTP_SERVER) > 0:
