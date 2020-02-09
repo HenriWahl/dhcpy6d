@@ -321,14 +321,14 @@ def collect_macs(now):
     try:
         # Linux can use kernel neighbor cache
         if OS == 'Linux':
-            for host in list(get_neighbor_cache_linux(IF_NUMBER, timer).values()):
+            for host in list(get_neighbor_cache_linux(IF_NUMBER, timer.time).values()):
                 if not host.llip in collected_macs:
                     if host.llip.startswith('fe80'):
                         collected_macs[host.llip] = host
                         if cfg.LOG_MAC_LLIP:
                             log.info(f'collected mac {host.mac} for llip {colonify_ip6(host.llip)}')
                         if cfg.CACHE_MAC_LLIP:
-                            volatile_store.store_mac_llip(host.mac, host.llip, timer)
+                            volatile_store.store_mac_llip(host.mac, host.llip, timer.time)
         else:
             # subject to change - other distros might have other paths - might become a task
             # for a setup routine to find appropriate paths
@@ -352,7 +352,7 @@ def collect_macs(now):
                         if cfg.LOG_MAC_LLIP:
                             log.info('collected mac %s for llip %s' % (
                                 f[NC[OS]['mac']], colonify_ip6(f[NC[OS]['llip']])))
-                        volatile_store.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']], timer)
+                        volatile_store.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']], timer.time)
     except Exception as err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()

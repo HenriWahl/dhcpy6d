@@ -78,7 +78,7 @@ def manage_prefixes_routes():
     """
         delete or add inactive or active routes according to the prefixes in database
     """
-    volatile_store.release_free_prefixes(timer)
+    volatile_store.release_free_prefixes(timer.time)
     inactive_prefixes = volatile_store.get_inactive_prefixes()
     active_prefixes = volatile_store.get_active_prefixes()
 

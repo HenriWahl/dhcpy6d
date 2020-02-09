@@ -109,7 +109,7 @@ class TidyUpThread(Thread):
                 # transaction data can be deleted after transaction is finished
                 for transaction in list(transactions.values()):
                     try:
-                        if timer > transaction.timestamp + cfg.CLEANING_INTERVAL * 10:
+                        if timer.time > transaction.timestamp + cfg.CLEANING_INTERVAL * 10:
                             log.info(
                                 f'TidyUp: deleted transaction {transaction.id} with timestamp {transaction.timestamp}')
                             transactions.pop(transaction.id)
@@ -125,24 +125,24 @@ class TidyUpThread(Thread):
                     # cleaning database once per minute should be enough
                     if dbcount > 60 // cfg.CLEANING_INTERVAL:
                         # remove leases which might not be recycled like random addresses for example
-                        volatile_store.remove_leases(timer, 'random')
+                        volatile_store.remove_leases(timer.time, 'random')
                         # set leases and prefixes free whose valid lifetime is over
-                        volatile_store.release_free_leases(timer)
-                        volatile_store.release_free_prefixes(timer)
+                        volatile_store.release_free_leases(timer.time)
+                        volatile_store.release_free_prefixes(timer.time)
                         # unlock advertised leases and prefixes remaining
-                        volatile_store.unlock_unused_advertised_leases(timer)
-                        volatile_store.unlock_unused_advertised_prefixes(timer)
+                        volatile_store.unlock_unused_advertised_leases(timer.time)
+                        volatile_store.unlock_unused_advertised_prefixes(timer.time)
                         # remove routes with inactive prefixes
                         self.check_routes()
                         # check for brute force clients and put them into blacklist if necessary
-                        self.check_requests(timer)
+                        self.check_requests(timer.time)
                         dbcount = 0
                 dbcount += 1
 
                 # clean collected MAC addresses after 300 seconds
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
-                if cfg.CACHE_MAC_LLIP == False:
-                    timestamp = timer
+                if not cfg.CACHE_MAC_LLIP :
+                    timestamp = timer.time
                     for record in list(collected_macs.values()):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP:
@@ -213,7 +213,7 @@ class RouteThread(Thread):
             # ignore result to avoid routes being set but not noted in database when a command like
             # 'ip -6 route delete' gives a return code not 0 because a route already exists
             if mode == 'up':
-                volatile_store.store_route(prefix, length, router, timer)
+                volatile_store.store_route(prefix, length, router, timer.time)
             if mode == 'down':
                 volatile_store.remove_route(prefix)
             log.info(f"Called '{call_real}' to modify route - result: {result}")
@@ -230,6 +230,6 @@ class TimerThread(Thread):
 
     def run(self):
         while True:
-            global timer
-            timer = int(time.time())
+            # set globally available time here to new value
+            timer.time = time.time()
             time.sleep(1)

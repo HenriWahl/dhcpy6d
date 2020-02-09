@@ -49,7 +49,7 @@ class Transaction:
         # default dummy OptionsRequest
         self.options_request = list()
         # timestamp to manage/clean transactions
-        self.timestamp = timer
+        self.timestamp = timer.time
         # dummy hostname
         self.fqdn = ''
         self.hostname = ''

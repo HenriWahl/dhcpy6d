@@ -118,7 +118,7 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
                                             client.addresses.append(ia)
 
                                     # de-preferred random address has to be deleted and replaced
-                                    elif a['category'] == 'random' and timer > a['preferred_until']:
+                                    elif a['category'] == 'random' and timer.time > a['preferred_until']:
                                         # create new random address if old one is depreferred
                                         random_address = parse_pattern_address(cfg.ADDRESSES[a['type']], client_config,
                                                                                transaction_id)

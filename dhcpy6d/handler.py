@@ -56,7 +56,7 @@ class Request:
     def __init__(self, client):
         self.client = client
         self.count = 1
-        self.timestamp = timer
+        self.timestamp = timer.time
 
 
 class RequestHandler(socketserver.DatagramRequestHandler):
@@ -179,7 +179,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     else:
                         # shortcut to transactions[transaction_id]
                         transaction = transactions[transaction_id]
-                        transaction.timestamp = timer
+                        transaction.timestamp = timer.time
                         transaction.last_message_received_type = message_type
 
                     # log incoming messages
@@ -198,7 +198,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                             if not transaction.client_llip in collected_macs:
                                 if not cfg.IGNORE_MAC:
                                     # complete MAC collection - will make most sence on Linux and its native neighborcache access
-                                    collect_macs(timer)
+                                    collect_macs(timer.time)
 
                                     # when still no trace of the client in neighbor cache then send silly signal back
                                     if not transaction.client_llip in collected_macs:
@@ -210,7 +210,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                             [CONST.OPTION.STATUS_CODE],
                                                             status=CONST.STATUS.SUCCESS)
                                         # complete MAC collection
-                                        collect_macs(timer)
+                                        collect_macs(timer.time)
                                         # if client cannot be found in collected MACs
                                         if not transaction.client_llip in collected_macs:
                                             if cfg.IGNORE_UNKNOWN_CLIENTS and client_address in requests:
@@ -246,7 +246,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                         transaction.options_request)
 
                                     # store leases for addresses and lock advertised address
-                                    volatile_store.store(deepcopy(transaction), timer)
+                                    volatile_store.store(deepcopy(transaction), timer.time)
 
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -268,7 +268,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                             [CONST.OPTION.PREFERENCE] +
                                                             [CONST.OPTION.RAPID_COMMIT] + transaction.options_request)
                                     # store leases for addresses
-                                    volatile_store.store(deepcopy(transaction), timer)
+                                    volatile_store.store(deepcopy(transaction), timer.time)
 
                                     # run external script for setting a route to the delegated prefix
                                     if CONST.OPTION.IA_PD in transaction.ia_options:
@@ -303,7 +303,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                         [CONST.OPTION.PREFERENCE] +
                                                         transaction.options_request)
                                     # store leases for addresses
-                                    volatile_store.store(deepcopy(transaction), timer)
+                                    volatile_store.store(deepcopy(transaction), timer.time)
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction.id)
 
@@ -316,7 +316,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                         [CONST.OPTION.PREFERENCE] +
                                                         transaction.options_request)
                                     # store leases for addresses
-                                    volatile_store.store(deepcopy(transaction), timer)
+                                    volatile_store.store(deepcopy(transaction), timer.time)
 
                                 # RELEASE
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
@@ -330,10 +330,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                             dns_delete(transaction.id, address=a, action='release')
                                     for a in transaction.addresses:
                                         # free lease
-                                        volatile_store.release_lease(a, timer)
+                                        volatile_store.release_lease(a, timer.time)
                                     for p in transaction.prefixes:
                                         # free prefix - without length
-                                        volatile_store.release_prefix(p.split('/')[0], timer)
+                                        volatile_store.release_prefix(p.split('/')[0], timer.time)
                                         # delete route to formerly requesting client
                                         modify_route(transaction.id, 'down')
                                     # send status code option (type 13) with success (type 0)

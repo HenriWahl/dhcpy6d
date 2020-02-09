@@ -23,6 +23,7 @@ import time
 import dns.resolver
 
 from .config import cfg
+from .constants import CONST
 
 # if nameserver is given create resolver
 if len(cfg.NAMESERVER) > 0:
@@ -46,6 +47,28 @@ else:
     resolver_update = None
     keyring = None
 
+
+class Timer:
+    """
+    global object containing time set by TimerThread
+    """
+    __time = 0
+
+    def __init__(self):
+        self.time = time.time()
+
+    @property
+    def time(self):
+        return self.__time
+
+    @time.setter
+    def time(self, new_time):
+        self.__time = int(new_time)
+
+
+# global time variable, synchronized by TimerThread
+timer = Timer()
+
 # dictionary to store transactions - key is transaction ID, value a transaction object
 transactions = {}
 # collected MAC addresses from clients, mapping to link local IPs
@@ -67,9 +90,6 @@ route_queue = queue.Queue()
 requests = {}
 requests_blacklist = {}
 
-# global time variable, synchronized by TimerThread
-timer = int(time.time())
-
 # save OS
 OS = platform.system()
 if 'BSD' in OS:
@@ -81,16 +101,16 @@ if 'BSD' in OS:
 # len is minimal length a line has to have to be evaluable
 #
 # update: has been different to Linux which now access neighbor cache natively
-NC = {'BSD': {'call' : '/usr/sbin/ndp -a -n',
-                'dev'  : 2,
-                'llip' : 0,
-                'mac'  : 1,
-                'len'  : 3},
-       'Darwin': { 'call' : '/usr/sbin/ndp -a -n',
-                   'dev'  : 2,
-                   'llip' : 0,
-                   'mac'  : 1,
-                   'len'  : 3}
+NC = {'BSD': {'call': '/usr/sbin/ndp -a -n',
+              'dev': 2,
+              'llip': 0,
+              'mac': 1,
+              'len': 3},
+      'Darwin': {'call': '/usr/sbin/ndp -a -n',
+                 'dev': 2,
+                 'llip': 0,
+                 'mac': 1,
+                 'len': 3}
       }
 
 # libc access via ctypes, needed for interface handling, get it by helpers.get_libc()
@@ -103,11 +123,11 @@ IF_NAME = {}
 IF_NUMBER = {}
 
 # IA_NA, IA_TA and IA_PD Options referred here in handler
-IA_OPTIONS = (3, 4, 25)
+IA_OPTIONS = (CONST.OPTION.IA_NA,
+              CONST.OPTION.IA_TA,
+              CONST.OPTION.IA_PD)
 
 # options to be ignored when logging
-# IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'DUIDLLAddress', 'DUIDType', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old']
-# IGNORED_LOG_OPTIONS = ['OptionsRaw', 'Client', 'ClientConfigDB', 'Timestamp', 'IAT1', 'IAT2', 'IP6_old', 'LLIP_old']
 IGNORED_LOG_OPTIONS = ['options_raw', 'client', 'client_config_db', 'timestamp', 'iat1', 'iat2', 'id']
 
 # empty options string test
@@ -125,4 +145,3 @@ DUMMY_MAC = '00:00:00:00:00:00'
 # source of configuration of hosts
 # use client configuration only if needed
 config_store = volatile_store = None
-
