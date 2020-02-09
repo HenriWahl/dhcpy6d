@@ -118,6 +118,9 @@ ADVERTISE = {'addresses': 'addresses',
 # DNS repeating values
 DNS = {'invalid-hostname': 'invalid-hostname'}
 
+# Dummy default values
+DUMMY = {'': 'empty'}
+
 # see https://tools.ietf.org/html/rfc4578#section-2.1
 ARCHITECTURE_TYPE = {0: 'Intel x86PC',
                      1: 'NEC / PC98',
@@ -205,6 +208,7 @@ class Constants:
         self.ANSWER = self.Category(ANSWER)
         self.ADVERTISE = self.Category(ADVERTISE)
         self.DNS = self.Category(DNS)
+        self.DUMMY = self.Category(DUMMY)
         # needed for logging - use original dict
         self.MESSAGE_DICT = MESSAGE
         # architecture types as dict

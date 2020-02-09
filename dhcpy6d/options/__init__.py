@@ -20,6 +20,7 @@ import importlib.util
 import pathlib
 import re
 
+from ..constants import CONST
 
 class OptionTemplate:
     """
@@ -34,8 +35,9 @@ class OptionTemplate:
         """
         to be filled with life by every single option
         every option has its special treatment of input and output data
+        return default dummy values
         """
-        pass
+        return CONST.DUMMY.EMPTY, False
 
     def apply(self, **kwargs):
         """
