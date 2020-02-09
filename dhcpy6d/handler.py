@@ -374,7 +374,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            log.error(f'handle(): {str(err)} | Caused by: {client_address} | Transaction: {transaction.id}')
+            log.error(f'handle(): {str(err)} | caused by: {client_address} | transaction: {transaction.id}')
             return None
 
     def build_response(self, message_type_response, transaction_id, options_request, status=0):
