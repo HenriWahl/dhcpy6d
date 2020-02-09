@@ -36,16 +36,16 @@ class Option(OptionTemplate):
         # crazy clients out in the wild which might become silent this way
         if transaction.client:
             if len(cfg.CLASSES[transaction.client.client_class].NAMESERVER) > 0:
-                nameserver = ''
+                nameserver = b''
                 for ns in cfg.CLASSES[transaction.client.client_class].NAMESERVER:
-                    nameserver += inet_pton(AF_INET6, ns).decode()
+                    nameserver += inet_pton(AF_INET6, ns)
                 response_string_part = self.convert_to_string(self.number, hexlify(nameserver).decode())
                 options_answer_part = self.number
         elif len(cfg.NAMESERVER) > 0:
             # in case several nameservers are given convert them all and add them
-            nameserver = ''
+            nameserver = b''
             for ns in cfg.NAMESERVER:
-                nameserver += inet_pton(AF_INET6, ns).decode()
+                nameserver += inet_pton(AF_INET6, ns)
             response_string_part = self.convert_to_string(self.number, hexlify(nameserver).decode())
             options_answer_part = self.number
         return response_string_part, options_answer_part
