@@ -175,7 +175,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
             prefix_prefix, prefix_length = split_prefix(prefix)
 
             # check_prefix returns hostname, prefix, length, type, category, class, preferred_until of leased address
-            answer = volatile_store.check_prefix(prefix_prefix, prefix_length, transaction.id)
+            answer = volatile_store.check_prefix(prefix_prefix, prefix_length, transaction)
 
             if answer:
                 if len(answer) > 0:

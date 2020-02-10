@@ -103,12 +103,12 @@ class Textfile(Store):
         self.connected = True
 
 
-    def get_client_config_by_mac(self, transaction_id):
+    def get_client_config_by_mac(self, transaction):
         """
             get host(s?) and its information belonging to that mac
         """
         hosts = list()
-        mac = transactions[transaction_id].mac
+        mac = transaction.mac
         if mac in self.index_mac:
             hosts.extend(self.index_mac[mac])
             return hosts
@@ -116,12 +116,12 @@ class Textfile(Store):
             return None
 
 
-    def get_client_config_by_duid(self, transaction_id):
+    def get_client_config_by_duid(self, transaction):
         """
             get host and its information belonging to that DUID
         """
         hosts = list()
-        duid = transactions[transaction_id].duid
+        duid = transaction.duid
         if duid in self.index_duid:
             hosts.extend(self.index_duid[duid])
             return hosts
@@ -129,11 +129,11 @@ class Textfile(Store):
             return None
 
 
-    def get_client_config_by_hostname(self, transaction_id):
+    def get_client_config_by_hostname(self, transaction):
         """
             get host and its information by hostname
         """
-        hostname = transactions[transaction_id].hostname
+        hostname = transaction.hostname
         if hostname in self.hosts:
             return [self.hosts[hostname]]
         else:

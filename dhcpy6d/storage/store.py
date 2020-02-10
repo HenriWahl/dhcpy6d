@@ -502,7 +502,7 @@ class Store:
 
         return self.query(query)
 
-    def check_prefix(self, prefix, length, transaction_id):
+    def check_prefix(self, prefix, length, transaction):
         """
         check state of a prefix for REBIND and RENEW messages
         """
@@ -513,17 +513,17 @@ class Store:
                     (self.table_prefixes,
                      prefix,
                      length,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid)
+                     transaction.mac,
+                     transaction.duid)
         else:
             query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
                      AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
                     (self.table_prefixes,
                      prefix,
                      length,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid,
-                     transactions[transaction_id].iaid)
+                     transaction.mac,
+                     transaction.duid,
+                     transaction.iaid)
         return self.query(query)
 
     def check_advertised_lease(self, transaction=None, category='', atype=''):
@@ -547,9 +547,9 @@ class Store:
                      AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_leases,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid,
-                     transactions[transaction_id].iaid,
+                     transaction.mac,
+                     transaction.duid,
+                     transaction.iaid,
                      category,
                      atype)
         result = self.query(query)
@@ -561,7 +561,7 @@ class Store:
         else:
             return(False)
 
-    def check_advertised_prefix(self, transaction=None, category='', ptype=''):
+    def check_advertised_prefix(self, transaction, category='', ptype=''):
         """
         check if there is already an advertised prefix for client
         """
@@ -582,9 +582,9 @@ class Store:
                      AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_prefixes,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid,
-                     transactions[transaction_id].iaid,
+                     transaction.mac,
+                     transaction.duid,
+                     transaction.iaid,
                      category,
                      ptype)
         result = self.query(query)

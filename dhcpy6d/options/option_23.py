@@ -32,7 +32,7 @@ class Option(OptionTemplate):
         # dummy empty defaults
         response_string_part = ''
         options_answer_part = None
-        # should not be necessary to check if Transactions[transaction_id].client exists but there are
+        # should not be necessary to check if transactions.client exists but there are
         # crazy clients out in the wild which might become silent this way
         if transaction.client:
             if len(cfg.CLASSES[transaction.client.client_class].NAMESERVER) > 0:
