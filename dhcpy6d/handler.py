@@ -437,48 +437,60 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 # problems may have arisen while processing and these information
                 # is not valid anymore
                 # handler type + transaction id
-                response_string = '%02x' % (7)
+                #response_string = '%02x' % (7)
+                response_string = f'{CONST.MESSAGE.REPLY:02x}'
                 response_string += transaction.id
 
                 # always of interest
                 # option 1 client identifier
-                response_string += build_option(1, transaction.duid)
+                response_string += build_option(CONST.OPTION.CLIENTID,
+                                                transaction.duid)
                 # option 2 server identifier
-                response_string += build_option(2, cfg.SERVERDUID)
+                response_string += build_option(CONST.OPTION.SERVERID,
+                                                cfg.SERVERDUID)
 
                 # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                response_string += build_option(13, '%04x' % 2)
+                response_string += build_option(CONST.OPTION.STATUS_CODE,
+                                                f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
 
                 log.error('%s| transaction_id: %s | DatabaseError: %s' % (CONST.MESSAGE_DICT[message_type_response], transaction.id, ' '.join(db_error)))
 
             else:
                 # log handler
                 if not transaction.client is None:
-                    if len(transaction.client.addresses) == 0 and\
-                       len(transaction.client.prefixes) == 0 and\
-                       transaction.answer == 'normal' and\
-                       transaction.last_message_received_type in [1, 3, 5, 6]:
+                    if len(transaction.client.addresses) == 0 and \
+                       len(transaction.client.prefixes) == 0 and \
+                       transaction.answer == 'normal' and \
+                       transaction.last_message_received_type in [CONST.MESSAGE.SOLICIT,
+                                                                  CONST.MESSAGE.REQUEST,
+                                                                  CONST.MESSAGE.RENEW,
+                                                                  CONST.MESSAGE.REBIND]:
                         # create error handler - headers have to be recreated because
                         # problems may have arisen while processing and these information
                         # is not valid anymore
                         # handler type + transaction id
-                        response_string = '%02x' % 7
+                        #response_string = '%02x' % 7
+                        response_string = f'{CONST.MESSAGE.REPLY:02x}'
                         response_string += transaction.id
 
                         # always of interest
                         # option 1 client identifier
-                        response_string += build_option(1, transaction.duid)
+                        response_string += build_option(CONST.OPTION.CLIENTID,
+                                                        transaction.duid)
                         # option 2 server identifier
-                        response_string += build_option(2, cfg.SERVERDUID)
+                        response_string += build_option(CONST.OPTION.SERVERID,
+                                                        cfg.SERVERDUID)
 
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
-                        response_string += build_option(13, '%04x' % 2)
+                        response_string += build_option(CONST.OPTION.STATUS_CODE,
+                                                        f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                         # options in answer to be logged
-                        options_answer.append(13)
+                        options_answer.append(CONST.OPTION.STATUS_CODE)
 
                         # log warning message about unavailable addresses
-                        log.warning('REPLY | no addresses or prefixes available | transaction_id: %s | client_llip: %s' % \
-                                    (transaction.id, colonify_ip6(transaction.client_llip)))
+                        log.warning(f'REPLY | no addresses or prefixes available | '
+                                    'transaction_id: {transaction.id} | '
+                                    'client_llip: {colonify_ip6(transaction.client_llip))}')
 
                     elif CONST.OPTION.IA_NA in options_request or \
                          CONST.OPTION.IA_TA in options_request or \

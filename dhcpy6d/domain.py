@@ -76,7 +76,7 @@ def dns_delete(transaction, address='', action='release'):
         # if there is any address type which prototype matches use its DNS ZONE
         if a.matches_prototype(address):
             # kind of RCF-compliant security measure - check if hostname and DUID from transaction fits them of store
-            if duid == transaction.duid and\
+            if duid == transaction.duid and \
                iaid == transaction.iaid:
                 delete = True
                 # also check MAC address if MAC counts in general - not RFCish

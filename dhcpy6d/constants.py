@@ -193,5 +193,6 @@ class Constants:
         # architecture types as dict
         self.ARCHITECTURE_TYPE_DICT = ARCHITECTURE_TYPE
 
+
 # Add constants for global access
 CONST = Constants()
