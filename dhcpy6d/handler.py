@@ -495,7 +495,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 else:
                     options_answer = sorted(options_answer)
                     log.info('%s | transaction_id: %s | options: %s' % (CONST.MESSAGE_DICT[message_type_response],
-                                                                        transaction,
+                                                                        transaction.id,
                                                                         options_answer))
             # handler
             self.response = binascii.unhexlify(response_string)
