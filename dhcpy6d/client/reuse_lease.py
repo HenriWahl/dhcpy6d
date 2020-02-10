@@ -19,7 +19,6 @@
 from ..config import (Address,
                       cfg,
                       Prefix)
-from ..constants import CONST
 from ..globals import (timer,
                        transactions)
 from ..helpers import (decompress_ip6,
@@ -30,7 +29,7 @@ from ..storage import volatile_store
 from .parse_pattern import parse_pattern_address
 
 
-def reuse_lease(client=None, client_config=None, transaction_id=None):
+def reuse_lease(client=None, client_config=None, transaction=None):
     """
     Reuse already existing lease information
     """
@@ -39,19 +38,19 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
         client.hostname = client_config.HOSTNAME
         client.client_class = client_config.CLASS
         # apply answer type of client to transaction - useful if no answer or no address available is configured
-        transactions[transaction_id].answer = cfg.CLASSES[client.client_class].ANSWER
+        transaction.answer = cfg.CLASSES[client.client_class].ANSWER
     else:
         # use default class if host is unknown
-        client.hostname = transactions[transaction_id].hostname
-        client.client_class = 'default_' + transactions[transaction_id].interface
+        client.hostname = transaction.hostname
+        client.client_class = 'default_' + transaction.interface
         # apply answer type of client to transaction - useful if no answer or no address available is configured
-        transactions[transaction_id].answer = cfg.CLASSES[client.client_class].ANSWER
+        transaction.answer = cfg.CLASSES[client.client_class].ANSWER
 
     if 'addresses' in cfg.CLASSES[client.client_class].ADVERTISE and \
-            (3 or 4) in transactions[transaction_id].ia_options:
-        for address in transactions[transaction_id].addresses:
+            (3 or 4) in transaction.ia_options:
+        for address in transaction.addresses:
             # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
-            answer = volatile_store.check_lease(address, transaction_id)
+            answer = volatile_store.check_lease(address, transaction)
             if answer:
                 if len(answer) > 0:
                     for item in answer:
@@ -60,12 +59,12 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
                                 item)))
                         # if lease exists but no configured client set class to default
                         if client_config is None:
-                            client.hostname = transactions[transaction_id].hostname
-                            client.client_class = 'default_' + transactions[transaction_id].interface
+                            client.hostname = transaction.hostname
+                            client.client_class = 'default_' + transaction.interface
                         # check if address type of lease still exists in configuration
                         # and if request interface matches that of class
                         if a['class'] in cfg.CLASSES and client.client_class == a['class'] and \
-                                transactions[transaction_id].interface in cfg.CLASSES[client.client_class].INTERFACE:
+                                transaction.interface in cfg.CLASSES[client.client_class].INTERFACE:
                             # type of address must be defined in addresses for this class
                             # or fixed/dns - in which case it is not class related
                             if a['type'] in cfg.CLASSES[a['class']].ADDRESSES or a['type'] in ['fixed']:
@@ -120,8 +119,9 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
                                     # de-preferred random address has to be deleted and replaced
                                     elif a['category'] == 'random' and timer.time > a['preferred_until']:
                                         # create new random address if old one is depreferred
-                                        random_address = parse_pattern_address(cfg.ADDRESSES[a['type']], client_config,
-                                                                               transaction_id)
+                                        random_address = parse_pattern_address(cfg.ADDRESSES[a['type']],
+                                                                               client_config,
+                                                                               transaction.id)
                                         # create new random address if old one is de-preferred
                                         # do not wait until it is invalid
                                         if random_address is not None:
@@ -161,7 +161,7 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
         # important indent here, has to match for...addresses-loop!
         # look for addresses in transaction that are invalid and add them
         # to client addresses with flag invalid and a RFC-compliant lifetime of 0
-        for a in set(transactions[transaction_id].addresses).difference(
+        for a in set(transaction.addresses).difference(
                 [decompress_ip6(x.ADDRESS) for x in client.addresses]):
             client.addresses.append(Address(address=a,
                                             valid=False,
@@ -169,13 +169,13 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
                                             valid_lifetime=0))
 
     if 'prefixes' in cfg.CLASSES[client.client_class].ADVERTISE and \
-            25 in transactions[transaction_id].ia_options:
-        for prefix in transactions[transaction_id].prefixes:
+            25 in transaction.ia_options:
+        for prefix in transaction.prefixes:
             # split prefix of prefix from length, separated by /
             prefix_prefix, prefix_length = split_prefix(prefix)
 
             # check_prefix returns hostname, prefix, length, type, category, class, preferred_until of leased address
-            answer = volatile_store.check_prefix(prefix_prefix, prefix_length, transaction_id)
+            answer = volatile_store.check_prefix(prefix_prefix, prefix_length, transaction.id)
 
             if answer:
                 if len(answer) > 0:
@@ -185,12 +185,12 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
                                 item)))
                         # if lease exists but no configured client set class to default
                         if client_config is None:
-                            client.hostname = transactions[transaction_id].hostname
-                            client.client_class = 'default_' + transactions[transaction_id].interface
+                            client.hostname = transaction.hostname
+                            client.client_class = 'default_' + transaction.interface
                         # check if address type of lease still exists in configuration
                         # and if request interface matches that of class
                         if p['class'] in cfg.CLASSES and client.client_class == p['class'] and \
-                                transactions[transaction_id].interface in cfg.CLASSES[client.client_class].INTERFACE:
+                                transaction.interface in cfg.CLASSES[client.client_class].INTERFACE:
                             # type of address must be defined in addresses for this class
                             # or fixed/dns - in which case it is not class related
                             if p['type'] in cfg.CLASSES[p['class']].PREFIXES:
@@ -247,7 +247,7 @@ def reuse_lease(client=None, client_config=None, transaction_id=None):
         # look for prefixes in transaction that are invalid and add them
         # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
         if len(client.prefixes) > 0:
-            for p in set(transactions[transaction_id].prefixes).difference(
+            for p in set(transaction.prefixes).difference(
                     [decompress_prefix(x.PREFIX, x.LENGTH) for x in client.prefixes]):
                 prefix, length = split_prefix(p)
                 client.prefixes.append(Prefix(prefix=prefix,

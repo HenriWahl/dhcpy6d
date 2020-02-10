@@ -26,7 +26,7 @@ from ..log import log
 from ..storage import volatile_store
 
 
-def parse_pattern_address(address, client_config, transaction_id):
+def parse_pattern_address(address, client_config, transaction):
     """
         parse address pattern and replace variables with current values
     """
@@ -39,11 +39,11 @@ def parse_pattern_address(address, client_config, transaction_id):
 
     # check different client address categories - to be extended!
     if address.CATEGORY == 'mac':
-        macraw = ''.join(transactions[transaction_id].mac.split(':'))
+        macraw = ''.join(transaction.mac.split(':'))
         a = a.replace('$mac$', ':'.join((macraw[0:4], macraw[4:8], macraw[8:12])))
     elif address.CATEGORY == 'eui64':
         # https://tools.ietf.org/html/rfc4291#section-2.5.1
-        mac = transactions[transaction_id].mac
+        mac = transaction.mac
         a = a.replace('$eui64$', convert_mac_to_eui64(mac))
     elif address.CATEGORY in ['fixed', 'dns']:
         # No patterns for fixed address, let's bail
@@ -56,7 +56,7 @@ def parse_pattern_address(address, client_config, transaction_id):
             return None
     elif address.CATEGORY == 'random':
         # first check if address already has been advertised
-        advertised_address = volatile_store.check_advertised_lease(transaction_id,
+        advertised_address = volatile_store.check_advertised_lease(transaction,
                                                                    category='random',
                                                                    atype=address.TYPE)
         # when address already has been advertised for this client use it
@@ -82,7 +82,7 @@ def parse_pattern_address(address, client_config, transaction_id):
 
         # the following steps are done to find a collision-free lease in given range
         # check if address already has been advertised - important for REPLY after SOLICIT-ADVERTISE-REQUEST
-        advertised_address = volatile_store.check_advertised_lease(transaction_id, category='range', atype=address.TYPE)
+        advertised_address = volatile_store.check_advertised_lease(transaction, category='range', atype=address.TYPE)
         # when address already has been advertised for this client use it
         if advertised_address:
             a = advertised_address
@@ -91,8 +91,8 @@ def parse_pattern_address(address, client_config, transaction_id):
             lease = volatile_store.get_range_lease_for_recycling(prefix=prefix,
                                                                  range_from=range_from,
                                                                  range_to=range_to,
-                                                                 duid=transactions[transaction_id].duid,
-                                                                 mac=transactions[transaction_id].mac)
+                                                                 duid=transaction.duid,
+                                                                 mac=transaction.mac)
             # the found lease has to be in range - important after changed range boundaries
             if lease is not None and range_from <= lease[28:].lower() <= range_to:
                 a = ':'.join((lease[0:4], lease[4:8], lease[8:12], lease[12:16],
@@ -140,7 +140,7 @@ def parse_pattern_address(address, client_config, transaction_id):
     return decompress_ip6(a)
 
 
-def parse_pattern_prefix(pattern, client_config, transaction_id):
+def parse_pattern_prefix(pattern, client_config, transaction):
     """
         parse address pattern and replace variables with current values
     """
@@ -176,7 +176,7 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
 
         # the following steps are done to find a collision-free lease in given range
         # check if address already has been advertised - important for REPLY after SOLICIT-ADVERTISE-REQUEST
-        advertised_prefix = volatile_store.check_advertised_prefix(transaction_id, category='range', ptype=pattern.TYPE)
+        advertised_prefix = volatile_store.check_advertised_prefix(transaction, category='range', ptype=pattern.TYPE)
 
         # when address already has been advertised for this client use it
         if advertised_prefix:
@@ -187,8 +187,8 @@ def parse_pattern_prefix(pattern, client_config, transaction_id):
                                                                    length=pattern.LENGTH,
                                                                    range_from=range_from,
                                                                    range_to=range_to,
-                                                                   duid=transactions[transaction_id].duid,
-                                                                   mac=transactions[transaction_id].mac)
+                                                                   duid=transaction.duid,
+                                                                   mac=transaction.mac)
             # the found prefix has to be in range - important after changed range boundaries
             if prefix is not None:
                 if range_from <= prefix[prefix_range_index:prefix_range_index+4].lower() <= range_to:

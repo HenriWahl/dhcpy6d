@@ -27,21 +27,21 @@ from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
 
 
-def default(client=None, client_config=None, transaction_id=None):
+def default(client=None, client_config=None, transaction=None):
     # use default class if host is unknown
-    client.hostname = transactions[transaction_id].hostname
-    client.client_class = 'default_' + transactions[transaction_id].interface
+    client.hostname = transaction.hostname
+    client.client_class = 'default_' + transaction.interface
     # apply answer type of client to transaction - useful if no answer or no address available is configured
-    transactions[transaction_id].answer = cfg.CLASSES[client.client_class].ANSWER
+    transaction.answer = cfg.CLASSES[client.client_class].ANSWER
 
-    if 'addresses' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
-            (3 or 4) in transactions[transaction_id].ia_options:
-        for address in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADDRESSES:
+    if 'addresses' in cfg.CLASSES['default_' + transaction.interface].ADVERTISE and \
+            (3 or 4) in transaction.ia_options:
+        for address in cfg.CLASSES['default_' + transaction.interface].ADDRESSES:
             # addresses of category 'dns' will be searched in DNS
             if cfg.ADDRESSES[address].CATEGORY == 'dns':
                 a = get_ip_from_dns(client.hostname)
             else:
-                a = parse_pattern_address(cfg.ADDRESSES[address], client, transaction_id)
+                a = parse_pattern_address(cfg.ADDRESSES[address], client, transaction)
             if a:
                 ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
                              preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
@@ -55,11 +55,11 @@ def default(client=None, client_config=None, transaction_id=None):
                              dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                 client.addresses.append(ia)
 
-    if 'prefixes' in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADVERTISE and \
-            25 in transactions[transaction_id].ia_options:
+    if 'prefixes' in cfg.CLASSES['default_' + transaction.interface].ADVERTISE and \
+            CONST.OPTION.IA_PD in transaction.ia_options:
 
-        for prefix in cfg.CLASSES['default_' + transactions[transaction_id].interface].PREFIXES:
-            p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
+        for prefix in cfg.CLASSES['default_' + transaction.interface].PREFIXES:
+            p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction)
             # in case range has been exceeded p will be None
             if p:
                 ia_pd = Prefix(prefix=p,

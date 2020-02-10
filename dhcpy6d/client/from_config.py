@@ -27,14 +27,14 @@ from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
 
 
-def from_config(client=None, client_config=None, transaction_id=None):
+def from_config(client=None, client_config=None, transaction=None):
     # give client hostname + class
     client.hostname = client_config.HOSTNAME
     client.client_class = client_config.CLASS
     # apply answer type of client to transaction - useful if no answer or no address available is configured
-    transactions[transaction_id].answer = cfg.CLASSES[client.client_class].ANSWER
+    transaction.answer = cfg.CLASSES[client.client_class].ANSWER
     # continue only if request interface matches class interfaces
-    if transactions[transaction_id].interface in cfg.CLASSES[client.client_class].INTERFACE:
+    if transaction.interface in cfg.CLASSES[client.client_class].INTERFACE:
         # if fixed addresses are given build them
         if client_config.ADDRESS is not None:
             for address in client_config.ADDRESS:
@@ -59,7 +59,7 @@ def from_config(client=None, client_config=None, transaction_id=None):
                 if cfg.ADDRESSES[address].CATEGORY == 'dns':
                     a = get_ip_from_dns(client.hostname)
                 else:
-                    a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
+                    a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction)
                 # in case range has been exceeded a will be None
                 if a:
                     ia = Address(address=a,
@@ -82,16 +82,16 @@ def from_config(client=None, client_config=None, transaction_id=None):
 
                 # check if transaction attributes matches the bootfile defintion
                 if (not client_architecture or
-                    transactions[transaction_id].client_architecture == client_architecture or
-                    transactions[transaction_id].known_client_architecture == client_architecture) and \
+                    transaction.client_architecture == client_architecture or
+                    transaction.known_client_architecture == client_architecture) and \
                         (not user_class or
-                         transactions[transaction_id].UserClass == user_class):
+                         transaction.UserClass == user_class):
                     client.bootfiles.append(cfg.BOOTFILES[bootfile])
 
             if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
-                    25 in transactions[transaction_id].ia_options:
+                    CONST.OPTION.IA_PD in transaction.ia_options:
                 for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:
-                    p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction_id)
+                    p = parse_pattern_prefix(cfg.PREFIXES[prefix], client_config, transaction)
                     # in case range has been exceeded p will be None
                     if p:
                         ia_pd = Prefix(prefix=p,
@@ -106,13 +106,13 @@ def from_config(client=None, client_config=None, transaction_id=None):
 
         if client_config.ADDRESS == client_config.CLASS == '':
             # use default class if no class or address is given
-            for address in cfg.CLASSES['default_' + transactions[transaction_id].interface].ADDRESSES:
-                client.client_class = 'default_' + transactions[transaction_id].interface
+            for address in cfg.CLASSES['default_' + transaction.interface].ADDRESSES:
+                client.client_class = 'default_' + transaction.interface
                 # addresses of category 'dns' will be searched in DNS
                 if cfg.ADDRESSES[address].CATEGORY == 'dns':
                     a = get_ip_from_dns(client.hostname)
                 else:
-                    a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction_id)
+                    a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction)
                 if a:
                     ia = Address(address=a, ia_type=cfg.ADDRESSES[address].IA_TYPE,
                                  preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
@@ -126,16 +126,16 @@ def from_config(client=None, client_config=None, transaction_id=None):
                                  dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
                     client.addresses.append(ia)
 
-            for bootfile in cfg.CLASSES['default_' + transactions[transaction_id].interface].BOOTFILES:
+            for bootfile in cfg.CLASSES['default_' + transaction.interface].BOOTFILES:
                 client_architecture = bootfile.CLIENT_ARCHITECTURE
                 user_class = bootfile.USER_CLASS
 
                 # check if transaction attributes matches the bootfile defintion
                 if (not client_architecture or
-                    transactions[transaction_id].client_architecture == client_architecture or
-                    transactions[transaction_id].known_client_architecture == client_architecture) and \
+                    transaction.client_architecture == client_architecture or
+                    transaction.known_client_architecture == client_architecture) and \
                         (not user_class or
-                         transactions[transaction_id].UserClass == user_class):
+                         transaction.UserClass == user_class):
                     client.bootfiles.append(bootfile)
 
     # given client has been modified successfully

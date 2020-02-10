@@ -479,7 +479,7 @@ class Store:
                                                        prefix+range_to+((128-int(length))//4)*'0')
         return self.query(query)
 
-    def check_lease(self, address, transaction_id):
+    def check_lease(self, address, transaction):
         """
         check state of a lease for REBIND and RENEW messages
         """
@@ -489,16 +489,16 @@ class Store:
                      AND address = '%s' AND mac = '%s' AND duid = '%s'" % \
                     (self.table_leases,
                      address,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid)
+                     transaction.mac,
+                     transaction.duid)
         else:
             query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
                      AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
                     (self.table_leases,
                      address,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid,
-                     transactions[transaction_id].iaid)
+                     transaction.mac,
+                     transaction.duid,
+                     transaction.iaid)
 
         return self.query(query)
 
@@ -526,7 +526,7 @@ class Store:
                      transactions[transaction_id].iaid)
         return self.query(query)
 
-    def check_advertised_lease(self, transaction_id='', category='', atype=''):
+    def check_advertised_lease(self, transaction=None, category='', atype=''):
         """
         check if there are already advertised addresses for client
         """
@@ -537,8 +537,8 @@ class Store:
                      AND mac = '%s' AND duid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_leases,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid,
+                     transaction.mac,
+                     transaction.duid,
                      category,
                      atype)
         else:
@@ -561,7 +561,7 @@ class Store:
         else:
             return(False)
 
-    def check_advertised_prefix(self, transaction_id='', category='', ptype=''):
+    def check_advertised_prefix(self, transaction=None, category='', ptype=''):
         """
         check if there is already an advertised prefix for client
         """
@@ -572,8 +572,8 @@ class Store:
                      AND mac = '%s' AND duid = '%s'\
                      AND category = '%s' AND type = '%s'" % \
                     (self.table_prefixes,
-                     transactions[transaction_id].mac,
-                     transactions[transaction_id].duid,
+                     transaction.mac,
+                     transaction.duid,
                      category,
                      ptype)
         else:
@@ -641,21 +641,21 @@ class Store:
         query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_prefixes, now + 60)
         return self.query(query)
 
-    def build_config_from_db(self, transaction_id):
+    def build_config_from_db(self, transaction):
         """
         get client config from db and build the appropriate config objects and indices
         """
-        if transactions[transaction_id].client_config_db is None:
+        if transaction.client_config_db is None:
             query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
                     hostname = '%s' OR mac LIKE '%%%s%%' OR duid = '%s'" % \
-                    (self.table_hosts,\
-                     transactions[transaction_id].hostname,\
-                     transactions[transaction_id].mac,\
-                     transactions[transaction_id].duid)
+                    (self.table_hosts,
+                     transaction.hostname,
+                     transaction.mac,
+                     transaction.duid)
             answer = self.query(query)
 
             # add client config which seems to fit to transaction
-            transactions[transaction_id].client_config_db = ClientConfigDB()
+            transaction.client_config_db = ClientConfigDB()
 
             # read all sections of config file
             # a section here is a host
@@ -667,67 +667,67 @@ class Store:
                 if duid: duid = duid.lower()
                 if address: address = listify_option(address.lower())
 
-                transactions[transaction_id].client_config_db.hosts[hostname] = ClientConfig(hostname=hostname,
-                                                                                                mac=mac,
-                                                                                                duid=duid,
-                                                                                                aclass=aclass,
-                                                                                                address=address,
-                                                                                                id=id)
+                transaction.client_config_db.hosts[hostname] = ClientConfig(hostname=hostname,
+                                                                            mac=mac,
+                                                                            duid=duid,
+                                                                            aclass=aclass,
+                                                                            address=address,
+                                                                            id=id)
 
                 # and put the host objects into index
-                if transactions[transaction_id].client_config_db.hosts[hostname].MAC:
-                    for m in transactions[transaction_id].client_config_db.hosts[hostname].MAC:
-                        if not m in transactions[transaction_id].client_config_db.index_mac:
-                            transactions[transaction_id].client_config_db.index_mac[m] = [transactions[transaction_id].client_config_db.hosts[hostname]]
+                if transaction.client_config_db.hosts[hostname].MAC:
+                    for m in transaction.client_config_db.hosts[hostname].MAC:
+                        if not m in transaction.client_config_db.index_mac:
+                            transaction.client_config_db.index_mac[m] = [transaction.client_config_db.hosts[hostname]]
                         else:
-                            transactions[transaction_id].client_config_db.index_mac[m].append(transactions[transaction_id].client_config_db.hosts[hostname])
+                            transaction.client_config_db.index_mac[m].append(transaction.client_config_db.hosts[hostname])
 
                 # add DUIDs to IndexDUID
-                if not transactions[transaction_id].client_config_db.hosts[hostname].DUID == '':
-                    if not transactions[transaction_id].client_config_db.hosts[hostname].DUID in transactions[transaction_id].client_config_db.index_duid:
-                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.hosts[hostname].DUID] = [transactions[transaction_id].client_config_db.hosts[hostname]]
+                if not transaction.client_config_db.hosts[hostname].DUID == '':
+                    if not transaction.client_config_db.hosts[hostname].DUID in transaction.client_config_db.index_duid:
+                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID] = [transaction.client_config_db.hosts[hostname]]
                     else:
-                        transactions[transaction_id].client_config_db.index_duid[transactions[transaction_id].client_config_db.hosts[hostname].DUID].append(transactions[transaction_id].client_config_db.hosts[hostname])
+                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID].append(transaction.client_config_db.hosts[hostname])
 
                 # some cleaning
                 del host, mac, duid, address, aclass, id
 
-    def get_client_config_by_mac(self, transaction_id):
+    def get_client_config_by_mac(self, transaction):
         """
         get host and its information belonging to that mac
         """
         hosts = list()
-        mac = transactions[transaction_id].mac
+        mac = transaction.mac
 
-        if mac in transactions[transaction_id].client_config_db.index_mac:
-            hosts.extend(transactions[transaction_id].client_config_db.index_mac[mac])
+        if mac in transaction.client_config_db.index_mac:
+            hosts.extend(transaction.client_config_db.index_mac[mac])
             return hosts
         else:
             return None
 
 
-    def get_client_config_by_duid(self, transaction_id):
+    def get_client_config_by_duid(self, transaction):
         """
             get host and its information belonging to that DUID
         """
         # get client config that most probably seems to fit
         hosts = list()
-        duid = transactions[transaction_id].duid
+        duid = transaction.duid
 
-        if duid in transactions[transaction_id].client_config_db.index_duid:
-            hosts.extend(transactions[transaction_id].client_config_db.index_duid[duid])
+        if duid in transaction.client_config_db.index_duid:
+            hosts.extend(transaction.client_config_db.index_duid[duid])
             return hosts
         else:
             return None
 
 
-    def get_client_config_by_hostname(self, transaction_id):
+    def get_client_config_by_hostname(self, transaction):
         """
             get host and its information by hostname
         """
-        hostname = transactions[transaction_id].hostname
-        if hostname in transactions[transaction_id].client_config_db.hosts:
-            return [transactions[transaction_id].client_config_db.hosts[hostname]]
+        hostname = transaction.hostname
+        if hostname in transaction.client_config_db.hosts:
+            return [transaction.client_config_db.hosts[hostname]]
         else:
             return None
 

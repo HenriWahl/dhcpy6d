@@ -42,7 +42,7 @@ class Option(OptionTemplate):
         if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
             # collect client information
             if transaction.client is None:
-                transaction.client = Client(transaction.id)
+                transaction.client = Client(transaction)
 
             # Only if prefixes are provided
             if 'prefixes' in cfg.CLASSES[transaction.client.client_class].ADVERTISE:

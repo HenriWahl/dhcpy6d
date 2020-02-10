@@ -41,7 +41,7 @@ class Option(OptionTemplate):
         if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
             # collect client information
             if transaction.client is None:
-                transaction.client = Client(transaction.id)
+                transaction.client = Client(transaction)
 
             if 'addresses' in cfg.CLASSES[transaction.client.client_class].ADVERTISE and \
                     CONST.OPTION.IA_NA in transaction.ia_options:

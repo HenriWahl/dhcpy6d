@@ -272,10 +272,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                                     # run external script for setting a route to the delegated prefix
                                     if CONST.OPTION.IA_PD in transaction.ia_options:
-                                        modify_route(transaction.id, 'up')
+                                        modify_route(transaction, 'up')
 
                                     if cfg.DNS_UPDATE:
-                                        dns_update(transaction.id)
+                                        dns_update(transaction)
 
                                 # CONFIRM
                                 # if last request was a CONFIRM (4) send a REPLY (type 7) back
@@ -305,7 +305,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     # store leases for addresses
                                     volatile_store.store(deepcopy(transaction), timer.time)
                                     if cfg.DNS_UPDATE:
-                                        dns_update(transaction.id)
+                                        dns_update(transaction)
 
                                 # REBIND
                                 # if last request was a REBIND (type 6) send a REPLY (type 7) back
@@ -324,10 +324,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     #  build client to be able to delete it from DNS
                                     if transaction.client is None:
                                         # transactions[transaction_id].client = build_client(transaction_id)
-                                        transaction.client = Client(transaction.id)
+                                        transaction.client = Client(transaction)
                                     if cfg.DNS_UPDATE:
                                         for a in transaction.addresses:
-                                            dns_delete(transaction.id, address=a, action='release')
+                                            dns_delete(transaction, address=a, action='release')
                                     for a in transaction.addresses:
                                         # free lease
                                         volatile_store.release_lease(a, timer.time)
@@ -335,7 +335,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                         # free prefix - without length
                                         volatile_store.release_prefix(p.split('/')[0], timer.time)
                                         # delete route to formerly requesting client
-                                        modify_route(transaction.id, 'down')
+                                        modify_route(transaction, 'down')
                                     # send status code option (type 13) with success (type 0)
                                     self.build_response(CONST.MESSAGE.REPLY,
                                                         transaction.id,

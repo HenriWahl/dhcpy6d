@@ -35,7 +35,7 @@ class Option(OptionTemplate):
 
         # build client if not done yet
         if transaction.client is None:
-            transaction.client = Client(transaction.id)
+            transaction.client = Client(transaction)
 
         bootfiles = transaction.client.bootfiles
         if len(bootfiles) > 0:
