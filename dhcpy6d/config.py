@@ -583,7 +583,6 @@ class Config:
         if not self.IGNORE_INTERFACE:
             for i in self.INTERFACE:
                 # also accept Linux VLAN and other definitions but interface must exist
-                # if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                 if not i in get_interfaces() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                     error_exit(f"{msg_prefix} Interface '{i}' is unknown.")
 
@@ -664,8 +663,8 @@ class Config:
 
         # check if valid lifetime is longer than preferred lifetime
         if not int(self.VALID_LIFETIME) > int(self.PREFERRED_LIFETIME):
-            error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." %
-                       (msg_prefix, self.VALID_LIFETIME, self.PREFERRED_LIFETIME))
+            error_exit(f"{msg_prefix} Valid lifetime '{self.VALID_LIFETIME}' is shorter "
+                       f"than preferred lifetime '{self.PREFERRED_LIFETIME}' and thus invalid.")
 
         # check if T1 is a number
         if not self.T1.isdigit():
@@ -677,14 +676,13 @@ class Config:
 
         # check T2 is not smaller than T1
         if not int(self.T2) >= int(self.T1):
-            error_exit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." %
-                       (msg_prefix, self.T2, self.T1))
+            error_exit(f"{msg_prefix} T2 '{self.T2}' is shorter than T1 '{self.T1}' and thus invalid.")
 
         # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
         if not (int(self.T1) <= int(self.T2) <= int(self.PREFERRED_LIFETIME) <= int(self.VALID_LIFETIME)):
-            error_exit(
-                "%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." %
-                (msg_prefix, self.T1, self.T2, self.PREFERRED_LIFETIME, self.VALID_LIFETIME))
+            error_exit(f"{msg_prefix} Time intervals T1 '{self.T1}' <= T2 '{self.T2}' <= "
+                       f"preferred_lifetime '{self.PREFERRED_LIFETIME}' <= "
+                       f"valid_lifetime '{self.VALID_LIFETIME}' are wrong.")
 
         # check server preference
         if not self.SERVER_PREFERENCE.isdigit():
@@ -696,8 +694,8 @@ class Config:
         if not self.INFORMATION_REFRESH_TIME.isdigit():
             error_exit(f"{msg_prefix} Information refresh time '{self.INFORMATION_REFRESH_TIME}' is invalid.")
         elif not 0 < int(self.INFORMATION_REFRESH_TIME):
-            error_exit("%s Information refresh time preference '%s' is pretty short." % (
-            msg_prefix, self.INFORMATION_REFRESH_TIME))
+            error_exit(f"{msg_prefix} Information refresh time preference "
+                       f"'{self.INFORMATION_REFRESH_TIME}' is pretty short." )
 
         # check validity of configuration source
         if not self.STORE_CONFIG in ['mysql', 'postgresql', 'sqlite', 'file', False]:
@@ -710,9 +708,8 @@ class Config:
         # check if database for config and volatile is equal - if any
         if self.STORE_CONFIG in ['mysql', 'postgresql'] and self.STORE_VOLATILE in ['mysql', 'postgresql']:
             if not self.STORE_CONFIG == self.STORE_VOLATILE:
-                error_exit("%s Storage types for database access have to be equal - '%s' != '%s'." % (msg_prefix,
-                                                                                                      self.STORE_CONFIG,
-                                                                                                      self.STORE_VOLATILE,))
+                error_exit(f"{msg_prefix} Storage types for database access have to be equal - "
+                           f"'{self.STORE_CONFIG}' != '{self.STORE_VOLATILE}'.")
 
         # check validity of config file
         if self.STORE_CONFIG == 'file':
@@ -775,13 +772,13 @@ class Config:
                             f"{msg_prefix} Syslog destination '{self.LOG_SYSLOG_DESTINATION}' is no socket.")
                 elif self.LOG_SYSLOG_DESTINATION.count(':') > 0:
                     if self.LOG_SYSLOG_DESTINATION.count(':') > 1:
-                        error_exit("%s Syslog destination '%s' is no valid host:port destination." % (
-                        msg_prefix, self.LOG_SYSLOG_DESTINATION))
+                        error_exit(f"{msg_prefix} Syslog destination '{self.LOG_SYSLOG_DESTINATION}' "
+                                   f"is no valid host:port destination.")
 
         # check authentification information
         if not self.AUTHENTICATION_INFORMATION.isalnum():
-            error_exit("%s Authentification information '%s' must be alphanumeric." % (
-            msg_prefix, self.AUTHENTICATION_INFORMATION))
+            error_exit(f"{msg_prefix} Authentification information '{self.AUTHENTICATION_INFORMATION}' "
+                       f"must be alphanumeric.")
 
         # check validity of identification attributes
         for i in self.IDENTIFICATION:
@@ -802,7 +799,8 @@ class Config:
 
         # check if request rate limit blacklist release time seconds are a number
         if not self.REQUEST_LIMIT_RELEASE_TIME.isdigit():
-            error_exit(f"{msg_prefix} Request limit blacklist release time '{self.REQUEST_LIMIT_RELEASE_TIME}' is invalid.")
+            error_exit(f"{msg_prefix} Request limit blacklist release time "
+                       f"'{self.REQUEST_LIMIT_RELEASE_TIME}' is invalid.")
 
         # check validity of identification attributes
         if not self.REQUEST_LIMIT_IDENTIFICATION in ['mac', 'llip']:
@@ -827,7 +825,6 @@ class Config:
             if not self.IGNORE_INTERFACE:
                 for i in self.CLASSES[c].INTERFACE:
                     # also accept Linux VLAN and other definitions but interface must exist
-                    # if LIBC.if_nametoindex(i) == 0 or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                     if not i in get_interfaces() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                         error_exit(f"{msg_prefix} Interface '{i}' is invalid.")
 
@@ -869,8 +866,8 @@ class Config:
 
             # check T2 is not smaller than T1
             if not int(self.CLASSES[c].T2) >= int(self.CLASSES[c].T1):
-                error_exit("%s T2 '%s' is shorter than T1 '%s' and thus invalid." % \
-                           (msg_prefix, self.CLASSES[c].T2, self.CLASSES[c].T1))
+                error_exit(f"{msg_prefix} T2 '{self.CLASSES[c].T2}' is shorter "
+                           f"than T1 '{self.CLASSES[c].T1}' and thus invalid." )
 
             # check every single address of a class
             for a in self.CLASSES[c].ADDRESSES:
@@ -881,40 +878,36 @@ class Config:
 
                 # test validity of category
                 if not self.ADDRESSES[a].CATEGORY.strip() in ['eui64', 'fixed', 'range', 'random', 'mac', 'id', 'dns']:
-                    error_exit(
-                        "%s Category '%s' is invalid. Category must be one of 'eui64', 'fixed', 'range', 'random', 'mac', 'id' and 'dns'." % (
-                        msg_prefix, self.ADDRESSES[a].CATEGORY))
+                    error_exit(f"{msg_prefix} Category '{self.ADDRESSES[a].CATEGORY}' is invalid. "
+                               f"Category must be one of 'eui64', 'fixed', 'range', 'random', 'mac', 'id' and 'dns'.")
 
                 # test validity of pattern - has its own error output
                 self.ADDRESSES[a].build_prototype()
                 # test existence of category specific variable in pattern
                 if self.ADDRESSES[a].CATEGORY == 'range':
                     if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.ADDRESSES[a].RANGE, re.IGNORECASE):
-                        error_exit("%s Range '%s' is not valid." % \
-                                   (msg_prefix, self.ADDRESSES[a].RANGE))
+                        error_exit(f"{msg_prefix} Range '{self.ADDRESSES[a].RANGE}' is not valid.")
                     if not 0 < self.ADDRESSES[a].PATTERN.count('$range$') < 2:
-                        error_exit(
-                            "%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." % \
-                            (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit(f"{msg_prefix} Pattern '{self.ADDRESSES[a].PATTERN.strip()}' contains wrong "
+                                   f"number of '$range$' variables for category 'range'.")
                     elif not self.ADDRESSES[a].PATTERN.endswith('$range$'):
-                        error_exit("%s Pattern '%s' must end with '$range$' variable for category 'range'." % \
-                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit(f"{msg_prefix} Pattern '{self.ADDRESSES[a].PATTERN.strip()}' must end "
+                                   f"with '$range$' variable for category 'range'.")
 
                 if self.ADDRESSES[a].CATEGORY == 'mac':
                     if not 0 < self.ADDRESSES[a].PATTERN.count('$mac$') < 2:
-                        error_exit("%s Pattern '%s' contains wrong number of '$mac$' variables for category 'mac'." % \
-                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit(f"{msg_prefix} Pattern '{self.ADDRESSES[a].PATTERN.strip()}' contains wrong "
+                                   f"number of '$mac$' variables for category 'mac'.")
 
                 if self.ADDRESSES[a].CATEGORY == 'id':
                     if not self.ADDRESSES[a].PATTERN.count('$id$') == 1:
-                        error_exit("%s Pattern '%s' contains wrong number of '$id$' variables for category 'id'." % \
-                                   (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit(f"{msg_prefix} Pattern '{self.ADDRESSES[a].PATTERN.strip()}' contains wrong "
+                                   f"number of '$id$' variables for category 'id'.")
 
                 if self.ADDRESSES[a].CATEGORY == 'random':
                     if not self.ADDRESSES[a].PATTERN.count('$random64$') == 1:
-                        error_exit(
-                            "%s Pattern '%s' contains wrong number of '$random64$' variables for category 'random'." % \
-                            (msg_prefix, self.ADDRESSES[a].PATTERN.strip()))
+                        error_exit(f"{msg_prefix} Pattern '{self.ADDRESSES[a].PATTERN.strip()}' contains wrong "
+                                   f"number of '$random64$' variables for category 'random'.")
 
                 if self.ADDRESSES[a].CATEGORY == 'dns':
                     if not len(self.NAMESERVER) > 0:
@@ -922,8 +915,8 @@ class Config:
 
                 # check ia_type
                 if not self.ADDRESSES[a].IA_TYPE.strip().lower() in ['na', 'ta']:
-                    error_exit("%s: IA type '%s' must be one of 'na' or 'ta'." % (
-                    msg_prefix, self.ADDRESSES[a].IA_TYPE.strip()))
+                    error_exit(f"{msg_prefix}: IA type '{self.ADDRESSES[a].IA_TYPE.strip()}' "
+                               f"must be one of 'na' or 'ta'.")
 
                 # check if valid lifetime is a number
                 if not self.ADDRESSES[a].VALID_LIFETIME.isdigit():
@@ -936,16 +929,16 @@ class Config:
 
                 # check if valid lifetime is longer than preferred lifetime
                 if not int(self.ADDRESSES[a].VALID_LIFETIME) >= int(self.ADDRESSES[a].PREFERRED_LIFETIME):
-                    error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." % \
-                               (msg_prefix, self.ADDRESSES[a].VALID_LIFETIME, self.ADDRESSES[a].PREFERRED_LIFETIME))
+                    error_exit(f"{msg_prefix} Valid lifetime '{self.ADDRESSES[a].VALID_LIFETIME}' is shorter "
+                               f"than preferred lifetime '{self.ADDRESSES[a].PREFERRED_LIFETIME}' and thus invalid.")
 
                 # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
                 if not (int(self.CLASSES[c].T1) <= int(self.CLASSES[c].T2) <= \
                         int(self.ADDRESSES[a].PREFERRED_LIFETIME) <= int(self.ADDRESSES[a].VALID_LIFETIME)):
-                    error_exit(
-                        "%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
-                        (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
-                         self.ADDRESSES[a].PREFERRED_LIFETIME, self.ADDRESSES[a].VALID_LIFETIME))
+                    error_exit(f"{msg_prefix} Time intervals T1 '{self.CLASSES[c].T1}' <= "
+                               f"T2 '{self.CLASSES[c].T2}' <= "
+                               f"preferred_lifetime '{self.ADDRESSES[a].PREFERRED_LIFETIME}' <= "
+                               f"valid_lifetime '{self.ADDRESSES[a].VALID_LIFETIME}' are wrong.")
 
             # check every single bootfile of a class
             for b in self.CLASSES[c].BOOTFILES:
@@ -963,23 +956,21 @@ class Config:
 
                 # test validity of category
                 if not self.PREFIXES[p].CATEGORY.strip() in ['range', 'id']:
-                    error_exit("%s Category '%s' is invalid. Category must be 'range' or 'id'." % (
-                    msg_prefix, self.PREFIXES[p].CATEGORY))
+                    error_exit(f"{msg_prefix} Category 'self.PREFIXES[p].CATEGORY' is invalid. "
+                               f"Category must be 'range' or 'id'.")
 
                 # test validity of pattern - has its own error output
                 self.PREFIXES[p].build_prototype()
                 # test existence of category specific variable in pattern
                 if self.PREFIXES[p].CATEGORY == 'range':
                     if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.PREFIXES[p].RANGE, re.IGNORECASE):
-                        error_exit("%s Range '%s' is not valid." % \
-                                   (msg_prefix, self.PREFIXES[p].RANGE))
+                        error_exit(f"{msg_prefix} Range '{self.PREFIXES[p].RANGE}' is not valid.")
                     if not 0 < self.PREFIXES[p].PATTERN.count('$range$') < 2:
-                        error_exit(
-                            "%s Pattern '%s' contains wrong number of '$range$' variables for category 'range'." % \
-                            (msg_prefix, self.PREFIXES[p].PATTERN.strip()))
+                        error_exit(f"{msg_prefix} Pattern '{self.PREFIXES[p].PATTERN.strip()}' contains wrong "
+                                   f"number of '$range$' variables for category 'range'." )
                     elif self.PREFIXES[p].PATTERN.endswith('$range$'):
-                        error_exit("%s Pattern '%s' must not end with '$range$' variable for category 'range'." % \
-                                   (msg_prefix, self.PREFIXES[p].PATTERN.strip()))
+                        error_exit(f"{msg_prefix} Pattern '{self.PREFIXES[p].PATTERN.strip()}' must not end "
+                                   f"with '$range$' variable for category 'range'.")
 
                 # check if valid lifetime is a number
                 if not self.PREFIXES[p].VALID_LIFETIME.isdigit():
@@ -992,16 +983,16 @@ class Config:
 
                 # check if valid lifetime is longer than preferred lifetime
                 if not int(self.PREFIXES[p].VALID_LIFETIME) >= int(self.PREFIXES[p].PREFERRED_LIFETIME):
-                    error_exit("%s Valid lifetime '%s' is shorter than preferred lifetime '%s' and thus invalid." % \
-                               (msg_prefix, self.PREFIXES[p].VALID_LIFETIME, self.PREFIXES[p].PREFERRED_LIFETIME))
+                    error_exit(f"{msg_prefix} Valid lifetime '{self.PREFIXES[p].VALID_LIFETIME}' is shorter "
+                               f"than preferred lifetime '{self.PREFIXES[p].PREFERRED_LIFETIME}' and thus invalid.")
 
                 # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
                 if not (int(self.CLASSES[c].T1) <= int(self.CLASSES[c].T2) <=
                         int(self.PREFIXES[p].PREFERRED_LIFETIME) <= int(self.PREFIXES[p].VALID_LIFETIME)):
-                    error_exit(
-                        "%s Time intervals T1 '%s' <= T2 '%s' <= preferred_lifetime '%s' <= valid_lifetime '%s' are wrong." % \
-                        (msg_prefix, self.CLASSES[c].T1, self.CLASSES[c].T2,
-                         self.PREFIXES[p].PREFERRED_LIFETIME, self.PREFIXES[p].VALID_LIFETIME))
+                    error_exit(f"{msg_prefix} Time intervals T1 '{self.CLASSES[c].T1}' <= "
+                               f"T2 '{self.CLASSES[c].T2}' <= "
+                               f"preferred_lifetime '{self.PREFIXES[p].PREFERRED_LIFETIME}' <= "
+                               f"valid_lifetime '{self.PREFIXES[p].VALID_LIFETIME}' are wrong.")
 
                 # check if prefix is a valid number
                 if not self.PREFIXES[p].LENGTH.isdigit():
