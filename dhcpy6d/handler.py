@@ -45,7 +45,7 @@ from .log import log
 from .options import OPTIONS
 from .route import modify_route
 from .storage import (config_store,
-                       volatile_store)
+                      volatile_store)
 from .transaction import Transaction
 
 
@@ -183,21 +183,24 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         transaction.last_message_received_type = message_type
 
                     # log incoming messages
-                    log.info(f'{CONST.MESSAGE_DICT[message_type]} | transaction_id: {transaction.id}{transaction.get_options_string()}')
+                    log.info(f'{CONST.MESSAGE_DICT[message_type]} | '
+                             f'transaction: {transaction.id}{transaction.get_options_string()}')
 
                     # 3. answer requests
                     # check if client sent a valid DUID (alphanumeric)
                     if transaction.duid.isalnum():
                         # if request was not addressed to multicast do nothing but logging
                         if transaction.interface == '':
-                            log.info('transaction_id: %s | %s' % (transaction.id, 'Multicast necessary but message came from %s' % (colonify_ip6(transaction.client_llip))))
+                            log.info(f'transaction: {transaction.id} | Multicast necessary '
+                                     f'but message came from {colonify_ip6(transaction.client_llip)}')
                             # reset transaction counter
                             transaction.counter = 0
                         else:
                             # client will get answer if its LLIP & MAC is known
                             if not transaction.client_llip in collected_macs:
                                 if not cfg.IGNORE_MAC:
-                                    # complete MAC collection - will make most sence on Linux and its native neighborcache access
+                                    # complete MAC collection - will make most sense on Linux
+                                    # and its native neighborcache access
                                     collect_macs(timer.time)
 
                                     # when still no trace of the client in neighbor cache then send silly signal back
@@ -225,7 +228,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     except:
                                         # MAC not yet found :-(
                                         if cfg.LOG_MAC_LLIP:
-                                            log.info('transaction_id: %s | %s' % (transaction.id, 'mac address for llip %s unknown' % (colonify_ip6(transaction.client_llip))))
+                                            log.info(f'transaction: {transaction.id} | mac address for '
+                                                     f'llip {colonify_ip6(transaction.client_llip)} unknown')
 
                             # if finally there is some info about the client or MACs play no role try to answer the request
                             if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
@@ -235,7 +239,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                                 # ADVERTISE
                                 # if last request was a SOLICIT send an ADVERTISE (type 2) back
-                                #if transaction.last_message_received_type == 1 \
                                 if transaction.last_message_received_type == CONST.MESSAGE.SOLICIT \
                                    and not transaction.rapid_commit:
                                     # preference option (7) is for free
@@ -437,7 +440,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 # problems may have arisen while processing and these information
                 # is not valid anymore
                 # handler type + transaction id
-                #response_string = '%02x' % (7)
                 response_string = f'{CONST.MESSAGE.REPLY:02x}'
                 response_string += transaction.id
 
@@ -453,8 +455,9 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 response_string += build_option(CONST.OPTION.STATUS_CODE,
                                                 f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
 
-                log.error('%s| transaction_id: %s | DatabaseError: %s' % (CONST.MESSAGE_DICT[message_type_response], transaction.id, ' '.join(db_error)))
-
+                log.error(f'{CONST.MESSAGE_DICT[message_type_response]} | '
+                          f'transaction: {transaction.id} | '
+                          f'DatabaseError: {" ".join(db_error)}')
             else:
                 # log handler
                 if not transaction.client is None:
@@ -469,7 +472,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         # problems may have arisen while processing and these information
                         # is not valid anymore
                         # handler type + transaction id
-                        #response_string = '%02x' % 7
                         response_string = f'{CONST.MESSAGE.REPLY:02x}'
                         response_string += transaction.id
 
@@ -489,7 +491,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                         # log warning message about unavailable addresses
                         log.warning(f'REPLY | no addresses or prefixes available | '
-                                    'transaction_id: {transaction.id} | '
+                                    'transaction: {transaction.id} | '
                                     'client_llip: {colonify_ip6(transaction.client_llip))}')
 
                     elif CONST.OPTION.IA_NA in options_request or \
@@ -497,18 +499,17 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                          CONST.OPTION.IA_PD in options_request or \
                          CONST.OPTION.STATUS_CODE in options_request:
                         options_answer = sorted(options_answer)
-                        log.info('%s | transaction_id: %s | options: %s%s' % (CONST.MESSAGE_DICT[message_type_response],
-                                                                              transaction.id,
-                                                                              options_answer,
-                                                                              transaction.client.get_options_string()))
+                        log.info(f'{CONST.MESSAGE_DICT[message_type_response]} | '
+                                 f'transaction: {transaction.id} | '
+                                 f'options: {options_answer} {transaction.client.get_options_string()}')
                     else:
                         print(options_request)
                         log.info('what else should I do?')
                 else:
                     options_answer = sorted(options_answer)
-                    log.info('%s | transaction_id: %s | options: %s' % (CONST.MESSAGE_DICT[message_type_response],
-                                                                        transaction.id,
-                                                                        options_answer))
+                    log.info(f'{CONST.MESSAGE_DICT[message_type_response]} | '
+                             f'transaction: transaction.id | '
+                             f'options: {options_answer}')
             # handler
             self.response = binascii.unhexlify(response_string)
 
@@ -550,4 +551,4 @@ class RequestHandler(socketserver.DatagramRequestHandler):
         if command == 'prefix' and len(arguments) == 1:
             cfg.PREFIX = arguments[0]
             volatile_store.store_dynamic_prefix(cfg.PREFIX)
-        log.info('Control message "%s" received' % ' '.join(control_message_clean))
+        log.info(f'Control message \'{" ".join(control_message_clean)}\' received')

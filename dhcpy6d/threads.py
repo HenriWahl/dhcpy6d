@@ -111,7 +111,7 @@ class TidyUpThread(Thread):
                         if timer.time > transaction.timestamp + cfg.CLEANING_INTERVAL * 10:
                             transactions.pop(transaction.id)
                     except Exception as err:
-                        log.error('TidyUp: TransactionID %s has already been deleted' % (str(err)))
+                        log.error(f'TidyUp: transaction {str(err)} has already been deleted')
                         traceback.print_exc(file=sys.stdout)
                         sys.stdout.flush()
 

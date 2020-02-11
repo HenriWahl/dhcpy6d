@@ -123,7 +123,7 @@ if __name__ == '__main__':
     os.setuid(pwd.getpwnam(cfg.USER).pw_uid)
 
     # log interfaces
-    log.info('Listening on interfaces: %s' % (' '.join(IF_NAME)))
+    log.info(f'Listening on interfaces: {" ".join(IF_NAME)}')
 
     # serve forever
     try:

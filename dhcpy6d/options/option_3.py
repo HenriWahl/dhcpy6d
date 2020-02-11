@@ -50,7 +50,7 @@ class Option(OptionTemplate):
                     if transaction.answer == 'noaddress':
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
+                                                                      f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                         # clean client addresses which not be deployed anyway
                         transaction.client.addresses[:] = []
                         # options in answer to be logged
@@ -70,11 +70,11 @@ class Option(OptionTemplate):
                                     # reset all addresses with lifetime 0
                                     # lets start with maximal transaction count of 10
                                     if transaction.counter < 10:
-                                        preferred_lifetime = '%08x' % int(address.PREFERRED_LIFETIME)
-                                        valid_lifetime = '%08x' % int(address.VALID_LIFETIME)
+                                        preferred_lifetime = f'{int(address.PREFERRED_LIFETIME):08x}'
+                                        valid_lifetime = f'{int(address.VALID_LIFETIME):08x}'
                                     else:
-                                        preferred_lifetime = '%08x' % 0
-                                        valid_lifetime = '%08x' % 0
+                                        preferred_lifetime = '00000000'
+                                        valid_lifetime = '00000000'
                                     ia_addresses += self.convert_to_string(CONST.OPTION.IAADDR,
                                                                            ipv6_address +
                                                                            preferred_lifetime +
@@ -84,17 +84,17 @@ class Option(OptionTemplate):
                                 # todo: default clients sometimes seem to have class ''
                                 #
                                 if transaction.client.client_class != '':
-                                    t1 = '%08x' % int(cfg.CLASSES[transaction.client.client_class].T1)
-                                    t2 = '%08x' % int(cfg.CLASSES[transaction.client.client_class].T2)
+                                    t1 = f'{int(cfg.CLASSES[transaction.client.client_class].T1):08x}'
+                                    t2 =  f'{int(cfg.CLASSES[transaction.client.client_class].T2):08x}'
                                 else:
-                                    t1 = '%08x' % int(cfg.T1)
-                                    t2 = '%08x' % int(cfg.T2)
+                                    t1 = f'{int(cfg.T1):08x}'
+                                    t2 = f'{int(cfg.T2):08x}'
 
                                 response_string_part = self.convert_to_string(CONST.OPTION.IA_NA,
-                                                                             transaction.iaid +
-                                                                             t1 +
-                                                                             t2 +
-                                                                             ia_addresses)
+                                                                              transaction.iaid +
+                                                                              t1 +
+                                                                              t2 +
+                                                                              ia_addresses)
                             # options in answer to be logged
                             options_answer_part = CONST.OPTION.IA_NA
                         except:

@@ -33,7 +33,8 @@ from .config import cfg
 log = getLogger('dhcpy6d')
 
 if cfg.LOG:
-    formatter = Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+    #formatter = Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+    formatter = Formatter('{asctime} {name} {levelname} {message}', style='{')
     log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
     if cfg.LOG_FILE != '':
         chown(cfg.LOG_FILE, getpwnam(cfg.USER).pw_uid, getgrnam(cfg.GROUP).gr_gid)
@@ -48,8 +49,8 @@ if cfg.LOG:
     if cfg.LOG_SYSLOG:
         # time should be added by syslog daemon
         hostname = gethostname().split('.')[0]
-        formatter = Formatter(hostname + ' %(name)s %(levelname)s %(message)s')
-        # if /socket/file is given use this as addres
+        formatter = Formatter(hostname + ' {name} {levelname} {message}', style='{')
+        # if /socket/file is given use this as address
         if cfg.LOG_SYSLOG_DESTINATION.startswith('/'):
             destination = cfg.LOG_SYSLOG_DESTINATION
         # if host and port are defined use them...
