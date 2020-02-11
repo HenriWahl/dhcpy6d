@@ -494,8 +494,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                     elif CONST.OPTION.IA_NA in options_request or \
                          CONST.OPTION.IA_TA in options_request or \
-                         CONST.OPTION.STATUS_CODE in options_request or \
-                         CONST.OPTION.IA_PD in options_request:
+                         CONST.OPTION.IA_PD in options_request or \
+                         CONST.OPTION.STATUS_CODE in options_request:
                         options_answer = sorted(options_answer)
                         log.info('%s | transaction_id: %s | options: %s%s' % (CONST.MESSAGE_DICT[message_type_response],
                                                                               transaction.id,
