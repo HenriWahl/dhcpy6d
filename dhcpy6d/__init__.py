@@ -18,8 +18,8 @@
 
 """Module dhcpy6d"""
 
-import binascii
-import random
+from binascii import hexlify
+from random import randint
 import select
 import shlex
 import socket
@@ -127,7 +127,7 @@ def get_neighbor_cache_linux(if_number, now):
     pid, groups = s.getsockname()
 
     # random sequence for NETLINK access
-    seq = random.randint(0, pow(2, 31))
+    seq = randint(0, pow(2, 31))
 
     # netlink message header (struct nlmsghdr)
     MSG_HEADER = struct.pack('IHHII', MSG_HEADER_LENGTH,
@@ -176,23 +176,16 @@ def get_neighbor_cache_linux(if_number, now):
                          'nlmsg_len is smaller than structure size'.format(answer_pos, nlmsg_len))
                 break
             if answer_len - answer_pos < struct.calcsize(f'<{nlmsghdr_fmt}'):
-                log.warn('broken data from netlink (position {0}, length avail %{1}): '
-                         'received data size is smaller than structure size'.format(answer_pos,
-                                                                                    answer_len - answer_pos))
+                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                         'received data size is smaller than structure size')
                 break
             if answer_len - answer_pos < nlmsg_len:
-                log.warn('broken data from netlink (position {0}, length avail {1}): '
-                         'received dcolonify_ata size is smaller than nlmsg_len'.format(answer_pos,
-                                                                                        answer_len - answer_pos))
+                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                         'received dcolonify_ata size is smaller than nlmsg_len')
                 break
             if pid != nlmsg_pid or seq != nlmsg_seq:
-                log.warn('broken data from netlink (position {0}, length avail {1}): '
-                         'invalid seq ({2} x {3}) or pid ({4} x {5})'.format(answer_pos,
-                                                                             answer_len - answer_pos,
-                                                                             seq,
-                                                                             nlmsg_seq,
-                                                                             pid,
-                                                                             nlmsg_pid))
+                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                         f'invalid seq ({seq} x {nlmsg_seq}) or pid ({pid} x {nlmsg_pid})')
                 break
 
             # data for this Routing/device hook record
@@ -200,23 +193,19 @@ def get_neighbor_cache_linux(if_number, now):
             # if log.getEffectiveLevel() <= logging.DEBUG:
             #    log.debug('nlm[%i:%i]%s: %s' % (answer_pos, answer_pos+nlmsg_len, \
             #              str(struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)), \
-            #              binascii.hexlify(nlmsg_data)))
+            #              hexlify(nlmsg_data)))
 
             if nlmsg_type == NLMSG_DONE:
                 break
             if nlmsg_type == NLMSG_ERROR:
                 nlmsgerr_error, nlmsgerr_len, nlmsgerr_type, nlmsgerr_flags, nlmsgerr_seq, nlmsgerr_pid = \
                     struct.unpack_from('<sIHHII', nlmsg_data)
-                log.warn('broken data from netlink (position {0}, length avail {1}): '
-                         'invalid message (errno {2})'.format(answer_pos,
-                                                              answer_len - answer_pos,
-                                                              nlmsgerr_error))
+                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                         f'invalid message (errno {nlmsgerr_error})')
                 break
             if nlmsg_type not in [RTM_NEWNEIGH, RTM_DELNEIGH, RTM_GETNEIGH]:
-                log.warn('broken data from netlink (position {0}, length avail {1}): '
-                         'this is really weird, wrong message type {2}'.format(answer_pos,
-                                                                               answer_len - answer_pos,
-                                                                               nlmsg_type))
+                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                         f'this is really weird, wrong message type {nlmsg_type}')
                 break
 
             curr_pos = answer_pos + nlmsg_header_len
@@ -243,10 +232,8 @@ def get_neighbor_cache_linux(if_number, now):
                 # basic safety checks for received data (imitates RTA_OK)
                 if nla_len < struct.calcsize(f'<{nlattr_fmt}'):
                     log.debug('This is normal for last record, but we should not get here (because of NLMSG_DONE); '
-                              'data size: {0}, data[{1}:{2}] =  {3}'.format(answer_len,
-                                                                            answer_pos + nlmsg_header_len,
-                                                                            answer_pos + nlmsg_len,
-                                                                            binascii.hexlify(nlmsg_data)))
+                              f'data size: {answer_len}, data[{answer_pos + nlmsg_header_len}:'
+                              f'{answer_pos + nlmsg_len}] =  {hexlify(nlmsg_data)}')
                     break
 
                 # data for this Routing/device hook record attribute
@@ -254,17 +241,17 @@ def get_neighbor_cache_linux(if_number, now):
                 # if log.getEffectiveLevel() <= logging.DEBUG:
                 #    log.debug('nla[%i:]%s: %s' % (nlmsg_data_pos, \
                 #              str(struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
-                #              binascii.hexlify(nla_data)))
+                #              hexlify(nla_data)))
 
                 nda_type_key = NDA.get(nla_type, str(nla_type))
                 if nda_type_key == 'NDA_DST':
-                    nda[nda_type_key] = colonify_ip6(binascii.hexlify(nla_data))
+                    nda[nda_type_key] = colonify_ip6(hexlify(nla_data))
                 elif nda_type_key == 'NDA_LLADDR':
-                    nda[nda_type_key] = colonify_mac(binascii.hexlify(nla_data))
+                    nda[nda_type_key] = colonify_mac(hexlify(nla_data))
                 elif nda_type_key == 'NDA_CACHEINFO':
                     nda[nda_type_key] = struct.unpack_from('<IIII', nla_data)
                 elif nda_type_key == 'NDA_VLAN':
-                    nda[nda_type_key] = binascii.hexlify(nla_data)
+                    nda[nda_type_key] = hexlify(nla_data)
                 else:
                     nda[nda_type_key] = nla_data
 
@@ -279,7 +266,7 @@ def get_neighbor_cache_linux(if_number, now):
             # * no need for multicast address cache entries (MAC 33:33:...)
             if nda['NDM_STATE'] & ~(NUD_INCOMPLETE | NUD_FAILED | NUD_NOARP):
                 if not nda['NDM_IFINDEX'] in if_number:
-                    log.debug("can't find device for interface index {}}".format(nda['NDM_IFINDEX']))
+                    log.debug(f"can't find device for interface index {nda['NDM_IFINDEX']}")
                 elif not 'NDA_DST' in nda:
                     log.warn(f"can't find destination address (wrong entry state: {nda['NDM_STATE']}?!)")
                 elif not 'NDA_LLADDR' in nda:
@@ -297,12 +284,8 @@ def get_neighbor_cache_linux(if_number, now):
             answer_pos += nlmsg_len
 
     except struct.error as e:
-        log.warn('broken data from netlink (position {0}, '
-                 'data[{1}:{2}] = {3}...): {4}'.format(answer_pos,
-                                                       curr_pos,
-                                                       answer_len,
-                                                       binascii.hexlify(answer[curr_pos:curr_pos + 8]),
-                                                       str(e)))
+        log.warn(f'broken data from netlink (position {answer_pos}, '
+                 f'data[{curr_pos}:{answer_len}] = {hexlify(answer[curr_pos:curr_pos + 8])}...): {str(e)}')
 
     # clean up
     s.close()
@@ -334,25 +317,26 @@ def collect_macs(now):
             # for a setup routine to find appropriate paths
             for host in subprocess.getoutput(NC[OS]['call']).splitlines():
                 # get fragments of output line
-                f = shlex.split(host)
-                if f[NC[OS]['dev']] in cfg.INTERFACE and len(f) >= NC[OS]['len']:
+                frags = shlex.split(host)
+                if frags[NC[OS]['dev']] in cfg.INTERFACE and len(frags) >= NC[OS]['len']:
                     # get rid of %interface
-                    f[NC[OS]['llip']] = decompress_ip6(f[NC[OS]['llip']].split('%')[0])
-                    if f[NC[OS]['mac']] == '(incomplete)':
+                    frags[NC[OS]['llip']] = decompress_ip6(frags[NC[OS]['llip']].split('%')[0])
+                    if frags[NC[OS]['mac']] == '(incomplete)':
                         continue
                     # correct maybe shortened MAC
-                    f[NC[OS]['mac']] = correct_mac(f[NC[OS]['mac']])
+                    frags[NC[OS]['mac']] = correct_mac(frags[NC[OS]['mac']])
                     # put non yet existing LLIPs into dictionary - if they have MACs
-                    if not f[NC[OS]['llip']] in collected_macs and f[NC[OS]['llip']].lower().startswith('fe80') \
-                            and ':' in f[NC[OS]['mac']]:
-                        collected_macs[f[NC[OS]['llip']]] = NeighborCacheRecord(llip=f[NC[OS]['llip']],
-                                                                                mac=f[NC[OS]['mac']],
-                                                                                interface=f[NC[OS]['dev']],
-                                                                                now=now)
+                    if not frags[NC[OS]['llip']] in collected_macs and \
+                       frags[NC[OS]['llip']].lower().startswith('fe80') and \
+                       ':' in frags[NC[OS]['mac']]:
+                        collected_macs[frags[NC[OS]['llip']]] = NeighborCacheRecord(llip=frags[NC[OS]['llip']],
+                                                                                    mac=frags[NC[OS]['mac']],
+                                                                                    interface=frags[NC[OS]['dev']],
+                                                                                    now=now)
                         if cfg.LOG_MAC_LLIP:
-                            log.info('collected mac %s for llip %s' % (
-                                f[NC[OS]['mac']], colonify_ip6(f[NC[OS]['llip']])))
-                        volatile_store.store_mac_llip(f[NC[OS]['mac']], f[NC[OS]['llip']], timer.time)
+                            log.info(f"collected mac {frags[NC[OS]['mac']]} for "
+                                     f"llip {colonify_ip6(frags[NC[OS]['llip']])}")
+                        volatile_store.store_mac_llip(frags[NC[OS]['mac']], frags[NC[OS]['llip']], timer.time)
     except Exception as err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()

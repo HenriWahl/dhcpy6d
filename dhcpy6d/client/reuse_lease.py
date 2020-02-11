@@ -19,8 +19,8 @@
 from ..config import (Address,
                       cfg,
                       Prefix)
-from ..globals import (timer,
-                       transactions)
+from ..constants import CONST
+from ..globals import timer
 from ..helpers import (decompress_ip6,
                        decompress_prefix,
                        split_prefix)
@@ -47,7 +47,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
         transaction.answer = cfg.CLASSES[client.client_class].ANSWER
 
     if 'addresses' in cfg.CLASSES[client.client_class].ADVERTISE and \
-            (3 or 4) in transaction.ia_options:
+            (CONST.OPTION.IA_NA or CONST.OPTION.IA_TA) in transaction.ia_options:
         for address in transaction.addresses:
             # check_lease returns hostname, address, type, category, ia_type, class, preferred_until of leased address
             answer = volatile_store.check_lease(address, transaction)
@@ -169,7 +169,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                             valid_lifetime=0))
 
     if 'prefixes' in cfg.CLASSES[client.client_class].ADVERTISE and \
-            25 in transaction.ia_options:
+            CONST.OPTION.IA_PD in transaction.ia_options:
         for prefix in transaction.prefixes:
             # split prefix of prefix from length, separated by /
             prefix_prefix, prefix_length = split_prefix(prefix)
