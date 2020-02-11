@@ -33,7 +33,6 @@ from .config import cfg
 log = getLogger('dhcpy6d')
 
 if cfg.LOG:
-    #formatter = Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
     formatter = Formatter('{asctime} {name} {levelname} {message}', style='{')
     log.setLevel(logging.__dict__[cfg.LOG_LEVEL])
     if cfg.LOG_FILE != '':
