@@ -508,7 +508,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 else:
                     options_answer = sorted(options_answer)
                     log.info(f'{CONST.MESSAGE_DICT[message_type_response]} | '
-                             f'transaction: transaction.id | '
+                             f'transaction: {transaction.id} | '
                              f'options: {options_answer}')
             # handler
             self.response = binascii.unhexlify(response_string)
