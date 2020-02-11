@@ -121,7 +121,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                         # create new random address if old one is depreferred
                                         random_address = parse_pattern_address(cfg.ADDRESSES[a['type']],
                                                                                client_config,
-                                                                               transaction.id)
+                                                                               transaction)
                                         # create new random address if old one is de-preferred
                                         # do not wait until it is invalid
                                         if random_address is not None:
