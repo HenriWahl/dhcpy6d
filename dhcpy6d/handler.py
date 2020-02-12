@@ -65,6 +65,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
     """
     # empty dummy handler
     response = ''
+    # most messages are no locally generated control messages
+    is_control_message = False
 
     def handle(self):
         """
@@ -87,9 +89,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
         if not cfg.IGNORE_MAC and cfg.IGNORE_UNKNOWN_CLIENTS:
             if client_address in requests_blacklist:
                 return False
-
-        # default is no control request
-        self.is_control_message = False
 
         # check if we are limiting requests
         if cfg.REQUEST_LIMIT:
@@ -197,14 +196,14 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                             transaction.counter = 0
                         else:
                             # client will get answer if its LLIP & MAC is known
-                            if not transaction.client_llip in collected_macs:
+                            if transaction.client_llip not in collected_macs:
                                 if not cfg.IGNORE_MAC:
                                     # complete MAC collection - will make most sense on Linux
                                     # and its native neighborcache access
                                     collect_macs(timer.time)
 
                                     # when still no trace of the client in neighbor cache then send silly signal back
-                                    if not transaction.client_llip in collected_macs:
+                                    if transaction.client_llip not in collected_macs:
                                         # if not known send status code option failure to get
                                         # LLIP/MAC mapping from neighbor cache
                                         # status code 'Success' sounds silly but works best
@@ -215,7 +214,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                         # complete MAC collection
                                         collect_macs(timer.time)
                                         # if client cannot be found in collected MACs
-                                        if not transaction.client_llip in collected_macs:
+                                        if transaction.client_llip not in collected_macs:
                                             if cfg.IGNORE_UNKNOWN_CLIENTS and client_address in requests:
                                                 if requests[client_address].count > 1:
                                                     requests_blacklist[client_address] = Request(client_address)
@@ -225,13 +224,16 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     # try to add client MAC address to transaction object
                                     try:
                                         transaction.mac = collected_macs[transaction.client_llip].mac
-                                    except:
+                                    except KeyError:
+                                        traceback.print_exc(file=sys.stdout)
+                                        sys.stdout.flush()
                                         # MAC not yet found :-(
                                         if cfg.LOG_MAC_LLIP:
                                             log.info(f'transaction: {transaction.id} | mac address for '
                                                      f'llip {colonify_ip6(transaction.client_llip)} unknown')
 
-                            # if finally there is some info about the client or MACs play no role try to answer the request
+                            # if finally there is some info about the client or MACs
+                            # it plays no role try to answer the request
                             if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
                                 if not cfg.IGNORE_MAC:
                                     if transaction.mac == DUMMY_MAC:
@@ -254,8 +256,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
                                 elif transaction.last_message_received_type == CONST.MESSAGE.REQUEST or \
-                                     (transaction.last_message_received_type == CONST.MESSAGE.SOLICIT and
-                                      transaction.rapid_commit):
+                                    (transaction.last_message_received_type == CONST.MESSAGE.SOLICIT and
+                                     transaction.rapid_commit):
                                     # preference option (7) is for free
                                     # if RapidCommit was set give it back
                                     if not transaction.rapid_commit:
@@ -426,7 +428,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         sys.stdout.flush()
 
             # if databases are not connected send error to client
-            if not (config_store.connected == volatile_store.connected == True):
+            # if not (config_store.connected == volatile_store.connected == True):
+            if not config_store.connected and not volatile_store.connected:
                 # mark database errors - every database may add its error
                 db_error = []
                 if not config_store.connected:
@@ -495,9 +498,9 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     'client_llip: {colonify_ip6(transaction.client_llip))}')
 
                     elif CONST.OPTION.IA_NA in options_request or \
-                         CONST.OPTION.IA_TA in options_request or \
-                         CONST.OPTION.IA_PD in options_request or \
-                         CONST.OPTION.STATUS_CODE in options_request:
+                            CONST.OPTION.IA_TA in options_request or \
+                            CONST.OPTION.IA_PD in options_request or \
+                            CONST.OPTION.STATUS_CODE in options_request:
                         options_answer = sorted(options_answer)
                         log.info(f'{CONST.MESSAGE_DICT[message_type_response]} | '
                                  f'transaction: {transaction.id} | '
@@ -533,9 +536,11 @@ class RequestHandler(socketserver.DatagramRequestHandler):
         else:
             log.error("Nothing sent - please set 'really_do_it = yes' in config file or as command line option.")
 
-    def control_message(self, raw_bytes):
+    @staticmethod
+    def control_message(raw_bytes):
         """
         execute commands sent in by control message
+        @staticmethod proposed by PyCharm
         """
         control_message = binascii.unhexlify(raw_bytes)
         control_message_fragments = control_message.decode().split(' ')

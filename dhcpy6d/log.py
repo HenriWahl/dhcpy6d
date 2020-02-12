@@ -21,8 +21,8 @@ import logging
 from logging import (Formatter,
                      getLogger,
                      StreamHandler)
-from logging.handlers import(SysLogHandler,
-                             WatchedFileHandler)
+from logging.handlers import (SysLogHandler,
+                              WatchedFileHandler)
 from os import chown
 from pwd import getpwnam
 from socket import gethostname
@@ -59,7 +59,6 @@ if cfg.LOG:
         else:
             destination = (cfg.LOG_SYSLOG_DESTINATION, 514)
         log_handler = SysLogHandler(address=destination,
-                      facility=SysLogHandler.__dict__['LOG_' + cfg.LOG_SYSLOG_FACILITY])
+                                    facility=SysLogHandler.__dict__['LOG_' + cfg.LOG_SYSLOG_FACILITY])
         log_handler.setFormatter(formatter)
         log.addHandler(log_handler)
-

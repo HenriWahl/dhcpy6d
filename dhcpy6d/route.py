@@ -18,8 +18,7 @@
 
 from .config import cfg
 from .globals import (route_queue,
-                      timer,
-                      transactions)
+                      timer)
 from .log import log
 from .storage import volatile_store
 

@@ -130,14 +130,14 @@ def get_neighbor_cache_linux(if_number, now):
     seq = randint(0, pow(2, 31))
 
     # netlink message header (struct nlmsghdr)
-    MSG_HEADER = struct.pack('IHHII', MSG_HEADER_LENGTH,
+    msg_header = struct.pack('IHHII', MSG_HEADER_LENGTH,
                              MSG_HEADER_TYPE, MSG_HEADER_FLAGS, seq, pid)
 
     # NETLINK message is always the same except header seq (struct ndmsg)
-    MSG = struct.pack('B', socket.AF_INET6)
+    msg = struct.pack('B', socket.AF_INET6)
 
     # send message with header
-    s.send(MSG_HEADER + MSG)
+    s.send(msg_header + msg)
 
     # read all data from socket
     answer = b''
@@ -163,13 +163,10 @@ def get_neighbor_cache_linux(if_number, now):
     try:
         while answer_pos < answer_len:
             curr_pos = answer_pos
-            # if log.getEffectiveLevel() <= logging.DEBUG:
-            #    log.debug('nlm[%i:]: parsing up to %i...' % (answer_pos, answer_len))
 
             nlmsg_len, nlmsg_type, nlmsg_flags, nlmsg_seq, nlmsg_pid = struct.unpack_from(f'<{nlmsghdr_fmt}',
                                                                                           answer,
                                                                                           answer_pos)
-
             # basic safety checks for received data (imitates NLMSG_OK)
             if nlmsg_len < struct.calcsize(f'<{nlmsghdr_fmt}'):
                 log.warn('broken data from netlink (position {0}, nlmsg_len {1}): '
@@ -190,10 +187,6 @@ def get_neighbor_cache_linux(if_number, now):
 
             # data for this Routing/device hook record
             nlmsg_data = answer[answer_pos + nlmsg_header_len:answer_pos + nlmsg_len]
-            # if log.getEffectiveLevel() <= logging.DEBUG:
-            #    log.debug('nlm[%i:%i]%s: %s' % (answer_pos, answer_pos+nlmsg_len, \
-            #              str(struct.unpack_from('<%s' % nlmsghdr_fmt, answer, answer_pos)), \
-            #              hexlify(nlmsg_data)))
 
             if nlmsg_type == NLMSG_DONE:
                 break
@@ -211,20 +204,13 @@ def get_neighbor_cache_linux(if_number, now):
             curr_pos = answer_pos + nlmsg_header_len
             ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type = \
                 struct.unpack_from(f'<{ndmsg_fmt}', nlmsg_data, 0)
-            # if log.getEffectiveLevel() <= logging.DEBUG:
-            #    log.debug('nlm[%i:%i]: family %s, pad1 %s, pad2 %s, ifindex %s, state %s, flags %s, type %s' % \
-            #              (answer_pos, answer_pos+nlmsg_len, ndm_family, ndm_pad1, ndm_pad2, ndm_ifindex, ndm_state, ndm_flags, ndm_type))
-
-            nda = {
-                'NDM_FAMILY': ndm_family, 'NDM_IFINDEX': ndm_ifindex,
-                'NDM_STATE': ndm_state, 'NDM_FLAGS': ndm_flags,
-                'NDM_TYPE': ndm_type}
+            nda = {'NDM_FAMILY': ndm_family, 'NDM_IFINDEX': ndm_ifindex,
+                   'NDM_STATE': ndm_state, 'NDM_FLAGS': ndm_flags,
+                   'NDM_TYPE': ndm_type}
             nlmsg_data_pos = 0
             nlmsg_data_len = nlmsg_len - nlmsg_header_len
             while nlmsg_data_pos < nlmsg_data_len:
                 curr_pos = answer_pos + nlmsg_header_len + nlmsg_data_pos
-                # if log.getEffectiveLevel() <= logging.DEBUG:
-                #    log.debug('nla[%i:]: parsing up to %i...' % (nlmsg_data_pos, nlmsg_data_len))
 
                 nla_len, nla_type = \
                     struct.unpack_from(f'<{nlattr_fmt}', nlmsg_data, nlmsg_data_pos)
@@ -238,10 +224,6 @@ def get_neighbor_cache_linux(if_number, now):
 
                 # data for this Routing/device hook record attribute
                 nla_data = nlmsg_data[nlmsg_data_pos + nla_header_len:nlmsg_data_pos + nla_len]
-                # if log.getEffectiveLevel() <= logging.DEBUG:
-                #    log.debug('nla[%i:]%s: %s' % (nlmsg_data_pos, \
-                #              str(struct.unpack_from('<%s' % nlattr_fmt, nlmsg_data, nlmsg_data_pos)), \
-                #              hexlify(nla_data)))
 
                 nda_type_key = NDA.get(nla_type, str(nla_type))
                 if nda_type_key == 'NDA_DST':
@@ -258,18 +240,15 @@ def get_neighbor_cache_linux(if_number, now):
                 nlmsg_data_pos += nla_header_len
                 nlmsg_data_pos += (nla_len - nla_header_len + NLA_ALIGNTO - 1) & ~(NLA_ALIGNTO - 1)  # alignment to 4
 
-            # if log.getEffectiveLevel() <= logging.DEBUG:
-            #    log.debug('nlm[%i:%i]: %s' % (answer_pos, answer_pos+nlmsg_len, str(nda)))
-
             # prepare all required data to be returned to callee
             # * only care about configured devices
             # * no need for multicast address cache entries (MAC 33:33:...)
             if nda['NDM_STATE'] & ~(NUD_INCOMPLETE | NUD_FAILED | NUD_NOARP):
-                if not nda['NDM_IFINDEX'] in if_number:
+                if nda['NDM_IFINDEX'] not in if_number:
                     log.debug(f"can't find device for interface index {nda['NDM_IFINDEX']}")
-                elif not 'NDA_DST' in nda:
+                elif 'NDA_DST' not in nda:
                     log.warn(f"can't find destination address (wrong entry state: {nda['NDM_STATE']}?!)")
-                elif not 'NDA_LLADDR' in nda:
+                elif 'NDA_LLADDR' not in nda:
                     log.warn(f"can't find local hardware address (wrong entry state: {nda['NDM_STATE']}?!)")
                 else:
                     if if_number[nda['NDM_IFINDEX']] in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
@@ -305,7 +284,7 @@ def collect_macs(now):
         # Linux can use kernel neighbor cache
         if OS == 'Linux':
             for host in list(get_neighbor_cache_linux(IF_NUMBER, timer.time).values()):
-                if not host.llip in collected_macs:
+                if host.llip not in collected_macs:
                     if host.llip.startswith('fe80'):
                         collected_macs[host.llip] = host
                         if cfg.LOG_MAC_LLIP:

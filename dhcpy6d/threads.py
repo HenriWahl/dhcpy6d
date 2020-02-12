@@ -46,7 +46,7 @@ class DNSQueryThread(Thread):
 
     def __init__(self):
         Thread.__init__(self, name='DNSQuery')
-        self.setDaemon(1)
+        self.setDaemon(True)
 
     def run(self):
         # wait for new queries in queue until the end of the world
@@ -96,7 +96,7 @@ class TidyUpThread(Thread):
 
     def __init__(self):
         Thread.__init__(self, name='TidyUp')
-        self.setDaemon(1)
+        self.setDaemon(True)
 
     def run(self):
         try:
@@ -138,7 +138,7 @@ class TidyUpThread(Thread):
 
                 # clean collected MAC addresses after 300 seconds
                 # some Linuxes seem to be pretty slow and run out of the previous 30 seconds
-                if not cfg.CACHE_MAC_LLIP :
+                if not cfg.CACHE_MAC_LLIP:
                     timestamp = timer.time
                     for record in list(collected_macs.values()):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
@@ -151,9 +151,11 @@ class TidyUpThread(Thread):
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
 
-    def check_routes(self):
+    @staticmethod
+    def check_routes():
         """
             remove routes with inactive prefixes
+            thanks to PyCharm this might be a @staticmethod
         """
         for prefix in volatile_store.get_inactive_prefixes():
             length, router, pclass = volatile_store.get_route(prefix)
@@ -161,12 +163,13 @@ class TidyUpThread(Thread):
             if pclass in cfg.CLASSES:
                 route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
 
-    def check_requests(self, now):
+    @staticmethod
+    def check_requests(now):
         """
             check for brute force clients and put them into blacklist if necessary
             get time as now from caller
+            dito here regarding MAC addresses
         """
-
         # clean blacklist
         for client in list(requests_blacklist.keys()):
             if now > requests_blacklist[client].timestamp + cfg.REQUEST_LIMIT_RELEASE_TIME:
@@ -190,7 +193,7 @@ class RouteThread(Thread):
 
     def __init__(self, route_queue):
         Thread.__init__(self, name='Route')
-        self.setDaemon(1)
+        self.setDaemon(True)
         self.route_queue = route_queue
 
     def run(self):
@@ -223,7 +226,7 @@ class TimerThread(Thread):
 
     def __init__(self):
         Thread.__init__(self, name='Timer')
-        self.setDaemon(1)
+        self.setDaemon(True)
 
     def run(self):
         while True:

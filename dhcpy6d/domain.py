@@ -23,10 +23,8 @@ from dns.resolver import (NoAnswer,
 
 from .config import cfg
 from .globals import (dns_query_queue,
-                      transactions,
                       resolver_query)
-from .helpers import (colonify_ip6,
-                      decompress_ip6)
+from .helpers import decompress_ip6
 from .storage import volatile_store
 
 
@@ -101,8 +99,8 @@ def get_ip_from_dns(hostname):
     """
     try:
         answer = resolver_query.query(hostname, 'AAAA')
-        return(decompress_ip6(answer.rrset.to_text().split(' ')[-1]))
+        return decompress_ip6(answer.rrset.to_text().split(' ')[-1])
     except NoAnswer:
-        return(False)
+        return False
     except NoNameservers:
-        return(False)
+        return False

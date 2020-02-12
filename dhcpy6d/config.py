@@ -31,18 +31,12 @@ import sys
 import time
 import uuid
 
-from .constants import CONST
 from .helpers import (decompress_ip6,
                       error_exit,
                       get_interfaces,
                       listify_option,
                       send_control_message)
 
-# from .helpers import *
-
-# use ctypes for libc access in get_libc from helpers
-# LIBC = get_libc()
-#
 # needed for boolean options
 BOOLPOOL = {'0': False, '1': True, 'no': False, 'yes': True, 'false': False, 'true': True, False: False, True: True,
             'on': True, 'off': False}
@@ -65,14 +59,6 @@ Usage: dhcpy6d --config <file> [--user <user>] [--group <group>] [--duid <duid>]
 
 See manpage dhcpy6d(8) for details.
 '''
-
-
-# def generate_duid():
-#     """
-#     Creates a DUID for the server - needed if none exists or is given
-#     :return:
-#     """
-#     return '00010001{0:08x}{1:012x}'.format(int(time.time()), uuid.getnode())
 
 
 class Config:
@@ -341,8 +327,10 @@ class Config:
                 if section.upper() == 'DHCPY6D':
                     # check for legacy settings - STORE_MYSQL_* will be replaced by STORE_DB_* since 0.4.2
                     # see https://github.com/HenriWahl/dhcpy6d/issues/3
-                    if item[0].upper() in (
-                    'STORE_MYSQL_HOST', 'STORE_MYSQL_DB', 'STORE_MYSQL_USER', 'STORE_MYSQL_PASSWORD'):
+                    if item[0].upper() in ('STORE_MYSQL_HOST',
+                                           'STORE_MYSQL_DB',
+                                           'STORE_MYSQL_USER',
+                                           'STORE_MYSQL_PASSWORD'):
                         sys.stderr.write(f"\nWARNING: Keyword '{item[0]}' in section '[{section}]' "
                                          f"is deprecated and should be replaced "
                                          f"by '{item[0].lower().replace('mysql', 'db')}'.\n\n")
@@ -430,7 +418,7 @@ class Config:
                             lex.whitespace = WHITESPACE
                             lex.wordchars += ':.'
                             for interface in lex:
-                                if not interface in self.INTERFACE:
+                                if interface not in self.INTERFACE:
                                     error_exit(f"Interface '{interface}' used in section '[{section}]' "
                                                f"of configuration file '{configfile}' is not "
                                                "defined in general settings.")
@@ -509,19 +497,26 @@ class Config:
 
         # index of classes which add some identification rules etc.
         for c in list(self.CLASSES.values()):
-            if c.FILTER_MAC != '': self.FILTERS['mac'].append(c)
-            if c.FILTER_DUID != '': self.FILTERS['duid'].append(c)
-            if c.FILTER_HOSTNAME != '': self.FILTERS['hostname'].append(c)
-            if c.NAMESERVER != '': c.NAMESERVER = listify_option(c.NAMESERVER)
-            if c.NTP_SERVER != '': c.NTP_SERVER = listify_option(c.NTP_SERVER)
+            if c.FILTER_MAC != '':
+                self.FILTERS['mac'].append(c)
+            if c.FILTER_DUID != '':
+                self.FILTERS['duid'].append(c)
+            if c.FILTER_HOSTNAME != '':
+                self.FILTERS['hostname'].append(c)
+            if c.NAMESERVER != '':
+                c.NAMESERVER = listify_option(c.NAMESERVER)
+            if c.NTP_SERVER != '':
+                c.NTP_SERVER = listify_option(c.NTP_SERVER)
             if c.INTERFACE != '':
                 c.INTERFACE = listify_option(c.INTERFACE)
             else:
                 # use general setting if none specified
                 c.INTERFACE = self.INTERFACE
             # use default T1 and T2 if not defined
-            if c.T1 == 0: c.T1 = self.T1
-            if c.T2 == 0: c.T2 = self.T2
+            if c.T1 == 0:
+                c.T1 = self.T1
+            if c.T2 == 0:
+                c.T2 = self.T2
             # check advertised IA types - if empty default to ['addresses']
             if len(c.ADVERTISE) == 0:
                 c.ADVERTISE = ['addresses', 'prefixes']
@@ -530,14 +525,18 @@ class Config:
         for a in self.ADDRESSES:
             # name for address, important for leases db
             self.ADDRESSES[a].TYPE = a
-            if self.ADDRESSES[a].VALID_LIFETIME == 0: self.ADDRESSES[a].VALID_LIFETIME = self.VALID_LIFETIME
-            if self.ADDRESSES[a].PREFERRED_LIFETIME == 0: self.ADDRESSES[a].PREFERRED_LIFETIME = self.PREFERRED_LIFETIME
+            if self.ADDRESSES[a].VALID_LIFETIME == 0:
+                self.ADDRESSES[a].VALID_LIFETIME = self.VALID_LIFETIME
+            if self.ADDRESSES[a].PREFERRED_LIFETIME == 0:
+                self.ADDRESSES[a].PREFERRED_LIFETIME = self.PREFERRED_LIFETIME
             # normalize ranges
             self.ADDRESSES[a].RANGE = self.ADDRESSES[a].RANGE.lower()
             # convert boolean string to boolean value
             self.ADDRESSES[a].DNS_UPDATE = BOOLPOOL[self.ADDRESSES[a].DNS_UPDATE]
-            if self.ADDRESSES[a].DNS_ZONE == '': self.ADDRESSES[a].DNS_ZONE = self.DOMAIN
-            if self.ADDRESSES[a].DNS_TTL == '0': self.ADDRESSES[a].DNS_TTL = self.DNS_TTL
+            if self.ADDRESSES[a].DNS_ZONE == '':
+                self.ADDRESSES[a].DNS_ZONE = self.DOMAIN
+            if self.ADDRESSES[a].DNS_TTL == '0':
+                self.ADDRESSES[a].DNS_TTL = self.DNS_TTL
             # add prototype for later fast validity comparison of rebinding leases
             # also use as proof of validity of address patterns
             self.ADDRESSES[a].build_prototype()
@@ -546,8 +545,10 @@ class Config:
         for p in self.PREFIXES:
             # name for address, important for leases db
             self.PREFIXES[p].TYPE = p
-            if self.PREFIXES[p].VALID_LIFETIME == 0: self.PREFIXES[p].VALID_LIFETIME = self.VALID_LIFETIME
-            if self.PREFIXES[p].PREFERRED_LIFETIME == 0: self.PREFIXES[p].PREFERRED_LIFETIME = self.PREFERRED_LIFETIME
+            if self.PREFIXES[p].VALID_LIFETIME == 0:
+                self.PREFIXES[p].VALID_LIFETIME = self.VALID_LIFETIME
+            if self.PREFIXES[p].PREFERRED_LIFETIME == 0:
+                self.PREFIXES[p].PREFERRED_LIFETIME = self.PREFERRED_LIFETIME
             # normalize ranges
             self.PREFIXES[p].RANGE = self.PREFIXES[p].RANGE.lower()
             # route via Link Local Address
@@ -557,7 +558,7 @@ class Config:
             self.PREFIXES[p].build_prototype()
 
         # check if some options are set by cli options
-        if not self.cli_user is None:
+        if self.cli_user is not None:
             self.USER = self.cli_user
         if not self.cli_group is None:
             self.GROUP = self.cli_group
@@ -695,19 +696,19 @@ class Config:
             error_exit(f"{msg_prefix} Information refresh time '{self.INFORMATION_REFRESH_TIME}' is invalid.")
         elif not 0 < int(self.INFORMATION_REFRESH_TIME):
             error_exit(f"{msg_prefix} Information refresh time preference "
-                       f"'{self.INFORMATION_REFRESH_TIME}' is pretty short." )
+                       f"'{self.INFORMATION_REFRESH_TIME}' is pretty short.")
 
         # check validity of configuration source
-        if not self.STORE_CONFIG in ['mysql', 'postgresql', 'sqlite', 'file', False]:
+        if self.STORE_CONFIG not in ['mysql', 'postgresql', 'sqlite', 'file', False]:
             error_exit(f"{msg_prefix} Unknown config storage type '{self.STORAGE}' is invalid.")
 
         # check which type of storage to use for leases
-        if not self.STORE_VOLATILE in ['mysql', 'postgresql', 'sqlite']:
+        if self.STORE_VOLATILE not in ['mysql', 'postgresql', 'sqlite']:
             error_exit(f"{msg_prefix} Unknown volatile storage type '{self.VOLATILE}' is invalid.")
 
         # check if database for config and volatile is equal - if any
         if self.STORE_CONFIG in ['mysql', 'postgresql'] and self.STORE_VOLATILE in ['mysql', 'postgresql']:
-            if not self.STORE_CONFIG == self.STORE_VOLATILE:
+            if self.STORE_CONFIG != self.STORE_VOLATILE:
                 error_exit(f"{msg_prefix} Storage types for database access have to be equal - "
                            f"'{self.STORE_CONFIG}' != '{self.STORE_VOLATILE}'.")
 
@@ -756,10 +757,10 @@ class Config:
             else:
                 error_exit(f'{msg_prefix} No logfile configured.')
 
-            if not self.LOG_LEVEL in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            if self.LOG_LEVEL not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
                 error_exit(f"Log level '{self.LOG_LEVEL}' is invalid")
             if self.LOG_SYSLOG:
-                if not self.LOG_SYSLOG_FACILITY in ['KERN', 'USER', 'MAIL', 'DAEMON', 'AUTH',
+                if self.LOG_SYSLOG_FACILITY not in ['KERN', 'USER', 'MAIL', 'DAEMON', 'AUTH',
                                                     'LPR', 'NEWS', 'UUCP', 'CRON', 'SYSLOG',
                                                     'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3',
                                                     'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7']:
@@ -782,11 +783,11 @@ class Config:
 
         # check validity of identification attributes
         for i in self.IDENTIFICATION:
-            if not i in ['mac', 'hostname', 'duid']:
+            if i not in ['mac', 'hostname', 'duid']:
                 error_exit(f"{msg_prefix} Identification must consist of 'mac', 'hostname' and/or 'duid'.")
 
         # check validity of identification mode
-        if not self.IDENTIFICATION_MODE.strip() in ['match_all', 'match_some']:
+        if self.IDENTIFICATION_MODE.strip() not in ['match_all', 'match_some']:
             error_exit(f"{msg_prefix} Identification mode must be one of 'match_all' or 'match_some'.")
 
         # check if request rate limit seconds are a number
@@ -803,7 +804,7 @@ class Config:
                        f"'{self.REQUEST_LIMIT_RELEASE_TIME}' is invalid.")
 
         # check validity of identification attributes
-        if not self.REQUEST_LIMIT_IDENTIFICATION in ['mac', 'llip']:
+        if self.REQUEST_LIMIT_IDENTIFICATION not in ['mac', 'llip']:
             error_exit(f"{msg_prefix} Request limit identification must be one of 'mac' or 'llip'.")
 
         # Make integers of number strings to avoid later repeated conversion
@@ -816,7 +817,7 @@ class Config:
         # more checks to come...
         for c in self.CLASSES:
             msg_prefix = f"Class '{c}':"
-            if not self.CLASSES[c].ANSWER in ['normal',
+            if self.CLASSES[c].ANSWER not in ['normal',
                                               'noaddress',
                                               'none']:
                 error_exit(f"{msg_prefix} answer type must be one of 'normal', 'noaddress' and 'none'.")
@@ -825,12 +826,12 @@ class Config:
             if not self.IGNORE_INTERFACE:
                 for i in self.CLASSES[c].INTERFACE:
                     # also accept Linux VLAN and other definitions but interface must exist
-                    if not i in get_interfaces() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
+                    if i not in get_interfaces() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                         error_exit(f"{msg_prefix} Interface '{i}' is invalid.")
 
             # check advertised IA types
             for i in self.CLASSES[c].ADVERTISE:
-                if not i in ['addresses', 'prefixes']:
+                if i not in ['addresses', 'prefixes']:
                     error_exit("Only 'addresses' and 'prefixes' can be advertised.")
 
             # check nameserver to be given to client
@@ -867,17 +868,17 @@ class Config:
             # check T2 is not smaller than T1
             if not int(self.CLASSES[c].T2) >= int(self.CLASSES[c].T1):
                 error_exit(f"{msg_prefix} T2 '{self.CLASSES[c].T2}' is shorter "
-                           f"than T1 '{self.CLASSES[c].T1}' and thus invalid." )
+                           f"than T1 '{self.CLASSES[c].T1}' and thus invalid.")
 
             # check every single address of a class
             for a in self.CLASSES[c].ADDRESSES:
                 msg_prefix = f"Class '{c}' Address type '{a}':"
                 # test if used addresses are defined
-                if not a in self.ADDRESSES:
+                if a not in self.ADDRESSES:
                     error_exit(f"{msg_prefix} Address type '{a}' is not defined.")
 
                 # test validity of category
-                if not self.ADDRESSES[a].CATEGORY.strip() in ['eui64', 'fixed', 'range', 'random', 'mac', 'id', 'dns']:
+                if self.ADDRESSES[a].CATEGORY.strip() not in ['eui64', 'fixed', 'range', 'random', 'mac', 'id', 'dns']:
                     error_exit(f"{msg_prefix} Category '{self.ADDRESSES[a].CATEGORY}' is invalid. "
                                f"Category must be one of 'eui64', 'fixed', 'range', 'random', 'mac', 'id' and 'dns'.")
 
@@ -885,7 +886,7 @@ class Config:
                 self.ADDRESSES[a].build_prototype()
                 # test existence of category specific variable in pattern
                 if self.ADDRESSES[a].CATEGORY == 'range':
-                    if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.ADDRESSES[a].RANGE, re.IGNORECASE):
+                    if not re.match('^[0-9a-f]{1,4}-[0-9a-f]{1,4}$', self.ADDRESSES[a].RANGE, re.IGNORECASE):
                         error_exit(f"{msg_prefix} Range '{self.ADDRESSES[a].RANGE}' is not valid.")
                     if not 0 < self.ADDRESSES[a].PATTERN.count('$range$') < 2:
                         error_exit(f"{msg_prefix} Pattern '{self.ADDRESSES[a].PATTERN.strip()}' contains wrong "
@@ -933,7 +934,7 @@ class Config:
                                f"than preferred lifetime '{self.ADDRESSES[a].PREFERRED_LIFETIME}' and thus invalid.")
 
                 # check if T1 <= T2 <= PREFERRED_LIFETIME <= VALID_LIFETIME
-                if not (int(self.CLASSES[c].T1) <= int(self.CLASSES[c].T2) <= \
+                if not (int(self.CLASSES[c].T1) <= int(self.CLASSES[c].T2) <=
                         int(self.ADDRESSES[a].PREFERRED_LIFETIME) <= int(self.ADDRESSES[a].VALID_LIFETIME)):
                     error_exit(f"{msg_prefix} Time intervals T1 '{self.CLASSES[c].T1}' <= "
                                f"T2 '{self.CLASSES[c].T2}' <= "
@@ -944,18 +945,18 @@ class Config:
             for b in self.CLASSES[c].BOOTFILES:
                 msg_prefix = f"Bootfile '{c}' BOOTFILE type '{b}':"
                 # test if used bootfiles are defined
-                if not b in self.BOOTFILES:
+                if b not in self.BOOTFILES:
                     error_exit(f"{msg_prefix} Bootfile type '{b}' is not defined.")
 
             # check every single prefix of a class
             for p in self.CLASSES[c].PREFIXES:
                 msg_prefix = f"Class '{c}' PREFIX type '{p}':"
                 # test if used addresses are defined
-                if not p in self.PREFIXES:
+                if p not in self.PREFIXES:
                     error_exit(f"{msg_prefix} Prefix type '{p}' is not defined.")
 
                 # test validity of category
-                if not self.PREFIXES[p].CATEGORY.strip() in ['range', 'id']:
+                if self.PREFIXES[p].CATEGORY.strip() not in ['range', 'id']:
                     error_exit(f"{msg_prefix} Category 'self.PREFIXES[p].CATEGORY' is invalid. "
                                f"Category must be 'range' or 'id'.")
 
@@ -963,11 +964,11 @@ class Config:
                 self.PREFIXES[p].build_prototype()
                 # test existence of category specific variable in pattern
                 if self.PREFIXES[p].CATEGORY == 'range':
-                    if not re.match('^[0-9a-f]{1,4}\-[0-9a-f]{1,4}$', self.PREFIXES[p].RANGE, re.IGNORECASE):
+                    if not re.match('^[0-9a-f]{1,4}-[0-9a-f]{1,4}$', self.PREFIXES[p].RANGE, re.IGNORECASE):
                         error_exit(f"{msg_prefix} Range '{self.PREFIXES[p].RANGE}' is not valid.")
                     if not 0 < self.PREFIXES[p].PATTERN.count('$range$') < 2:
                         error_exit(f"{msg_prefix} Pattern '{self.PREFIXES[p].PATTERN.strip()}' contains wrong "
-                                   f"number of '$range$' variables for category 'range'." )
+                                   f"number of '$range$' variables for category 'range'.")
                     elif self.PREFIXES[p].PATTERN.endswith('$range$'):
                         error_exit(f"{msg_prefix} Pattern '{self.PREFIXES[p].PATTERN.strip()}' must not end "
                                    f"with '$range$' variable for category 'range'.")
@@ -1050,7 +1051,6 @@ class ConfigObject:
 
         self.PROTOTYPE = prototype
 
-
     def inject_dynamic_prefix_into_prototype(self, dynamic_prefix):
         """
             called from main to put then known dynamic prefix into protoype
@@ -1058,7 +1058,6 @@ class ConfigObject:
         if '$prefix$' in self.PATTERN:
             prefix_pattern = self.PATTERN.replace('$prefix$', dynamic_prefix)
             self.build_prototype(prefix_pattern)
-
 
     def matches_prototype(self, address):
         """
@@ -1190,6 +1189,7 @@ class Class:
         # commands or scripts to be called for setting and removing routes for prefixes
         self.CALL_UP = ''
         self.CALL_DOWN = ''
+
 
 class BootFile:
     """

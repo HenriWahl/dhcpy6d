@@ -98,7 +98,7 @@ def build_option(number, payload):
     """
     # option number and length take 2 byte each so the string has to be 4 chars long
     option = f'{number:04x}'  # option number
-    option += f'{len(payload)//2:04x}'  # payload length, /2 because 2 chars are 1 byte
+    option += f'{len(payload) // 2:04x}'  # payload length, /2 because 2 chars are 1 byte
     option += payload
     return option
 
@@ -188,7 +188,7 @@ def colonify_ip6(address):
         return ':'.join((address[0:4], address[4:8], address[8:12], address[12:16],
                          address[16:20], address[20:24], address[24:28], address[28:32]))
     else:
-        #return 'n/a'
+        # return 'n/a'
         # provoke crash to see what happens with un-addresses
         return False
 
