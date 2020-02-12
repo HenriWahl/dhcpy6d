@@ -21,6 +21,7 @@ import sys
 import traceback
 
 from ..config import cfg
+from ..constants import CONST
 from ..globals import (DUMMY_MAC,
                        EMPTY_OPTIONS,
                        IGNORED_LOG_OPTIONS)
@@ -203,7 +204,6 @@ class Client:
 
                 # get intersection of all sets of identifying attributes - even the empty ones
                 if len(id_attributes) > 0:
-                    #client_config = set.intersection(eval('&'.join(id_attributes)))
                     client_config = set.intersection(*id_attributes)
 
                     # if exactly one client has been identified use that config
@@ -217,9 +217,10 @@ class Client:
                     client_config = None
 
             # If client gave some addresses for RENEW or REBIND consider them
-            if transaction.last_message_received_type in (5, 6) and \
-                not (len(transaction.addresses) == 0 and
-                     len(transaction.prefixes) == 0):
+            if transaction.last_message_received_type is not CONST.MESSAGE.RENEW and \
+               transaction.last_message_received_type is not CONST.MESSAGE.REBIND and \
+               not (len(transaction.addresses) == 0 and
+                    len(transaction.prefixes) == 0):
                 # use already existing lease
                 reuse_lease(client=self, client_config=client_config, transaction=transaction)
             # build IA addresses from config - fixed ones and dynamic
@@ -233,5 +234,5 @@ class Client:
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            log.error('build_client(): ' + str(err))
+            log.error('build(): ' + str(err))
             return None
