@@ -25,6 +25,7 @@ import traceback
 from ..config import cfg
 from .store import Store
 
+
 class SQLite(Store):
     """
         file-based SQLite database, might be an option for single installations
@@ -35,19 +36,17 @@ class SQLite(Store):
         self.connection = None
 
         try:
-            self.DBConnect(storage_type)
+            self.db_connect(storage_type)
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
 
-
-    def DBConnect(self, storage_type='volatile'):
+    def db_connect(self, storage_type='volatile'):
         """
             Initialize DB connection
         """
-
         # only import if needed
-        if not 'sqlite3' in list(sys.modules.keys()):
+        if 'sqlite3' not in list(sys.modules.keys()):
             import sqlite3
 
         try:
@@ -64,7 +63,6 @@ class SQLite(Store):
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             return None
-
 
     def db_query(self, query):
         """

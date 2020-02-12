@@ -26,7 +26,9 @@ from .store import DB
 
 
 class DBMySQL(DB):
-
+    """
+    access MySQL and Mariadb
+    """
     def db_connect(self):
         """
             Connect to database server according to database type

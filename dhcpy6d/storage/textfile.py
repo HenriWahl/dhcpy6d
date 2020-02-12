@@ -19,8 +19,6 @@
 import configparser
 
 from ..config import cfg
-from ..globals import (collected_macs,
-                       transactions)
 from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option)
@@ -64,13 +62,17 @@ class Textfile(Store):
             if self.hosts[section].CLASS in cfg.CLASSES:
                 for a in cfg.CLASSES[self.hosts[section].CLASS].ADDRESSES:
                     if cfg.ADDRESSES[a].CATEGORY == 'id' and self.hosts[section].ID == '':
-                        error_exit(f"Textfile client configuration: No ID given for client '{self.hosts[section].HOSTNAME}'")
+                        error_exit(f"Textfile client configuration: No ID given "
+                                   f"for client '{self.hosts[section].HOSTNAME}'")
             else:
-                error_exit(f"Textfile client configuration: Class '{self.hosts[section].CLASS}' of host '{self.hosts[section].HOSTNAME}' is not defined")
+                error_exit(f"Textfile client configuration: Class '{self.hosts[section].CLASS}' "
+                           f"of host '{self.hosts[section].HOSTNAME}' is not defined")
 
             if self.hosts[section].ID != '':
                 if self.hosts[section].ID in list(self.ids.keys()):
-                    error_exit(f"Textfile client configuration: ID '{self.hosts[section].ID}' of client '{self.hosts[section].HOSTNAME}' is already used by '{self.ids[self.hosts[section].ID]}'.")
+                    error_exit(f"Textfile client configuration: ID '{self.hosts[section].ID}' "
+                               f"of client '{self.hosts[section].HOSTNAME}' is already used "
+                               f"by '{self.ids[self.hosts[section].ID]}'.")
                 else:
                     self.ids[self.hosts[section].ID] = self.hosts[section].HOSTNAME
 
@@ -81,13 +83,13 @@ class Textfile(Store):
             self.hosts[section].ADDRESS = listify_option(self.hosts[section].ADDRESS)
 
             # Decompress IPv6-Addresses
-            if self.hosts[section].ADDRESS != None:
-                self.hosts[section].ADDRESS =  [decompress_ip6(x) for x in self.hosts[section].ADDRESS]
+            if self.hosts[section].ADDRESS is not None:
+                self.hosts[section].ADDRESS = [decompress_ip6(x) for x in self.hosts[section].ADDRESS]
 
             # and put the host objects into index
             if self.hosts[section].MAC:
                 for m in self.hosts[section].MAC:
-                    if not m in self.index_mac:
+                    if m not in self.index_mac:
                         self.index_mac[m] = [self.hosts[section]]
                     else:
                         self.index_mac[m].append(self.hosts[section])
@@ -102,7 +104,6 @@ class Textfile(Store):
         # not very meaningful in case of databaseless textfile config but for completeness
         self.connected = True
 
-
     def get_client_config_by_mac(self, transaction):
         """
             get host(s?) and its information belonging to that mac
@@ -114,7 +115,6 @@ class Textfile(Store):
             return hosts
         else:
             return None
-
 
     def get_client_config_by_duid(self, transaction):
         """
@@ -128,7 +128,6 @@ class Textfile(Store):
         else:
             return None
 
-
     def get_client_config_by_hostname(self, transaction):
         """
             get host and its information by hostname
@@ -139,9 +138,8 @@ class Textfile(Store):
         else:
             return None
 
-
-    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], id=''):
+    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], host_id=''):
         """
             give back ClientConfig object
         """
-        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
+        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=host_id)

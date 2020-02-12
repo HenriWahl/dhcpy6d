@@ -20,13 +20,12 @@ import sys
 import traceback
 
 from ..config import cfg
-from ..constants import CONST
-from ..globals import (collected_macs,
-                       transactions)
+from ..globals import collected_macs
 from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option,
                        NeighborCacheRecord)
+
 
 class ClientConfig:
     """
@@ -60,6 +59,7 @@ class ClientConfigDB:
         self.hosts = {}
         self.index_mac = {}
         self.index_duid = {}
+
 
 class Store:
     """
@@ -110,13 +110,14 @@ class Store:
                 return answer[0][0]
             else:
                 return None
-        return (decoration_function)
+        return decoration_function
 
     @clean_query_answer
     def get_db_version(self):
         """
+        return stored version if dhcpy6d DB
         """
-        return(self.query("SELECT item_value FROM meta WHERE item_key = 'version'"))
+        return self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
 
     def store(self, transaction, now):
         """
@@ -125,10 +126,10 @@ class Store:
         # only if client exists
         if transaction.client:
             for a in transaction.client.addresses:
-                if not a.ADDRESS is None:
+                if a.ADDRESS is not None:
                     query = f"SELECT address FROM {self.table_leases} WHERE address = '{a.ADDRESS}'"
                     answer = self.query(query)
-                    if answer != None:
+                    if answer is not None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
                             query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime,\
@@ -192,10 +193,10 @@ class Store:
                             self.query(query)
 
             for p in transaction.client.prefixes:
-                if not p.PREFIX is None:
+                if p.PREFIX is not None:
                     query = f"SELECT prefix FROM {self.table_prefixes} WHERE prefix = '{p.PREFIX}'"
                     answer = self.query(query)
-                    if answer != None:
+                    if answer is not None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
                             query = "INSERT INTO %s (prefix, length, active, last_message, preferred_lifetime, valid_lifetime,\
@@ -383,17 +384,17 @@ class Store:
         """
         query = f"SELECT DISTINCT hostname, duid, mac, iaid FROM {self.table_leases} WHERE address='{address}'"
         answer = self.query(query)
-        if answer != None:
+        if answer is not None:
             if len(answer)>0:
                 if len(answer[0]) > 0:
                     return answer[0]
                 else:
                     # calling method expects quartet of hostname, duid, mac, iad - get None if nothing there
-                    return((None, None, None, None))
+                    return None, None, None, None
             else:
-                return((None, None, None, None))
+                return None, None, None, None
         else:
-            return((None, None, None, None))
+            return None, None, None, None
 
     def get_active_prefixes(self):
         """
@@ -425,17 +426,17 @@ class Store:
         """
         query = "SELECT {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE {0}.prefix = {1}.prefix AND {1}.prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
         answer = self.query(query)
-        if answer != None:
-            if len(answer)>0:
+        if answer is not None:
+            if len(answer) > 0:
                 if len(answer[0]) > 0:
                     return answer[0]
                 else:
                     # calling method expects triple of length, router and class - get None if nothing there
-                    return((None, None, None))
+                    return None, None, None
             else:
-                return((None, None, None))
+                return None, None, None
         else:
-            return((None, None, None))
+            return None, None, None
 
     @clean_query_answer
     def release_lease(self, address, now):
@@ -555,11 +556,11 @@ class Store:
         result = self.query(query)
         if result != None:
             if len(result) == 0:
-                return(False)
+                return False
             else:
-                return(result[0][0])
+                return result[0][0]
         else:
-            return(False)
+            return False
 
     def check_advertised_prefix(self, transaction, category='', ptype=''):
         """
@@ -590,11 +591,11 @@ class Store:
         result = self.query(query)
         if result != None:
             if len(result) == 0:
-                return(False)
+                return False
             else:
-                return(result[0][0])
+                return result[0][0]
         else:
-            return(False)
+            return False
 
     def release_free_leases(self, now):
         """
@@ -661,36 +662,42 @@ class Store:
             # a section here is a host
             # lowering MAC and DUID information in case they where upper in database
             for host in answer:
-                hostname, mac, duid, aclass, address, id = host
+                hostname, mac, duid, aclass, address, host_id = host
                 # lower some attributes to comply with values from request
-                if mac: mac = listify_option(mac.lower())
-                if duid: duid = duid.lower()
-                if address: address = listify_option(address.lower())
+                if mac:
+                    mac = listify_option(mac.lower())
+                if duid:
+                    duid = duid.lower()
+                if address:
+                    address = listify_option(address.lower())
 
                 transaction.client_config_db.hosts[hostname] = ClientConfig(hostname=hostname,
                                                                             mac=mac,
                                                                             duid=duid,
                                                                             aclass=aclass,
                                                                             address=address,
-                                                                            id=id)
+                                                                            id=host_id)
 
                 # and put the host objects into index
                 if transaction.client_config_db.hosts[hostname].MAC:
                     for m in transaction.client_config_db.hosts[hostname].MAC:
-                        if not m in transaction.client_config_db.index_mac:
+                        if m not in transaction.client_config_db.index_mac:
                             transaction.client_config_db.index_mac[m] = [transaction.client_config_db.hosts[hostname]]
                         else:
-                            transaction.client_config_db.index_mac[m].append(transaction.client_config_db.hosts[hostname])
+                            transaction.client_config_db.index_mac[m].\
+                                append(transaction.client_config_db.hosts[hostname])
 
                 # add DUIDs to IndexDUID
-                if not transaction.client_config_db.hosts[hostname].DUID == '':
-                    if not transaction.client_config_db.hosts[hostname].DUID in transaction.client_config_db.index_duid:
-                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID] = [transaction.client_config_db.hosts[hostname]]
+                if transaction.client_config_db.hosts[hostname].DUID != '':
+                    if transaction.client_config_db.hosts[hostname].DUID not in transaction.client_config_db.index_duid:
+                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID] = \
+                            [transaction.client_config_db.hosts[hostname]]
                     else:
-                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID].append(transaction.client_config_db.hosts[hostname])
+                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID].\
+                            append(transaction.client_config_db.hosts[hostname])
 
                 # some cleaning
-                del host, mac, duid, address, aclass, id
+                del host, mac, duid, address, aclass, host_id
 
     def get_client_config_by_mac(self, transaction):
         """
@@ -704,7 +711,6 @@ class Store:
             return hosts
         else:
             return None
-
 
     def get_client_config_by_duid(self, transaction):
         """
@@ -720,7 +726,6 @@ class Store:
         else:
             return None
 
-
     def get_client_config_by_hostname(self, transaction):
         """
             get host and its information by hostname
@@ -731,13 +736,11 @@ class Store:
         else:
             return None
 
-
-    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], id=''):
+    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], host_id=''):
         """
             give back ClientConfig object
         """
-        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=id)
-
+        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=host_id)
 
     def store_mac_llip(self, mac, link_local_ip, now):
         """
@@ -758,7 +761,6 @@ class Store:
     def get_dynamic_prefix(self):
         query = "SELECT item_value FROM meta WHERE item_key = 'dynamic_prefix'"
         return self.query(query)
-
 
     def store_dynamic_prefix(self, prefix):
         """
@@ -891,7 +893,7 @@ class Store:
                             mac, last_update = timestamp_old
                             last_update_new = last_update.strftime('%s')
                             self.query("UPDATE macs_llips SET last_update_new = {0} "
-                                                "WHERE mac = '{1}'".format(last_update_new,
+                                       "WHERE mac = '{1}'".format(last_update_new,
                                                                            mac))
                         print('Converting timestamps of macs_llips succeeded')
                         for table in db_tables:
@@ -1026,8 +1028,10 @@ class Store:
 class DB(Store):
     """
         MySQL and PostgreSQL database interface
-        for robustness see http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
+        for robustness http://stackoverflow.com/questions/207981/how-to-enable-mysql-client-auto-re-connect-with-mysqldb
     """
+    connection = False
+    cursor = False
 
     def __init__(self, query_queue, answer_queue):
         Store.__init__(self, query_queue, answer_queue)
@@ -1043,7 +1047,7 @@ class DB(Store):
         """
         if cfg.STORE_CONFIG == 'mysql' or cfg.STORE_VOLATILE == 'mysql':
             try:
-                if not 'MySQLdb' in list(sys.modules.keys()):
+                if 'MySQLdb' not in list(sys.modules.keys()):
                     import MySQLdb
             except:
                 error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
@@ -1062,7 +1066,7 @@ class DB(Store):
 
         elif cfg.STORE_CONFIG == 'postgresql' or cfg.STORE_VOLATILE == 'postgresql':
             try:
-                if not 'psycopg2' in list(sys.modules.keys()):
+                if 'psycopg2' not in list(sys.modules.keys()):
                     import psycopg2
             except:
                 traceback.print_exc(file=sys.stdout)
@@ -1070,9 +1074,9 @@ class DB(Store):
                 error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
             try:
                 self.connection = sys.modules['psycopg2'].connect(host=cfg.STORE_DB_HOST,
-                                                   database=cfg.STORE_DB_DB,
-                                                   user=cfg.STORE_DB_USER,
-                                                   passwd=cfg.STORE_DB_PASSWORD)
+                                                                  database=cfg.STORE_DB_DB,
+                                                                  user=cfg.STORE_DB_USER,
+                                                                  passwd=cfg.STORE_DB_PASSWORD)
                 self.cursor = self.connection.cursor()
                 self.connected = True
             except:
