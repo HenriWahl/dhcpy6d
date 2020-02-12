@@ -23,8 +23,7 @@ import traceback
 from ..config import cfg
 from ..globals import (DUMMY_MAC,
                        EMPTY_OPTIONS,
-                       IGNORED_LOG_OPTIONS,
-                       transactions)
+                       IGNORED_LOG_OPTIONS)
 from ..helpers import colonify_ip6
 from ..log import log
 from ..storage import config_store
@@ -70,7 +69,6 @@ class Client:
         """
         options_string = ''
         # put own attributes into a string
-        #options = sorted(list(self.__dict__.keys()))
         options = sorted(self.__dict__.keys())
         # options.sort()
         for option in options:
@@ -80,7 +78,7 @@ class Client:
                     if 'addresses' in cfg.CLASSES[self.client_class].ADVERTISE:
                         option_string = f'{option}:'
                         for address in self.__dict__[option]:
-                            option_string +=  f' {colonify_ip6(address.ADDRESS)}'
+                            option_string += f' {colonify_ip6(address.ADDRESS)}'
                         options_string = f'{options_string} | {option_string}'
                 elif option == 'bootfiles':
                     option_string = f'{option}:'
@@ -165,7 +163,7 @@ class Client:
             # if filters did not get a result try it the hard way
             if client_config is None:
                 # check all given identification criteria - if they all match each other the client is identified
-                id_attributes = list()
+                id_attributes = []
 
                 # get client config that most probably seems to fit
                 config_store.build_config_from_db(transaction)
@@ -180,32 +178,33 @@ class Client:
                         macs = config_store.get_client_config_by_mac(transaction)
                         if macs:
                             macs = set(macs)
-                            id_attributes.append('macs')
+                            id_attributes.append(macs)
                         elif cfg.IDENTIFICATION_MODE == 'match_all':
                             macs = set()
-                            id_attributes.append('macs')
+                            id_attributes.append(macs)
 
                     if identification == 'duid':
                         duids = config_store.get_client_config_by_duid(transaction)
                         if duids:
                             duids = set(duids)
-                            id_attributes.append('duids')
+                            id_attributes.append(duids)
                         elif cfg.IDENTIFICATION_MODE == 'match_all':
                             duids = set()
-                            id_attributes.append('duids')
+                            id_attributes.append(duids)
 
                     if identification == 'hostname':
                         hostnames = config_store.get_client_config_by_hostname(transaction)
                         if hostnames:
                             hostnames = set(hostnames)
-                            id_attributes.append('hostnames')
+                            id_attributes.append(hostnames)
                         elif cfg.IDENTIFICATION_MODE == 'match_all':
                             hostnames = set()
-                            id_attributes.append('hostnames')
+                            id_attributes.append(hostnames)
 
                 # get intersection of all sets of identifying attributes - even the empty ones
                 if len(id_attributes) > 0:
-                    client_config = set.intersection(eval('&'.join(id_attributes)))
+                    #client_config = set.intersection(eval('&'.join(id_attributes)))
+                    client_config = set.intersection(*id_attributes)
 
                     # if exactly one client has been identified use that config
                     if len(client_config) == 1:
