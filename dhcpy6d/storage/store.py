@@ -270,7 +270,9 @@ class Store:
                 query = f"INSERT INTO {self.table_routes} VALUES ('{prefix}', {length}, '{router}', {now})"
                 return self.query(query)
             elif len(self.query(query)) == 1:
-                query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, now)
+                # query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, now)
+                query = f"UPDATE {self.table_routes} SET prefix = '{prefix}', length = {length}, " \
+                        f"router = '{router}', last_update = {now} WHERE prefix = '{prefix}'"
                 return self.query(query)
             return None
         else:
@@ -400,7 +402,9 @@ class Store:
         """
         get used prefixes to be able to reinstall their routes
         """
-        query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 1".format(self.table_prefixes, self.table_routes)
+        # query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 1".format(self.table_prefixes, self.table_routes)
+        query = f"SELECT {self.table_prefixes}.prefix FROM {self.table_prefixes} INNER JOIN {self.table_routes} ON " \
+                f"{self.table_prefixes}.prefix = {self.table_routes}.prefix WHERE {self.table_prefixes}.active = 1"
         answer = self.query(query)
         active_prefixes = list()
         if answer is not None:
@@ -412,7 +416,9 @@ class Store:
         """
         get unused prefixes to be able to delete their routes
         """
-        query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 0".format(self.table_prefixes, self.table_routes)
+        # query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 0".format(self.table_prefixes, self.table_routes)
+        query = f"SELECT {self.table_prefixes}.prefix FROM {self.table_prefixes} INNER JOIN {self.table_routes} " \
+                f"ON {self.table_prefixes}.prefix = {self.table_routes}.prefix WHERE {self.table_prefixes}.active = 0"
         answer = self.query(query)
         inactive_prefixes = list()
         if answer is not None:
@@ -424,7 +430,10 @@ class Store:
         """
         get all route parameters plus class for a certain prefix - mostly to delete the route
         """
-        query = "SELECT {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE {0}.prefix = {1}.prefix AND {1}.prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
+        # query = "SELECT {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE {0}.prefix = {1}.prefix AND {1}.prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
+        query = f"SELECT {self.table_routes}.length, {self.table_routes}.router, {self.table_prefixes}.class FROM " \
+                f"{self.table_routes} INNER JOIN {self.table_prefixes} WHERE {self.table_routes}.prefix = " \
+                f"{self.table_prefixes}.prefix AND {self.table_prefixes}.prefix = '{prefix}'"
         answer = self.query(query)
         if answer is not None:
             if len(answer) > 0:
@@ -554,7 +563,7 @@ class Store:
                      category,
                      atype)
         result = self.query(query)
-        if result != None:
+        if result is not None:
             if len(result) == 0:
                 return False
             else:
@@ -589,7 +598,7 @@ class Store:
                      category,
                      ptype)
         result = self.query(query)
-        if result != None:
+        if result is not None:
             if len(result) == 0:
                 return False
             else:
@@ -857,7 +866,7 @@ class Store:
                     if ' ' in db_datetime_test[0][0]:
                         update_type = 'sqlite'
 
-                if update_type != False:
+                if update_type:
                     # add new columns with suffix *_new
                     db_tables = {'leases': ['last_update', 'preferred_until', 'valid_until'],
                                  'macs_llips': ['last_update']}
@@ -880,36 +889,38 @@ class Store:
                             last_update_new = last_update.strftime('%s')
                             preferred_until_new = preferred_until.strftime('%s')
                             valid_until_new = valid_until.strftime('%s')
-                            self.query("UPDATE leases SET last_update_new = {0}, "
-                                                                  "preferred_until_new = {1}, "
-                                                                  "valid_until_new = {2} "
-                                                "WHERE address = '{3}'".format(last_update_new,
-                                                                               preferred_until_new,
-                                                                               valid_until_new,
-                                                                               address))
+                            # self.query("UPDATE leases SET last_update_new = {0}, "
+                            #                                       "preferred_until_new = {1}, "
+                            #                                       "valid_until_new = {2} "
+                            #                     "WHERE address = '{3}'".format(last_update_new,
+                            #                                                    preferred_until_new,
+                            #                                                    valid_until_new,
+                            #                                                    address))
+                            self.query(f"UPDATE leases SET last_update_new = {last_update_new}, "
+                                       "preferred_until_new = {preferred_until_new}, "
+                                       "valid_until_new = {valid_until_new} "
+                                       "WHERE address = '{address}'")
                         print('Converting timestamps of leases succeeded')
                         timestamps_old = self.query('SELECT mac, last_update FROM macs_llips')
                         for timestamp_old in timestamps_old:
                             mac, last_update = timestamp_old
                             last_update_new = last_update.strftime('%s')
-                            self.query("UPDATE macs_llips SET last_update_new = {0} "
-                                       "WHERE mac = '{1}'".format(last_update_new,
-                                                                           mac))
+                            self.query(f"UPDATE macs_llips SET last_update_new = {last_update_new} WHERE mac = '{mac}'")
                         print('Converting timestamps of macs_llips succeeded')
                         for table in db_tables:
                             for column in db_tables[table]:
                                 self.query(f'ALTER TABLE {table} DROP COLUMN {column}')
-                                self.query('ALTER TABLE {0} CHANGE COLUMN {1}_new {1} BIGINT NOT NULL'.format(table, column))
+                                self.query(f'ALTER TABLE {table} CHANGE COLUMN {column}_new {column} BIGINT NOT NULL')
                                 print(f'Moving column {column} of table {table} succeeded')
 
                     if update_type == 'sqlite':
                         for table in db_tables:
-                            self.query('ALTER TABLE {0} RENAME TO {0}_old'.format(table))
+                            self.query(f'ALTER TABLE {table} RENAME TO {table}_old')
 
                         self.query('CREATE TABLE leases AS SELECT address,active,last_message,preferred_lifetime,'
-                                                                  'valid_lifetime,hostname,type,category,ia_type,'
-                                                                  'class,mac,duid,iaid '
-                                                                  'FROM leases_old')
+                                   'valid_lifetime,hostname,type,category,ia_type,'
+                                   'class,mac,duid,iaid '
+                                   'FROM leases_old')
 
                         self.query('CREATE TABLE macs_llips AS SELECT mac,link_local_ip FROM macs_llips_old')
 
@@ -931,21 +942,16 @@ class Store:
                             last_update_new = last_update.strftime('%s')
                             preferred_until_new = preferred_until.strftime('%s')
                             valid_until_new = valid_until.strftime('%s')
-                            self.query("UPDATE leases SET last_update = {0}, "
-                                                          "preferred_until = {1}, "
-                                                          "valid_until = {2} "
-                                                "WHERE address = '{3}'".format(last_update_new,
-                                                                               preferred_until_new,
-                                                                               valid_until_new,
-                                                                               address))
+                            self.query(f"UPDATE leases SET last_update = {last_update_new}, "
+                                       f"preferred_until = {preferred_until_new}, "
+                                       f"valid_until = {valid_until_new} "
+                                       f"WHERE address = '{address}'")
                         print('Converting timestamps of leases succeeded')
                         timestamps_old = self.query('SELECT mac, last_update FROM macs_llips_old')
                         for timestamp_old in timestamps_old:
                             mac, last_update = timestamp_old
                             last_update_new = last_update.strftime('%s')
-                            self.query("UPDATE macs_llips SET last_update = {0} "
-                                                "WHERE mac = '{1}'".format(last_update_new,
-                                                                           mac))
+                            self.query(f"UPDATE macs_llips SET last_update = {last_update_new} WHERE mac = '{mac}'")
                         print('Converting timestamps of macs_llips succeeded')
 
         # Extend volatile database to handle prefixes - comes with database version 2
