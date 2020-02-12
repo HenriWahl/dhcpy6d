@@ -225,8 +225,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                     try:
                                         transaction.mac = collected_macs[transaction.client_llip].mac
                                     except KeyError:
-                                        traceback.print_exc(file=sys.stdout)
-                                        sys.stdout.flush()
                                         # MAC not yet found :-(
                                         if cfg.LOG_MAC_LLIP:
                                             log.info(f'transaction: {transaction.id} | mac address for '
