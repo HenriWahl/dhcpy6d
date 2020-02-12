@@ -19,7 +19,6 @@
 import random
 
 from ..config import cfg
-from ..globals import transactions
 from ..helpers import (convert_mac_to_eui64,
                        decompress_ip6)
 from ..log import log

@@ -21,7 +21,6 @@ from ..config import (Address,
                       Prefix)
 from ..constants import CONST
 from ..domain import get_ip_from_dns
-from ..globals import transactions
 
 from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
