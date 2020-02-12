@@ -85,7 +85,7 @@ class Option(OptionTemplate):
                                 #
                                 if transaction.client.client_class != '':
                                     t1 = f'{int(cfg.CLASSES[transaction.client.client_class].T1):08x}'
-                                    t2 =  f'{int(cfg.CLASSES[transaction.client.client_class].T2):08x}'
+                                    t2 = f'{int(cfg.CLASSES[transaction.client.client_class].T2):08x}'
                                 else:
                                     t1 = f'{int(cfg.T1):08x}'
                                     t2 = f'{int(cfg.T2):08x}'
@@ -100,13 +100,13 @@ class Option(OptionTemplate):
                         except:
                             # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                             response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                     f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
+                                                                          f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                             # options in answer to be logged
                             options_answer_part = CONST.OPTION.STATUS_CODE
                     else:
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                     f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
+                                                                      f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
                         # options in answer to be logged
                         options_answer_part = CONST.OPTION.STATUS_CODE
 
@@ -125,6 +125,6 @@ class Option(OptionTemplate):
             for a in range(len(payload[32:]) // 44):
                 address = payload[32:][(a * 56):(a * 56) + 32]
                 # in case an address is asked for twice by one host ignore the twin
-                if not address in transaction.addresses:
+                if address not in transaction.addresses:
                     transaction.addresses.append(address)
         transaction.ia_options.append(CONST.OPTION.IA_NA)

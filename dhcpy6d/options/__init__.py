@@ -20,7 +20,6 @@ import importlib.util
 import pathlib
 import re
 
-from ..constants import CONST
 
 class OptionTemplate:
     """

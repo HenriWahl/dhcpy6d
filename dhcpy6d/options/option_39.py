@@ -16,13 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-from binascii import hexlify
 import re
-from socket import (AF_INET6,
-                    inet_pton)
 
 from dhcpy6d.config import cfg
-from dhcpy6d.constants import CONST
 from dhcpy6d.helpers import (convert_binary_to_dns,
                              convert_dns_to_binary)
 from dhcpy6d.options import OptionTemplate
@@ -38,6 +34,7 @@ class Option(OptionTemplate):
       - client wants server to update DNS -> sends 0 0 1
        - client wants no server DNS update -> sends 1 0 0
     """
+
     def build(self, transaction=None, **kwargs):
         # dummy empty return value
         response_string_part = ''
@@ -50,7 +47,7 @@ class Option(OptionTemplate):
         # - client wants no server DNS update -> sends 1 0 0
         if transaction.client:
             # flags for answer
-            N, O, S = 0, 0, 0
+            n, o, s = 0, 0, 0
             # use hostname supplied by client
             if cfg.DNS_USE_CLIENT_HOSTNAME:
                 hostname = transaction.hostname
@@ -61,22 +58,22 @@ class Option(OptionTemplate):
                 if cfg.DNS_UPDATE == 1:
                     # DNS update done by server - don't care what client wants
                     if cfg.DNS_IGNORE_CLIENT:
-                        S = 1
-                        O = 1
+                        s = 1
+                        o = 1
                     else:
                         # honor the client's request for the server to initiate DNS updates
                         if transaction.dns_s == 1:
-                            S = 1
+                            s = 1
                         # honor the client's request for no server-initiated DNS update
                         elif transaction.dns_n == 1:
-                            N = 1
+                            n = 1
                 else:
                     # no DNS update at all, not for server and not for client
                     if transaction.dns_n == 1 or \
                             transaction.dns_s == 1:
-                        O = 1
+                        o = 1
                 # sum of flags
-                nos_flags = N * 4 + O * 2 + S * 1
+                nos_flags = n * 4 + o * 2 + s * 1
                 fqdn_binary = convert_dns_to_binary(f'{hostname}.{cfg.DOMAIN}')
                 response_string_part = self.convert_to_string(self.number, f'{nos_flags:02x}{fqdn_binary}')
             else:
@@ -97,7 +94,7 @@ class Option(OptionTemplate):
         transaction.fqdn = convert_binary_to_dns(option[2:])
         transaction.hostname = transaction.fqdn.split('.')[0].lower()
         # test if hostname is valid
-        n = re.compile('^([a-z0-9\-\_]+)*$')
-        if n.match(transaction.hostname) is None:
+        hostname_pattern = re.compile('^([a-z0-9-_]+)*$')
+        if hostname_pattern.match(transaction.hostname) is None:
             transaction.hostname = ''
-        del n
+        del hostname_pattern

@@ -51,7 +51,7 @@ class Option(OptionTemplate):
                     if transaction.answer == 'noprefix':
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                         response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
+                                                                      f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                         # clean client prefixes which not be deployed anyway
                         transaction.client.prefixes[:] = []
                         # options in answer to be logged
@@ -86,18 +86,23 @@ class Option(OptionTemplate):
                                 t2 = f'{int(cfg.T2):08x}'
 
                             # even if there are no prefixes server has to deliver an empty PD
-                            response_string_part = self.convert_to_string(self.number, transaction.iaid + t1 + t2 + ia_prefixes)
+                            response_string_part = self.convert_to_string(self.number,
+                                                                          transaction.iaid +
+                                                                          t1 +
+                                                                          t2 +
+                                                                          ia_prefixes)
                             # if no prefixes available a NoPrefixAvail status code has to be sent
                             if ia_prefixes == '':
                                 # REBIND not possible
                                 if transaction.last_message_received_type == CONST.MESSAGE.REBIND:
                                     # Option 13 Status Code Option - statuscode is 3: 'NoBinding'
                                     response_string_part += self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                             f'{CONST.STATUS.NO_BINDING:04x}')
+                                                                                   f'{CONST.STATUS.NO_BINDING:04x}')
                                 else:
                                     # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
-                                    response_string_part += self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                             f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
+                                    response_string_part += self.convert_to_string(  # break because line too long
+                                                                              CONST.OPTION.STATUS_CODE,
+                                                                              f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                             # options in answer to be logged
                             options_answer_part = self.number
 
@@ -105,13 +110,13 @@ class Option(OptionTemplate):
                             print(err)
                             # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                             response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                    f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
+                                                                          f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                             # options in answer to be logged
                             options_answer_part = self.number
                     else:
                         # Option 13 Status Code Option - statuscode is 6: 'No Prefix available'
                         response_string_part = self.convert_to_string(CONST.OPTION.STATUS_CODE,
-                                                                f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
+                                                                      f'{CONST.STATUS.NO_PREFIX_AVAILABLE:04x}')
                         # options in answer to be logged
                         options_answer_part = self.number
 
@@ -120,7 +125,7 @@ class Option(OptionTemplate):
     def apply(self, transaction=None, option=None, **kwargs):
         for payload in option:
             # iaid        t1        t2       ia_prefix   opt_length       preferred validlt    length    prefix
-            # 00000001    ffffffff  ffffffff  001a        0019             00000e10   00001518    30     fd661234000000000000000000000000
+            # 00000001    ffffffff  ffffffff  001a        0019             00000e10   00001518    30     fd66123400....
             # 8               16      24      28          32                  40      48          50      82
             transaction.iaid = payload[0:8]
             transaction.iat1 = int(payload[8:16], 16)
@@ -131,7 +136,7 @@ class Option(OptionTemplate):
                 length = int(payload[48:][(p*58):(p*58)+2], 16)
                 prefix_combined = combine_prefix_length(prefix, length)
                 # in case a prefix is asked for twice by one host ignore the twin
-                if not prefix_combined in transaction.prefixes:
+                if prefix_combined not in transaction.prefixes:
                     transaction.prefixes.append(prefix_combined)
                 del(prefix, length, prefix_combined)
         transaction.ia_options.append(CONST.OPTION.IA_PD)

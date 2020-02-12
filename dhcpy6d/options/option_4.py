@@ -81,8 +81,8 @@ class Option(OptionTemplate):
                                                                            valid_lifetime)
                             if ia_addresses != '':
                                 response_string_part = self.convert_to_string(CONST.OPTION.IA_TA,
-                                                                             transaction.iaid +
-                                                                             ia_addresses)
+                                                                              transaction.iaid +
+                                                                              ia_addresses)
                             # options in answer to be logged
                             options_answer_part = CONST.OPTION.IA_TA
                         except:
@@ -113,6 +113,6 @@ class Option(OptionTemplate):
             for a in range(len(payload[32:]) // 44):
                 address = payload[32:][(a * 56):(a * 56) + 32]
                 # in case an address is asked for twice by one host ignore the twin
-                if not address in transaction.addresses:
+                if address not in transaction.addresses:
                     transaction.addresses.append(address)
         transaction.ia_options.append(CONST.OPTION.IA_TA)
