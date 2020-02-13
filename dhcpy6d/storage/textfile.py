@@ -142,4 +142,4 @@ class Textfile(Store):
         """
             give back ClientConfig object
         """
-        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=host_id)
+        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, host_id=host_id)

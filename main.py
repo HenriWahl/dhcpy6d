@@ -112,8 +112,8 @@ if __name__ == '__main__':
     tidyup_thread.start()
 
     # start DNS query queue to care for DNS in background
-    dnsquery_thread = DNSQueryThread()
-    dnsquery_thread.start()
+    dns_query_thread = DNSQueryThread()
+    dns_query_thread.start()
 
     # set user and group
     log.info(f'Running as user {cfg.USER} (UID {pwd.getpwnam(cfg.USER).pw_uid}) and '

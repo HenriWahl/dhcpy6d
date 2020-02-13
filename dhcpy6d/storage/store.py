@@ -31,7 +31,7 @@ class ClientConfig:
     """
         static client settings object to be stuffed into Hosts dict of Textfile store
     """
-    def __init__(self, hostname='', aclass='default', duid='', address=None, mac=None, id=''):
+    def __init__(self, hostname='', aclass='default', duid='', address=None, mac=None, host_id=''):
         self.HOSTNAME = hostname
         # MACs
         self.MAC = mac
@@ -47,7 +47,7 @@ class ClientConfig:
         else:
             self.ADDRESS = None
         self.CLASS = aclass
-        self.ID = id
+        self.ID = host_id
         self.DUID = duid
 
 
@@ -132,29 +132,27 @@ class Store:
                     if answer is not None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            query = "INSERT INTO %s (address, active, last_message, preferred_lifetime, valid_lifetime,\
-                                     hostname, type, category, ia_type, class, mac, duid, iaid, last_update,\
-                                     preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s',\
-                                     '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
-                                  (self.table_leases,
-                                   a.ADDRESS,
-                                   1,
-                                   transaction.last_message_received_type,
-                                   a.PREFERRED_LIFETIME,
-                                   a.VALID_LIFETIME,
-                                   transaction.client.hostname,
-                                   a.TYPE,
-                                   a.CATEGORY,
-                                   a.IA_TYPE,
-                                   transaction.client.client_class,
-                                   transaction.mac,
-                                   transaction.duid,
-                                   transaction.iaid,
-                                   now,
-                                   now + int(a.PREFERRED_LIFETIME),
-                                   now + int(a.VALID_LIFETIME))
+                            query = f"INSERT INTO {self.table_leases} (address, active, last_message, " \
+                                    f"preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, " \
+                                    f"class, mac, duid, iaid, last_update, preferred_until, valid_until) " \
+                                    f"VALUES ('{a.ADDRESS}', " \
+                                    f"'1', " \
+                                    f"'{transaction.last_message_received_type}', " \
+                                    f"'{a.PREFERRED_LIFETIME}', " \
+                                    f"'{a.VALID_LIFETIME}', " \
+                                    f"'{transaction.client.hostname}', " \
+                                    f"'{a.TYPE}', "\
+                                    f"'{a.CATEGORY}', "\
+                                    f"'{a.IA_TYPE}', " \
+                                    f"'{transaction.client.client_class}', " \
+                                    f"'{transaction.mac}', " \
+                                    f"'{transaction.duid}', " \
+                                    f"'{transaction.iaid}', " \
+                                    f"'{now}', " \
+                                    f"'{now + int(a.PREFERRED_LIFETIME)}', " \
+                                    f"'{now + int(a.VALID_LIFETIME)}')"
                             result = self.query(query)
-                            # for unknow reasons sometime a lease shall be inserted which already exists
+                            # for unknown reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
                             if result == 'IntegrityError':
                                 print('IntegrityError:', query)
@@ -577,26 +575,29 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = "SELECT prefix, length FROM %s WHERE last_message = 1\
-                     AND active = 1\
-                     AND mac = '%s' AND duid = '%s'\
-                     AND category = '%s' AND type = '%s'" % \
-                    (self.table_prefixes,
-                     transaction.mac,
-                     transaction.duid,
-                     category,
-                     ptype)
+            # query = "SELECT prefix, length FROM %s WHERE last_message = 1\
+            #          AND active = 1\
+            #          AND mac = '%s' AND duid = '%s'\
+            #          AND category = '%s' AND type = '%s'" % \
+            #         (self.table_prefixes,
+            #          transaction.mac,
+            #          transaction.duid,
+            #          category,
+            #          ptype)
+            query = f"SELECT prefix, length FROM {self.table_prefixes} WHERE last_message = 1 AND " \
+                    f"active = 1 AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}' AND " \
+                    f"category = '{category}' AND " \
+                    f"type = '{ptype}'"
         else:
-            query = "SELECT prefix, length FROM %s WHERE last_message = 1\
-                     AND active = 1\
-                     AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
-                     AND category = '%s' AND type = '%s'" % \
-                    (self.table_prefixes,
-                     transaction.mac,
-                     transaction.duid,
-                     transaction.iaid,
-                     category,
-                     ptype)
+            query = f"SELECT prefix, length FROM {self.table_prefixes} WHERE last_message = 1 AND " \
+                    f"active = 1 AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}' AND " \
+                    f"iaid = '{transaction.iaid}' AND " \
+                    f"category = '{category}' AND " \
+                    f"type = '{ptype}'"
         result = self.query(query)
         if result is not None:
             if len(result) == 0:
@@ -625,7 +626,8 @@ class Store:
         remove all leases of a certain category like random - they will grow the database
         but be of no further use
         """
-        query = f"DELETE FROM {self.table_leases} WHERE active = 0 AND category = '{category}' AND valid_until < '{now}'"
+        query = f"DELETE FROM {self.table_leases} WHERE active = 0 AND " \
+                f"category = '{category}' AND valid_until < '{now}'"
         return self.query(query)
 
     def remove_route(self, prefix):
@@ -640,7 +642,7 @@ class Store:
         unlock leases marked as advertised but apparently never been delivered
         let's say a client should have requested its formerly advertised address after 1 minute
         """
-        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_leases, now + 60)
+        query = f"UPDATE {self.table_leases} SET last_message = 0 WHERE last_message = 1 AND last_update < '{now + 60}'"
         return self.query(query)
 
     def unlock_unused_advertised_prefixes(self, now):
@@ -648,7 +650,8 @@ class Store:
             unlock prefixes marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
         """
-        query = "UPDATE %s SET last_message = 0 WHERE last_message = 1 AND last_update < '%s'" % (self.table_prefixes, now + 60)
+        query = f"UPDATE {self.table_prefixes} SET last_message = 0 WHERE last_message = 1 AND " \
+                f"last_update < '{now + 60}'"
         return self.query(query)
 
     def build_config_from_db(self, transaction):
@@ -656,12 +659,10 @@ class Store:
         get client config from db and build the appropriate config objects and indices
         """
         if transaction.client_config_db is None:
-            query = "SELECT hostname, mac, duid, class, address, id FROM %s WHERE \
-                    hostname = '%s' OR mac LIKE '%%%s%%' OR duid = '%s'" % \
-                    (self.table_hosts,
-                     transaction.hostname,
-                     transaction.mac,
-                     transaction.duid)
+            query = f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} WHERE " \
+                    f"hostname = '{transaction.hostname}' OR " \
+                    f"mac LIKE '%{transaction.mac}%' OR " \
+                    f"duid = '{transaction.duid}'"
             answer = self.query(query)
 
             # add client config which seems to fit to transaction
@@ -685,7 +686,7 @@ class Store:
                                                                             duid=duid,
                                                                             aclass=aclass,
                                                                             address=address,
-                                                                            id=host_id)
+                                                                            host_id=host_id)
 
                 # and put the host objects into index
                 if transaction.client_config_db.hosts[hostname].MAC:
@@ -749,7 +750,7 @@ class Store:
         """
             give back ClientConfig object
         """
-        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, id=host_id)
+        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, host_id=host_id)
 
     def store_mac_llip(self, mac, link_local_ip, now):
         """
