@@ -161,34 +161,29 @@ class Store:
                                 continue
                         # otherwise update it if not a random address
                         if a.CATEGORY != 'random':
-                            query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
-                                     valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
-                                     ia_type = '%s', class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
-                                     last_update = '%s', preferred_until = '%s', valid_until = '%s'\
-                                     WHERE address = '%s'" % \
-                                  (self.table_leases,
-                                   transaction.last_message_received_type,
-                                   a.PREFERRED_LIFETIME,
-                                   a.VALID_LIFETIME,
-                                   transaction.client.hostname,
-                                   a.TYPE,
-                                   a.CATEGORY,
-                                   a.IA_TYPE,
-                                   transaction.client.client_class,
-                                   transaction.mac,
-                                   transaction.duid,
-                                   transaction.iaid,
-                                   now,
-                                   now + int(a.PREFERRED_LIFETIME),
-                                   now + int(a.VALID_LIFETIME),
-                                   a.ADDRESS)
-                            self.query(query)
+                            query = f"UPDATE {self.table_leases} SET active = 1, " \
+                                    f"last_message = {transaction.last_message_received_type}, " \
+                                    f"preferred_lifetime = '{a.PREFERRED_LIFETIME}', " \
+                                    f"valid_lifetime = '{a.VALID_LIFETIME}', " \
+                                    f"hostname = '{transaction.client.hostname}', " \
+                                    f"type = '{a.TYPE}', " \
+                                    f"category = '{a.CATEGORY}', " \
+                                    f"ia_type = '{a.IA_TYPE}', " \
+                                    f"class = '{transaction.client.client_class}', " \
+                                    f"mac = '{transaction.mac}', " \
+                                    f"duid = '{transaction.duid}', " \
+                                    f"iaid = '{transaction.iaid}', " \
+                                    f"last_update = '{now}', " \
+                                    f"preferred_until = '{now + int(a.PREFERRED_LIFETIME)}', " \
+                                    f"valid_until = '{now + int(a.VALID_LIFETIME)}'\
+                                     WHERE address = '{a.ADDRESS}'"
                         else:
                             # set last message type of random address
-                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
-                                     (self.table_leases, transaction.last_message_received_type,
-                                      a.ADDRESS)
-                            self.query(query)
+                            query = f"UPDATE self.table_leases " \
+                                    f"SET last_message = {transaction.last_message_received_type}, " \
+                                    f"active = 1 " \
+                                    f"WHERE address = '{a.ADDRESS}'"
+                        self.query(query)
 
             for p in transaction.client.prefixes:
                 if p.PREFIX is not None:
@@ -735,8 +730,8 @@ class Store:
         db_entry = self.query(query)
         # if known already update timestamp of MAC-link-local-ip-mapping
         if not db_entry or db_entry == []:
-            query = "INSERT INTO macs_llips (mac, link_local_ip, last_update) VALUES ('%s', '%s', '%s')" % \
-                  (mac, link_local_ip, now)
+            query = f"INSERT INTO macs_llips (mac, link_local_ip, last_update) " \
+                    f"VALUES ('{mac}', '{link_local_ip}', '{now}')"
             self.query(query)
         else:
             query = f"UPDATE macs_llips SET link_local_ip = '{link_local_ip}', last_update = '{now}' WHERE mac = '{mac}'"
@@ -873,9 +868,9 @@ class Store:
                             #                                                    valid_until_new,
                             #                                                    address))
                             self.query(f"UPDATE leases SET last_update_new = {last_update_new}, "
-                                       "preferred_until_new = {preferred_until_new}, "
-                                       "valid_until_new = {valid_until_new} "
-                                       "WHERE address = '{address}'")
+                                       f"preferred_until_new = {preferred_until_new}, "
+                                       f"valid_until_new = {valid_until_new} "
+                                       f"WHERE address = '{address}'")
                         print('Converting timestamps of leases succeeded')
                         timestamps_old = self.query('SELECT mac, last_update FROM macs_llips')
                         for timestamp_old in timestamps_old:
