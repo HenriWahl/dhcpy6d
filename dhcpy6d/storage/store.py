@@ -488,21 +488,18 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
-                     AND address = '%s' AND mac = '%s' AND duid = '%s'" % \
-                    (self.table_leases,
-                     address,
-                     transaction.mac,
-                     transaction.duid)
+            query = f"SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until " \
+                    f"FROM {self.table_leases} WHERE active = 1 AND " \
+                    f"address = '{address}' AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}'"
         else:
-            query = "SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until FROM %s WHERE active = 1\
-                     AND address = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
-                    (self.table_leases,
-                     address,
-                     transaction.mac,
-                     transaction.duid,
-                     transaction.iaid)
-
+            query = f"SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until " \
+                    f"FROM {self.table_leases} WHERE active = 1 AND " \
+                    f"address = '{address}' AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}' AND " \
+                    f"iaid = '{transaction.iaid}'"
         return self.query(query)
 
     def check_prefix(self, prefix, length, transaction):
@@ -511,22 +508,20 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
-                     AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s'" % \
-                    (self.table_prefixes,
-                     prefix,
-                     length,
-                     transaction.mac,
-                     transaction.duid)
+            query = f"SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until " \
+                    f"FROM {self.table_prefixes} WHERE active = 1 AND " \
+                    f"prefix = '{prefix}' AND " \
+                    f"length = '{length}' AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}'"
         else:
-            query = "SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until FROM %s WHERE active = 1\
-                     AND prefix = '%s' AND length = '%s' AND mac = '%s' AND duid = '%s' AND iaid = '%s'" % \
-                    (self.table_prefixes,
-                     prefix,
-                     length,
-                     transaction.mac,
-                     transaction.duid,
-                     transaction.iaid)
+            query = f"SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until " \
+                    f"FROM {self.table_prefixes} WHERE active = 1 AND " \
+                    f"prefix = '{prefix}' AND " \
+                    f"length = '{length}' AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}' AND " \
+                    f"iaid = '{transaction.iaid}'"
         return self.query(query)
 
     def check_advertised_lease(self, transaction=None, category='', atype=''):
@@ -535,26 +530,20 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = "SELECT address FROM %s WHERE last_message = 1\
-                     AND active = 1\
-                     AND mac = '%s' AND duid = '%s'\
-                     AND category = '%s' AND type = '%s'" % \
-                    (self.table_leases,
-                     transaction.mac,
-                     transaction.duid,
-                     category,
-                     atype)
+            query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND " \
+                    f"active = 1 AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}' AND " \
+                    f"category = '{category}' AND " \
+                    f"type = '{atype}'"
         else:
-            query = "SELECT address FROM %s WHERE last_message = 1\
-                     AND active = 1\
-                     AND mac = '%s' AND duid = '%s' AND iaid = '%s'\
-                     AND category = '%s' AND type = '%s'" % \
-                    (self.table_leases,
-                     transaction.mac,
-                     transaction.duid,
-                     transaction.iaid,
-                     category,
-                     atype)
+            query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND " \
+                    f"active = 1 AND " \
+                    f"mac = '{transaction.mac}' AND " \
+                    f"duid = '{transaction.duid}' AND " \
+                    f"iaid = '{transaction.iaid}' AND " \
+                    f"category = '{category}' AND " \
+                    f"type = '{atype}'"
         result = self.query(query)
         if result is not None:
             if len(result) == 0:
@@ -570,15 +559,6 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            # query = "SELECT prefix, length FROM %s WHERE last_message = 1\
-            #          AND active = 1\
-            #          AND mac = '%s' AND duid = '%s'\
-            #          AND category = '%s' AND type = '%s'" % \
-            #         (self.table_prefixes,
-            #          transaction.mac,
-            #          transaction.duid,
-            #          category,
-            #          ptype)
             query = f"SELECT prefix, length FROM {self.table_prefixes} WHERE last_message = 1 AND " \
                     f"active = 1 AND " \
                     f"mac = '{transaction.mac}' AND " \
