@@ -468,11 +468,8 @@ class Store:
         """
         check how many leases are stored - used to find out if address range has been exceeded
         """
-        query = "SELECT COUNT(address) FROM %s WHERE address LIKE '%s%%' AND "\
-                "'%s' <= address AND address <= '%s'" % (self.table_leases,
-                                                         prefix,
-                                                         prefix+range_from,
-                                                         prefix+range_to)
+        query = f"SELECT COUNT(address) FROM {self.table_leases} WHERE address LIKE '{prefix}%' AND "\
+                f"'{prefix+range_from}' <= address AND address <= '{prefix+range_to}'"
         return self.query(query)
 
     @clean_query_answer
@@ -480,11 +477,9 @@ class Store:
         """
         check how many leases are stored - used to find out if address range has been exceeded
         """
-        query = "SELECT COUNT(prefix) FROM %s WHERE prefix LIKE '%s%%' AND "\
-                "'%s' <= prefix AND prefix <= '%s'" % (self.table_prefixes,
-                                                       prefix,
-                                                       prefix+range_from+((128-int(length))//4)*'0',
-                                                       prefix+range_to+((128-int(length))//4)*'0')
+        query = f"SELECT COUNT(prefix) FROM {self.table_prefixes} WHERE prefix LIKE '{prefix}%' AND "\
+                f"'{prefix+range_from+((128-int(length))//4)*'0'}' <= prefix AND " \
+                f"prefix <= '{prefix+range_to+((128-int(length))//4)*'0'}'"
         return self.query(query)
 
     def check_lease(self, address, transaction):
