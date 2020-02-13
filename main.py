@@ -38,7 +38,6 @@ from dhcpy6d.config import cfg
 
 from dhcpy6d.globals import (config_answer_queue,
                              config_query_queue,
-                             dns_query_queue,
                              IF_NAME,
                              route_queue,
                              volatile_answer_queue,
@@ -55,7 +54,7 @@ from dhcpy6d.threads import (DNSQueryThread,
                              TidyUpThread,
                              TimerThread)
 
-### MAIN ###
+# main part, initializing all stuff
 
 if __name__ == '__main__':
     log.info('Starting dhcpy6d daemon...')
@@ -117,7 +116,8 @@ if __name__ == '__main__':
     dnsquery_thread.start()
 
     # set user and group
-    log.info(f'Running as user {cfg.USER} (UID {pwd.getpwnam(cfg.USER).pw_uid}) and group {cfg.GROUP} (GID {grp.getgrnam(cfg.GROUP).gr_gid})')
+    log.info(f'Running as user {cfg.USER} (UID {pwd.getpwnam(cfg.USER).pw_uid}) and '
+             f'group {cfg.GROUP} (GID {grp.getgrnam(cfg.GROUP).gr_gid})')
     # first set group because otherwise the freshly unprivileged user could not modify its groups itself
     os.setgid(grp.getgrnam(cfg.GROUP).gr_gid)
     os.setuid(pwd.getpwnam(cfg.USER).pw_uid)
