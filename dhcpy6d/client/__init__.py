@@ -130,7 +130,7 @@ class Client:
                                 client_config = config_store.get_client_config(hostname=transaction.hostname,
                                                                                mac=[transaction.mac],
                                                                                duid=transaction.duid,
-                                                                               aclass=c.NAME)
+                                                                               client_class=c.NAME)
                                 # add classname to dictionary - if there are more than one entry classes do not match
                                 # and thus are invalid
                                 filtered_class[c.NAME] = c
@@ -142,7 +142,7 @@ class Client:
                                 client_config = config_store.get_client_config(hostname=transaction.hostname,
                                                                                mac=[transaction.mac],
                                                                                duid=transaction.duid,
-                                                                               aclass=c.NAME)
+                                                                               client_class=c.NAME)
                                 # see above
                                 filtered_class[c.NAME] = c
                         # HOSTNAMEs
@@ -153,7 +153,7 @@ class Client:
                                 client_config = config_store.get_client_config(hostname=transaction.hostname,
                                                                                mac=[transaction.mac],
                                                                                duid=transaction.duid,
-                                                                               aclass=c.NAME)
+                                                                               client_class=c.NAME)
                                 # see above
                                 filtered_class[c.NAME] = c
 

@@ -31,7 +31,7 @@ class ClientConfig:
     """
         static client settings object to be stuffed into Hosts dict of Textfile store
     """
-    def __init__(self, hostname='', aclass='default', duid='', address=None, mac=None, host_id=''):
+    def __init__(self, hostname='', client_class='default', duid='', address=None, mac=None, host_id=''):
         self.HOSTNAME = hostname
         # MACs
         self.MAC = mac
@@ -46,7 +46,7 @@ class ClientConfig:
                 self.ADDRESS.append(decompress_ip6(a))
         else:
             self.ADDRESS = None
-        self.CLASS = aclass
+        self.CLASS = client_class
         self.ID = host_id
         self.DUID = duid
 
@@ -132,24 +132,24 @@ class Store:
                     if answer is not None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
-                            query = f"INSERT INTO {self.table_leases} (address, active, last_message, " \
-                                    f"preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, " \
-                                    f"class, mac, duid, iaid, last_update, preferred_until, valid_until) " \
-                                    f"VALUES ('{a.ADDRESS}', " \
-                                    f"'1', " \
-                                    f"'{transaction.last_message_received_type}', " \
-                                    f"'{a.PREFERRED_LIFETIME}', " \
-                                    f"'{a.VALID_LIFETIME}', " \
-                                    f"'{transaction.client.hostname}', " \
+                            query = f"INSERT INTO {self.table_leases} (address, active, last_message, "\
+                                    f"preferred_lifetime, valid_lifetime, hostname, type, category, ia_type, "\
+                                    f"class, mac, duid, iaid, last_update, preferred_until, valid_until) "\
+                                    f"VALUES ('{a.ADDRESS}', "\
+                                    f"'1', "\
+                                    f"'{transaction.last_message_received_type}', "\
+                                    f"'{a.PREFERRED_LIFETIME}', "\
+                                    f"'{a.VALID_LIFETIME}', "\
+                                    f"'{transaction.client.hostname}', "\
                                     f"'{a.TYPE}', "\
                                     f"'{a.CATEGORY}', "\
-                                    f"'{a.IA_TYPE}', " \
-                                    f"'{transaction.client.client_class}', " \
-                                    f"'{transaction.mac}', " \
-                                    f"'{transaction.duid}', " \
-                                    f"'{transaction.iaid}', " \
-                                    f"'{now}', " \
-                                    f"'{now + int(a.PREFERRED_LIFETIME)}', " \
+                                    f"'{a.IA_TYPE}', "\
+                                    f"'{transaction.client.client_class}', "\
+                                    f"'{transaction.mac}', "\
+                                    f"'{transaction.duid}', "\
+                                    f"'{transaction.iaid}', "\
+                                    f"'{now}', "\
+                                    f"'{now + int(a.PREFERRED_LIFETIME)}', "\
                                     f"'{now + int(a.VALID_LIFETIME)}')"
                             result = self.query(query)
                             # for unknown reasons sometime a lease shall be inserted which already exists
@@ -161,27 +161,28 @@ class Store:
                                 continue
                         # otherwise update it if not a random address
                         if a.CATEGORY != 'random':
-                            query = f"UPDATE {self.table_leases} SET active = 1, " \
-                                    f"last_message = {transaction.last_message_received_type}, " \
-                                    f"preferred_lifetime = '{a.PREFERRED_LIFETIME}', " \
-                                    f"valid_lifetime = '{a.VALID_LIFETIME}', " \
-                                    f"hostname = '{transaction.client.hostname}', " \
-                                    f"type = '{a.TYPE}', " \
-                                    f"category = '{a.CATEGORY}', " \
-                                    f"ia_type = '{a.IA_TYPE}', " \
-                                    f"class = '{transaction.client.client_class}', " \
-                                    f"mac = '{transaction.mac}', " \
-                                    f"duid = '{transaction.duid}', " \
-                                    f"iaid = '{transaction.iaid}', " \
-                                    f"last_update = '{now}', " \
-                                    f"preferred_until = '{now + int(a.PREFERRED_LIFETIME)}', " \
-                                    f"valid_until = '{now + int(a.VALID_LIFETIME)}'\
-                                     WHERE address = '{a.ADDRESS}'"
+                            query = f"UPDATE {self.table_leases} "\
+                                    f"SET active = 1, "\
+                                    f"last_message = {transaction.last_message_received_type}, "\
+                                    f"preferred_lifetime = '{a.PREFERRED_LIFETIME}', "\
+                                    f"valid_lifetime = '{a.VALID_LIFETIME}', "\
+                                    f"hostname = '{transaction.client.hostname}', "\
+                                    f"type = '{a.TYPE}', "\
+                                    f"category = '{a.CATEGORY}', "\
+                                    f"ia_type = '{a.IA_TYPE}', "\
+                                    f"class = '{transaction.client.client_class}', "\
+                                    f"mac = '{transaction.mac}', "\
+                                    f"duid = '{transaction.duid}', "\
+                                    f"iaid = '{transaction.iaid}', "\
+                                    f"last_update = '{now}', "\
+                                    f"preferred_until = '{now + int(a.PREFERRED_LIFETIME)}', "\
+                                    f"valid_until = '{now + int(a.VALID_LIFETIME)}' "\
+                                    f"WHERE address = '{a.ADDRESS}'"
                         else:
                             # set last message type of random address
-                            query = f"UPDATE self.table_leases " \
-                                    f"SET last_message = {transaction.last_message_received_type}, " \
-                                    f"active = 1 " \
+                            query = f"UPDATE {self.table_leases} "\
+                                    f"SET active = 1, "\
+                                    f"last_message = {transaction.last_message_received_type}, "\
                                     f"WHERE address = '{a.ADDRESS}'"
                         self.query(query)
 
@@ -264,7 +265,7 @@ class Store:
                 return self.query(query)
             elif len(self.query(query)) == 1:
                 # query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, now)
-                query = f"UPDATE {self.table_routes} SET prefix = '{prefix}', length = {length}, " \
+                query = f"UPDATE {self.table_routes} SET prefix = '{prefix}', length = {length}, "\
                         f"router = '{router}', last_update = {now} WHERE prefix = '{prefix}'"
                 return self.query(query)
             return None
@@ -279,15 +280,14 @@ class Store:
         ADVERTISE with the last known-as-good address for a client
         SOLICIT message type is 1
         """
-        query = "SELECT address FROM %s WHERE "\
-                "category = 'range' AND "\
-                "'%s' <= address AND "\
-                "address <= '%s' AND "\
-                "duid = '%s' AND "\
-                "mac = '%s' AND "\
-                "last_message != 1 "\
-                "ORDER BY last_update DESC LIMIT 1" %\
-                (self.table_leases, prefix+range_from, prefix+range_to, duid, mac)
+        query = f"SELECT address FROM {self.table_leases} WHERE "\
+                f"category = 'range' AND "\
+                f"'{prefix+range_from,}' <= address AND "\
+                f"address <= '{prefix+range_to}' AND "\
+                f"duid = '{duid}' AND "\
+                f"mac = '{mac}' AND "\
+                f"last_message != 1 "\
+                f"ORDER BY last_update DESC LIMIT 1"
         return self.query(query)
 
     @clean_query_answer
@@ -298,21 +298,15 @@ class Store:
         ADVERTISE with the last known-as-good address for a client
         SOLICIT message type is 1
         """
-        query = "SELECT prefix FROM %s WHERE "\
-                "category = 'range' AND "\
-                "'%s' <= prefix AND "\
-                "prefix <= '%s' AND "\
-                "length = '%s' AND "\
-                "duid = '%s' AND "\
-                "mac = '%s' AND "\
-                "last_message != 1 "\
-                "ORDER BY last_update DESC LIMIT 1" %\
-                (self.table_prefixes,
-                 prefix+range_from+((128-int(length))//4)*'0',
-                 prefix+range_to+((128-int(length))//4)*'0',
-                 length,
-                 duid,
-                 mac)
+        query = f"SELECT prefix FROM {self.table_prefixes} WHERE "\
+                f"category = 'range' AND "\
+                f"'{prefix+range_from+((128-int(length))//4)*'0'}' <= prefix AND "\
+                f"prefix <= '{prefix+range_to+((128-int(length))//4)*'0'}' AND "\
+                f"length = '{length}' AND "\
+                f"duid = '{duid}' AND "\
+                f"mac = '{mac}' AND "\
+                f"last_message != 1 "\
+                f"ORDER BY last_update DESC LIMIT 1"
         return self.query(query)
 
     @clean_query_answer
@@ -320,12 +314,9 @@ class Store:
         """
         ask DB for highest known leases - if necessary range sensitive
         """
-        query = "SELECT address FROM %s WHERE active = 1 AND "\
-                "category = 'range' AND "\
-                "'%s' <= address and address <= '%s' ORDER BY address DESC LIMIT 1" %\
-                (self.table_leases,
-                 prefix+range_from,
-                 prefix+range_to)
+        query = f"SELECT address FROM {self.table_leases} WHERE active = 1 AND "\
+                f"category = 'range' AND "\
+                f"'{prefix+range_from}' <= address and address <= '{prefix+range_to}' ORDER BY address DESC LIMIT 1"
         return self.query(query)
 
     @clean_query_answer
@@ -333,14 +324,11 @@ class Store:
         """
         ask DB for highest known prefix - if necessary range sensitive
         """
-        query = "SELECT prefix FROM %s WHERE active = 1 AND "\
-                "category = 'range' AND "\
-                "'%s' <= prefix AND prefix <= '%s' AND "\
-                "length = '%s' ORDER BY prefix DESC LIMIT 1" %\
-                (self.table_prefixes,
-                    prefix+range_from+((128-int(length))//4)*'0',
-                    prefix+range_to+((128-int(length))//4)*'0',
-                    length)
+        query = f"SELECT prefix FROM {self.table_prefixes} WHERE active = 1 AND "\
+                f"category = 'range' AND "\
+                f"'{prefix+range_from+((128-int(length))//4)*'0'}' <= prefix AND "\
+                f"prefix <= '{prefix+range_to+((128-int(length))//4)*'0'}' AND "\
+                f"length = '{length}' ORDER BY prefix DESC LIMIT 1"
         return self.query(query)
 
     @clean_query_answer
@@ -349,11 +337,10 @@ class Store:
         ask DB for oldest known inactive lease to minimize chance of collisions
         ordered by valid_until to get leases that are free as long as possible
         """
-        query = "SELECT address FROM %s WHERE active = 0 AND category = 'range' AND "\
-                "'%s' <= address AND address <= '%s' ORDER BY valid_until ASC LIMIT 1" %\
-                (self.table_leases,
-                 prefix+range_from,
-                 prefix+range_to)
+        query = f"SELECT address FROM {self.table_leases} WHERE active = 0 AND "\
+                f"category = 'range' AND "\
+                f"'{prefix+range_from}' <= address AND "\
+                f"address <= '{prefix+range_to}' ORDER BY valid_until ASC LIMIT 1"
         return self.query(query)
 
     @clean_query_answer
@@ -362,15 +349,12 @@ class Store:
         ask DB for oldest known inactive prefix to minimize chance of collisions
         ordered by valid_until to get leases that are free as long as possible
         """
-        query = "SELECT prefix FROM %s WHERE active = 0 AND " \
-                "category = 'range' AND "\
-                "'%s' <= prefix AND prefix <= '%s' AND " \
-                "length = '%s' "\
-                "ORDER BY valid_until ASC LIMIT 1" %\
-                (self.table_prefixes,
-                 prefix+range_from+((128-int(length))//4)*'0',
-                 prefix+range_to+((128-int(length))//4)*'0',
-                 length)
+        query = f"SELECT prefix FROM {self.table_prefixes} WHERE active = 0 AND "\
+                f"category = 'range' AND "\
+                f"'{prefix+range_from+((128-int(length))//4)*'0'}' <= prefix AND "\
+                f"prefix <= '{prefix+range_to+((128-int(length))//4)*'0'}' AND "\
+                f"length = '{length}' "\
+                f"ORDER BY valid_until ASC LIMIT 1"
         return self.query(query)
 
     def get_host_lease(self, address):
@@ -396,7 +380,7 @@ class Store:
         get used prefixes to be able to reinstall their routes
         """
         # query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 1".format(self.table_prefixes, self.table_routes)
-        query = f"SELECT {self.table_prefixes}.prefix FROM {self.table_prefixes} INNER JOIN {self.table_routes} ON " \
+        query = f"SELECT {self.table_prefixes}.prefix FROM {self.table_prefixes} INNER JOIN {self.table_routes} ON "\
                 f"{self.table_prefixes}.prefix = {self.table_routes}.prefix WHERE {self.table_prefixes}.active = 1"
         answer = self.query(query)
         active_prefixes = list()
@@ -410,7 +394,7 @@ class Store:
         get unused prefixes to be able to delete their routes
         """
         # query = "SELECT {0}.prefix FROM {0} INNER JOIN {1} ON {0}.prefix = {1}.prefix WHERE {0}.active = 0".format(self.table_prefixes, self.table_routes)
-        query = f"SELECT {self.table_prefixes}.prefix FROM {self.table_prefixes} INNER JOIN {self.table_routes} " \
+        query = f"SELECT {self.table_prefixes}.prefix FROM {self.table_prefixes} INNER JOIN {self.table_routes} "\
                 f"ON {self.table_prefixes}.prefix = {self.table_routes}.prefix WHERE {self.table_prefixes}.active = 0"
         answer = self.query(query)
         inactive_prefixes = list()
@@ -424,8 +408,8 @@ class Store:
         get all route parameters plus class for a certain prefix - mostly to delete the route
         """
         # query = "SELECT {0}.length, {0}.router, {1}.class FROM {0} INNER JOIN {1} WHERE {0}.prefix = {1}.prefix AND {1}.prefix = '{2}'".format(self.table_routes, self.table_prefixes, prefix)
-        query = f"SELECT {self.table_routes}.length, {self.table_routes}.router, {self.table_prefixes}.class FROM " \
-                f"{self.table_routes} INNER JOIN {self.table_prefixes} WHERE {self.table_routes}.prefix = " \
+        query = f"SELECT {self.table_routes}.length, {self.table_routes}.router, {self.table_prefixes}.class FROM "\
+                f"{self.table_routes} INNER JOIN {self.table_prefixes} WHERE {self.table_routes}.prefix = "\
                 f"{self.table_prefixes}.prefix AND {self.table_prefixes}.prefix = '{prefix}'"
         answer = self.query(query)
         if answer is not None:
@@ -473,7 +457,7 @@ class Store:
         check how many leases are stored - used to find out if address range has been exceeded
         """
         query = f"SELECT COUNT(prefix) FROM {self.table_prefixes} WHERE prefix LIKE '{prefix}%' AND "\
-                f"'{prefix+range_from+((128-int(length))//4)*'0'}' <= prefix AND " \
+                f"'{prefix+range_from+((128-int(length))//4)*'0'}' <= prefix AND "\
                 f"prefix <= '{prefix+range_to+((128-int(length))//4)*'0'}'"
         return self.query(query)
 
@@ -483,17 +467,17 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = f"SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until " \
-                    f"FROM {self.table_leases} WHERE active = 1 AND " \
-                    f"address = '{address}' AND " \
-                    f"mac = '{transaction.mac}' AND " \
+            query = f"SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until "\
+                    f"FROM {self.table_leases} WHERE active = 1 AND "\
+                    f"address = '{address}' AND "\
+                    f"mac = '{transaction.mac}' AND "\
                     f"duid = '{transaction.duid}'"
         else:
-            query = f"SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until " \
-                    f"FROM {self.table_leases} WHERE active = 1 AND " \
-                    f"address = '{address}' AND " \
-                    f"mac = '{transaction.mac}' AND " \
-                    f"duid = '{transaction.duid}' AND " \
+            query = f"SELECT DISTINCT hostname, address, type, category, ia_type, class, preferred_until "\
+                    f"FROM {self.table_leases} WHERE active = 1 AND "\
+                    f"address = '{address}' AND "\
+                    f"mac = '{transaction.mac}' AND "\
+                    f"duid = '{transaction.duid}' AND "\
                     f"iaid = '{transaction.iaid}'"
         return self.query(query)
 
@@ -503,19 +487,19 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = f"SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until " \
-                    f"FROM {self.table_prefixes} WHERE active = 1 AND " \
-                    f"prefix = '{prefix}' AND " \
-                    f"length = '{length}' AND " \
-                    f"mac = '{transaction.mac}' AND " \
+            query = f"SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until "\
+                    f"FROM {self.table_prefixes} WHERE active = 1 AND "\
+                    f"prefix = '{prefix}' AND "\
+                    f"length = '{length}' AND "\
+                    f"mac = '{transaction.mac}' AND "\
                     f"duid = '{transaction.duid}'"
         else:
-            query = f"SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until " \
-                    f"FROM {self.table_prefixes} WHERE active = 1 AND " \
-                    f"prefix = '{prefix}' AND " \
-                    f"length = '{length}' AND " \
-                    f"mac = '{transaction.mac}' AND " \
-                    f"duid = '{transaction.duid}' AND " \
+            query = f"SELECT DISTINCT hostname, prefix, length, type, category, class, preferred_until "\
+                    f"FROM {self.table_prefixes} WHERE active = 1 AND "\
+                    f"prefix = '{prefix}' AND "\
+                    f"length = '{length}' AND "\
+                    f"mac = '{transaction.mac}' AND "\
+                    f"duid = '{transaction.duid}' AND "\
                     f"iaid = '{transaction.iaid}'"
         return self.query(query)
 
@@ -525,19 +509,19 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND " \
-                    f"active = 1 AND " \
-                    f"mac = '{transaction.mac}' AND " \
-                    f"duid = '{transaction.duid}' AND " \
-                    f"category = '{category}' AND " \
+            query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND "\
+                    f"active = 1 AND "\
+                    f"mac = '{transaction.mac}' AND "\
+                    f"duid = '{transaction.duid}' AND "\
+                    f"category = '{category}' AND "\
                     f"type = '{atype}'"
         else:
-            query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND " \
-                    f"active = 1 AND " \
-                    f"mac = '{transaction.mac}' AND " \
-                    f"duid = '{transaction.duid}' AND " \
-                    f"iaid = '{transaction.iaid}' AND " \
-                    f"category = '{category}' AND " \
+            query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND "\
+                    f"active = 1 AND "\
+                    f"mac = '{transaction.mac}' AND "\
+                    f"duid = '{transaction.duid}' AND "\
+                    f"iaid = '{transaction.iaid}' AND "\
+                    f"category = '{category}' AND "\
                     f"type = '{atype}'"
         result = self.query(query)
         if result is not None:
@@ -554,19 +538,19 @@ class Store:
         """
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
-            query = f"SELECT prefix, length FROM {self.table_prefixes} WHERE last_message = 1 AND " \
-                    f"active = 1 AND " \
-                    f"mac = '{transaction.mac}' AND " \
-                    f"duid = '{transaction.duid}' AND " \
-                    f"category = '{category}' AND " \
+            query = f"SELECT prefix, length FROM {self.table_prefixes} WHERE last_message = 1 AND "\
+                    f"active = 1 AND "\
+                    f"mac = '{transaction.mac}' AND "\
+                    f"duid = '{transaction.duid}' AND "\
+                    f"category = '{category}' AND "\
                     f"type = '{ptype}'"
         else:
-            query = f"SELECT prefix, length FROM {self.table_prefixes} WHERE last_message = 1 AND " \
-                    f"active = 1 AND " \
-                    f"mac = '{transaction.mac}' AND " \
-                    f"duid = '{transaction.duid}' AND " \
-                    f"iaid = '{transaction.iaid}' AND " \
-                    f"category = '{category}' AND " \
+            query = f"SELECT prefix, length FROM {self.table_prefixes} WHERE last_message = 1 AND "\
+                    f"active = 1 AND "\
+                    f"mac = '{transaction.mac}' AND "\
+                    f"duid = '{transaction.duid}' AND "\
+                    f"iaid = '{transaction.iaid}' AND "\
+                    f"category = '{category}' AND "\
                     f"type = '{ptype}'"
         result = self.query(query)
         if result is not None:
@@ -596,7 +580,7 @@ class Store:
         remove all leases of a certain category like random - they will grow the database
         but be of no further use
         """
-        query = f"DELETE FROM {self.table_leases} WHERE active = 0 AND " \
+        query = f"DELETE FROM {self.table_leases} WHERE active = 0 AND "\
                 f"category = '{category}' AND valid_until < '{now}'"
         return self.query(query)
 
@@ -620,7 +604,7 @@ class Store:
             unlock prefixes marked as advertised but apparently never been delivered
             let's say a client should have requested its formerly advertised address after 1 minute
         """
-        query = f"UPDATE {self.table_prefixes} SET last_message = 0 WHERE last_message = 1 AND " \
+        query = f"UPDATE {self.table_prefixes} SET last_message = 0 WHERE last_message = 1 AND "\
                 f"last_update < '{now + 60}'"
         return self.query(query)
 
@@ -629,9 +613,9 @@ class Store:
         get client config from db and build the appropriate config objects and indices
         """
         if transaction.client_config_db is None:
-            query = f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} WHERE " \
-                    f"hostname = '{transaction.hostname}' OR " \
-                    f"mac LIKE '%{transaction.mac}%' OR " \
+            query = f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} WHERE "\
+                    f"hostname = '{transaction.hostname}' OR "\
+                    f"mac LIKE '%{transaction.mac}%' OR "\
                     f"duid = '{transaction.duid}'"
             answer = self.query(query)
 
@@ -654,10 +638,9 @@ class Store:
                 transaction.client_config_db.hosts[hostname] = ClientConfig(hostname=hostname,
                                                                             mac=mac,
                                                                             duid=duid,
-                                                                            aclass=aclass,
+                                                                            client_class=aclass,
                                                                             address=address,
                                                                             host_id=host_id)
-
                 # and put the host objects into index
                 if transaction.client_config_db.hosts[hostname].MAC:
                     for m in transaction.client_config_db.hosts[hostname].MAC:
@@ -716,11 +699,11 @@ class Store:
         else:
             return None
 
-    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], host_id=''):
+    def get_client_config(self, hostname='', client_class='', duid='', address=[], mac=[], host_id=''):
         """
             give back ClientConfig object
         """
-        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, host_id=host_id)
+        return ClientConfig(hostname=hostname, client_class=client_class, duid=duid, address=address, mac=mac, host_id=host_id)
 
     def store_mac_llip(self, mac, link_local_ip, now):
         """
@@ -730,7 +713,7 @@ class Store:
         db_entry = self.query(query)
         # if known already update timestamp of MAC-link-local-ip-mapping
         if not db_entry or db_entry == []:
-            query = f"INSERT INTO macs_llips (mac, link_local_ip, last_update) " \
+            query = f"INSERT INTO macs_llips (mac, link_local_ip, last_update) "\
                     f"VALUES ('{mac}', '{link_local_ip}', '{now}')"
             self.query(query)
         else:

@@ -138,8 +138,8 @@ class Textfile(Store):
         else:
             return None
 
-    def get_client_config(self, hostname='', aclass='', duid='', address=[], mac=[], host_id=''):
+    def get_client_config(self, hostname='', client_class='', duid='', address=[], mac=[], host_id=''):
         """
             give back ClientConfig object
         """
-        return ClientConfig(hostname=hostname, aclass=aclass, duid=duid, address=address, mac=mac, host_id=host_id)
+        return ClientConfig(hostname=hostname, client_class=client_class, duid=duid, address=address, mac=mac, host_id=host_id)

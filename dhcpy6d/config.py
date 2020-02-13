@@ -1106,7 +1106,7 @@ class Address(ConfigObject):
         self.VALID_LIFETIME = valid_lifetime
         self.ADDRESS = address
         self.RANGE = arange.lower()
-        # because 'class' is a python keyword we use 'aclass' here
+        # because 'class' is a python keyword we use 'client_class' here
         self.CLASS = aclass
         # same with type
         self.TYPE = atype
