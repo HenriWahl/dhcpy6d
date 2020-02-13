@@ -216,8 +216,7 @@ def parse_pattern_prefix(pattern, client_config, transaction):
                                                                                      range_to=range_to)
                             if prefix is None:
                                 # if none is available limit is reached and nothing returned
-                                log.critical('Prefix address space %s[%s-%s] exceeded' % (prefix_prefix,
-                                                                                          range_from, range_to))
+                                log.critical(f'Prefix address space {prefix_prefix}[{range_from}-{range_to}] exceeded')
                                 return None
                             else:
                                 # if lease is OK use it
@@ -269,9 +268,7 @@ def parse_pattern_prefix(pattern, client_config, transaction):
                             p = p.replace('$range$', range_from)
                         else:
                             # if none is available limit is reached and nothing returned
-                            log.critical('Prefix address space %s[%s-%s] exceeded' % (prefix_prefix,
-                                                                                      range_from,
-                                                                                      range_to))
+                            log.critical(f'Prefix address space {prefix_prefix}[{range_from}-{range_to}] exceeded')
                             return None
                     else:
                         # if there is a lease it might be used

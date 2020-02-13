@@ -191,64 +191,58 @@ class Store:
                     query = f"SELECT prefix FROM {self.table_prefixes} WHERE prefix = '{p.PREFIX}'"
                     answer = self.query(query)
                     if answer is not None:
-                        # if address is not leased yet add it
+                        # if prefix is not leased yet add it
                         if len(answer) == 0:
-                            query = "INSERT INTO %s (prefix, length, active, last_message, preferred_lifetime, valid_lifetime,\
-                                     hostname, type, category, class, mac, duid, iaid, last_update,\
-                                     preferred_until, valid_until) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',\
-                                     '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % \
-                                  (self.table_prefixes,
-                                   p.PREFIX,
-                                   p.LENGTH,
-                                   1,
-                                   transaction.last_message_received_type,
-                                   p.PREFERRED_LIFETIME,
-                                   p.VALID_LIFETIME,
-                                   transaction.client.hostname,
-                                   p.TYPE,
-                                   p.CATEGORY,
-                                   transaction.client.client_class,
-                                   transaction.mac,
-                                   transaction.duid,
-                                   transaction.iaid,
-                                   now,
-                                   now + int(p.PREFERRED_LIFETIME),
-                                   now + int(p.VALID_LIFETIME))
+                            query = f"INSERT INTO {self.table_prefixes} (prefix, length, active, last_message, "\
+                                    f"preferred_lifetime, valid_lifetime, hostname, type, category, class, mac, duid, "\
+                                    f"iaid, last_update, preferred_until, valid_until) "\
+                                    f"VALUES ('{p.PREFIX}', "\
+                                    f"'{p.LENGTH}', "\
+                                    f"1, "\
+                                    f"'{transaction.last_message_received_type}', "\
+                                    f"'{p.PREFERRED_LIFETIME}, "\
+                                    f"'{p.VALID_LIFETIME}', "\
+                                    f"'{transaction.client.hostname}', "\
+                                    f"'{p.TYPE}', "\
+                                    f"'{p.CATEGORY}', "\
+                                    f"'{transaction.client.client_class}', "\
+                                    f"'{transaction.mac}', "\
+                                    f"'{transaction.duid}', "\
+                                    f"'{transaction.iaid}', "\
+                                    f"'{now}', "\
+                                    f"'{now + int(p.PREFERRED_LIFETIME)}', "\
+                                    f"'{now + int(p.VALID_LIFETIME)}')"
                             result = self.query(query)
                             # for unknow reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
                             # doing this here for prefixes is just a precautional measure
                             if result != 'IntegrityError':
                                 continue
-                        # otherwise update it if not a random address
+                        # otherwise update it if not a random prefix
+                        # anyway right now only th categories 'range' and 'id' exist
                         if p.CATEGORY != 'random':
-                            query = "UPDATE %s SET active = 1, last_message = %s, preferred_lifetime = '%s',\
-                                     valid_lifetime = '%s', hostname = '%s', type = '%s', category = '%s',\
-                                     class = '%s', mac = '%s', duid = '%s', iaid = '%s',\
-                                     last_update = '%s', preferred_until = '%s', valid_until = '%s'\
-                                     WHERE prefix = '%s'" % \
-                                  (self.table_prefixes,
-                                   transaction.last_message_received_type,
-                                   p.PREFERRED_LIFETIME,
-                                   p.VALID_LIFETIME,
-                                   transaction.client.hostname,
-                                   p.TYPE,
-                                   p.CATEGORY,
-                                   transaction.client.client_class,
-                                   transaction.mac,
-                                   transaction.duid,
-                                   transaction.iaid,
-                                   now,
-                                   now + int(p.PREFERRED_LIFETIME),
-                                   now + int(p.VALID_LIFETIME),
-                                   p.PREFIX)
-                            self.query(query)
+                            query = f"UPDATE {self.table_prefixes} SET active = 1, "\
+                                    f"last_message = {transaction.last_message_received_type}, "\
+                                    f"preferred_lifetime = '{p.PREFERRED_LIFETIME}', "\
+                                    f"valid_lifetime = '{p.VALID_LIFETIME}', "\
+                                    f"hostname = '{transaction.client.hostname}', "\
+                                    f"type = '{p.TYPE}', "\
+                                    f"category = '{p.CATEGORY}', "\
+                                    f"class = '{transaction.client.client_class}', "\
+                                    f"mac = '{transaction.mac}', "\
+                                    f"duid = '{transaction.duid}', "\
+                                    f"iaid = '{transaction.iaid}', "\
+                                    f"last_update = '{now}', "\
+                                    f"preferred_until = '{now + int(p.PREFERRED_LIFETIME)}', "\
+                                    f"valid_until = '{now + int(p.VALID_LIFETIME)}' "\
+                                    f"WHERE prefix = '{p.PREFIX}'"
                         else:
-                            # set last message type of random address
-                            query = "UPDATE %s SET last_message = %s, active = 1 WHERE address = '%s'" %\
-                                     (self.table_prefixes, transaction.last_message_received_type,
-                                      p.PREFIX)
-                            self.query(query)
+                            # set last message type of random prefix
+                            query = f"UPDATE {self.table_prefixes} " \
+                                    f"SET last_message = {transaction.last_message_received_type}, " \
+                                    f"active = 1 " \
+                                    f"WHERE prefix = '{p.PREFIX}'"
+                        self.query(query)
             return True
         # if no client -> False
         return False
