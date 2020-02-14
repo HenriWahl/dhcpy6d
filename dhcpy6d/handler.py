@@ -23,7 +23,6 @@ import socketserver
 import sys
 import traceback
 
-from . import collect_macs
 from .client import Client
 from .config import cfg
 from .constants import CONST
@@ -42,6 +41,7 @@ from .helpers import (build_option,
                       LOCALHOST,
                       LOCALHOST_INTERFACES)
 from .log import log
+from .macs import collect_macs
 from .options import OPTIONS
 from .route import modify_route
 from .storage import (config_store,
