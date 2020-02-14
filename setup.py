@@ -23,7 +23,8 @@
 # USA
 
 
-from distutils.core import setup
+#from distutils.core import setup
+from setuptools import setup, find_packages
 import os.path
 
 CLASSIFIERS = [
@@ -61,7 +62,7 @@ if os.path.exists('/tmp/DHCPY6D_BUILDING_RPM'):
 else:
     #scripts_custom = ['main.py']
     scripts_custom = ''
-    entry_points = {'console_scripts': ['dhcpy6d = main']}
+    entry_points = {'console_scripts': ['dhcpy6d = main:run']}
 
 setup(name = 'dhcpy6d',
       version = '0.7.99',
@@ -73,26 +74,8 @@ setup(name = 'dhcpy6d',
       author_email = 'h.wahl@ifw-dresden.de',
       url = 'https://dhcpy6d.ifw-dresden.de/',
       download_url = 'https://dhcpy6d.ifw-dresden.de/download',
-      py_modules = ['dhcpy6d.client.default',
-                    'dhcpy6d.client.from_config',
-                    'dhcpy6d.client.parse_pattern',
-                    'dhcpy6d.client.reuse_lease',
-                    'dhcpy6d.config',
-                    'dhcpy6d.constants',
-                    'dhcpy6d.domain',
-                    'dhcpy6d.globals',
-                    'dhcpy6d.handler',
-                    'dhcpy6d.helpers',
-                    'dhcpy6d.log',
-                    'dhcpy6d.route',
-                    'dhcpy6d.storage.mysql',
-                    'dhcpy6d.storage.postgresql',
-                    'dhcpy6d.storage.sqlite',
-                    'dhcpy6d.storage.store',
-                    'dhcpy6d.storage.textfile',
-                    'dhcpy6d.threads',
-                    'dhcpy6d.transaction'],
       data_files = data_files_custom,
-      scripts = scripts_custom, requires=['distro', 'dns']
+      scripts = scripts_custom, requires=['distro', 'dnspython'],
+      entry_points = entry_points
       )
 

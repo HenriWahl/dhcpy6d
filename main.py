@@ -54,9 +54,9 @@ from dhcpy6d.threads import (DNSQueryThread,
                              TidyUpThread,
                              TimerThread)
 
-# main part, initializing all stuff
 
-if __name__ == '__main__':
+# main part, initializing all stuff
+def run():
     log.info('Starting dhcpy6d daemon...')
     log.info(f'Server DUID: {cfg.SERVERDUID}')
 
@@ -130,3 +130,7 @@ if __name__ == '__main__':
         udp_server.serve_forever()
     except KeyboardInterrupt:
         sys.exit(0)
+
+
+if __name__ == '__main__':
+    run()
