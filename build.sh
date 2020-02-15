@@ -51,9 +51,9 @@ if [ "$OS" == "debian" ]
                 sudo apt -y install build-essential devscripts dh-python dh-systemd
         fi
 
-        if [ ! -d /usr/share/doc/python-all ]
+        if [ ! -d /usr/share/doc/python3-all ]
             then
-                sudo apt -y install python-all
+                sudo apt -y install python3-all
         fi
 
         debuild --no-tgz-check -- clean

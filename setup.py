@@ -23,34 +23,41 @@
 # USA
 
 
-#from distutils.core import setup
+# from distutils.core import setup
 from setuptools import setup, find_packages
+import os
 import os.path
+import shutil
+
+# workaround to get dhcpy6d-startscript created
+if not os.path.exists('bin'):
+    os.mkdir('bin')
+shutil.copyfile('main.py', 'bin/dhcpy6d')
 
 CLASSIFIERS = [
     'Intended Audience :: System Administrators',
     'Development Status :: 5 - Production/Stable',
     'License :: OSI Approved :: GNU General Public License (GPL)',
     'Operating System :: POSIX :: Linux',
-    'Operating System :: POSIX', 
+    'Operating System :: POSIX',
     'Natural Language :: English',
     'Programming Language :: Python',
     'Topic :: System :: Networking'
 ]
 
 data_files_custom = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),
-              ('/var/log', ['var/log/dhcpy6d.log']),
-              ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',
-                                  'doc/config.sql',
-                                  'doc/dhcpy6d-example.conf',
-                                  'doc/dhcpy6d-minimal.conf',
-                                  'doc/LICENSE',
-                                  'doc/volatile.sql',
-                                  'doc/volatile.postgresql']),
-              ('/usr/share/man/man5', ['man/man5/dhcpy6d.conf.5',
-                                       'man/man5/dhcpy6d-clients.conf.5']),
-              ('/usr/share/man/man8', ['man/man8/dhcpy6d.8']),
-              ('/etc', ['etc/dhcpy6d.conf']),]
+                     ('/var/log', ['var/log/dhcpy6d.log']),
+                     ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',
+                                                 'doc/config.sql',
+                                                 'doc/dhcpy6d-example.conf',
+                                                 'doc/dhcpy6d-minimal.conf',
+                                                 'doc/LICENSE',
+                                                 'doc/volatile.sql',
+                                                 'doc/volatile.postgresql']),
+                     ('/usr/share/man/man5', ['man/man5/dhcpy6d.conf.5',
+                                              'man/man5/dhcpy6d-clients.conf.5']),
+                     ('/usr/share/man/man8', ['man/man8/dhcpy6d.8']),
+                     ('/etc', ['etc/dhcpy6d.conf']), ]
 
 # RPM creation uses more files as data_files which on Debian are 
 # installed via debhelpers
@@ -58,24 +65,23 @@ data_files_custom = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),
 if os.path.exists('/tmp/DHCPY6D_BUILDING_RPM'):
     scripts_custom = ''
     data_files_custom.append(('/usr/sbin', ['dhcpy6d']))
-    data_files_custom.append(('/etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))	
+    data_files_custom.append(('/etc/logrotate.d', ['etc/logrotate.d/dhcpy6d']))
 else:
-    #scripts_custom = ['main.py']
-    scripts_custom = ''
-    entry_points = {'console_scripts': ['dhcpy6d = main:run']}
+    scripts_custom = ['bin/dhcpy6d']
+    # scripts_custom = ''
+    # entry_points = {'console_scripts': ['dhcpy6d = main:run']}
 
-setup(name = 'dhcpy6d',
-      version = '0.7.99',
-      license = 'GNU GPL v2',
-      description = 'DHCPv6 server daemon',
-      long_description = 'Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by DUID, hostname or MAC address as in the good old IPv4 days. It allows easy dualstack transition, addresses may be generated randomly, by range, by DNS, by arbitrary ID or MAC address. Clients can get more than one address, leases and client configuration can be stored in databases and DNS can be updated dynamically.',
-      classifiers = CLASSIFIERS,
-      author = 'Henri Wahl',
-      author_email = 'h.wahl@ifw-dresden.de',
-      url = 'https://dhcpy6d.ifw-dresden.de/',
-      download_url = 'https://dhcpy6d.ifw-dresden.de/download',
-      data_files = data_files_custom,
-      scripts = scripts_custom, requires=['distro', 'dnspython'],
-      entry_points = entry_points
+setup(name='dhcpy6d',
+      version='0.9.99',
+      license='GNU GPL v2',
+      description='DHCPv6 server daemon',
+      long_description='Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by DUID, hostname or MAC address as in the good old IPv4 days. It allows easy dualstack transition, addresses may be generated randomly, by range, by DNS, by arbitrary ID or MAC address. Clients can get more than one address, leases and client configuration can be stored in databases and DNS can be updated dynamically.',
+      classifiers=CLASSIFIERS,
+      author='Henri Wahl',
+      author_email='h.wahl@ifw-dresden.de',
+      url='https://dhcpy6d.ifw-dresden.de/',
+      download_url='https://dhcpy6d.ifw-dresden.de/download',
+      data_files=data_files_custom,
+      scripts=scripts_custom, requires=['distro', 'dnspython'],
+      packages=find_packages()
       )
-

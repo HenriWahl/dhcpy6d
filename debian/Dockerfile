@@ -1,4 +1,4 @@
-FROM debian:testing
+FROM debian:10
 LABEL maintainer=h.wahl@ifw-dresden.de
 
 # just in case a proxy is needed
@@ -14,4 +14,4 @@ RUN apt -y install apt-utils
 RUN apt -y upgrade
 
 # prerequisites for package building
-RUN apt -y install build-essential devscripts dh-systemd dh-python git python-all python-docutils sudo
+RUN apt -y install build-essential devscripts dh-systemd dh-python git python3-all python3-docutils python3-setuptools sudo
