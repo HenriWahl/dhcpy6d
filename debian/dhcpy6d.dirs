@@ -1,1 +1,4 @@
 usr/share/dhcpy6d/
+usr/share/dhcpy6d/default
+var/lib
+var/log

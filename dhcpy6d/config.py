@@ -284,7 +284,8 @@ class Config:
         except getopt.GetoptError as err:
             print(err)
             print(USAGE)
-            sys.exit(1)
+            #sys.exit(1)
+            sys.exit(0)
 
         if configfile is None:
             error_exit('No config file given - please use --config <config.file>')

@@ -14,4 +14,6 @@ RUN apt -y install apt-utils
 RUN apt -y upgrade
 
 # prerequisites for package building
-RUN apt -y install build-essential devscripts dh-systemd dh-python git python3-all python3-docutils python3-setuptools sudo
+RUN apt -y install build-essential devscripts dh-systemd dh-python git python3-all python3-docutils python3-setuptools python3-pip sudo
+
+WORKDIR /dhcpy6d

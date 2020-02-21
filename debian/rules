@@ -1,9 +1,9 @@
 #!/usr/bin/make -f
 %:
-	dh $@ --with python3 --with systemd
+	dh $@ --with python3 --with systemd --buildsystem=pybuild
 
 override_dh_auto_install:
-	dh_auto_install -- --install-scripts=/usr/sbin
+	#dh_auto_install -- --install-scripts=/usr/sbin
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/LICENSE
 	rm -f debian/dhcpy6d/var/log/dhcpy6d.log
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/*.[0-9]
@@ -19,8 +19,11 @@ override_dh_systemd_enable:
 override_dh_systemd_start:
 	dh_systemd_start --no-start
 
+# there are no tests - build package anyway
+override_dh_auto_test:
+
 # make -f debian/rules get-orig-source
 get-orig-source:
-	python setup.py sdist
+	python3 setup.py sdist
 	mv -v dist/dhcpy6d-*.tar.gz ../dhcpy6d_`dpkg-parsechangelog -SVersion | cut -d- -f1`.orig.tar.gz
 	rm -r MANIFEST dist
