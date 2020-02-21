@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding: utf8
 #
 # DHCPy6d DHCPv6 Daemon
 #

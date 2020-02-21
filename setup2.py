@@ -21,7 +21,16 @@
 # Boston, MA 02110-1301
 # USA
 
+import os
+import os.path
 from setuptools import setup, find_packages
+import shutil
+
+# workaround to get dhcpy6d-startscript created
+if not os.path.exists('bin'):
+    os.mkdir('bin')
+shutil.copyfile('main.py', 'bin/dhcpy6d')
+os.chmod('bin/dhcpy6d', 0o554)
 
 classifiers = [
     'Intended Audience :: System Administrators',
@@ -46,7 +55,9 @@ data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),
               ('/usr/share/man/man5', ['man/man5/dhcpy6d.conf.5',
                                               'man/man5/dhcpy6d-clients.conf.5']),
               ('/usr/share/man/man8', ['man/man8/dhcpy6d.8']),
-              ('/etc', ['etc/dhcpy6d.conf']), ]
+              ('/etc', ['etc/dhcpy6d.conf']),
+              ('/usr/sbin', ['bin/dhcpy6d']),
+              ]
 
 setup(name='dhcpy6d',
       version='0.9.99',
