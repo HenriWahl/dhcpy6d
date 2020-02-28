@@ -1,26 +1,29 @@
 #!/usr/bin/make -f
 %:
-	dh $@ --with python2 --with systemd
+	dh $@ --buildsystem=pybuild --with python3 --with systemd
 
 override_dh_auto_install:
-	dh_auto_install -- --install-scripts=/usr/sbin
+	dh_auto_install -- --install-args="--install-scripts=/usr/sbin --install-layout=deb"
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/LICENSE
 	rm -f debian/dhcpy6d/var/log/dhcpy6d.log
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/*.[0-9]
+	find debian/dhcpy6d/ -name __pycache__ -print0 | xargs -0 --no-run-if-empty rm -rv
+	mv -v debian/dhcpy6d/usr/lib/python3.7 debian/dhcpy6d/usr/lib/python3
 	mv -v debian/dhcpy6d/var/lib/dhcpy6d/volatile.sqlite debian/dhcpy6d/usr/share/dhcpy6d/
+	mv -v debian/dhcpy6d/usr/sbin/main.py debian/dhcpy6d/usr/sbin/dhcpy6d
 
 override_dh_install:
 	dh_install
 	chmod 0644 debian/dhcpy6d/usr/share/dhcpy6d/default/dhcpy6d
 
-override_dh_systemd_enable:
-	dh_systemd_enable --no-enable
-
-override_dh_systemd_start:
-	dh_systemd_start --no-start
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start
 
 # make -f debian/rules get-orig-source
 get-orig-source:
 	python setup.py sdist
 	mv -v dist/dhcpy6d-*.tar.gz ../dhcpy6d_`dpkg-parsechangelog -SVersion | cut -d- -f1`.orig.tar.gz
 	rm -r MANIFEST dist
+
+# there are no tests - build package anyway
+override_dh_auto_test:
