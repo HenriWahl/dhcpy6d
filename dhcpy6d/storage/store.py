@@ -276,7 +276,7 @@ class Store:
         """
         query = f"SELECT address FROM {self.table_leases} WHERE "\
                 f"category = 'range' AND "\
-                f"'{prefix+range_from,}' <= address AND "\
+                f"'{prefix+range_from}' <= address AND "\
                 f"address <= '{prefix+range_to}' AND "\
                 f"duid = '{duid}' AND "\
                 f"mac = '{mac}' AND "\
