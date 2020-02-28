@@ -182,7 +182,7 @@ class Store:
                             # set last message type of random address
                             query = f"UPDATE {self.table_leases} "\
                                     f"SET active = 1, "\
-                                    f"last_message = {transaction.last_message_received_type}, "\
+                                    f"last_message = {transaction.last_message_received_type} "\
                                     f"WHERE address = '{a.ADDRESS}'"
                         self.query(query)
 
