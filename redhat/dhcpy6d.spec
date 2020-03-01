@@ -1,10 +1,10 @@
 %{?!dhcpy6d_uid:   %define dhcpy6d_uid   dhcpy6d}
 %{?!dhcpy6d_gid:   %define dhcpy6d_gid   %dhcpy6d_uid}
 
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?python_sitelib: %global python_sitelib %(%{__python3} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 Name:              dhcpy6d
-Version:           0.7.99
+Version: 0.9.99
 Release:           9%{?dist}
 Summary:           DHCPv6 server daemon
 
@@ -24,18 +24,19 @@ Source1:           %{name}
 BuildRoot:         %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch: noarch
 
-BuildRequires: python
-Requires: python
+BuildRequires: python3
+BuildRequires: python3-setuptools
+Requires: python3
 
 BuildRequires: systemd
 Requires: systemd
 
 %if 0%{?suse_version}
-Requires: python-mysql
-Requires: python-dnspython
+Requires: python3-mysql
+Requires: python3-dnspython
 %else
-Requires: MySQL-python
-Requires: python-dns
+Requires: MySQL-python3
+Requires: python3-dns
 %endif
 
 Requires: coreutils
@@ -53,10 +54,10 @@ Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by D
 %setup -q
 
 %build
-CFLAGS="%{optflags}" %{__python} setup.py build
+CFLAGS="%{optflags}" %{__python3} setup.py build
 
 %install
-%{__python} setup.py install --skip-build --prefix=%{_prefix} --install-scripts=%{_sbindir} --root=%{buildroot}
+%{__python3} setup.py install --skip-build --prefix=%{_prefix} --install-scripts=%{_sbindir} --root=%{buildroot}
 install -p -D -m 644 %{S:1} %{buildroot}%{_unitdir}/%{name}.service
 install -p -D -m 644 etc/logrotate.d/%{name} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
 /bin/chmod 0550 %{buildroot}%{_sbindir}/%{name}
