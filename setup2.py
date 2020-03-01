@@ -27,10 +27,10 @@ from setuptools import setup, find_packages
 import shutil
 
 # workaround to get dhcpy6d-startscript created
-if not os.path.exists('bin'):
-    os.mkdir('bin')
-shutil.copyfile('main.py', 'bin/dhcpy6d')
-os.chmod('bin/dhcpy6d', 0o554)
+if not os.path.exists('sbin'):
+    os.mkdir('sbin')
+shutil.copyfile('main.py', 'sbin/dhcpy6d')
+os.chmod('sbin/dhcpy6d', 0o554)
 
 classifiers = [
     'Intended Audience :: System Administrators',

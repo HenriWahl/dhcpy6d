@@ -18,9 +18,10 @@ Package: dhcpy6d
 Architecture: all
 Depends: adduser,
          lsb-base,
+         python3-distro,
          python3-dnspython,
          ${misc:Depends},
-         ${python:Depends},
+         ${python3:Depends},
          ucf
 Pre-Depends: dpkg (>= 1.19.7)
 Suggests: python3-mysqldb,
