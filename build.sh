@@ -22,11 +22,11 @@ function create_manpages {
         then
             if [ "$OS" == "debian" ]
                 then
-                    sudo apt -y install python-docutils
+                    sudo apt -y install python3-docutils
             fi
             if [ "$OS" == "redhat" ]
                 then
-                    sudo yum -y install python-docutils
+                    sudo yum -y install python3-docutils
             fi
         fi
 
@@ -48,7 +48,7 @@ if [ "$OS" == "debian" ]
         # install missing packages
         if ! which debuild
             then
-                sudo apt -y install build-essential devscripts dh-python dh-systemd
+                sudo apt -y install build-essential devscripts dh-python dh-systemd python3-setuptools
         fi
 
         if [ ! -d /usr/share/doc/python3-all ]
