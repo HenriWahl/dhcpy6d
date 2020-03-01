@@ -1,3 +1,5 @@
 etc/default/dhcpy6d usr/share/dhcpy6d/default/
-var/lib/volatile.sqlite var/lib/dhcpy6d/volatile.sqlite
-var/log/dhcpy6d.log var/log/dhcpy6d.log
+#var/lib/volatile.sqlite var/lib/dhcpy6d/volatile.sqlite
+var/lib/volatile.sqlite var/lib/dhcpy6d/
+#var/log/dhcpy6d.log var/log/dhcpy6d.log
+var/log/dhcpy6d.log var/log/
