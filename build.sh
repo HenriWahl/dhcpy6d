@@ -12,11 +12,7 @@ function get_os() {
     OS=debian
   elif [ -f /etc/redhat-release ]; then
     yum install -y sudo which
-    if ! which dnf; then
-      OS=redhat7
-    else
-      OS=redhat8
-    fi
+    OS=redhat
   fi
 }
 
@@ -25,10 +21,7 @@ function create_manpages() {
     if [ "$OS" == "debian" ]; then
       sudo apt -y install python3-docutils
     fi
-    if [ "$OS" == "redhat7" ]; then
-      sudo yum -y install python-docutils
-    fi
-    if [ "$OS" == "redhat8" ]; then
+    if [ "$OS" == "redhat" ]; then
       sudo yum -y install python3-docutils
     fi
   fi
@@ -59,15 +52,14 @@ if [ "$OS" == "debian" ]; then
   debuild --no-tgz-check -- clean
   debuild --no-tgz-check -- binary-indep
 
-elif [ "$OS" == "redhat7" ] || [ "$OS" == "redhat8" ]; then
-  echo $OS
+elif [ "$OS" == "redhat" ]; then
   echo "Building .rpm package"
 
   create_manpages
 
   # install missing packages
   if ! which rpmbuild; then
-    sudo yum -y install rpm-build python3-setuptools
+    sudo yum -y install python3-devel python3-setuptools rpm-build
   fi
 
   TOPDIR=$HOME/dhcpy6d.$$
@@ -77,8 +69,9 @@ elif [ "$OS" == "redhat7" ] || [ "$OS" == "redhat8" ]; then
   mkdir -p $TOPDIR/SOURCES
 
   # init needed in TOPDIR/SOURCES
-  ###cp -pf redhat/init.d/dhcpy6d $TOPDIR/SOURCES
   cp -pf lib/systemd/system/dhcpy6d.service $TOPDIR/SOURCES/dhcpy6d
+
+  pwd
 
   # use setup.py sdist build output to get package name
   FILE=$(python3 setup.py sdist --dist-dir $TOPDIR/SOURCES | grep "creating dhcpy6d-" | head -n1 | cut -d" " -f2)
@@ -93,11 +86,13 @@ elif [ "$OS" == "redhat7" ] || [ "$OS" == "redhat8" ]; then
   # finally build binary rpm
   rpmbuild -bb --define "_topdir $TOPDIR" $SPEC
 
+  echo $TOPDIR
+
   # get rpm file
   cp -f $(find $TOPDIR/RPMS -name "$FILE-?.*noarch.rpm") .
 
   # clean
-  rm -rf $TOPDIR
+  #rm -rf $TOPDIR
 else
   echo "Package creation is only supported on Debian and RedHat derivatives."
 fi

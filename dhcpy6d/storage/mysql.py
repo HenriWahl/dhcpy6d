@@ -27,8 +27,12 @@ from .store import DB
 
 class DBMySQL(DB):
     """
-    access MySQL and Mariadb
+    access MySQL and MariaDB
     """
+
+    # as default try MySQLdb - is not shipped anymore with Redhat/CentOS 8, so provide fallback option
+    db_type = 'MySQLdb'
+
     def db_connect(self):
         """
             Connect to database server according to database type
@@ -37,9 +41,14 @@ class DBMySQL(DB):
             if 'MySQLdb' not in list(sys.modules.keys()):
                 import MySQLdb
         except:
-            error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
+            try:
+                if 'pymsql' not in list(sys.modules.keys()):
+                    import pymysql
+                    self.db_type = 'pymysql'
+            except:
+                error_exit('ERROR: Cannot find module MySQLdb or PyMySQL. Please install one of them to proceed.')
         try:
-            self.connection = sys.modules['MySQLdb'].connect(host=cfg.STORE_DB_HOST,
+            self.connection = sys.modules[self.db_type].connect(host=cfg.STORE_DB_HOST,
                                                              db=cfg.STORE_DB_DB,
                                                              user=cfg.STORE_DB_USER,
                                                              passwd=cfg.STORE_DB_PASSWORD)
@@ -56,7 +65,7 @@ class DBMySQL(DB):
     def db_query(self, query):
         try:
             self.cursor.execute(query)
-        except sys.modules['MySQLdb'].IntegrityError:
+        except sys.modules[self.db_type].IntegrityError:
             return 'IntegrityError'
         except Exception as err:
             # try to reestablish database connection
