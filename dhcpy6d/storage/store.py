@@ -204,7 +204,7 @@ class Store:
                                     f"'{p.LENGTH}', " \
                                     f"1, " \
                                     f"'{transaction.last_message_received_type}', " \
-                                    f"'{p.PREFERRED_LIFETIME}, " \
+                                    f"'{p.PREFERRED_LIFETIME}', " \
                                     f"'{p.VALID_LIFETIME}', " \
                                     f"'{transaction.client.hostname}', " \
                                     f"'{p.TYPE}', " \
