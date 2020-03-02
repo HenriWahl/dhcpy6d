@@ -26,6 +26,11 @@ from .store import DB
 
 
 class DBPostgreSQL(DB):
+    """
+    PostgreSQL connection - to be tested!
+    """
+
+    db_type = 'postgresql'
 
     def db_connect(self):
         """

@@ -30,6 +30,9 @@ class SQLite(Store):
     """
         file-based SQLite database, might be an option for single installations
     """
+
+    db_type = 'sqlite'
+
     def __init__(self, query_queue, answer_queue, storage_type='volatile'):
 
         Store.__init__(self, query_queue, answer_queue)

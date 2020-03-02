@@ -993,6 +993,7 @@ class DB(Store):
     """
     connection = False
     cursor = False
+    db_type = ''
 
     def __init__(self, query_queue, answer_queue):
         Store.__init__(self, query_queue, answer_queue)
