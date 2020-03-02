@@ -733,7 +733,7 @@ class Store:
 
         # if already existing just update dynamic prefix
         if not db_entry or db_entry == []:
-            query = f"INSERT INTO meta (item_key, item_value) VALUES ('{'dynamic_prefix'}', '{prefix}')"
+            query = f"INSERT INTO meta (item_key, item_value) VALUES ('dynamic_prefix', '{prefix}')"
             self.query(query)
         else:
             query = f"UPDATE meta SET item_value = '{prefix}' WHERE item_key = 'dynamic_prefix'"
