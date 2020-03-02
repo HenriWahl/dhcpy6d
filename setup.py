@@ -30,10 +30,10 @@ import shutil
 try:
     if not os.path.exists('sbin'):
         os.mkdir('sbin')
-    shutil.copyfile('dhcpy6d.py', 'sbin/dhcpy6d')
+    shutil.copyfile('main.py', 'sbin/dhcpy6d')
     os.chmod('sbin/dhcpy6d', 0o554)
 except:
-    print('could not copy dhcpy6d.py')
+    print('could not copy main.py to sbin/dhcpy6d')
 
 classifiers = [
     'Intended Audience :: System Administrators',
