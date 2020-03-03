@@ -45,12 +45,6 @@ class OptionTemplate:
         """
         pass
 
-    def check_config(self, **kwargs):
-        """
-        the option's config might rather be checked by the option itself instead in config.py
-        """
-        pass
-
     @staticmethod
     def convert_to_string(number, payload):
         """

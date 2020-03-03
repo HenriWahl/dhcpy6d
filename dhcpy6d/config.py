@@ -109,7 +109,6 @@ class Config:
         self.SERVER_PREFERENCE = '255'
 
         # SNTP SERVERS Option 31
-        # Unused!
         self.SNTP_SERVERS = ''
 
         # NTP server Option 56
@@ -284,7 +283,6 @@ class Config:
         except getopt.GetoptError as err:
             print(err)
             print(USAGE)
-            #sys.exit(1)
             sys.exit(0)
 
         if configfile is None:
