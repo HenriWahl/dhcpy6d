@@ -9,10 +9,11 @@ ENV https_proxy $HTTP_PROXY
 RUN pip install distro \
                 dnspython \
                 mysqlclient \
-                psutil \
                 psycopg2
 
 RUN useradd --system --user-group dhcpy6d
 
+WORKDIR /dhcpy6d
 
+CMD python3 main.py --config dhcpy6d.conf --user dhcpy6d --group dhcpy6d
 

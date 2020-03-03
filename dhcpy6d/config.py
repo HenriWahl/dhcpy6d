@@ -123,7 +123,7 @@ class Config:
         # config type
         # one of file, mysql, sqlite or none
         self.STORE_CONFIG = 'none'
-        # one of mysql or sqlite
+        # one of mysql, postgresql or sqlite
         self.STORE_VOLATILE = 'sqlite'
 
         # file for client information
