@@ -51,10 +51,10 @@ class OptionTemplate:
         glue option number with payload
         """
         # option number and length take 2 byte each so the string has to be 4 chars long
-        option = f'{number:04x}'  # option number
-        option += f'{(len(payload)//2):04x}'  # payload length, /2 because 2 chars are 1 byte
-        option += payload
-        return option
+        option_string = f'{number:04x}'  # option number
+        option_string += f'{(len(payload)//2):04x}'  # payload length, /2 because 2 chars are 1 byte
+        option_string += payload
+        return option_string
 
 
 # globally available options
