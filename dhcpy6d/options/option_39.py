@@ -85,7 +85,7 @@ class Option(OptionTemplate):
 
         return response_string_part, options_answer_part
 
-    def apply(self, transaction=None, option=None, **kwargs):
+    def initialize(self, transaction=None, option=None, **kwargs):
         bits = f'{int(option[1:2]):04d}'
         transaction.dns_n = int(bits[1])
         transaction.dns_o = int(bits[2])

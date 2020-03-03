@@ -24,7 +24,7 @@ class Option(OptionTemplate):
     """
     61 Client System Architecture Type
     """
-    def apply(self, transaction=None, option=None, **kwargs):
+    def initialize(self, transaction=None, option=None, **kwargs):
         # raw client architecture is supplied as a 16-bit integer (e. g. 0007)
         # See https://tools.ietf.org/html/rfc4578#section-2.1
         transaction.client_architecture = option

@@ -23,7 +23,7 @@ class Option(OptionTemplate):
     """
     Option 1 Client Identifier Option
     """
-    def apply(self, transaction=None, option=None, **kwargs):
+    def initialize(self, transaction=None, option=None, **kwargs):
         transaction.duid = option
         # See https://github.com/HenriWahl/dhcpy6d/issues/25 and DUID type is not used at all so just remove it
         # self.DUIDType = int(options[1][0:4], 16)

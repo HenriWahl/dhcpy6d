@@ -33,15 +33,21 @@ class OptionTemplate:
     def build(self, **kwargs):
         """
         to be filled with life by every single option
-        every option has its special treatment of input and output data
+        every option has its special treatment of input and output data per request
         return default dummy values
         """
         return '', False
 
-    def apply(self, **kwargs):
+    def initialize(self, **kwargs):
         """
         to be filled with life by every single option
         every transaction has the opportunity to add options, depending on request
+        """
+        pass
+
+    def check_config(self, **kwargs):
+        """
+        the option's config might rather be checked by the option itself instead in config.py
         """
         pass
 

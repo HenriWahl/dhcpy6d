@@ -28,5 +28,5 @@ class Option(OptionTemplate):
         response_string_part = self.convert_to_string(self.number, '')
         return response_string_part, self.number
 
-    def apply(self, transaction=None, **kwargs):
+    def initialize(self, transaction=None, **kwargs):
         transaction.rapid_commit = True

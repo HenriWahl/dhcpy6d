@@ -77,8 +77,8 @@ class Config:
         # default settings
         # Server cfg.INTERFACE + addresses
         self.INTERFACE = 'eth0'
-        self.MCAST = 'ff02::1:2'
-        self.PORT = '547'
+        #self.MCAST = 'ff02::1:2'
+        #self.PORT = '547'
         self.ADDRESS = '2001:db8::1'
         # effective user and group - will have to be set mainly by distribution package
         self.USER = 'root'
@@ -588,19 +588,19 @@ class Config:
                 if not i in get_interfaces() or not re.match('^[a-z0-9_:.%-]*$', i, re.IGNORECASE):
                     error_exit(f"{msg_prefix} Interface '{i}' is unknown.")
 
-        # check multicast address
-        try:
-            decompress_ip6(self.MCAST)
-        except Exception as err:
-            error_exit(f"{msg_prefix} Multicast address '{err}' is invalid.")
-        if not self.MCAST.lower().startswith('ff'):
-            error_exit(f"Multicast address '{msg_prefix}' is invalid.")
+        # # check multicast address
+        # try:
+        #     decompress_ip6(self.MCAST)
+        # except Exception as err:
+        #     error_exit(f"{msg_prefix} Multicast address '{err}' is invalid.")
+        # if not self.MCAST.lower().startswith('ff'):
+        #     error_exit(f"Multicast address '{msg_prefix}' is invalid.")
 
-        # check DHCPv6 port
-        if not self.PORT.isdigit():
-            error_exit(f"{msg_prefix} Port '{self.PORT}' is invalid")
-        elif not 0 < int(self.PORT) <= 65535:
-            error_exit(f"{msg_prefix} Port '{self.PORT}' is invalid")
+        # # check DHCPv6 port
+        # if not self.PORT.isdigit():
+        #     error_exit(f"{msg_prefix} Port '{self.PORT}' is invalid")
+        # elif not 0 < int(self.PORT) <= 65535:
+        #     error_exit(f"{msg_prefix} Port '{self.PORT}' is invalid")
 
         # check server's address
         try:
