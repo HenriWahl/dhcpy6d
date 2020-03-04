@@ -35,7 +35,8 @@ def from_config(client=None, client_config=None, transaction=None):
     # continue only if request interface matches class interfaces
     if transaction.interface in cfg.CLASSES[client.client_class].INTERFACE:
         # if fixed addresses are given build them
-        if client_config.ADDRESS is not None:
+        if client_config.ADDRESS is not None and \
+                    CONST.OPTION.IA_NA in transaction.ia_options:
             for address in client_config.ADDRESS:
                 if len(address) > 0:
                     # fixed addresses are assumed to be non-temporary
@@ -50,6 +51,17 @@ def from_config(client=None, client_config=None, transaction=None):
                                  aclass='fixed',
                                  atype='fixed')
                     client.addresses.append(ia)
+
+        # if fixed prefixes are given and requested build them
+        if client_config.PREFIX is not None and \
+                    CONST.OPTION.IA_PD in transaction.ia_options:
+            for prefix in client_config.PREFIX:
+                ia_pd = Prefix(prefix=prefix['address'],
+                               length=prefix['length'],
+                               preferred_lifetime=cfg.PREFERRED_LIFETIME,
+                               valid_lifetime=cfg.VALID_LIFETIME,
+                               route_link_local=True)
+                client.prefixes.append(ia_pd)
 
         if not client_config.CLASS == '':
             # add all addresses which belong to that class
@@ -87,6 +99,7 @@ def from_config(client=None, client_config=None, transaction=None):
                          transaction.UserClass == user_class):
                     client.bootfiles.append(cfg.BOOTFILES[bootfile])
 
+            # if prefixes are advertised in this class and the client demands a prefix (trough IA_PD)
             if 'prefixes' in cfg.CLASSES[client_config.CLASS].ADVERTISE and \
                     CONST.OPTION.IA_PD in transaction.ia_options:
                 for prefix in cfg.CLASSES[client_config.CLASS].PREFIXES:

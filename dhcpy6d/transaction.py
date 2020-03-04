@@ -98,6 +98,7 @@ class Transaction:
         self.user_class = ''
 
         # if the options have some treatment for transactions just apply it if there is an defined option
+        # if ta options are discovered here, the ia_options value of this transaction instance will be set
         for option in options:
             if option in OPTIONS:
                 OPTIONS[option].initialize(transaction=self, option=options[option])

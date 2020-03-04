@@ -76,6 +76,9 @@ These attributes do not serve for identification of a client but for appropriate
 **address = <address> [<address> ...]**
     Addresses configured here will be sent to a client in addition to the ones it gets due to its class. Might be useful for some extra static address definitions.
 
+**prefix = <prefix> [<prefix> ...]**
+    Prefix configured here wil be sent to client in addition to the ones it gets due ti its class.
+
 
 Examples
 ========
@@ -103,6 +106,12 @@ The next lines contain some example client definitions:
 | mac = 04:04:04:04:04:04
 | id = 1234
 | class = valid_client
+
+| [client5]
+| hostname = client5
+| mac = 01:01:01:01:01:02
+| class = valid_client
+| prefix = 2001:cb8::/48
 
 License
 =======

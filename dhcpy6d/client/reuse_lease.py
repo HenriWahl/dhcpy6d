@@ -242,6 +242,17 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                                         pclass=p['class'],
                                                         route_link_local=cfg.PREFIXES[p['type']].ROUTE_LINK_LOCAL)
                                             client.prefixes.append(ia)
+                            # add prefixes which are bound to client to advertised prefixes
+                            else:
+                                ia = Prefix(prefix=p['prefix'],
+                                            length=p['length'],
+                                            ptype=p['type'],
+                                            preferred_lifetime=cfg.PREFERRED_LIFETIME,
+                                            valid_lifetime=cfg.VALID_LIFETIME,
+                                            category=p['category'],
+                                            pclass=p['class'],
+                                            route_link_local=True)
+                                client.prefixes.append(ia)
 
         # important indent here, has to match for...prefixes-loop!
         # look for prefixes in transaction that are invalid and add them

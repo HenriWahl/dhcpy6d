@@ -193,6 +193,16 @@ def colonify_ip6(address):
         return False
 
 
+def convert_prefix_inline(prefix):
+    """
+    check if supplied prefix is valid and convert it
+    """
+    address, length = split_prefix(prefix)
+    address = decompress_ip6(address)
+    return {"address": address,
+            "length": length}
+
+
 def combine_prefix_length(prefix, length):
     """
     add prefix and length to 'prefix/length' string
@@ -230,7 +240,7 @@ def listify_option(option):
     if option:
         lex = shlex.shlex(option)
         lex.whitespace = WHITESPACE
-        lex.wordchars += ':.-'
+        lex.wordchars += ':.-/'
         return list(lex)
     else:
         return None
