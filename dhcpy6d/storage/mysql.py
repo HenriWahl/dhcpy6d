@@ -49,9 +49,9 @@ class DBMySQL(DB):
                 error_exit('ERROR: Cannot find module MySQLdb or PyMySQL. Please install one of them to proceed.')
         try:
             self.connection = sys.modules[self.db_type].connect(host=cfg.STORE_DB_HOST,
-                                                             db=cfg.STORE_DB_DB,
-                                                             user=cfg.STORE_DB_USER,
-                                                             passwd=cfg.STORE_DB_PASSWORD)
+                                                                db=cfg.STORE_DB_DB,
+                                                                user=cfg.STORE_DB_USER,
+                                                                passwd=cfg.STORE_DB_PASSWORD)
             self.connection.autocommit(True)
             self.cursor = self.connection.cursor()
             self.connected = True
@@ -69,13 +69,19 @@ class DBMySQL(DB):
             return 'IntegrityError'
         except Exception as err:
             # try to reestablish database connection
-            print(f'Error: {str(err)}')
+            print(f'Error: {str(err.args[1])}')
             print(f'Query: {query}')
             if not self.db_connect():
                 return None
             else:
                 try:
-                    self.cursor.execute(query)
+                    if err.args[1].startswith('Table') and err.args[1].endswith("doesn't exist"):
+                        table = err.args[1].split('.')[1].split("'")[0]
+                        self.cursor.execute(self.schemas[table])
+                    elif not (err.args[1].startswith('Table') and err.args[1].endswith("already exists")):
+                        self.cursor.execute('')
+                    else:
+                        self.cursor.execute(query)
                 except:
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()

@@ -65,10 +65,78 @@ class ClientConfigDB:
 
 class Store:
     """
-    abstract class to present MySQL or SQLlite
+    abstract class to present MySQL or SQLite or Postgresql
     """
 
-    # def __init__(self, cfg, query_queue, answer_queue, transactions, collected_macs):
+    # put SQL schemas here to be in reach of all storage types
+    schemas = {}
+    schemas['meta'] = '''
+                        CREATE TABLE meta (
+                        item_key varchar(255) NOT NULL,
+                        item_value varchar(255) NOT NULL,
+                        PRIMARY KEY (item_key)
+                    );
+                    '''
+    schemas['leases'] = '''
+                        CREATE TABLE leases (
+                        address varchar(32) NOT NULL,
+                        active tinyint(4) NOT NULL,
+                        preferred_lifetime int(11) NOT NULL,
+                        valid_lifetime int(11) NOT NULL,
+                        hostname varchar(255) NOT NULL,
+                        type varchar(255) NOT NULL,
+                        category varchar(255) NOT NULL,
+                        ia_type varchar(255) NOT NULL,
+                        class varchar(255) NOT NULL,
+                        mac varchar(17) NOT NULL,
+                        duid varchar(255) NOT NULL,
+                        last_update bigint NOT NULL,
+                        preferred_until bigint NOT NULL,
+                        valid_until bigint NOT NULL,
+                        iaid varchar(8) DEFAULT NULL,
+                        last_message int(11) NOT NULL DEFAULT 0,
+                        PRIMARY KEY (address)
+                        );
+                        '''
+    schemas['macs_llips'] = '''
+                            CREATE TABLE macs_llips (
+                            mac varchar(17) NOT NULL,
+                            link_local_ip varchar(39) NOT NULL,
+                            last_update bigint NOT NULL,
+                            PRIMARY KEY (mac)
+                            );
+                            '''
+    schemas['prefixes'] = '''
+                        CREATE TABLE prefixes (
+                        prefix varchar(32) NOT NULL,
+                        length tinyint(4) NOT NULL,
+                        active tinyint(4) NOT NULL,
+                        preferred_lifetime int(11) NOT NULL,
+                        valid_lifetime int(11) NOT NULL,
+                        hostname varchar(255) NOT NULL,
+                        type varchar(255) NOT NULL,
+                        category varchar(255) NOT NULL,
+                        class varchar(255) NOT NULL,
+                        mac varchar(17) NOT NULL,
+                        duid varchar(255) NOT NULL,
+                        last_update bigint NOT NULL,
+                        preferred_until bigint NOT NULL,
+                        valid_until bigint NOT NULL,
+                        iaid varchar(8) DEFAULT NULL,
+                        last_message int(11) NOT NULL DEFAULT 0,
+                        PRIMARY KEY (prefix)
+                        );
+                        '''
+    schemas['routes'] = '''
+                        CREATE TABLE routes (
+                        prefix varchar(32) NOT NULL,
+                        length tinyint(4) NOT NULL,
+                        router varchar(32) NOT NULL,
+                        last_update bigint NOT NULL,
+                        PRIMARY KEY (prefix)
+                        );
+                        '''
+
     def __init__(self, query_queue, answer_queue):
         self.query_queue = query_queue
         self.answer_queue = answer_queue
@@ -771,7 +839,7 @@ class Store:
         """
         try:
             if self.query('SELECT last_message FROM leases LIMIT 1') is None:
-                # row 'last_message' in tables 'leases' does not exist yet, comes with version 0.1.6
+                # row 'last_message' in schemas 'leases' does not exist yet, comes with version 0.1.6
                 self.query('ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0')
                 print("Adding row 'last_message' to table 'leases' in volatile storage succeeded.")
         except:
@@ -843,13 +911,6 @@ class Store:
                             last_update_new = last_update.strftime('%s')
                             preferred_until_new = preferred_until.strftime('%s')
                             valid_until_new = valid_until.strftime('%s')
-                            # self.query("UPDATE leases SET last_update_new = {0}, "
-                            #                                       "preferred_until_new = {1}, "
-                            #                                       "valid_until_new = {2} "
-                            #                     "WHERE address = '{3}'".format(last_update_new,
-                            #                                                    preferred_until_new,
-                            #                                                    valid_until_new,
-                            #                                                    address))
                             self.query(f"UPDATE leases SET last_update_new = {last_update_new}, "
                                        f"preferred_until_new = {preferred_until_new}, "
                                        f"valid_until_new = {valid_until_new} "
@@ -1005,44 +1066,6 @@ class DB(Store):
 
     def db_connect(self):
         """
-            Connect to database server according to database type
+        Connect to database server according to database type
         """
-        if cfg.STORE_CONFIG == 'mysql' or cfg.STORE_VOLATILE == 'mysql':
-            try:
-                if 'MySQLdb' not in list(sys.modules.keys()):
-                    import MySQLdb
-            except:
-                error_exit('ERROR: Cannot find module MySQLdb. Please install to proceed.')
-            try:
-                self.connection = sys.modules['MySQLdb'].connect(host=cfg.STORE_DB_HOST,
-                                                                 db=cfg.STORE_DB_DB,
-                                                                 user=cfg.STORE_DB_USER,
-                                                                 passwd=cfg.STORE_DB_PASSWORD)
-                self.connection.autocommit(True)
-                self.cursor = self.connection.cursor()
-                self.connected = True
-            except:
-                traceback.print_exc(file=sys.stdout)
-                sys.stdout.flush()
-                self.connected = False
-
-        elif cfg.STORE_CONFIG == 'postgresql' or cfg.STORE_VOLATILE == 'postgresql':
-            try:
-                if 'psycopg2' not in list(sys.modules.keys()):
-                    import psycopg2
-            except:
-                traceback.print_exc(file=sys.stdout)
-                sys.stdout.flush()
-                error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
-            try:
-                self.connection = sys.modules['psycopg2'].connect(host=cfg.STORE_DB_HOST,
-                                                                  database=cfg.STORE_DB_DB,
-                                                                  user=cfg.STORE_DB_USER,
-                                                                  passwd=cfg.STORE_DB_PASSWORD)
-                self.cursor = self.connection.cursor()
-                self.connected = True
-            except:
-                traceback.print_exc(file=sys.stdout)
-                sys.stdout.flush()
-                self.connected = False
-        return self.connected
+        pass
