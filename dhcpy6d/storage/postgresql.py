@@ -22,6 +22,7 @@ import traceback
 from ..config import cfg
 from ..helpers import error_exit
 
+from .schemas import POSTGRESQL_SCHEMA
 from .store import DB
 
 
@@ -31,6 +32,7 @@ class DBPostgreSQL(DB):
     """
 
     db_type = 'postgresql'
+    schemas = POSTGRESQL_SCHEMA
 
     def db_connect(self):
         """
@@ -62,12 +64,20 @@ class DBPostgreSQL(DB):
             self.cursor.execute(query)
         except Exception as err:
             # try to reestablish database connection
-            print(f'Error: {str(err)}')
+            print(f'Error: {str(err.args[1])}')
+            print(f'Query: {query}')
             if not self.db_connect():
                 return None
             else:
                 try:
-                    self.cursor.execute(query)
+                    # build tables if they are not existing yet
+                    if err.args[1].startswith('Table') and err.args[1].endswith("doesn't exist"):
+                        table = err.args[1].split('.')[1].split("'")[0]
+                        self.cursor.execute(self.schemas[table])
+                    elif not (err.args[1].startswith('Table') and err.args[1].endswith("already exists")):
+                        self.cursor.execute('')
+                    else:
+                        self.cursor.execute(query)
                 except:
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()

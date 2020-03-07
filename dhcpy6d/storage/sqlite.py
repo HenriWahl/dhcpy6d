@@ -51,7 +51,6 @@ class SQLite(Store):
         # only import if needed
         if 'sqlite3' not in list(sys.modules.keys()):
             import sqlite3
-
         try:
             if storage_type == 'volatile':
                 storage = cfg.STORE_SQLITE_VOLATILE
@@ -72,7 +71,7 @@ class SQLite(Store):
             execute query on DB
         """
         try:
-            answer = self.cursor.execute(query)
+            self.cursor.execute(query)
             # commit only if explicitly wanted
             if query.startswith('INSERT'):
                 self.connection.commit()
@@ -83,9 +82,34 @@ class SQLite(Store):
             self.connected = True
         except sys.modules['sqlite3'].IntegrityError:
             return 'IntegrityError'
+        except sys.modules['sqlite3'].OperationalError as err:
+            # err_msg later used to find out missing table
+            err_msg = str(err.args[0])
+            # try to reestablish database connection
+            print(f'Error: {err_msg}')
+            print(f'Query: {query}')
+            try:
+                # build tables if they are not existing yet
+                if err_msg.startswith('no such table:'):
+                    table = err_msg.split(': ')[1]
+                    self.cursor.execute(self.schemas[table])
+                elif not (err_msg.startswith('Table') and err_msg.endswith("already exists")):
+                    self.cursor.execute('')
+                else:
+                    self.cursor.execute(query)
+                # sqlite loves extra commits - or is there a way to autocommit?
+                self.connection.commit()
+            except:
+                traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
+                self.connected = False
+                return None
         except Exception as err:
-            self.connected = False
-            print(err)
-            return None
+            # try to reestablish database connection
+            print(f'Error: {str(err.args[0])}')
+            print(f'Query: {query}')
+            if not self.db_connect():
+                return None
 
-        return answer.fetchall()
+        result = self.cursor.fetchall()
+        return result

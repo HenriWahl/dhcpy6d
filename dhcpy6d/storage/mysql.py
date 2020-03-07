@@ -68,17 +68,19 @@ class DBMySQL(DB):
         except sys.modules[self.db_type].IntegrityError:
             return 'IntegrityError'
         except Exception as err:
+            err_msg = str(err.args[1])
             # try to reestablish database connection
-            print(f'Error: {str(err.args[1])}')
+            print(f'Error: {err_msg}')
             print(f'Query: {query}')
             if not self.db_connect():
                 return None
             else:
                 try:
-                    if err.args[1].startswith('Table') and err.args[1].endswith("doesn't exist"):
-                        table = err.args[1].split('.')[1].split("'")[0]
+                    # build tables if they are not existing yet
+                    if err_msg.startswith('Table') and err_msg.endswith("doesn't exist"):
+                        table = err_msg.split('.')[1].split("'")[0]
                         self.cursor.execute(self.schemas[table])
-                    elif not (err.args[1].startswith('Table') and err.args[1].endswith("already exists")):
+                    elif not (err_msg.startswith('Table') and err_msg.endswith("already exists")):
                         self.cursor.execute('')
                     else:
                         self.cursor.execute(query)
