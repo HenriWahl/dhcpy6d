@@ -93,7 +93,8 @@ class SQLite(Store):
                 if err_msg.startswith('no such table:'):
                     table = err_msg.split(': ')[1]
                     self.cursor.execute(self.schemas[table])
-                elif not (err_msg.startswith('Table') and err_msg.endswith("already exists")):
+                elif (err_msg.startswith('table ') and err_msg.endswith(" already exists")):
+                    # dummy execution
                     self.cursor.execute('')
                 else:
                     self.cursor.execute(query)

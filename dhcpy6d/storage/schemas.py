@@ -124,27 +124,27 @@ POSTGRESQL_SCHEMA['macs_llips'] = '''
                                 PRIMARY KEY (mac)
                                 );
                                 '''
-POSTGRESQL_SCHEMA[''] = '''
-                        CREATE TABLE prefixes (
-                        prefix varchar(32) NOT NULL,
-                        length smallint NOT NULL,
-                        active smallint NOT NULL,
-                        preferred_lifetime int NOT NULL,
-                        valid_lifetime int NOT NULL,
-                        hostname varchar(255) NOT NULL,
-                        type varchar(255) NOT NULL,
-                        category varchar(255) NOT NULL,
-                        class varchar(255) NOT NULL,
-                        mac varchar(17) NOT NULL,
-                        duid varchar(255) NOT NULL,
-                        last_update bigint NOT NULL,
-                        preferred_until bigint NOT NULL,
-                        valid_until bigint NOT NULL,
-                        iaid varchar(8) DEFAULT NULL,
-                        last_message int NOT NULL DEFAULT 0,
-                        PRIMARY KEY (prefix)
-                        );
-                        '''
+POSTGRESQL_SCHEMA['prefixes'] = '''
+                            CREATE TABLE prefixes (
+                            prefix varchar(32) NOT NULL,
+                            length smallint NOT NULL,
+                            active smallint NOT NULL,
+                            preferred_lifetime int NOT NULL,
+                            valid_lifetime int NOT NULL,
+                            hostname varchar(255) NOT NULL,
+                            type varchar(255) NOT NULL,
+                            category varchar(255) NOT NULL,
+                            class varchar(255) NOT NULL,
+                            mac varchar(17) NOT NULL,
+                            duid varchar(255) NOT NULL,
+                            last_update bigint NOT NULL,
+                            preferred_until bigint NOT NULL,
+                            valid_until bigint NOT NULL,
+                            iaid varchar(8) DEFAULT NULL,
+                            last_message int NOT NULL DEFAULT 0,
+                            PRIMARY KEY (prefix)
+                            );
+                            '''
 POSTGRESQL_SCHEMA['routes'] = '''
                             CREATE TABLE routes (
                             prefix varchar(32) NOT NULL,
