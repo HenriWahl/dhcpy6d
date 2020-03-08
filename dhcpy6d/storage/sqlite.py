@@ -30,9 +30,6 @@ class SQLite(Store):
     """
         file-based SQLite database, might be an option for single installations
     """
-
-    db_type = 'sqlite'
-
     def __init__(self, query_queue, answer_queue, storage_type='volatile'):
 
         Store.__init__(self, query_queue, answer_queue)
@@ -49,8 +46,9 @@ class SQLite(Store):
             Initialize DB connection
         """
         # only import if needed
-        if 'sqlite3' not in list(sys.modules.keys()):
+        if 'sqlite3' not in sys.modules:
             import sqlite3
+            self.db_module = sqlite3
         try:
             if storage_type == 'volatile':
                 storage = cfg.STORE_SQLITE_VOLATILE
@@ -58,7 +56,7 @@ class SQLite(Store):
                 os.chown(cfg.STORE_SQLITE_VOLATILE, pwd.getpwnam(cfg.USER).pw_uid, grp.getgrnam(cfg.GROUP).gr_gid)
             if storage_type == 'config':
                 storage = cfg.STORE_SQLITE_CONFIG
-            self.connection = sys.modules['sqlite3'].connect(storage, check_same_thread = False)
+            self.connection = self.db_module.connect(storage, check_same_thread = False)
             self.cursor = self.connection.cursor()
             self.connected = True
         except:
@@ -80,9 +78,9 @@ class SQLite(Store):
             elif query.startswith('DELETE'):
                 self.connection.commit()
             self.connected = True
-        except sys.modules['sqlite3'].IntegrityError:
+        except self.db_module.IntegrityError:
             return 'IntegrityError'
-        except sys.modules['sqlite3'].OperationalError as err:
+        except self.db_module.OperationalError as err:
             # err_msg later used to find out missing table
             err_msg = str(err.args[0])
             # try to reestablish database connection
@@ -93,8 +91,8 @@ class SQLite(Store):
                 if err_msg.startswith('no such table:'):
                     table = err_msg.split(': ')[1]
                     self.cursor.execute(self.schemas[table])
-                elif (err_msg.startswith('table ') and err_msg.endswith(" already exists")):
-                    # dummy execution
+                # if they already exist just execute some dummy query
+                elif (err_msg.startswith('table ') and err_msg.endswith(' already exists')):
                     self.cursor.execute('')
                 else:
                     self.cursor.execute(query)

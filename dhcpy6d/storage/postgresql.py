@@ -41,12 +41,13 @@ class DBPostgreSQL(DB):
         try:
             if 'psycopg2' not in list(sys.modules.keys()):
                 import psycopg2
+                self.db_module = psycopg2
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
         try:
-            self.connection = sys.modules['psycopg2'].connect(host=cfg.STORE_DB_HOST,
+            self.connection = self.db_module.connect(host=cfg.STORE_DB_HOST,
                                                               database=cfg.STORE_DB_DB,
                                                               user=cfg.STORE_DB_USER,
                                                               password=cfg.STORE_DB_PASSWORD)
@@ -62,20 +63,23 @@ class DBPostgreSQL(DB):
     def db_query(self, query):
         try:
             self.cursor.execute(query)
-        except Exception as err:
+        except (self.db_module.errors.UndefinedTable,
+                self.db_module.errors.DuplicateTable) as err:
+            err_msg = err.diag.message_primary
             # try to reestablish database connection
-            print(f'Error: {str(err.args[1])}')
+            print(f'Error: {err_msg}')
             print(f'Query: {query}')
             if not self.db_connect():
                 return None
             else:
                 try:
                     # build tables if they are not existing yet
-                    if err.args[1].startswith('Table') and err.args[1].endswith("doesn't exist"):
-                        table = err.args[1].split('.')[1].split("'")[0]
+                    if err_msg.startswith('relation "') and err_msg.endswith('" does not exist'):
+                        table = err_msg.split('"')[1]
                         self.cursor.execute(self.schemas[table])
-                    elif not (err.args[1].startswith('Table') and err.args[1].endswith("already exists")):
-                        self.cursor.execute('')
+                    # if they already exist just execute some dummy query - can't be empty in PostgreSQL
+                    elif (err_msg.startswith('relation "') and err_msg.endswith('" already exists')):
+                        self.cursor.execute("SELECT 'dummy'")
                     else:
                         self.cursor.execute(query)
                 except:
@@ -83,6 +87,17 @@ class DBPostgreSQL(DB):
                     sys.stdout.flush()
                     self.connected = False
                     return None
+        except self.db_module.errors.UniqueViolation as err:
+            # key can't be inserted twice
+            print(f'Error: {err.diag.message_primary}')
+            print(f'Query: {query}')
+            return None
+        except Exception as err:
+            # try to reestablish database connection
+            print(f'Error: {str(err.args[0])}')
+            print(f'Query: {query}')
+            if not self.db_connect():
+                return None
         try:
             result = self.cursor.fetchall()
         # quite probably a psycopg2.ProgrammingError occurs here

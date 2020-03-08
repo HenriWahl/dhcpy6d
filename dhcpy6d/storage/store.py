@@ -72,6 +72,9 @@ class Store:
     # put SQL schemas here to be in reach of all storage types
     schemas = GENERIC_SCHEMA
 
+    # link to used database module
+    db_module = None
+
     def __init__(self, query_queue, answer_queue):
         self.query_queue = query_queue
         self.answer_queue = answer_queue
@@ -989,7 +992,6 @@ class DB(Store):
     """
     connection = False
     cursor = False
-    db_type = ''
 
     def __init__(self, query_queue, answer_queue):
         Store.__init__(self, query_queue, answer_queue)

@@ -30,25 +30,23 @@ class DBMySQL(DB):
     access MySQL and MariaDB
     """
 
-    # as default try MySQLdb - is not shipped anymore with Redhat/CentOS 8, so provide fallback option
-    db_type = 'MySQLdb'
-
     def db_connect(self):
         """
             Connect to database server according to database type
         """
         try:
-            if 'MySQLdb' not in list(sys.modules.keys()):
+            if 'MySQLdb' not in sys.modules:
                 import MySQLdb
+                self.db_module = MySQLdb
         except:
             try:
-                if 'pymsql' not in list(sys.modules.keys()):
+                if 'pymsql' not in sys.modules:
                     import pymysql
-                    self.db_type = 'pymysql'
+                    self.db_module = pymysql
             except:
                 error_exit('ERROR: Cannot find module MySQLdb or PyMySQL. Please install one of them to proceed.')
         try:
-            self.connection = sys.modules[self.db_type].connect(host=cfg.STORE_DB_HOST,
+            self.connection = self.db_module.connect(host=cfg.STORE_DB_HOST,
                                                                 db=cfg.STORE_DB_DB,
                                                                 user=cfg.STORE_DB_USER,
                                                                 passwd=cfg.STORE_DB_PASSWORD)
@@ -65,7 +63,7 @@ class DBMySQL(DB):
     def db_query(self, query):
         try:
             self.cursor.execute(query)
-        except sys.modules[self.db_type].IntegrityError:
+        except self.db_module.IntegrityError:
             return 'IntegrityError'
         except Exception as err:
             err_msg = str(err.args[1])
@@ -80,8 +78,8 @@ class DBMySQL(DB):
                     if err_msg.startswith('Table') and err_msg.endswith("doesn't exist"):
                         table = err_msg.split('.')[1].split("'")[0]
                         self.cursor.execute(self.schemas[table])
-                    elif (err_msg.startswith('Table') and err_msg.endswith("already exists")):
-                        # dummy execution
+                    # if they already exist just execute some dummy query
+                    elif (err_msg.startswith('Table') and err_msg.endswith('already exists')):
                         self.cursor.execute('')
                     else:
                         self.cursor.execute(query)
