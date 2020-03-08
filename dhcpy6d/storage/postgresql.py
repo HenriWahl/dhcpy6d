@@ -30,8 +30,6 @@ class DBPostgreSQL(DB):
     """
     PostgreSQL connection - to be tested!
     """
-
-    db_type = 'postgresql'
     schemas = POSTGRESQL_SCHEMA
 
     def db_connect(self):

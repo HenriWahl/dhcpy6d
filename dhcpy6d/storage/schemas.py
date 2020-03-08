@@ -24,8 +24,9 @@ GENERIC_SCHEMA['meta'] = '''
                     item_key varchar(255) NOT NULL,
                     item_value varchar(255) NOT NULL,
                     PRIMARY KEY (item_key)
-                );
-                '''
+                    );
+                    INSERT INTO meta (item_key, item_value) VALUES ('version', '3');
+                    '''
 GENERIC_SCHEMA['leases'] = '''
                     CREATE TABLE leases (
                     address varchar(32) NOT NULL,
@@ -94,6 +95,7 @@ POSTGRESQL_SCHEMA['meta'] = '''
                         item_value varchar(255) NOT NULL,
                         PRIMARY KEY (item_key)
                         );
+                        
                         '''
 POSTGRESQL_SCHEMA['leases'] = '''
                             CREATE TABLE leases (

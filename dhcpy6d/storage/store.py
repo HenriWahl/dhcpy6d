@@ -72,6 +72,9 @@ class Store:
     # put SQL schemas here to be in reach of all storage types
     schemas = GENERIC_SCHEMA
 
+    # increasing number of SQL schema versions
+    db_version = 0
+
     # link to used database module
     db_module = None
 
@@ -127,7 +130,8 @@ class Store:
         """
         return stored version if dhcpy6d DB
         """
-        return self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
+        self.db_version = self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
+        return self.db_version
 
     def store(self, transaction, now):
         """
