@@ -58,7 +58,7 @@ class DBPostgreSQL(DB):
             self.connected = False
         return self.connected
 
-    def db_query(self, query):
+    def db_query_bla(self, query):
         try:
             self.cursor.execute(query)
         except (self.db_module.errors.UndefinedTable,
@@ -74,7 +74,7 @@ class DBPostgreSQL(DB):
                     # build tables if they are not existing yet
                     if err_msg.startswith('relation "') and err_msg.endswith('" does not exist'):
                         table = err_msg.split('"')[1]
-                        self.cursor.execute(self.schemas[table])
+                        #self.cursor.execute(self.schemas[table])
                     # if they already exist just execute some dummy query - can't be empty in PostgreSQL
                     elif (err_msg.startswith('relation "') and err_msg.endswith('" already exists')):
                         self.cursor.execute("SELECT 'dummy'")
@@ -104,3 +104,41 @@ class DBPostgreSQL(DB):
         except Exception:
             return None
         return result
+
+    def db_query(self, query):
+        try:
+            self.cursor.execute(query)
+        except Exception as err:
+            # try to reestablish database connection
+            print(f'Error: {str(err)}')
+            if not self.db_connect():
+                return None
+            else:
+                try:
+                    self.cursor.execute(query)
+                except:
+                    traceback.print_exc(file=sys.stdout)
+                    sys.stdout.flush()
+                    self.connected = False
+                    return None
+        try:
+            result = self.cursor.fetchall()
+        # quite probably a psycopg2.ProgrammingError occurs here
+        # which should be caught by except psycopg2.ProgrammingError
+        # but psycopg2 is not known here
+        except Exception:
+            return None
+        return result
+
+    def get_tables(self):
+        """
+        return tables - no turntables
+        """
+        tables = []
+        query = f"select table_name from information_schema.tables WHERE " \
+                f"table_schema = 'public' AND " \
+                f"table_catalog = '{cfg.STORE_DB_DB}'"
+        answer = self.query(query)
+        if len(answer) > 0:
+            tables = [x[0] for x in answer]
+        return tables

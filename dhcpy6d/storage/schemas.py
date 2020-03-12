@@ -25,7 +25,6 @@ GENERIC_SCHEMA['meta'] = '''
                     item_value varchar(255) NOT NULL,
                     PRIMARY KEY (item_key)
                     );
-                    INSERT INTO meta (item_key, item_value) VALUES ('version', '3');
                     '''
 GENERIC_SCHEMA['leases'] = '''
                     CREATE TABLE leases (

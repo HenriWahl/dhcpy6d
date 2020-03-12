@@ -75,6 +75,9 @@ def run():
                                               answer_queue=volatile_answer_queue)
     volatile_query_queue_watcher.start()
 
+    # check if database tables are up-to-date or exist and create them if not
+    volatile_store.check_storage()
+
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':
         cfg.PREFIX = volatile_store.get_dynamic_prefix()
@@ -86,9 +89,6 @@ def run():
         cfg.ADDRESSES[a].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
     for p in cfg.PREFIXES:
         cfg.PREFIXES[p].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
-
-    # adjust old data to match newer versions of dhcpy6d
-    volatile_store.legacy_adjustments()
 
     # collect all known MAC addresses from database
     if cfg.CACHE_MAC_LLIP:

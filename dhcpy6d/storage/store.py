@@ -73,7 +73,7 @@ class Store:
     schemas = GENERIC_SCHEMA
 
     # increasing number of SQL schema versions
-    db_version = 0
+    version = 3
 
     # link to used database module
     db_module = None
@@ -90,22 +90,22 @@ class Store:
         # flag to check if connection is OK
         self.connected = False
         # storage of query answers
-        self.results = {}
+        self.answers = {}
 
     def query(self, query):
         """
         put queries received into query queue and return the answers from answer queue
         """
-        if query in list(self.results.keys()):
-            answer = self.results.pop(query)
+        if query in list(self.answers.keys()):
+            answer = self.answers.pop(query)
         else:
             answer = None
             while answer is None:
                 self.query_queue.put(query)
-                self.results.update(self.answer_queue.get())
+                self.answers.update(self.answer_queue.get())
                 # just make sure the right answer comes back
-                if query in list(self.results.keys()):
-                    answer = self.results.pop(query)
+                if query in list(self.answers.keys()):
+                    answer = self.answers.pop(query)
         return answer
 
     def clean_query_answer(method):
@@ -130,8 +130,34 @@ class Store:
         """
         return stored version if dhcpy6d DB
         """
-        self.db_version = self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
-        return self.db_version
+        return self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
+
+    def get_tables(self):
+        """
+        every storage type should be able to tell if it contains all needed DB tables
+        very storage-specific, thus just a stub here
+        """
+        pass
+
+    def create_tables(self):
+        """
+        create tables in different storage types - information about schemas comes from schemas.py
+        """
+        for table in self.schemas:
+            query = self.schemas[table]
+            self.cursor.execute(query)
+        # set initial version
+        self.cursor.execute(f"INSERT INTO meta (item_key, item_value) VALUES ('version', '{self.version}')")
+
+    def check_storage(self):
+        """
+        check if all databases/storage is ready and up to date
+        """
+        tables = self.get_tables()
+        if len(tables) == 0:
+            self.create_tables()
+        else:
+            self.legacy_adjustments()
 
     def store(self, transaction, now):
         """
@@ -165,10 +191,10 @@ class Store:
                                     f"'{now}', " \
                                     f"'{now + int(a.PREFERRED_LIFETIME)}', " \
                                     f"'{now + int(a.VALID_LIFETIME)}')"
-                            result = self.query(query)
+                            answer = self.query(query)
                             # for unknown reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
-                            if result == 'IntegrityError':
+                            if answer == 'IntegrityError':
                                 print('IntegrityError:', query)
                             else:
                                 # jump to next item of loop
@@ -226,11 +252,11 @@ class Store:
                                     f"'{now}', " \
                                     f"'{now + int(p.PREFERRED_LIFETIME)}', " \
                                     f"'{now + int(p.VALID_LIFETIME)}')"
-                            result = self.query(query)
+                            answer = self.query(query)
                             # for unknow reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
                             # doing this here for prefixes is just a precautional measure
-                            if result != 'IntegrityError':
+                            if answer != 'IntegrityError':
                                 continue
                         # otherwise update it if not a random prefix
                         # anyway right now only the categories 'range' and 'id' exist
@@ -531,12 +557,12 @@ class Store:
                     f"iaid = '{transaction.iaid}' AND " \
                     f"category = '{category}' AND " \
                     f"type = '{atype}'"
-        result = self.query(query)
-        if result is not None:
-            if len(result) == 0:
+        answer = self.query(query)
+        if answer is not None:
+            if len(answer) == 0:
                 return False
             else:
-                return result[0][0]
+                return answer[0][0]
         else:
             return False
 
@@ -560,12 +586,12 @@ class Store:
                     f"iaid = '{transaction.iaid}' AND " \
                     f"category = '{category}' AND " \
                     f"type = '{ptype}'"
-        result = self.query(query)
-        if result is not None:
-            if len(result) == 0:
+        answer = self.query(query)
+        if answer is not None:
+            if len(answer) == 0:
                 return False
             else:
-                return result[0][0]
+                return answer[0][0]
         else:
             return False
 
@@ -794,20 +820,21 @@ class Store:
         # a database version number
         try:
             try:
-                # only newer databases contain a version number - starting with 1
-                if self.get_db_version() is None:
+                # only newer databases contain a version number - real ones starting with 1
+                if self.get_db_version() == None:
                     # add table containing meta information like version of database scheme
                     db_operations = ['CREATE TABLE meta (item_key varchar(255) NOT NULL,\
                                       item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))',
                                      "INSERT INTO meta (item_key, item_value) VALUES ('version', '1')"]
                     for db_operation in db_operations:
                         self.query(db_operation)
-                        print(f'{db_operation} in volatile storage succeded.')
-            except:
+                    self.query(db_operation)
+                    print(f"{db_operation} in volatile storage succeded.")
+            except Exception as err:
                 print(f"\n{db_operation} on volatile database failed.")
                 print('Please apply manually or grant necessary permissions.\n')
                 sys.exit(1)
-        except:
+        except Exception as err:
             print('\nSomething went wrong when retrieving version from database.\n')
             sys.exit(1)
 
