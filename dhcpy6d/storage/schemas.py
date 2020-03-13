@@ -16,17 +16,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+from ..config import cfg
+
 # put SQL schemas here to be in reach of all storage types
 # generic mostly usable for SQLite and MySQL/MariaDB
-GENERIC_SCHEMA = {}
-GENERIC_SCHEMA['meta'] = '''
+MYSQL_SQLITE = {}
+MYSQL_SQLITE['meta'] = '''
                     CREATE TABLE meta (
                     item_key varchar(255) NOT NULL,
                     item_value varchar(255) NOT NULL,
                     PRIMARY KEY (item_key)
                     );
                     '''
-GENERIC_SCHEMA['leases'] = '''
+MYSQL_SQLITE['leases'] = '''
                     CREATE TABLE leases (
                     address varchar(32) NOT NULL,
                     active tinyint(4) NOT NULL,
@@ -47,7 +49,7 @@ GENERIC_SCHEMA['leases'] = '''
                     PRIMARY KEY (address)
                     );
                     '''
-GENERIC_SCHEMA['macs_llips'] = '''
+MYSQL_SQLITE['macs_llips'] = '''
                         CREATE TABLE macs_llips (
                         mac varchar(17) NOT NULL,
                         link_local_ip varchar(39) NOT NULL,
@@ -55,7 +57,7 @@ GENERIC_SCHEMA['macs_llips'] = '''
                         PRIMARY KEY (mac)
                         );
                         '''
-GENERIC_SCHEMA['prefixes'] = '''
+MYSQL_SQLITE['prefixes'] = '''
                     CREATE TABLE prefixes (
                     prefix varchar(32) NOT NULL,
                     length tinyint(4) NOT NULL,
@@ -76,7 +78,7 @@ GENERIC_SCHEMA['prefixes'] = '''
                     PRIMARY KEY (prefix)
                     );
                     '''
-GENERIC_SCHEMA['routes'] = '''
+MYSQL_SQLITE['routes'] = '''
                     CREATE TABLE routes (
                     prefix varchar(32) NOT NULL,
                     length tinyint(4) NOT NULL,

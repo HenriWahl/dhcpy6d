@@ -24,8 +24,7 @@ from ..globals import collected_macs
 from ..helpers import (decompress_ip6,
                        listify_option,
                        NeighborCacheRecord)
-
-from .schemas import GENERIC_SCHEMA
+from .schemas import MYSQL_SQLITE
 
 
 class ClientConfig:
@@ -70,7 +69,10 @@ class Store:
     """
 
     # put SQL schemas here to be in reach of all storage types
-    schemas = GENERIC_SCHEMA
+    SCHEMAS = MYSQL_SQLITE
+
+    # query to get tables - different in every SQL storage
+    QUERY_TABLES = ''
 
     # increasing number of SQL schema versions
     version = 3
@@ -96,7 +98,9 @@ class Store:
         """
         put queries received into query queue and return the answers from answer queue
         """
-        if query in list(self.answers.keys()):
+        # if query in list(self.answers.keys()):
+        #if query in self.answers.keys():
+        if query in self.answers:
             answer = self.answers.pop(query)
         else:
             answer = None
@@ -104,7 +108,9 @@ class Store:
                 self.query_queue.put(query)
                 self.answers.update(self.answer_queue.get())
                 # just make sure the right answer comes back
-                if query in list(self.answers.keys()):
+                # if query in list(self.answers.keys()):
+                #if query in self.answers.keys():
+                if query in self.answers:
                     answer = self.answers.pop(query)
         return answer
 
@@ -134,17 +140,21 @@ class Store:
 
     def get_tables(self):
         """
-        every storage type should be able to tell if it contains all needed DB tables
-        very storage-specific, thus just a stub here
+        return tables - no turntables
         """
-        pass
+        tables = []
+        query = self.QUERY_TABLES
+        answer = self.query(query)
+        if len(answer) > 0:
+            tables = [x[0] for x in answer]
+        return tables
 
     def create_tables(self):
         """
         create tables in different storage types - information about schemas comes from schemas.py
         """
-        for table in self.schemas:
-            query = self.schemas[table]
+        for table in self.SCHEMAS:
+            query = self.SCHEMAS[table]
             self.cursor.execute(query)
         # set initial version
         self.cursor.execute(f"INSERT INTO meta (item_key, item_value) VALUES ('version', '{self.version}')")
@@ -194,7 +204,7 @@ class Store:
                             answer = self.query(query)
                             # for unknown reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
-                            if answer == 'IntegrityError':
+                            if answer == 'INSERT_ERROR':
                                 print('IntegrityError:', query)
                             else:
                                 # jump to next item of loop
@@ -256,7 +266,7 @@ class Store:
                             # for unknow reasons sometime a lease shall be inserted which already exists
                             # in this case go further (aka continue) and do an update instead of an insert
                             # doing this here for prefixes is just a precautional measure
-                            if answer != 'IntegrityError':
+                            if answer != 'INSERT_ERROR':
                                 continue
                         # otherwise update it if not a random prefix
                         # anyway right now only the categories 'range' and 'id' exist

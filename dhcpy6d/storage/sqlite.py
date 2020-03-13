@@ -30,6 +30,8 @@ class SQLite(Store):
     """
         file-based SQLite database, might be an option for single installations
     """
+    QUERY_TABLES = "SELECT name FROM sqlite_master WHERE type='table'"
+
     def __init__(self, query_queue, answer_queue, storage_type='volatile'):
 
         Store.__init__(self, query_queue, answer_queue)
@@ -79,30 +81,7 @@ class SQLite(Store):
                 self.connection.commit()
             self.connected = True
         except self.db_module.IntegrityError:
-            return 'IntegrityError'
-        except self.db_module.OperationalError as err:
-            # err_msg later used to find out missing table
-            err_msg = str(err.args[0])
-            # try to reestablish database connection
-            print(f'Error: {err_msg}')
-            print(f'Query: {query}')
-            try:
-                # build tables if they are not existing yet
-                if err_msg.startswith('no such table:'):
-                    table = err_msg.split(': ')[1]
-                    self.cursor.execute(self.schemas[table])
-                # if they already exist just execute some dummy query
-                elif (err_msg.startswith('table ') and err_msg.endswith(' already exists')):
-                    self.cursor.execute('')
-                else:
-                    self.cursor.execute(query)
-                # sqlite loves extra commits - or is there a way to autocommit?
-                self.connection.commit()
-            except:
-                traceback.print_exc(file=sys.stdout)
-                sys.stdout.flush()
-                self.connected = False
-                return None
+            return 'INSERT_ERROR'
         except Exception as err:
             # try to reestablish database connection
             print(f'Error: {str(err.args[0])}')
