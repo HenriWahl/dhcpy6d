@@ -98,8 +98,6 @@ class Store:
         """
         put queries received into query queue and return the answers from answer queue
         """
-        # if query in list(self.answers.keys()):
-        #if query in self.answers.keys():
         if query in self.answers:
             answer = self.answers.pop(query)
         else:
@@ -108,8 +106,6 @@ class Store:
                 self.query_queue.put(query)
                 self.answers.update(self.answer_queue.get())
                 # just make sure the right answer comes back
-                # if query in list(self.answers.keys()):
-                #if query in self.answers.keys():
                 if query in self.answers:
                     answer = self.answers.pop(query)
         return answer

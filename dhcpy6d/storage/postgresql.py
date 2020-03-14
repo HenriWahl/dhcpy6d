@@ -64,6 +64,7 @@ class DBPostgreSQL(DB):
     def db_query(self, query):
         try:
             self.cursor.execute(query)
+        # catch impossible INSERTs
         except self.db_module.errors.UniqueViolation:
             return 'INSERT_ERROR'
         except self.db_module.errors.IntegrityError:
@@ -83,9 +84,9 @@ class DBPostgreSQL(DB):
                     return None
         try:
             result = self.cursor.fetchall()
-        # quite probably a psycopg2.ProgrammingError occurs here
-        # which should be caught by except psycopg2.ProgrammingError
-        # but psycopg2 is not known here
-        except Exception:
+        # If there is no result after a database reconnect a None would lead to eternal loop
+        except self.db_module.ProgrammingError:
+            return []
+        except Exception as err:
             return None
         return result
