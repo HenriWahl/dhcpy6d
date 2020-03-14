@@ -132,8 +132,17 @@ class Store:
     def get_db_version(self):
         """
         return stored version if dhcpy6d DB
+
         """
-        return self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
+        try:
+            # will be cleaned by decorator so default answer value is a little bit unintuitive
+            answer = [['0']]
+            if 'meta' in self.get_tables():
+                answer = self.query("SELECT item_value FROM meta WHERE item_key = 'version'")
+            return answer
+        except:
+            # no table 'meta' and no key 'version'
+            return answer
 
     def get_tables(self):
         """
