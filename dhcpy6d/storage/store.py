@@ -24,7 +24,8 @@ from ..globals import collected_macs
 from ..helpers import (decompress_ip6,
                        listify_option,
                        NeighborCacheRecord)
-from .schemas import MYSQL_SQLITE
+from .schemas import (legacy_adjustments,
+                      MYSQL_SQLITE)
 
 
 class ClientConfig:
@@ -163,7 +164,7 @@ class Store:
         if len(tables) == 0:
             self.create_tables()
         else:
-            self.legacy_adjustments()
+            legacy_adjustments(self)
 
     def store(self, transaction, now):
         """
@@ -806,220 +807,6 @@ class Store:
         """
         # return empty tuple as dummy
         return ()
-
-    def legacy_adjustments(self):
-        """
-            adjust some existing data to work with newer versions of dhcpy6d
-        """
-        try:
-            if self.query('SELECT last_message FROM leases LIMIT 1') is None:
-                # row 'last_message' in schemas 'leases' does not exist yet, comes with version 0.1.6
-                self.query('ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0')
-                print("Adding row 'last_message' to table 'leases' in volatile storage succeeded.")
-        except:
-            print("\n'ALTER TABLE leases ADD last_message INT NOT NULL DEFAULT 0' on volatile database failed.")
-            print('Please apply manually or grant necessary permissions.\n')
-            sys.exit(1)
-
-        # after 0.4.3 with working PostgreSQL support the timestamps have to be stores in epoch seconds, not datetime
-        # also after 0.4.3 there will be a third table containing meta information - for a first start it should contain
-        # a database version number
-        try:
-            try:
-                # only newer databases contain a version number - real ones starting with 1
-                if self.get_db_version() == None:
-                    # add table containing meta information like version of database scheme
-                    db_operations = ['CREATE TABLE meta (item_key varchar(255) NOT NULL,\
-                                      item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))',
-                                     "INSERT INTO meta (item_key, item_value) VALUES ('version', '1')"]
-                    for db_operation in db_operations:
-                        self.query(db_operation)
-                    self.query(db_operation)
-                    print(f"{db_operation} in volatile storage succeded.")
-            except Exception as err:
-                print(f"\n{db_operation} on volatile database failed.")
-                print('Please apply manually or grant necessary permissions.\n')
-                sys.exit(1)
-        except Exception as err:
-            print('\nSomething went wrong when retrieving version from database.\n')
-            sys.exit(1)
-
-        # find out if timestamps still are in datetime format - applies only to sqlite and mysql anyway
-        if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
-            db_datetime_test = self.query('SELECT last_update FROM leases LIMIT 1')
-            if len(db_datetime_test) > 0:
-                import datetime
-
-                # flag to find out which update has to be done
-                update_type = False
-
-                # MySQL
-                if type(db_datetime_test[0][0]) is datetime.datetime:
-                    update_type = 'mysql'
-
-                # SQLite
-                if type(db_datetime_test[0][0]) is str:
-                    if ' ' in db_datetime_test[0][0]:
-                        update_type = 'sqlite'
-
-                if update_type:
-                    # add new columns with suffix *_new
-                    db_tables = {'leases': ['last_update', 'preferred_until', 'valid_until'],
-                                 'macs_llips': ['last_update']}
-
-                    if update_type == 'mysql':
-                        for table in db_tables:
-                            for column in db_tables[table]:
-                                self.query(f'ALTER TABLE {table} ADD COLUMN {column}_new bigint NOT NULL')
-                                print(f'ALTER TABLE {table} ADD COLUMN {column}_new bigint NOT NULL succeeded')
-                        # get old timestamps
-                        timestamps_old = self.query(
-                            'SELECT address, last_update, preferred_until, valid_until FROM leases')
-                        for timestamp_old in timestamps_old:
-                            address, last_update, preferred_until, valid_until = timestamp_old
-                            # convert SQLite datetime values from unicode to Python datetime
-                            if update_type == 'sqlite':
-                                last_update = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S.%f')
-                                preferred_until = datetime.datetime.strptime(preferred_until, '%Y-%m-%d %H:%M:%S.%f')
-                                valid_until = datetime.datetime.strptime(valid_until, '%Y-%m-%d %H:%M:%S.%f')
-
-                            last_update_new = last_update.strftime('%s')
-                            preferred_until_new = preferred_until.strftime('%s')
-                            valid_until_new = valid_until.strftime('%s')
-                            self.query(f"UPDATE leases SET last_update_new = {last_update_new}, "
-                                       f"preferred_until_new = {preferred_until_new}, "
-                                       f"valid_until_new = {valid_until_new} "
-                                       f"WHERE address = '{address}'")
-                        print('Converting timestamps of leases succeeded')
-                        timestamps_old = self.query('SELECT mac, last_update FROM macs_llips')
-                        for timestamp_old in timestamps_old:
-                            mac, last_update = timestamp_old
-                            last_update_new = last_update.strftime('%s')
-                            self.query(f"UPDATE macs_llips SET last_update_new = {last_update_new} WHERE mac = '{mac}'")
-                        print('Converting timestamps of macs_llips succeeded')
-                        for table in db_tables:
-                            for column in db_tables[table]:
-                                self.query(f'ALTER TABLE {table} DROP COLUMN {column}')
-                                self.query(f'ALTER TABLE {table} CHANGE COLUMN {column}_new {column} BIGINT NOT NULL')
-                                print(f'Moving column {column} of table {table} succeeded')
-
-                    if update_type == 'sqlite':
-                        for table in db_tables:
-                            self.query(f'ALTER TABLE {table} RENAME TO {table}_old')
-
-                        self.query('CREATE TABLE leases AS SELECT address,active,last_message,preferred_lifetime,'
-                                   'valid_lifetime,hostname,type,category,ia_type,'
-                                   'class,mac,duid,iaid '
-                                   'FROM leases_old')
-
-                        self.query('CREATE TABLE macs_llips AS SELECT mac,link_local_ip FROM macs_llips_old')
-
-                        # add timestamp columns in bigint format instead of datetime
-                        for table in db_tables:
-                            for column in db_tables[table]:
-                                self.query(f'ALTER TABLE {table} ADD COLUMN {column} bigint')
-
-                        # get old timestamps
-                        timestamps_old = self.query(
-                            'SELECT address, last_update, preferred_until, valid_until FROM leases_old')
-                        for timestamp_old in timestamps_old:
-                            address, last_update, preferred_until, valid_until = timestamp_old
-                            # convert SQLite datetime values from unicode to Python datetime
-                            if update_type == 'sqlite':
-                                last_update = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S.%f')
-                                preferred_until = datetime.datetime.strptime(preferred_until, '%Y-%m-%d %H:%M:%S.%f')
-                                valid_until = datetime.datetime.strptime(valid_until, '%Y-%m-%d %H:%M:%S.%f')
-
-                            last_update_new = last_update.strftime('%s')
-                            preferred_until_new = preferred_until.strftime('%s')
-                            valid_until_new = valid_until.strftime('%s')
-                            self.query(f"UPDATE leases SET last_update = {last_update_new}, "
-                                       f"preferred_until = {preferred_until_new}, "
-                                       f"valid_until = {valid_until_new} "
-                                       f"WHERE address = '{address}'")
-                        print('Converting timestamps of leases succeeded')
-                        timestamps_old = self.query('SELECT mac, last_update FROM macs_llips_old')
-                        for timestamp_old in timestamps_old:
-                            mac, last_update = timestamp_old
-                            last_update_new = last_update.strftime('%s')
-                            self.query(f"UPDATE macs_llips SET last_update = {last_update_new} WHERE mac = '{mac}'")
-                        print('Converting timestamps of macs_llips succeeded')
-
-        # Extend volatile database to handle prefixes - comes with database version 2
-        if int(self.get_db_version()) < 2:
-            if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
-                self.query('CREATE TABLE prefixes (\
-                              prefix varchar(32) NOT NULL,\
-                              length tinyint(4) NOT NULL,\
-                              active tinyint(4) NOT NULL,\
-                              preferred_lifetime int(11) NOT NULL,\
-                              valid_lifetime int(11) NOT NULL,\
-                              hostname varchar(255) NOT NULL,\
-                              type varchar(255) NOT NULL,\
-                              category varchar(255) NOT NULL,\
-                              class varchar(255) NOT NULL,\
-                              mac varchar(17) NOT NULL,\
-                              duid varchar(255) NOT NULL,\
-                              last_update bigint NOT NULL,\
-                              preferred_until bigint NOT NULL,\
-                              valid_until bigint NOT NULL,\
-                              iaid varchar(8) DEFAULT NULL,\
-                              last_message int(11) NOT NULL DEFAULT 0,\
-                              PRIMARY KEY (prefix)\
-                            )')
-
-            elif cfg.STORE_VOLATILE == 'postgresql':
-                self.query('CREATE TABLE prefixes (\
-                              prefix varchar(32) NOT NULL,\
-                              length smallint NOT NULL,\
-                              active smallint NOT NULL,\
-                              preferred_lifetime int NOT NULL,\
-                              valid_lifetime int NOT NULL,\
-                              hostname varchar(255) NOT NULL,\
-                              type varchar(255) NOT NULL,\
-                              category varchar(255) NOT NULL,\
-                              class varchar(255) NOT NULL,\
-                              mac varchar(17) NOT NULL,\
-                              duid varchar(255) NOT NULL,\
-                              last_update bigint NOT NULL,\
-                              preferred_until bigint NOT NULL,\
-                              valid_until bigint NOT NULL,\
-                              iaid varchar(8) DEFAULT NULL,\
-                              last_message int NOT NULL DEFAULT 0,\
-                              PRIMARY KEY (prefix)\
-                            )')
-
-            # increase version to 2
-            self.query("UPDATE meta SET item_value='2' WHERE item_key='version'")
-
-            # All OK
-            print("Adding table 'prefixes' succeeded")
-
-        # Extend volatile database to handle routes - comes with database version 3
-        if int(self.get_db_version()) < 3:
-            if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
-                self.query('CREATE TABLE routes (\
-                              prefix varchar(32) NOT NULL,\
-                              length tinyint(4) NOT NULL,\
-                              router varchar(32) NOT NULL,\
-                              last_update bigint NOT NULL,\
-                              PRIMARY KEY (prefix)\
-                            )')
-
-            elif cfg.STORE_VOLATILE == 'postgresql':
-                self.query('CREATE TABLE routes (\
-                              prefix varchar(32) NOT NULL,\
-                              length smallint NOT NULL,\
-                              router varchar(32) NOT NULL,\
-                              last_update bigint NOT NULL,\
-                              PRIMARY KEY (prefix)\
-                            )')
-
-            # increase version to 3
-            self.query("UPDATE meta SET item_value='3' WHERE item_key='version'")
-
-            # All OK
-            print("Adding table 'routes' succeeded")
 
 
 class DB(Store):
