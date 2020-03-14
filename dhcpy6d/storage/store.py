@@ -67,11 +67,11 @@ class Store:
     """
     abstract class to present MySQL or SQLite or Postgresql
     """
-
     # put SQL schemas here to be in reach of all storage types
     SCHEMAS = MYSQL_SQLITE
 
     # query to get tables - different in every SQL storage
+    # if no tables exist they will be created by create_tables()
     QUERY_TABLES = ''
 
     # increasing number of SQL schema versions

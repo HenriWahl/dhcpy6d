@@ -29,11 +29,13 @@ class DBMySQL(DB):
     """
     access MySQL and MariaDB
     """
+    QUERY_TABLES = f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{cfg.STORE_DB_DB}'"
 
     def db_connect(self):
         """
             Connect to database server according to database type
         """
+        # try to get some MySQL/MariaDB-module imported
         try:
             if 'MySQLdb' not in sys.modules:
                 import MySQLdb
@@ -61,6 +63,9 @@ class DBMySQL(DB):
         return self.connected
 
     def db_query(self, query):
+        """
+        execute DB query
+        """
         try:
             self.cursor.execute(query)
         except self.db_module.IntegrityError:

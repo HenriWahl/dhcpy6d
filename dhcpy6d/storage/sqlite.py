@@ -45,7 +45,7 @@ class SQLite(Store):
 
     def db_connect(self, storage_type='volatile'):
         """
-            Initialize DB connection
+        initialize DB connection
         """
         # only import if needed
         if 'sqlite3' not in sys.modules:
@@ -68,7 +68,7 @@ class SQLite(Store):
 
     def db_query(self, query):
         """
-            execute query on DB
+        execute query on DB
         """
         try:
             self.cursor.execute(query)

@@ -30,6 +30,7 @@ class DBPostgreSQL(DB):
     """
     PostgreSQL connection - to be tested!
     """
+    # different to default derived MYSQL_SQLITE schema
     SCHEMAS = POSTGRESQL_SCHEMA
     QUERY_TABLES = f"SELECT table_name FROM information_schema.tables WHERE " \
                    f"table_schema = 'public' AND " \
@@ -49,9 +50,9 @@ class DBPostgreSQL(DB):
             error_exit('ERROR: Cannot find module psycopg2. Please install to proceed.')
         try:
             self.connection = self.db_module.connect(host=cfg.STORE_DB_HOST,
-                                                              database=cfg.STORE_DB_DB,
-                                                              user=cfg.STORE_DB_USER,
-                                                              password=cfg.STORE_DB_PASSWORD)
+                                                     database=cfg.STORE_DB_DB,
+                                                     user=cfg.STORE_DB_USER,
+                                                     password=cfg.STORE_DB_PASSWORD)
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.connected = True
@@ -62,6 +63,9 @@ class DBPostgreSQL(DB):
         return self.connected
 
     def db_query(self, query):
+        """
+        execute DB query
+        """
         try:
             self.cursor.execute(query)
         # catch impossible INSERTs
