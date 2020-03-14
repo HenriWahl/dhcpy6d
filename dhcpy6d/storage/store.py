@@ -170,8 +170,10 @@ class Store:
         check if all databases/storage is ready and up to date
         """
         tables = self.get_tables()
+        # if there are not tables they have to be created
         if len(tables) == 0:
             self.create_tables()
+        # otherwise they migth need just some updates
         else:
             legacy_adjustments(self)
 
@@ -314,7 +316,6 @@ class Store:
                 query = f"INSERT INTO {self.table_routes} VALUES ('{prefix}', {length}, '{router}', {now})"
                 return self.query(query)
             elif len(self.query(query)) == 1:
-                # query = "UPDATE {0} SET prefix = '{1}', length = {2}, router = '{3}', last_update = {4} WHERE prefix = '{1}'".format(self.table_routes, prefix, length, router, now)
                 query = f"UPDATE {self.table_routes} SET prefix = '{prefix}', length = {length}, " \
                         f"router = '{router}', last_update = {now} WHERE prefix = '{prefix}'"
                 return self.query(query)

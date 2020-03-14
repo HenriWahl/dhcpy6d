@@ -492,8 +492,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                         # log warning message about unavailable addresses
                         log.warning(f'REPLY | no addresses or prefixes available | '
-                                    'transaction: {transaction.id} | '
-                                    'client_llip: {colonify_ip6(transaction.client_llip))}')
+                                    f'transaction: {transaction.id} | '
+                                    f'client_llip: {colonify_ip6(transaction.client_llip)}')
 
                     elif CONST.OPTION.IA_NA in options_request or \
                             CONST.OPTION.IA_TA in options_request or \
