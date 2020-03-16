@@ -31,7 +31,7 @@ from .options import OPTIONS
 
 class Transaction:
     """
-        all data of one transaction, to be collected in Transactions
+    all data of one transaction, to be collected in Transactions
     """
     def __init__(self, transaction_id, client_llip, interface, message_type, options):
         # Transaction ID
@@ -100,11 +100,11 @@ class Transaction:
         # if the options have some treatment for transactions just apply it if there is an defined option
         for option in options:
             if option in OPTIONS:
-                OPTIONS[option].apply(transaction=self, option=options[option])
+                OPTIONS[option].initialize(transaction=self, option=options[option])
 
     def get_options_string(self):
         """
-            get all options in one string for debugging
+        get all options in one string for debugging
         """
         options_string = ''
         # put own attributes into a string

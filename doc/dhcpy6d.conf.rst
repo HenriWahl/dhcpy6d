@@ -58,12 +58,6 @@ environments.
 **interface = <interface> [<interface> ...]**
     The interfaces the server listens on is defined with keyword interface. Multiple interfaces have to be separated by spaces.
 
-**mcast = <multicast-address>**
-    The multicast address to listen at is ff02::1:2. Due to the facts that dhcpy6d at the moment works in local network segments only and to the restriction of MAC addresses only being usable there it will always have this value.
-
-**port = <port>**
-    Exactly the same applies to the port dhcpy6d listens on. Default is 547. Probably senseless to change it but who knows.
-
 **serverduid = <longlongserverduid>**
     The server DUID should be configured with serverduid. If there is none dhcpy6d creates a new one at every startup.  Windows clients might run a little bit wild when server DUID changed. You are free to compose your own as long as it follows RFC 3315.
     Please note that it has to be in hexadecimal format - no octals, no "-", just like in the example below.

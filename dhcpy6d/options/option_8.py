@@ -24,5 +24,5 @@ class Option(OptionTemplate):
     Option 8 Elapsed Time
     RFC 3315: This time is expressed in hundredths of a second (10^-2 seconds).
     """
-    def apply(self, transaction=None, option=None, **kwargs):
+    def initialize(self, transaction=None, option=None, **kwargs):
         transaction.elapsed_time = int(option[0:8], 16)

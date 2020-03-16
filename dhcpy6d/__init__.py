@@ -58,7 +58,9 @@ class UDPMulticastIPv6(socketserver.UnixDatagramServer):
             IF_NAME[i] = socket.if_nametoindex(i)
             IF_NUMBER[IF_NAME[i]] = i
             if_number = struct.pack('I', IF_NAME[i])
-            mgroup = socket.inet_pton(socket.AF_INET6, cfg.MCAST) + if_number
+            #mgroup = socket.inet_pton(socket.AF_INET6, cfg.MCAST) + if_number
+            # no need vor variable.... the DHCPv6 multicast address is predefined
+            mgroup = socket.inet_pton(socket.AF_INET6, 'ff02::1:2') + if_number
 
             # join multicast group - should work definitively if not ignoring interface at startup
             if cfg.IGNORE_INTERFACE:

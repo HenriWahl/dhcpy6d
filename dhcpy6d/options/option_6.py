@@ -23,7 +23,7 @@ class Option(OptionTemplate):
     """
     Option 6 Option Request Option
     """
-    def apply(self, transaction=None, option=None, **kwargs):
+    def initialize(self, transaction=None, option=None, **kwargs):
         options_request = []
         options = option[:]
         # cut given option (which contains all requested options) into pieces
