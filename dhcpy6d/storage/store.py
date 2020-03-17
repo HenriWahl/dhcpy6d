@@ -149,6 +149,7 @@ class Store:
         return tables - no turntables
         """
         tables = []
+        # every DB type needs another query for tables
         query = self.QUERY_TABLES
         answer = self.query(query)
         if len(answer) > 0:
