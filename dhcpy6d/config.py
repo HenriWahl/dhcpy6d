@@ -329,7 +329,9 @@ class Config:
                     if item[0].upper() in ('STORE_MYSQL_HOST',
                                            'STORE_MYSQL_DB',
                                            'STORE_MYSQL_USER',
-                                           'STORE_MYSQL_PASSWORD'):
+                                           'STORE_MYSQL_PASSWORD',
+                                           'MCAST',
+                                           'PORT'):
                         sys.stderr.write(f"\nWARNING: Keyword '{item[0]}' in section '[{section}]' "
                                          f"is deprecated and should be replaced "
                                          f"by '{item[0].lower().replace('mysql', 'db')}'.\n\n")
