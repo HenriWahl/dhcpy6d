@@ -183,7 +183,7 @@ class Config:
         # interval for TidyUp thread - time to sleep in TidyUpThread
         self.CLEANING_INTERVAL = 10
 
-        # sddress, bootfile and class schemes
+        # address, bootfile and class schemes
         self.ADDRESSES = {}
         self.BOOTFILES = {}
         self.CLASSES = {}
