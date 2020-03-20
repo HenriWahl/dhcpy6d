@@ -23,7 +23,8 @@ from ..config import cfg
 from ..globals import collected_macs
 from ..helpers import (decompress_ip6,
                        listify_option,
-                       NeighborCacheRecord)
+                       NeighborCacheRecord,
+                       convert_prefix_inline)
 from .schemas import (legacy_adjustments,
                       MYSQL_SQLITE)
 
@@ -33,7 +34,7 @@ class ClientConfig:
         static client settings object to be stuffed into Hosts dict of Textfile store
     """
 
-    def __init__(self, hostname='', client_class='default', duid='', address=None, mac=None, host_id=''):
+    def __init__(self, hostname='', client_class='default', duid='', address=None, prefix=None, mac=None, host_id=''):
         self.HOSTNAME = hostname
         # MACs
         self.MAC = mac
@@ -48,6 +49,19 @@ class ClientConfig:
                 self.ADDRESS.append(decompress_ip6(a))
         else:
             self.ADDRESS = None
+
+        # fixed prefix
+        if prefix:
+            self.PREFIX = list()
+            if type(prefix) == list:
+                prefixes = prefix
+            else:
+                prefixes = listify_option(prefix)
+            for p in prefixes:
+                self.PREFIX.append(convert_prefix_inline(p))
+        else:
+            self.PREFIX = None
+
         self.CLASS = client_class
         self.ID = host_id
         self.DUID = duid

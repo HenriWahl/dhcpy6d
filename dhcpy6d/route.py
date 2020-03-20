@@ -40,7 +40,7 @@ def modify_route(transaction, mode):
         called when route has to be set - calls itself any external script or something like that
     """
     # check if client is already set - otherwise crashes
-    if transaction.client is None:
+    if transaction.client is not None:
         # only do anything if class of client has something defined to be called
         if (mode == 'up' and cfg.CLASSES[transaction.client.client_class].CALL_UP != '') or \
                 (mode == 'down' and cfg.CLASSES[transaction.client.client_class].CALL_DOWN != ''):
@@ -57,7 +57,7 @@ def modify_route(transaction, mode):
                         router = None
                         log.error(
                             'modify_route: client needs exactly 1 address to be used as router to delegated prefix')
-                if router is None:
+                if router is not None:
                     routes.append(Route(prefix.PREFIX, prefix.LENGTH, router))
 
             if mode == 'up':

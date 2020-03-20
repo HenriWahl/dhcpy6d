@@ -3,3 +3,4 @@
 *.yaml
 *.db
 *.log
+.idea

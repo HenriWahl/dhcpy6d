@@ -143,10 +143,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     length = int(raw_bytes_options[4:8], 16)
                     # *2 because 2 bytes make 1 char
                     value = raw_bytes_options[8:8 + length*2]
+
                     # Microsoft behaves a little bit different than the other
                     # clients - in RENEW and REBIND request multiple addresses of an
                     # IAID are not requested all in one option type 3 but
                     # come in several options of type 3 what leads to some confusion
+                    # so allow all IA_OPTION (NA, TA, PD) to exist more than once
+                    # and create them as list
                     if option not in IA_OPTIONS:
                         options[option] = value
                     else:

@@ -204,7 +204,8 @@ class RouteThread(Thread):
             mode, call, prefix, length, router = self.route_queue.get()
             call_real = call.replace('$prefix$', colonify_ip6(prefix)). \
                 replace('$length$', str(length)). \
-                replace('$router$', colonify_ip6(router))
+                replace('$router$', colonify_ip6(router)). \
+                replace('$mode$', mode)
             # subprocess needs list as argument which it gets by split()
             try:
                 result = subprocess.call(call_real.split(' '))

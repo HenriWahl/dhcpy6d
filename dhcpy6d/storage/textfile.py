@@ -21,7 +21,7 @@ import configparser
 from ..config import cfg
 from ..helpers import (decompress_ip6,
                        error_exit,
-                       listify_option)
+                       listify_option, convert_prefix_inline)
 
 from .store import (ClientConfig,
                     Store)
@@ -52,8 +52,8 @@ class Textfile(Store):
         for section in config.sections():
             self.hosts[section] = ClientConfig()
             for item in config.items(section):
-                # lowercase all MAC addresses, DUIDs and IPv6 addresses
-                if item[0].upper() in ['MAC', 'DUID', 'ADDRESS']:
+                # lowercase all MAC addresses, DUIDs, IPv6 addresses and prefixes
+                if item[0].upper() in ['MAC', 'DUID', 'ADDRESS', 'PREFIX']:
                     self.hosts[section].__setattr__(item[0].upper(), str(item[1]).lower())
                 else:
                     self.hosts[section].__setattr__(item[0].upper(), str(item[1]))
@@ -85,6 +85,13 @@ class Textfile(Store):
             # Decompress IPv6-Addresses
             if self.hosts[section].ADDRESS is not None:
                 self.hosts[section].ADDRESS = [decompress_ip6(x) for x in self.hosts[section].ADDRESS]
+
+            # in case of multiple supplied prefixes convert them to list
+            self.hosts[section].PREFIX = listify_option(self.hosts[section].PREFIX)
+
+            # split prefix into address and length, verify address
+            if self.hosts[section].PREFIX is not None:
+                self.hosts[section].PREFIX = [convert_prefix_inline(x) for x in self.hosts[section].PREFIX]
 
             # and put the host objects into index
             if self.hosts[section].MAC:
