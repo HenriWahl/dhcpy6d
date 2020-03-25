@@ -77,7 +77,7 @@ These attributes do not serve for identification of a client but for appropriate
     Addresses configured here will be sent to a client in addition to the ones it gets due to its class. Might be useful for some extra static address definitions.
 
 **prefix = <prefix> [<prefix> ...]**
-    Prefix configured here wil be sent to client in addition to the ones it gets due ti its class.
+    Prefix configured here will be sent to client in addition to the ones it gets due to its class.
 
 
 Examples
