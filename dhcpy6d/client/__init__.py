@@ -167,7 +167,7 @@ class Client:
                 id_attributes = []
 
                 # get client config that most probably seems to fit
-                config_store.build_config(transaction)
+                config_store.build_config_from_db(transaction)
 
                 # check every attribute which is required
                 # depending on identificaton mode empty results are ignored or considered

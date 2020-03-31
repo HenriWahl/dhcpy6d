@@ -674,7 +674,7 @@ class Store:
                 f"last_update < '{now + 60}'"
         return self.query(query)
 
-    def build_config(self, transaction):
+    def build_config_from_db(self, transaction):
         """
         get client config from db and build the appropriate config objects and indices
         """
@@ -735,8 +735,8 @@ class Store:
         hosts = list()
         mac = transaction.mac
 
-        if mac in transaction.client_config_db.index_mac:
-            hosts.extend(transaction.client_config_db.index_mac[mac])
+        if mac in transaction.client_config_dicts.index_mac:
+            hosts.extend(transaction.client_config_dicts.index_mac[mac])
             return hosts
         else:
             return None
@@ -749,8 +749,8 @@ class Store:
         hosts = list()
         duid = transaction.duid
 
-        if duid in transaction.client_config_db.index_duid:
-            hosts.extend(transaction.client_config_db.index_duid[duid])
+        if duid in transaction.client_config_dicts.index_duid:
+            hosts.extend(transaction.client_config_dicts.index_duid[duid])
             return hosts
         else:
             return None
@@ -760,8 +760,8 @@ class Store:
             get host and its information by hostname
         """
         hostname = transaction.hostname
-        if hostname in transaction.client_config_db.hosts:
-            return [transaction.client_config_db.hosts[hostname]]
+        if hostname in transaction.client_config_dicts.hosts:
+            return [transaction.client_config_dicts.hosts[hostname]]
         else:
             return None
 

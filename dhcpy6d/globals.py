@@ -128,7 +128,7 @@ IA_OPTIONS = (CONST.OPTION.IA_NA,
               CONST.OPTION.IA_PD)
 
 # options to be ignored when logging
-IGNORED_LOG_OPTIONS = ['options_raw', 'client', 'client_config_db', 'timestamp', 'iat1', 'iat2', 'id']
+IGNORED_LOG_OPTIONS = ['options_raw', 'client', 'client_config_dicts', 'timestamp', 'iat1', 'iat2', 'id']
 
 # empty options string test
 EMPTY_OPTIONS = [None, False, '', []]

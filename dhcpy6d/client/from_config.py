@@ -142,7 +142,7 @@ def from_config(client=None, client_config=None, transaction=None):
                 client_architecture = bootfile.CLIENT_ARCHITECTURE
                 user_class = bootfile.USER_CLASS
 
-                # check if transaction attributes matches the bootfile defintion
+                # check if transaction attributes match the bootfile definition
                 if (not client_architecture or
                     transaction.client_architecture == client_architecture or
                     transaction.known_client_architecture == client_architecture) and \
