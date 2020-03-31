@@ -44,6 +44,8 @@ There are 5 types of sections:
 **[bootfile_<bootfile_name>]**
     There can be various *[bootfile_<bootfile_name>]* sections. In serveral bootfile sections several tftp bootfile urls with restrictions
     to CPU architecture and user class supplied by the PXE client can be defined.
+    
+    **not yet in stable version 0.7.3**
 
 General configuration in section [dhcpy6d]
 ==========================================
@@ -431,6 +433,8 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
     Example:
 
         *bootfiles = eth1_ipxe eth1_efi64 eth1_efi32 eth1_efibc*
+    
+    **not yet in stable version 0.7.3**
 
 Default Class
 -------------
@@ -446,6 +450,8 @@ This class could get an address scheme too. It should be enough if 'address_defa
 
 Bootfile definitions in multiple [bootfile_<bootfile_name>] sections
 ====================================================================
+
+**not yet in stable version 0.7.3**
 
 The *<bootfile_name>* part of an **[bootfile_<bootfile_name>]** section is an arbitrarily chosen identifier like *efi32*, *bios* or *efi64*.
 Each bootfile can be restricted to an architecture and/or an user class which is sent by the PXE client.
