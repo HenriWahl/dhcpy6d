@@ -50,66 +50,71 @@ class Textfile(Store):
         # read all sections of config file
         # a section here is a host
         for section in config.sections():
-            self.hosts[section] = ClientConfig()
-            for item in config.items(section):
-                # lowercase all MAC addresses, DUIDs, IPv6 addresses and prefixes
-                if item[0].upper() in ['MAC', 'DUID', 'ADDRESS', 'PREFIX']:
-                    self.hosts[section].__setattr__(item[0].upper(), str(item[1]).lower())
-                else:
-                    self.hosts[section].__setattr__(item[0].upper(), str(item[1]))
-
-            # Test if host has ID
-            if self.hosts[section].CLASS in cfg.CLASSES:
-                for a in cfg.CLASSES[self.hosts[section].CLASS].ADDRESSES:
-                    if cfg.ADDRESSES[a].CATEGORY == 'id' and self.hosts[section].ID == '':
-                        error_exit(f"Textfile client configuration: No ID given "
-                                   f"for client '{self.hosts[section].HOSTNAME}'")
-            else:
-                error_exit(f"Textfile client configuration: Class '{self.hosts[section].CLASS}' "
-                           f"of host '{self.hosts[section].HOSTNAME}' is not defined")
-
-            if self.hosts[section].ID != '':
-                if self.hosts[section].ID in list(self.ids.keys()):
-                    error_exit(f"Textfile client configuration: ID '{self.hosts[section].ID}' "
-                               f"of client '{self.hosts[section].HOSTNAME}' is already used "
-                               f"by '{self.ids[self.hosts[section].ID]}'.")
-                else:
-                    self.ids[self.hosts[section].ID] = self.hosts[section].HOSTNAME
-
-            # in case of various MAC addresses split them...
-            self.hosts[section].MAC = listify_option(self.hosts[section].MAC)
-
-            # in case of various fixed addresses split them and avoid decompressing of ':'...
-            self.hosts[section].ADDRESS = listify_option(self.hosts[section].ADDRESS)
-
-            # Decompress IPv6-Addresses
-            if self.hosts[section].ADDRESS is not None:
-                self.hosts[section].ADDRESS = [decompress_ip6(x) for x in self.hosts[section].ADDRESS]
-
-            # in case of multiple supplied prefixes convert them to list
-            self.hosts[section].PREFIX = listify_option(self.hosts[section].PREFIX)
-
-            # split prefix into address and length, verify address
-            if self.hosts[section].PREFIX is not None:
-                self.hosts[section].PREFIX = [convert_prefix_inline(x) for x in self.hosts[section].PREFIX]
-
-            # and put the host objects into index
-            if self.hosts[section].MAC:
-                for m in self.hosts[section].MAC:
-                    if m not in self.index_mac:
-                        self.index_mac[m] = [self.hosts[section]]
+            hostname = config[section]['hostname'].lower()
+            # only if section matches hostname the following steps are of any use
+            if section.lower() == hostname:
+                self.hosts[hostname] = ClientConfig()
+                for item in config.items(hostname):
+                    # lowercase all MAC addresses, DUIDs, IPv6 addresses and prefixes
+                    if item[0].upper() in ['ADDRESS', 'DUID', 'HOSTNAME', 'MAC', 'PREFIX']:
+                        self.hosts[hostname].__setattr__(item[0].upper(), str(item[1]).lower())
                     else:
-                        self.index_mac[m].append(self.hosts[section])
+                        self.hosts[hostname].__setattr__(item[0].upper(), str(item[1]))
 
-            # add DUIDs to IndexDUID
-            if not self.hosts[section].DUID == '':
-                if not self.hosts[section].DUID in self.index_duid:
-                    self.index_duid[self.hosts[section].DUID] = [self.hosts[section]]
+                # Test if host has ID
+                if self.hosts[hostname].CLASS in cfg.CLASSES:
+                    for a in cfg.CLASSES[self.hosts[hostname].CLASS].ADDRESSES:
+                        if cfg.ADDRESSES[a].CATEGORY == 'id' and self.hosts[hostname].ID == '':
+                            error_exit(f"Textfile client configuration: No ID given "
+                                       f"for client '{self.hosts[hostname].HOSTNAME}'")
                 else:
-                    self.index_duid[self.hosts[section].DUID].append(self.hosts[section])
+                    error_exit(f"Textfile client configuration: Class '{self.hosts[hostname].CLASS}' "
+                               f"of host '{self.hosts[hostname].HOSTNAME}' is not defined")
 
-        # not very meaningful in case of databaseless textfile config but for completeness
-        self.connected = True
+                if self.hosts[hostname].ID != '':
+                    if self.hosts[hostname].ID in list(self.ids.keys()):
+                        error_exit(f"Textfile client configuration: ID '{self.hosts[hostname].ID}' "
+                                   f"of client '{self.hosts[hostname].HOSTNAME}' is already used "
+                                   f"by '{self.ids[self.hosts[hostname].ID]}'.")
+                    else:
+                        self.ids[self.hosts[hostname].ID] = self.hosts[hostname].HOSTNAME
+
+                # in case of various MAC addresses split them...
+                self.hosts[hostname].MAC = listify_option(self.hosts[hostname].MAC)
+
+                # in case of various fixed addresses split them and avoid decompressing of ':'...
+                self.hosts[hostname].ADDRESS = listify_option(self.hosts[hostname].ADDRESS)
+
+                # Decompress IPv6-Addresses
+                if self.hosts[hostname].ADDRESS is not None:
+                    self.hosts[hostname].ADDRESS = [decompress_ip6(x) for x in self.hosts[hostname].ADDRESS]
+
+                # in case of multiple supplied prefixes convert them to list
+                self.hosts[hostname].PREFIX = listify_option(self.hosts[hostname].PREFIX)
+
+                # split prefix into address and length, verify address
+                if self.hosts[hostname].PREFIX is not None:
+                    self.hosts[hostname].PREFIX = [convert_prefix_inline(x) for x in self.hosts[hostname].PREFIX]
+
+                # and put the host objects into index
+                if self.hosts[hostname].MAC:
+                    for m in self.hosts[hostname].MAC:
+                        if m not in self.index_mac:
+                            self.index_mac[m] = [self.hosts[hostname]]
+                        else:
+                            self.index_mac[m].append(self.hosts[hostname])
+
+                # add DUIDs to IndexDUID
+                if not self.hosts[hostname].DUID == '':
+                    if not self.hosts[hostname].DUID in self.index_duid:
+                        self.index_duid[self.hosts[hostname].DUID] = [self.hosts[hostname]]
+                    else:
+                        self.index_duid[self.hosts[hostname].DUID].append(self.hosts[hostname])
+            else:
+                error_exit(f"Textfile client configuration: section [{section.lower()}] "
+                           f"does not match hostname '{hostname}'")
+            # not very meaningful in case of databaseless textfile config but for completeness
+            self.connected = True
 
     def get_client_config_by_mac(self, transaction):
         """
