@@ -22,6 +22,7 @@ import traceback
 from ..config import cfg
 from ..globals import collected_macs
 from ..helpers import (decompress_ip6,
+                       error_exit,
                        listify_option,
                        NeighborCacheRecord,
                        convert_prefix_inline)
@@ -94,6 +95,9 @@ class Store:
 
     # link to used database module
     db_module = None
+
+    # flag for config database prefix support
+    config_prefix_support = False
 
     def __init__(self, query_queue, answer_queue):
         self.query_queue = query_queue
@@ -185,12 +189,31 @@ class Store:
         check if all databases/storage is ready and up to date
         """
         tables = self.get_tables()
-        # if there are not tables they have to be created
+        # if there are no tables they have to be created
         if len(tables) == 0:
             self.create_tables()
         # otherwise they migth need just some updates
         else:
             legacy_adjustments(self)
+
+    def check_config_prefixes_support(self):
+        """
+        check if client config database contains prefixes - if not just do not ask for prefixes in the future
+        """
+        # has to be checked only for databases
+        if cfg.STORE_CONFIG and not cfg.STORE_CONFIG != 'file':
+            # first check if database has config information at all
+            try:
+                self.cursor.execute(f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} LIMIT 1")
+            except Exception as error:
+                error_exit(f"Config database has problem: {error.args[1]}")
+            # if config information exists check if it also has prefixes
+            try:
+                self.cursor.execute(f"SELECT hostname, mac, duid, class, address, prefix, id FROM {self.table_hosts} LIMIT 1")
+            except:
+                return False
+            # when query was ok prefix support exists
+            self.config_prefix_support = True
 
     def store(self, transaction, now):
         """

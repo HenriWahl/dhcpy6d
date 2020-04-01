@@ -49,9 +49,9 @@ class DBMySQL(DB):
                 error_exit('ERROR: Cannot find module MySQLdb or PyMySQL. Please install one of them to proceed.')
         try:
             self.connection = self.db_module.connect(host=cfg.STORE_DB_HOST,
-                                                                db=cfg.STORE_DB_DB,
-                                                                user=cfg.STORE_DB_USER,
-                                                                passwd=cfg.STORE_DB_PASSWORD)
+                                                     db=cfg.STORE_DB_DB,
+                                                     user=cfg.STORE_DB_USER,
+                                                     passwd=cfg.STORE_DB_PASSWORD)
             self.connection.autocommit(True)
             self.cursor = self.connection.cursor()
             self.connected = True

@@ -78,6 +78,9 @@ def run():
     # check if database tables are up-to-date or exist and create them if not
     volatile_store.check_storage()
 
+    # check if config database - if any - supports prefixes
+    volatile_store.check_config_prefixes_support()
+
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':
         cfg.PREFIX = volatile_store.get_dynamic_prefix()
