@@ -22,6 +22,7 @@ import traceback
 from ..config import cfg
 from ..globals import collected_macs
 from ..helpers import (decompress_ip6,
+                       error_exit,
                        listify_option,
                        NeighborCacheRecord,
                        convert_prefix_inline)
@@ -67,7 +68,7 @@ class ClientConfig:
         self.DUID = duid
 
 
-class ClientConfigDB:
+class ClientConfigDicts:
     """
         class for storing client config snippet from DB - used in SQLite and MySQL Storage
     """
@@ -94,6 +95,9 @@ class Store:
 
     # link to used database module
     db_module = None
+
+    # flag for config database prefix support
+    config_prefix_support = False
 
     def __init__(self, query_queue, answer_queue):
         self.query_queue = query_queue
@@ -185,12 +189,32 @@ class Store:
         check if all databases/storage is ready and up to date
         """
         tables = self.get_tables()
-        # if there are not tables they have to be created
+        # if there are no tables they have to be created
         if len(tables) == 0:
             self.create_tables()
         # otherwise they migth need just some updates
         else:
             legacy_adjustments(self)
+
+    def check_config_prefixes_support(self):
+        """
+        check if client config database contains prefixes - if not just do not ask for prefixes in the future
+        """
+        # has to be checked only for databases
+        if cfg.STORE_CONFIG and cfg.STORE_CONFIG != 'file':
+            # first check if database has config information at all
+            try:
+                self.cursor.execute(f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} LIMIT 1")
+            except Exception as error:
+                error_exit(f"Config database has problem: {error.args[-1]}")
+            # if config information exists check if it also has prefixes
+            try:
+                self.cursor.execute(f"SELECT hostname, mac, duid, class, address, prefix, id FROM {self.table_hosts} LIMIT 1")
+            except:
+                return False
+            # when query was ok prefix support exists
+            self.config_prefix_support = True
+            return True
 
     def store(self, transaction, now):
         """
@@ -678,55 +702,105 @@ class Store:
         """
         get client config from db and build the appropriate config objects and indices
         """
-        if transaction.client_config_db is None:
-            query = f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} WHERE " \
-                    f"hostname = '{transaction.hostname}' OR " \
-                    f"mac = '{transaction.mac}' OR " \
-                    f"duid = '{transaction.duid}'"
-            answer = self.query(query)
-
+        if transaction.client_config_dicts is None:
             # add client config which seems to fit to transaction
-            transaction.client_config_db = ClientConfigDB()
+            transaction.client_config_dicts = ClientConfigDicts()
 
-            # read all sections of config file
-            # a section here is a host
-            # lowering MAC and DUID information in case they where upper in database
-            for host in answer:
-                hostname, mac, duid, aclass, address, host_id = host
-                # lower some attributes to comply with values from request
-                if mac:
-                    mac = listify_option(mac.lower())
-                if duid:
-                    duid = duid.lower()
-                if address:
-                    address = listify_option(address.lower())
+            if self.config_prefix_support:
+                query = f"SELECT hostname, mac, duid, class, address, prefix, id FROM {self.table_hosts} WHERE " \
+                        f"hostname = '{transaction.hostname}' OR " \
+                        f"mac = '{transaction.mac}' OR " \
+                        f"duid = '{transaction.duid}'"
+                answer = self.query(query)
 
-                transaction.client_config_db.hosts[hostname] = ClientConfig(hostname=hostname,
-                                                                            mac=mac,
-                                                                            duid=duid,
-                                                                            client_class=aclass,
-                                                                            address=address,
-                                                                            host_id=host_id)
-                # and put the host objects into index
-                if transaction.client_config_db.hosts[hostname].MAC:
-                    for m in transaction.client_config_db.hosts[hostname].MAC:
-                        if m not in transaction.client_config_db.index_mac:
-                            transaction.client_config_db.index_mac[m] = [transaction.client_config_db.hosts[hostname]]
+                # read all sections of config file
+                # a section here is a host
+                # lowering MAC and DUID information in case they where upper in database
+                for host in answer:
+                    hostname, mac, duid, client_class, address, prefix, host_id = host
+                    # lower some attributes to comply with values from request
+                    if mac:
+                        mac = listify_option(mac.lower())
+                    if duid:
+                        duid = duid.lower()
+                    if address:
+                        address = listify_option(address.lower())
+                    if prefix:
+                        prefix = listify_option(prefix.lower())
+
+                    transaction.client_config_dicts.hosts[hostname] = ClientConfig(hostname=hostname,
+                                                                                   mac=mac,
+                                                                                   duid=duid,
+                                                                                   client_class=client_class,
+                                                                                   address=address,
+                                                                                   prefix=prefix,
+                                                                                   host_id=host_id)
+                    # and put the host objects into index
+                    if transaction.client_config_dicts.hosts[hostname].MAC:
+                        for m in transaction.client_config_dicts.hosts[hostname].MAC:
+                            if m not in transaction.client_config_dicts.index_mac:
+                                transaction.client_config_dicts.index_mac[m] = [transaction.client_config_dicts.hosts[hostname]]
+                            else:
+                                transaction.client_config_dicts.index_mac[m]. \
+                                    append(transaction.client_config_dicts.hosts[hostname])
+
+                    # add DUIDs to IndexDUID
+                    if transaction.client_config_dicts.hosts[hostname].DUID != '':
+                        if transaction.client_config_dicts.hosts[hostname].DUID not in transaction.client_config_dicts.index_duid:
+                            transaction.client_config_dicts.index_duid[transaction.client_config_dicts.hosts[hostname].DUID] = \
+                                [transaction.client_config_dicts.hosts[hostname]]
                         else:
-                            transaction.client_config_db.index_mac[m]. \
-                                append(transaction.client_config_db.hosts[hostname])
+                            transaction.client_config_dicts.index_duid[transaction.client_config_dicts.hosts[hostname].DUID]. \
+                                append(transaction.client_config_dicts.hosts[hostname])
 
-                # add DUIDs to IndexDUID
-                if transaction.client_config_db.hosts[hostname].DUID != '':
-                    if transaction.client_config_db.hosts[hostname].DUID not in transaction.client_config_db.index_duid:
-                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID] = \
-                            [transaction.client_config_db.hosts[hostname]]
-                    else:
-                        transaction.client_config_db.index_duid[transaction.client_config_db.hosts[hostname].DUID]. \
-                            append(transaction.client_config_db.hosts[hostname])
+                    # some cleaning
+                    del host, mac, duid, address, prefix, client_class, host_id
+            else:
+                query = f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} WHERE " \
+                        f"hostname = '{transaction.hostname}' OR " \
+                        f"mac = '{transaction.mac}' OR " \
+                        f"duid = '{transaction.duid}'"
+                answer = self.query(query)
 
-                # some cleaning
-                del host, mac, duid, address, aclass, host_id
+                # read all sections of config file
+                # a section here is a host
+                # lowering MAC and DUID information in case they where upper in database
+                for host in answer:
+                    hostname, mac, duid, client_class, address, host_id = host
+                    # lower some attributes to comply with values from request
+                    if mac:
+                        mac = listify_option(mac.lower())
+                    if duid:
+                        duid = duid.lower()
+                    if address:
+                        address = listify_option(address.lower())
+
+                    transaction.client_config_dicts.hosts[hostname] = ClientConfig(hostname=hostname,
+                                                                                   mac=mac,
+                                                                                   duid=duid,
+                                                                                   client_class=client_class,
+                                                                                   address=address,
+                                                                                   host_id=host_id)
+                    # and put the host objects into index
+                    if transaction.client_config_dicts.hosts[hostname].MAC:
+                        for m in transaction.client_config_dicts.hosts[hostname].MAC:
+                            if m not in transaction.client_config_dicts.index_mac:
+                                transaction.client_config_dicts.index_mac[m] = [transaction.client_config_dicts.hosts[hostname]]
+                            else:
+                                transaction.client_config_dicts.index_mac[m]. \
+                                    append(transaction.client_config_dicts.hosts[hostname])
+
+                    # add DUIDs to IndexDUID
+                    if transaction.client_config_dicts.hosts[hostname].DUID != '':
+                        if transaction.client_config_dicts.hosts[hostname].DUID not in transaction.client_config_dicts.index_duid:
+                            transaction.client_config_dicts.index_duid[transaction.client_config_dicts.hosts[hostname].DUID] = \
+                                [transaction.client_config_dicts.hosts[hostname]]
+                        else:
+                            transaction.client_config_dicts.index_duid[transaction.client_config_dicts.hosts[hostname].DUID]. \
+                                append(transaction.client_config_dicts.hosts[hostname])
+
+                    # some cleaning
+                    del host, mac, duid, address, client_class, host_id
 
     def get_client_config_by_mac(self, transaction):
         """
@@ -735,8 +809,8 @@ class Store:
         hosts = list()
         mac = transaction.mac
 
-        if mac in transaction.client_config_db.index_mac:
-            hosts.extend(transaction.client_config_db.index_mac[mac])
+        if mac in transaction.client_config_dicts.index_mac:
+            hosts.extend(transaction.client_config_dicts.index_mac[mac])
             return hosts
         else:
             return None
@@ -749,8 +823,8 @@ class Store:
         hosts = list()
         duid = transaction.duid
 
-        if duid in transaction.client_config_db.index_duid:
-            hosts.extend(transaction.client_config_db.index_duid[duid])
+        if duid in transaction.client_config_dicts.index_duid:
+            hosts.extend(transaction.client_config_dicts.index_duid[duid])
             return hosts
         else:
             return None
@@ -760,8 +834,8 @@ class Store:
             get host and its information by hostname
         """
         hostname = transaction.hostname
-        if hostname in transaction.client_config_db.hosts:
-            return [transaction.client_config_db.hosts[hostname]]
+        if hostname in transaction.client_config_dicts.hosts:
+            return [transaction.client_config_dicts.hosts[hostname]]
         else:
             return None
 
@@ -769,7 +843,11 @@ class Store:
         """
             give back ClientConfig object
         """
-        return ClientConfig(hostname=hostname, client_class=client_class, duid=duid, address=address, mac=mac,
+        return ClientConfig(hostname=hostname,
+                            client_class=client_class,
+                            duid=duid,
+                            address=address,
+                            mac=mac,
                             host_id=host_id)
 
     def store_mac_llip(self, mac, link_local_ip, now):

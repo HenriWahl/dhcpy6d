@@ -33,7 +33,7 @@ from .mysql import DBMySQL
 from .postgresql import DBPostgreSQL
 from .sqlite import SQLite
 from .store import (ClientConfig,
-                    ClientConfigDB,
+                    ClientConfigDicts,
                     Store)
 from .textfile import Textfile
 

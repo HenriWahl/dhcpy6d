@@ -75,7 +75,7 @@ class Transaction:
         self.counter = 1
         # temporary storage for client configuration from DB config
         # - only used if config comes from DB
-        self.client_config_db = None
+        self.client_config_dicts = None
         # client config from config store
         self.client = None
         # Vendor Class Option
