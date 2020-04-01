@@ -39,12 +39,12 @@ class DBMySQL(DB):
         try:
             if 'MySQLdb' not in sys.modules:
                 import MySQLdb
-                self.db_module = MySQLdb
+            self.db_module = sys.modules['MySQLdb']
         except:
             try:
                 if 'pymsql' not in sys.modules:
                     import pymysql
-                    self.db_module = pymysql
+                self.db_module = sys.modules['pymysql']
             except:
                 error_exit('ERROR: Cannot find module MySQLdb or PyMySQL. Please install one of them to proceed.')
         try:

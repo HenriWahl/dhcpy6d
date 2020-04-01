@@ -41,9 +41,9 @@ class DBPostgreSQL(DB):
             Connect to database server according to database type
         """
         try:
-            if 'psycopg2' not in list(sys.modules.keys()):
+            if 'psycopg2' not in sys.modules:
                 import psycopg2
-                self.db_module = psycopg2
+            self.db_module = sys.modules['psycopg2']
         except:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()

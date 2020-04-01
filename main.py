@@ -79,7 +79,7 @@ def run():
     volatile_store.check_storage()
 
     # check if config database - if any - supports prefixes
-    volatile_store.check_config_prefixes_support()
+    config_store.check_config_prefixes_support()
 
     # if global dynamic prefix was not given take it from database - only possible after database initialisation
     if cfg.PREFIX == '':
