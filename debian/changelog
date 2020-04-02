@@ -4,6 +4,7 @@ dhcpy6d (1.0-1) stable; urgency=medium
     + added EUI64 address category
     + added PXE boot support
     + added support for fixed prefix per client config
+    + added self-creation of database tables
     + improved PostgreSQL support
     + migrated to Python 3
     + code housekeeping
