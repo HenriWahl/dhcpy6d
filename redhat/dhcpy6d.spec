@@ -4,8 +4,8 @@
 %{!?python3_sitelib: %global python3_sitelib %(%{__python3} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 Name:              dhcpy6d
-Version: 0.9.99
-Release:           4%{?dist}
+Version:           1.0
+Release:           1%{?dist}
 Summary:           DHCPv6 server daemon
 
 %if 0%{?suse_version}
@@ -129,6 +129,9 @@ fi
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
 
 %changelog
+* Fri Apr 03 2020 Henri Wahl <h.wahl@ifw-dresden.de> - 1.0-1
+- New upstream release
+
 * Mon Apr 30 2018 Henri Wahl <h.wahl@ifw-dresden.de> - 0.7-1
 - New upstream release
 

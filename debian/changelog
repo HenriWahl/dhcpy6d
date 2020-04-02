@@ -1,8 +1,15 @@
-dhcpy6d (0.9.99-4) stable; urgency=medium
+dhcpy6d (1.0-1) stable; urgency=medium
 
   * New upstream release
+    + added EUI64 address category
+    + added PXE boot support
+    + added support for fixed prefix per client config
+    + improved PostgreSQL support
+    + migrated to Python 3
+    + code housekeeping
+    + fixes of course
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Wed, 19 Feb 2020 14:30:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 03 Apr 2020 14:30:00 +0200
 
 dhcpy6d (0.7.3-1) stable; urgency=medium
 

@@ -1,10 +1,20 @@
 Changelog for dhcpy6d
 
-2018-10-25
+2020-04-03 1.0
+
+    added EUI64 address category
+    added PXE boot support
+    added support for fixed prefix per client config
+    improved PostgreSQL support
+    migrated to Python 3
+    code housekeeping
+    fixes of course
+
+2018-10-25 0.7.3
 
     added ignore_mac option to work with ppp interfaces
 
-2018-06-15
+2018-06-15 0.7.2
 
     fix for MySQLdb.IntegrityError
 
