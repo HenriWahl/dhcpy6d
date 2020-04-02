@@ -234,7 +234,7 @@ Address definitions in multiple [address_<address_name>] sections
 The *<address_name>* part of an **[address_<address_name>]** section is an arbitrarily chosen identifier like *clients_global* or *invalid_clients_local*.
 There can be many address definitions which will be used by classes. Every address definition may include several properties:
 
-**category = mac|id|range|random|dns**
+**category = mac|eui64|id|range|random|fixed|dns**
     Categories play an important role when defining patterns for addresses. An address belongs to a certain category:
 
     **mac**

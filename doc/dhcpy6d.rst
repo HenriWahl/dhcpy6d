@@ -7,7 +7,7 @@ MAC address aware DHCPv6 server
 ----------------------------------------------------------------
 
 :Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   20200-04-03
+:Date:   2020-04-03
 :Version: 1.0
 :Manual section: 8
 :Copyright: This manual page is licensed under the GPL-2 license.
