@@ -24,10 +24,10 @@ Description
 **dhcpy6d** is an open source server for DHCPv6, the DHCP protocol for IPv6.
 
 Its development is driven by the need to be able to use the existing
-IPv4 infrastructure in coexistence with IPv6.  In a dualstack
+IPv4 infrastructure in coexistence with IPv6. In a dualstack
 scenario, the existing DHCPv4 most probably uses MAC addresses of
-clients to identify them.  This is not intended by RFC 3315 for
-DHCPv6, but also not forbidden.  Dhcpy6d is able to do so in local
+clients to identify them. This is not intended by RFC 3315 for
+DHCPv6, but also not forbidden. Dhcpy6d is able to do so in local
 network segments and therefore offers a pragmatical method for
 parallel use of DHCPv4 and DHCPv6, because existing client management
 solutions could be used further.
