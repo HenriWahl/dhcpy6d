@@ -54,7 +54,6 @@ class UDPMulticastIPv6(socketserver.UnixDatagramServer):
         self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, 1)
 
         for i in cfg.INTERFACE:
-            # IF_NAME[i] = LIBC.if_nametoindex(i)
             IF_NAME[i] = socket.if_nametoindex(i)
             IF_NUMBER[IF_NAME[i]] = i
             if_number = struct.pack('I', IF_NAME[i])
