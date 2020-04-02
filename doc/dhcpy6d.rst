@@ -34,8 +34,8 @@ solutions could be used further.
 
 **dhcpy6d** comes with the following features:
 
-* identifies clients by MAC address, DUID, hostname or DNS name
-* generates addresses randomly, by MAC address, by range or by given ID
+* identifies clients by MAC address, DUID or hostname
+* generates addresses randomly, by MAC address, by range, by given ID or from DNS name
 * filters clients by MAC, DUID or hostname
 * assigns multiple addresses per client
 * allows one to organize clients in different classes
