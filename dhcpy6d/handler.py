@@ -53,6 +53,7 @@ class Request:
     """
         to be stored in requests dictionary to log client requests to be able to find brute force clients
     """
+
     def __init__(self, client):
         self.client = client
         self.count = 1
@@ -142,7 +143,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     option = int(raw_bytes_options[0:4], 16)
                     length = int(raw_bytes_options[4:8], 16)
                     # *2 because 2 bytes make 1 char
-                    value = raw_bytes_options[8:8 + length*2]
+                    value = raw_bytes_options[8:8 + length * 2]
 
                     # Microsoft behaves a little bit different than the other
                     # clients - in RENEW and REBIND request multiple addresses of an
@@ -161,26 +162,27 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                             options[option] = [value]
 
                     # cut off bytes worked on
-                    raw_bytes_options = raw_bytes_options[8 + length*2:]
+                    raw_bytes_options = raw_bytes_options[8 + length * 2:]
 
                 # only valid messages will be processed
                 if message_type in CONST.MESSAGE_DICT:
+                    client_llip = decompress_ip6(client_address)
                     # 2. create Transaction object if not yet done
-                    if transaction_id not in transactions:
-                        client_llip = decompress_ip6(client_address)
-                        transactions[transaction_id] = Transaction(transaction_id,
-                                                                   client_llip,
-                                                                   interface,
-                                                                   message_type,
-                                                                   options)
-                        # shortcut to transactions[transaction_id]
-                        transaction = transactions[transaction_id]
+                    identifier = client_llip + transaction_id
+                    if identifier not in transactions:
+                        transactions[identifier] = Transaction(transaction_id,
+                                                               client_llip,
+                                                               interface,
+                                                               message_type,
+                                                               options)
+                        # shortcut to transactions[identifier]
+                        transaction = transactions[identifier]
                         # add client MAC address to transaction object
                         if transaction.client_llip in collected_macs and not cfg.IGNORE_MAC:
                             transaction.mac = collected_macs[transaction.client_llip].mac
                     else:
-                        # shortcut to transactions[transaction_id]
-                        transaction = transactions[transaction_id]
+                        # shortcut to transactions[identifier]
+                        transaction = transactions[identifier]
                         transaction.timestamp = timer.time
                         transaction.last_message_received_type = message_type
 
@@ -243,7 +245,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # ADVERTISE
                                 # if last request was a SOLICIT send an ADVERTISE (type 2) back
                                 if transaction.last_message_received_type == CONST.MESSAGE.SOLICIT \
-                                   and not transaction.rapid_commit:
+                                        and not transaction.rapid_commit:
                                     # preference option (7) is for free
                                     self.build_response(CONST.MESSAGE.ADVERTISE,
                                                         transaction,
@@ -257,8 +259,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
                                 elif transaction.last_message_received_type == CONST.MESSAGE.REQUEST or \
-                                    (transaction.last_message_received_type == CONST.MESSAGE.SOLICIT and
-                                     transaction.rapid_commit):
+                                        (transaction.last_message_received_type == CONST.MESSAGE.SOLICIT and
+                                         transaction.rapid_commit):
                                     # preference option (7) is for free
                                     # if RapidCommit was set give it back
                                     if not transaction.rapid_commit:
@@ -393,9 +395,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             handler will be sent by self.finish()
         """
         try:
-            # # shortcut to transactions[transaction_id]
-            # transaction = transactions[transaction_id]
-
             # should be asked before any responses are built
             if transaction.answer == 'none':
                 self.response = ''
@@ -466,12 +465,12 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 # log handler
                 if not transaction.client is None:
                     if len(transaction.client.addresses) == 0 and \
-                       len(transaction.client.prefixes) == 0 and \
-                       transaction.answer == 'normal' and \
-                       transaction.last_message_received_type in [CONST.MESSAGE.SOLICIT,
-                                                                  CONST.MESSAGE.REQUEST,
-                                                                  CONST.MESSAGE.RENEW,
-                                                                  CONST.MESSAGE.REBIND]:
+                            len(transaction.client.prefixes) == 0 and \
+                            transaction.answer == 'normal' and \
+                            transaction.last_message_received_type in [CONST.MESSAGE.SOLICIT,
+                                                                       CONST.MESSAGE.REQUEST,
+                                                                       CONST.MESSAGE.RENEW,
+                                                                       CONST.MESSAGE.REBIND]:
                         # create error handler - headers have to be recreated because
                         # problems may have arisen while processing and these information
                         # is not valid anymore

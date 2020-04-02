@@ -106,10 +106,10 @@ class TidyUpThread(Thread):
             # get and delete invalid leases
             while True:
                 # transaction data can be deleted after transaction is finished
-                for transaction in list(transactions.values()):
+                for transaction in transactions.values():
                     try:
                         if timer.time > transaction.timestamp + cfg.CLEANING_INTERVAL * 10:
-                            transactions.pop(transaction.id)
+                            transactions.pop(transaction.client_llip + transaction.id)
                     except Exception as err:
                         log.error(f'TidyUp: transaction {str(err)} has already been deleted')
                         traceback.print_exc(file=sys.stdout)
