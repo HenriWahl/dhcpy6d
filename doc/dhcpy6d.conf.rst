@@ -7,8 +7,8 @@ Configuration file for DHCPv6 server dhcpy6d
 --------------------------------------------
 
 :Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   2018-04-30
-:Version: 0.7
+:Date:   2020-04-03
+:Version: 1.0
 :Manual section: 5
 :Copyright: This manual page is licensed under the GPL-2 license.
 
@@ -44,8 +44,7 @@ There are 5 types of sections:
 **[bootfile_<bootfile_name>]**
     There can be various *[bootfile_<bootfile_name>]* sections. In serveral bootfile sections several tftp bootfile urls with restrictions
     to CPU architecture and user class supplied by the PXE client can be defined.
-    
-    **not yet in stable version 0.7.3**
+
 
 General configuration in section [dhcpy6d]
 ==========================================
@@ -79,8 +78,7 @@ environments.
     *Default: root*
 
 **nameserver = <nameserver-address> [<nameserver-address> ...]**
-    Nameservers to be replied to request option 23 are defined with nameserver. If more than one is needed they have to be separated by spaces.
-    If an address type is of category *dns* at least one nameserver has to be given here.
+    If an address type is of category *dns* at least one nameserver has to be given here. If more than one is needed they have to be separated by spaces.
 
 **domain = <domain-name>**
     The domain to be used with FQDN hostnames for option 39.
@@ -433,9 +431,7 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
     Example:
 
         *bootfiles = eth1_ipxe eth1_efi64 eth1_efi32 eth1_efibc*
-    
-    **not yet in stable version 0.7.3**
-
+   
 Default Class
 -------------
 
@@ -448,10 +444,9 @@ This class could get an address scheme too. It should be enough if 'address_defa
 **[class_default_<interface>]**
     If dhcpy6d listens at multiple interfaces, one can define a default class for every 'interface'.
 
+
 Bootfile definitions in multiple [bootfile_<bootfile_name>] sections
 ====================================================================
-
-**not yet in stable version 0.7.3**
 
 The *<bootfile_name>* part of an **[bootfile_<bootfile_name>]** section is an arbitrarily chosen identifier like *efi32*, *bios* or *efi64*.
 Each bootfile can be restricted to an architecture and/or an user class which is sent by the PXE client.

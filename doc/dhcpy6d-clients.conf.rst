@@ -7,8 +7,8 @@ Clients configuration file for DHCPv6 server dhcpy6d
 ----------------------------------------------------
 
 :Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   2018-04-30
-:Version: 0.7
+:Date:   2020-04-03
+:Version: 1.0
 :Manual section: 5
 :Copyright: This manual page is licensed under the GPL-2 license.
 

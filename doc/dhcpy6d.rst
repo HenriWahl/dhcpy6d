@@ -7,8 +7,8 @@ MAC address aware DHCPv6 server
 ----------------------------------------------------------------
 
 :Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   2018-04-30
-:Version: 0.7
+:Date:   20200-04-03
+:Version: 1.0
 :Manual section: 8
 :Copyright: This manual page is licensed under the GPL-2 license.
 
@@ -34,7 +34,7 @@ solutions could be used further.
 
 **dhcpy6d** comes with the following features:
 
-* identifies clients by MAC address, DUID or hostname
+* identifies clients by MAC address, DUID, hostname or DNS name
 * generates addresses randomly, by MAC address, by range or by given ID
 * filters clients by MAC, DUID or hostname
 * assigns multiple addresses per client
