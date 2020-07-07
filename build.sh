@@ -26,7 +26,7 @@ function create_manpages() {
     fi
   fi
 
-  echo "Creating manpages form RST files"
+  echo "Creating manpages from RST files"
   rst2man doc/dhcpy6d.rst man/man8/dhcpy6d.8
   rst2man doc/dhcpy6d.conf.rst man/man5/dhcpy6d.conf.5
   rst2man doc/dhcpy6d-clients.conf.rst man/man5/dhcpy6d-clients.conf.5
