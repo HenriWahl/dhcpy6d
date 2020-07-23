@@ -1,3 +1,10 @@
+dhcpy6d (1.0.0-1) stable; urgency=medium
+
+  * New upstream release
+    + fixmandatory logfile
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Thu, 23 Jul 2020 14:30:00 +0200
+
 dhcpy6d (1.0-1) stable; urgency=medium
 
   * New upstream release
