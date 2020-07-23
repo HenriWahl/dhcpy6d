@@ -1,5 +1,9 @@
 Changelog for dhcpy6d
 
+2020-07-23 1.0.1
+
+    fix mandatory logfile
+
 2020-04-03 1.0
 
     added EUI64 address category
