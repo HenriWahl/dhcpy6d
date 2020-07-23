@@ -183,7 +183,8 @@ def legacy_adjustments(db):
         try:
             # only newer databases contain a version number - real ones starting with 1
             # non-existing version is False
-            if int(db.get_db_version()) == 0:
+            db_version = db.get_db_version()
+            if db_version is None or int(db_version) == 0:
                 # add table containing meta information like version of database scheme
                 db_operations = ['CREATE TABLE meta (item_key varchar(255) NOT NULL,\
                                   item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))',

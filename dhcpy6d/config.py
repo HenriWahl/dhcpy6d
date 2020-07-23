@@ -741,8 +741,6 @@ class Config:
                     error_exit(f"{msg_prefix} User {self.USER} is not owner of logfile '{self.LOG_FILE}'.")
                 if not stat_result.st_gid == grp.getgrnam(self.GROUP).gr_gid:
                     error_exit(f"{msg_prefix} Group {self.GROUP} is not owner of logfile '{self.LOG_FILE}'.")
-            else:
-                error_exit(f'{msg_prefix} No logfile configured.')
 
             if self.LOG_LEVEL not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
                 error_exit(f"Log level '{self.LOG_LEVEL}' is invalid")
