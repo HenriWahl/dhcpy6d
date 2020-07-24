@@ -130,7 +130,6 @@ class Transaction:
                 elif option == 'client_llip':
                     option_string = f'{option}: {colonify_ip6(self.__dict__[option])}'
                     options_string = f'{options_string} | {option_string}'
-
                 elif option == 'mac':
                     if self.__dict__[option] != DUMMY_MAC:
                         # option_string = f'{option}: {str(self.__dict__[option])}'
