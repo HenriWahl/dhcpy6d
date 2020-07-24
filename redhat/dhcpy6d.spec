@@ -129,6 +129,9 @@ fi
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
 
 %changelog
+* Fri Jul 24 2020 Henri Wahl <h.wahl@ifw-dresden.de> - 1.0.1-1
+- New upstream release
+
 * Fri Apr 03 2020 Henri Wahl <h.wahl@ifw-dresden.de> - 1.0-1
 - New upstream release
 

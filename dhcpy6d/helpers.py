@@ -190,6 +190,7 @@ def colonify_ip6(address):
     else:
         # return 'n/a'
         # provoke crash to see what happens with un-addresses
+        print('Uncolonifyable address:', address)
         return False
 
 
