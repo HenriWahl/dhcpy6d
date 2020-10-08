@@ -34,8 +34,8 @@ class Option(OptionTemplate):
         # dummy empty defaults
         response_string_part = ''
         options_answer_part = None
-
         ntp_server_options = ''
+
         if len(cfg.NTP_SERVER) > 0:
             for ntp_server_type in list(cfg.NTP_SERVER_DICT.keys()):
                 # ntp_server_suboption
