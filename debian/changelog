@@ -1,3 +1,10 @@
+dhcpy6d (1.0.2-1) stable; urgency=medium
+
+  * New upstream release
+    + fixed NTP_SERVER_DICT
+
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Thu, 08 Oct 2020 07:30:00 +0200
+
 dhcpy6d (1.0.1-1) stable; urgency=medium
 
   * New upstream release
