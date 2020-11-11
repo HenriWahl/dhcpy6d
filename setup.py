@@ -25,15 +25,35 @@ import os
 import os.path
 from setuptools import setup, find_packages
 import shutil
+import sys
 
-# workaround to get dhcpy6d-startscript created
-try:
-    if not os.path.exists('sbin'):
-        os.mkdir('sbin')
-    shutil.copyfile('main.py', 'sbin/dhcpy6d')
-    os.chmod('sbin/dhcpy6d', 0o554)
-except:
-    print('could not copy main.py to sbin/dhcpy6d')
+package_data = {'dhcpy6d': ['var/lib/volatile.sqlite',
+                            'var/log/dhcpy6d.log',
+                            'doc/LICENSE', 'doc/*.conf', 'doc/*.sql', 'doc/*.postgresql',
+                            'man/man5/*.conf.5',
+                            'man/man8/*.8',
+                            'etc/*.conf']}
+extra_args = {}
+
+if __name__ == "__main__" and "sdist" in sys.argv:
+    # Workaround to get dhcpy6d-startscript created
+    try:
+        script_name = 'sbin/dhcpy6d'
+        if not os.path.exists('sbin'):
+            os.mkdir('sbin')
+        shutil.copyfile('main.py', script_name)
+        os.chmod(script_name, 0o554)
+        package_data['dhcpy6d'].append(script_name)
+    except:
+        print('could not copy main.py to sbin/dhcpy6d')
+else:
+    extra_args = {
+        "entry_points": {
+            'console_scripts': [
+                'dhcpy6d=main:run'
+            ]
+        },
+    }
 
 classifiers = [
     'Intended Audience :: System Administrators',
@@ -46,22 +66,6 @@ classifiers = [
     'Topic :: System :: Networking'
 ]
 
-data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),
-              ('/var/log', ['var/log/dhcpy6d.log']),
-              ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',
-                                                 'doc/config.sql',
-                                                 'doc/dhcpy6d-example.conf',
-                                                 'doc/dhcpy6d-minimal.conf',
-                                                 'doc/LICENSE',
-                                                 'doc/volatile.sql',
-                                                 'doc/volatile.postgresql']),
-              ('/usr/share/man/man5', ['man/man5/dhcpy6d.conf.5',
-                                              'man/man5/dhcpy6d-clients.conf.5']),
-              ('/usr/share/man/man8', ['man/man8/dhcpy6d.8']),
-              ('/etc', ['etc/dhcpy6d.conf']),
-              ('/usr/sbin', ['sbin/dhcpy6d']),
-              ]
-
 setup(name='dhcpy6d',
       version='1.0.2',
       license='GNU GPL v2',
@@ -71,8 +75,10 @@ setup(name='dhcpy6d',
       author_email='h.wahl@ifw-dresden.de',
       url='https://dhcpy6d.ifw-dresden.de/',
       download_url='https://dhcpy6d.ifw-dresden.de/download',
-      requires=['distro', 'dnspython'],
+      install_requires=['distro', 'dnspython'],
       packages=find_packages(),
+      py_modules=["main"],
       classifiers=classifiers,
-      data_files=data_files
+      package_data=package_data,
+      **extra_args
       )
