@@ -143,6 +143,7 @@ class Config:
         self.DNS_UPDATE = 'False'
         self.DNS_UPDATE_NAMESERVER = '::1'
         self.DNS_TTL = 86400
+        self.DNS_USE_RNDC = 'True'
         self.DNS_RNDC_KEY = 'rndc-key'
         self.DNS_RNDC_SECRET = '0000000000000000000000000000000000000000000000000000000000000'
         # DNS RFC 4704 client DNS wishes
@@ -472,9 +473,10 @@ class Config:
             self.NTP_SERVER = listify_option(self.NTP_SERVER)
 
         # convert to boolean values
-        for option in ['DNS_UPDATE',
+        for option in ['DNS_IGNORE_CLIENT',
                        'DNS_USE_CLIENT_HOSTNAME',
-                       'DNS_IGNORE_CLIENT',
+                       'DNS_USE_RNDC',
+                       'DNS_UPDATE',
                        'REALLY_DO_IT',
                        'LOG',
                        'LOG_CONSOLE',

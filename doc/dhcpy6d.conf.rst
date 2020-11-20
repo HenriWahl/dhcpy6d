@@ -7,8 +7,8 @@ Configuration file for DHCPv6 server dhcpy6d
 --------------------------------------------
 
 :Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   2020-04-03
-:Version: 1.0
+:Date:   2020-11-20
+:Version: 1.0.3
 :Manual section: 5
 :Copyright: This manual page is licensed under the GPL-2 license.
 
@@ -165,6 +165,10 @@ environments.
     *Default: no*
 
 **dns_update_nameserver = <nameserver-address> [<nameserver-address> ...]**
+
+**dns_use_rndc = yes|no**
+    DNS updates might be able without RNDC key but this is not advised.
+    *Default: yes*
 
 **dns_rndc_key = <rndc-key_like_in_rndc.conf>**
 
