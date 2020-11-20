@@ -20,7 +20,8 @@ import queue
 import platform
 import time
 
-import dns
+import dns.resolver
+import dns.tsigkeyring
 
 from .config import cfg
 from .constants import CONST

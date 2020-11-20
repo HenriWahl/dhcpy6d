@@ -22,7 +22,10 @@ from threading import Thread
 import time
 import traceback
 
-import dns
+import dns.query
+import dns.resolver
+import dns.reversename
+import dns.update
 
 from .config import cfg
 from .globals import (collected_macs,
