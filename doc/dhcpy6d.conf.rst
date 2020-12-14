@@ -42,7 +42,7 @@ There are 5 types of sections:
     Class definitions allow to apply different addresses, time limits et al. to different types of clients.
 
 **[bootfile_<bootfile_name>]**
-    There can be various *[bootfile_<bootfile_name>]* sections. In serveral bootfile sections several tftp bootfile urls with restrictions
+    There can be various *[bootfile_<bootfile_name>]* sections. In several bootfile sections several tftp bootfile urls with restrictions
     to CPU architecture and user class supplied by the PXE client can be defined.
 
 
@@ -209,7 +209,7 @@ environments.
     *Default: yes*
 
 **request_limit = yes|no**
-    Enables request limits for clients wich can be controled by *request_limit_time* and *request_limit_count*.
+    Enables request limits for clients wich can be controlled by *request_limit_time* and *request_limit_count*.
     *Default: no*
 
 **request_limit_identification = mac|llip**
@@ -376,7 +376,7 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
     If a class does not contain any addresses clients won't get any address except they have one fixed defined in client configuration file or database.
 
 **prefixes = <prefix_name> [<address_name> ...]**
-    A class can contain prefixes - even most probably only one prefix will be usefull. *Name* means the *name*-part of a prefiy section.
+    A class can contain prefixes - even most probably only one prefix will be useful. *Name* means the *name*-part of a prefiy section.
 
 **answer = normal|noaddress|none**
     Normally a client will get an answer, but if for whatever reason is a need to give it an *NoAddrAvail* message back or completely ignore the client it can be set here.
@@ -942,7 +942,7 @@ Here dhcpy6d also provides prefixes in the default class. To avoid heavy load by
     |    ignore_iaid = yes
     |    ignore_unknown_clients = yes
     |
-    |    advertise = adresses prefixes
+    |    advertise = addresses prefixes
     |    manage_routes_at_start = yes
     |
     |    [address_default]
