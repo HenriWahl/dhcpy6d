@@ -57,7 +57,7 @@ There can be various \fI[prefix_<prefix_name>]\fP sections. In several prefix se
 Prefixes are organized in classes. For details read further down.
 .TP
 .B \fB[class_<class_name>]\fP
-Class definitions allow to apply different addresses, time limits et al. to different types of clients.
+Class definitions allow one to apply different addresses, time limits et al. to different types of clients.
 .TP
 .B \fB[bootfile_<bootfile_name>]\fP
 There can be various \fI[bootfile_<bootfile_name>]\fP sections. In several bootfile sections several tftp bootfile urls with restrictions
@@ -297,7 +297,7 @@ Maximum hex limit of range, highest is ffff.
 .INDENT 0.0
 .TP
 .B \fBpattern= $prefix$::$mac$|$eui64$|$id$|$range$|$random$\fP
-Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+Patterns allow one to design the addresses according to their category. See examples section below to make it more clear.
 .INDENT 7.0
 .TP
 .B \fB$mac$\fP
@@ -374,7 +374,7 @@ Maximum hex limit of range, highest is ffff.
 .INDENT 0.0
 .TP
 .B \fBpattern= $prefix$:$range$::\fP
-Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+Patterns allow one to design the addresses according to their category. See examples section below to make it more clear.
 .INDENT 7.0
 .TP
 .B \fB$range$\fP
@@ -434,14 +434,14 @@ Each class can have its own \fBt1\fP and \fBt2\fP values. The ones from general 
 .INDENT 0.0
 .TP
 .B \fBfilter_duid = <regular_expression>\fP
-Filters allow to apply a class to a client not by configuration but by a matching regular expression filter. Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
+Filters allow one to apply a class to a client not by configuration but by a matching regular expression filter. Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
 The regular expressions are meant to by Python Regular Expressions. See \fI\%https://docs.python.org/2/howto/regex.html\fP and examples section below for details.
 .TP
 .B \fBinterface = <interface> [<interface> ...]\fP
 It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
 .TP
 .B \fBadvertise = addresses|prefixes\fP
-A class per default allows to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either \fIaddresses\fP or \fIprefixes\fP\&.
+A class per default allows one to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either \fIaddresses\fP or \fIprefixes\fP\&.
 \fIDefault: addresses\fP
 .TP
 .B \fBcall_up = <executable> [$prefix$] [$length$] [$router$]\fP

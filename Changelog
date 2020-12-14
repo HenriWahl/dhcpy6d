@@ -41,7 +41,7 @@ Changelog for dhcpy6d
 
     added ntp_server option
     added request limits
-    allow to inject prefix - e.g. changed prefix from ISP
+    allow one to inject prefix - e.g. changed prefix from ISP
     optimized time requests
     ignore unknown clients
     fixes for prefix delegation
