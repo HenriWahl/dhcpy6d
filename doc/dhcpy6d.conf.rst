@@ -39,10 +39,10 @@ There are 5 types of sections:
     Prefixes are organized in classes. For details read further down.
 
 **[class_<class_name>]**
-    Class definitions allow to apply different addresses, time limits et al. to different types of clients.
+    Class definitions allow one to apply different addresses, time limits et al. to different types of clients.
 
 **[bootfile_<bootfile_name>]**
-    There can be various *[bootfile_<bootfile_name>]* sections. In serveral bootfile sections several tftp bootfile urls with restrictions
+    There can be various *[bootfile_<bootfile_name>]* sections. In several bootfile sections several tftp bootfile urls with restrictions
     to CPU architecture and user class supplied by the PXE client can be defined.
 
 
@@ -209,7 +209,7 @@ environments.
     *Default: yes*
 
 **request_limit = yes|no**
-    Enables request limits for clients wich can be controled by *request_limit_time* and *request_limit_count*.
+    Enables request limits for clients wich can be controlled by *request_limit_time* and *request_limit_count*.
     *Default: no*
 
 **request_limit_identification = mac|llip**
@@ -274,7 +274,7 @@ There can be many address definitions which will be used by classes. Every addre
 **pattern = 2001:db8::$mac$|$id$|$range$|$random$**
 
 **pattern= $prefix$::$mac$|$eui64$|$id$|$range$|$random$**
-    Patterns allow to design the addresses according to their category. See examples section below to make it more clear. 
+    Patterns allow one to design the addresses according to their category. See examples section below to make it more clear. 
 
     **$mac$**
         The MAC address from the DHCPv6 request's Link Local Address found in the neighbor cache will be inserted instead of the placeholder. It will be stretched over 3 thus octets like 00:11:22:33:44:55 become 0011:2233:4455.
@@ -342,7 +342,7 @@ A prefix definition may contain several properties:
 **pattern = 2001:db8:$range$::**
 
 **pattern= $prefix$:$range$::**
-    Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+    Patterns allow one to design the addresses according to their category. See examples section below to make it more clear.
 
     **$range$**
         If address is of category range the range defined with extra keyword *range* will be used here in place of one octet.
@@ -376,7 +376,7 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
     If a class does not contain any addresses clients won't get any address except they have one fixed defined in client configuration file or database.
 
 **prefixes = <prefix_name> [<address_name> ...]**
-    A class can contain prefixes - even most probably only one prefix will be usefull. *Name* means the *name*-part of a prefiy section.
+    A class can contain prefixes - even most probably only one prefix will be useful. *Name* means the *name*-part of a prefiy section.
 
 **answer = normal|noaddress|none**
     Normally a client will get an answer, but if for whatever reason is a need to give it an *NoAddrAvail* message back or completely ignore the client it can be set here.
@@ -395,14 +395,14 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 **filter_mac = <regular_expression>**
 
 **filter_duid = <regular_expression>**
-    Filters allow to apply a class to a client not by configuration but by a matching regular expression filter. Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
+    Filters allow one to apply a class to a client not by configuration but by a matching regular expression filter. Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
     The regular expressions are meant to by Python Regular Expressions. See `<https://docs.python.org/2/howto/regex.html>`_ and examples section below for details.
 
 **interface = <interface> [<interface> ...]**
     It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
 
 **advertise = addresses|prefixes**
-    A class per default allows to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either *addresses* or *prefixes*.
+    A class per default allows one to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either *addresses* or *prefixes*.
     *Default: addresses*
 
 **call_up = <executable> [$prefix$] [$length$] [$router$]**
@@ -942,7 +942,7 @@ Here dhcpy6d also provides prefixes in the default class. To avoid heavy load by
     |    ignore_iaid = yes
     |    ignore_unknown_clients = yes
     |
-    |    advertise = adresses prefixes
+    |    advertise = addresses prefixes
     |    manage_routes_at_start = yes
     |
     |    [address_default]
