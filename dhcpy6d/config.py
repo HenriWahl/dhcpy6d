@@ -192,7 +192,7 @@ class Config:
         self.IDENTIFICATION = 'mac'
         self.IDENTIFICATION_MODE = 'match_all'
 
-        # allow to ignore IAIDs which play no big role at all for server
+        # allow one to ignore IAIDs which play no big role at all for server
         self.IGNORE_IAID = 'False'
 
         # ignore clients which do no appear in the neighbor cache table
