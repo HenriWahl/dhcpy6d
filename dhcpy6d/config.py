@@ -143,6 +143,7 @@ class Config:
         self.DNS_UPDATE = 'False'
         self.DNS_UPDATE_NAMESERVER = '::1'
         self.DNS_TTL = 86400
+        self.DNS_USE_RNDC = 'True'
         self.DNS_RNDC_KEY = 'rndc-key'
         self.DNS_RNDC_SECRET = '0000000000000000000000000000000000000000000000000000000000000'
         # DNS RFC 4704 client DNS wishes
@@ -191,7 +192,7 @@ class Config:
         self.IDENTIFICATION = 'mac'
         self.IDENTIFICATION_MODE = 'match_all'
 
-        # allow to ignore IAIDs which play no big role at all for server
+        # allow one to ignore IAIDs which play no big role at all for server
         self.IGNORE_IAID = 'False'
 
         # ignore clients which do no appear in the neighbor cache table
@@ -472,9 +473,10 @@ class Config:
             self.NTP_SERVER = listify_option(self.NTP_SERVER)
 
         # convert to boolean values
-        for option in ['DNS_UPDATE',
+        for option in ['DNS_IGNORE_CLIENT',
                        'DNS_USE_CLIENT_HOSTNAME',
-                       'DNS_IGNORE_CLIENT',
+                       'DNS_USE_RNDC',
+                       'DNS_UPDATE',
                        'REALLY_DO_IT',
                        'LOG',
                        'LOG_CONSOLE',
@@ -833,12 +835,12 @@ class Config:
                     decompress_ip6(ntp_server)
                     # if decompressing worked it must be an address
                     if ntp_server.lower().startswith('ff'):
-                        self.CLASSES[c].NTP_SERVER_dict['MC'].append(ntp_server.lower())
+                        self.CLASSES[c].NTP_SERVER_DICT['MC'].append(ntp_server.lower())
                     else:
-                        self.CLASSES[c].NTP_SERVER_dict['SRV'].append(ntp_server.lower())
+                        self.CLASSES[c].NTP_SERVER_DICT['SRV'].append(ntp_server.lower())
                 except Exception as err:
                     if re.match('^[a-z0-9.-]*$', ntp_server, re.IGNORECASE):
-                        self.CLASSES[c].NTP_SERVER_dict['FQDN'].append(ntp_server.lower())
+                        self.CLASSES[c].NTP_SERVER_DICT['FQDN'].append(ntp_server.lower())
                     else:
                         error_exit(f"{msg_prefix} NTP server address '{ntp_server}' is invalid.")
 
@@ -1152,7 +1154,7 @@ class Class:
         self.NAMESERVER = ''
         self.NTP_SERVER = ''
         # Auxiliary options, derived from self.NTP_SERVER
-        self.NTP_SERVER_dict = {'SRV': [], 'MC': [], 'FQDN': []}
+        self.NTP_SERVER_DICT = {'SRV': [], 'MC': [], 'FQDN': []}
         self.FILTER_MAC = ''
         self.FILTER_HOSTNAME = ''
         self.FILTER_DUID = ''

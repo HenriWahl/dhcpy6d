@@ -34,7 +34,6 @@ class ClientConfig:
     """
         static client settings object to be stuffed into Hosts dict of Textfile store
     """
-
     def __init__(self, hostname='', client_class='default', duid='', address=None, prefix=None, mac=None, host_id=''):
         self.HOSTNAME = hostname
         # MACs

@@ -21,31 +21,29 @@ import platform
 import time
 
 import dns.resolver
+import dns.tsigkeyring
 
 from .config import cfg
 from .constants import CONST
+
+# dummy value is None for DNS related
+resolver_query = None
+resolver_update = None
+keyring = None
 
 # if nameserver is given create resolver
 if len(cfg.NAMESERVER) > 0:
     # default nameservers for DNS queries
     resolver_query = dns.resolver.Resolver()
     resolver_query.nameservers = cfg.NAMESERVER
-else:
-    resolver_query = None
 
 # RNDC Key for DNS updates from ISC Bind /etc/rndc.key
 if cfg.DNS_UPDATE:
-    import dns.update
-    import dns.tsigkeyring
-
-    keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY: cfg.DNS_RNDC_SECRET})
-
+    if cfg.DNS_USE_RNDC:
+        keyring = dns.tsigkeyring.from_text({cfg.DNS_RNDC_KEY: cfg.DNS_RNDC_SECRET})
     # resolver for DNS updates
     resolver_update = dns.resolver.Resolver()
     resolver_update.nameservers = [cfg.DNS_UPDATE_NAMESERVER]
-else:
-    resolver_update = None
-    keyring = None
 
 
 class Timer:

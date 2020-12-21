@@ -463,7 +463,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                           f'DatabaseError: {" ".join(db_error)}')
             else:
                 # log handler
-                if not transaction.client is None:
+                # if transaction.client is not None:
+                if transaction.client:
                     if len(transaction.client.addresses) == 0 and \
                             len(transaction.client.prefixes) == 0 and \
                             transaction.answer == 'normal' and \

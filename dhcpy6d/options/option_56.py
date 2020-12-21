@@ -34,12 +34,12 @@ class Option(OptionTemplate):
         # dummy empty defaults
         response_string_part = ''
         options_answer_part = None
-
         ntp_server_options = ''
+
         if len(cfg.NTP_SERVER) > 0:
-            for ntp_server_type in list(cfg.NTP_SERVER_dict.keys()):
+            for ntp_server_type in list(cfg.NTP_SERVER_DICT.keys()):
                 # ntp_server_suboption
-                for ntp_server in cfg.NTP_SERVER_dict[ntp_server_type]:
+                for ntp_server in cfg.NTP_SERVER_DICT[ntp_server_type]:
                     ntp_server_suboption = ''
                     if ntp_server_type == 'SRV':
                         ntp_server_suboption = self.convert_to_string(1, hexlify(inet_pton(AF_INET6, ntp_server)).decode())
