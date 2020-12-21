@@ -1,13 +1,12 @@
 Changelog for dhcpy6d
 
-2020-11-20 1.0.3
-
-    added option DNS_USE_RNDC
-
+<<<<<<<<< Temporary merge branch 1
+=========
 2020-10-08 1.0.2
 
     fixed NTP_SERVER_DICT
 
+>>>>>>>>> Temporary merge branch 2
 2020-07-24 1.0.1
 
     fix mandatory logfile
@@ -40,7 +39,7 @@ Changelog for dhcpy6d
 
     added ntp_server option
     added request limits
-    allow one to inject prefix - e.g. changed prefix from ISP
+    allow to inject prefix - e.g. changed prefix from ISP
     optimized time requests
     ignore unknown clients
     fixes for prefix delegation
