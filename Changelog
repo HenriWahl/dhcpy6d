@@ -3,7 +3,6 @@ Changelog for dhcpy6d
 2020-11-20 1.0.3
 
     added option DNS_USE_RNDC
-    improved setup.py
 
 2020-10-08 1.0.2
 
