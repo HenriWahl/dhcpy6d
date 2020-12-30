@@ -209,7 +209,7 @@ environments.
     *Default: yes*
 
 **request_limit = yes|no**
-    Enables request limits for clients wich can be controlled by *request_limit_time* and *request_limit_count*.
+    Enables request limits for clients which can be controlled by *request_limit_time* and *request_limit_count*.
     *Default: no*
 
 **request_limit_identification = mac|llip**
@@ -402,7 +402,7 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
     It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
 
 **advertise = addresses|prefixes**
-    A class per default allows one to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either *addresses* or *prefixes*.
+    A class per default allows one to advertise addresses as well as prefixes if requested. This option allows one to narrow the answers down to either *addresses* or *prefixes*.
     *Default: addresses*
 
 **call_up = <executable> [$prefix$] [$length$] [$router$]**
