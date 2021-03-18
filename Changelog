@@ -1,5 +1,9 @@
 Changelog for dhcpy6d
 
+2021-03-18 1.0.4
+
+    Fixed default behavior (route_link_local=no) in clients.conf
+
 2020-11-20 1.0.3
 
     added option DNS_USE_RNDC
