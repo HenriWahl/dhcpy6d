@@ -57,10 +57,10 @@ There can be various \fI[prefix_<prefix_name>]\fP sections. In several prefix se
 Prefixes are organized in classes. For details read further down.
 .TP
 .B \fB[class_<class_name>]\fP
-Class definitions allow to apply different addresses, time limits et al. to different types of clients.
+Class definitions allow one to apply different addresses, time limits et al. to different types of clients.
 .TP
 .B \fB[bootfile_<bootfile_name>]\fP
-There can be various \fI[bootfile_<bootfile_name>]\fP sections. In serveral bootfile sections several tftp bootfile urls with restrictions
+There can be various \fI[bootfile_<bootfile_name>]\fP sections. In several bootfile sections several tftp bootfile urls with restrictions
 to CPU architecture and user class supplied by the PXE client can be defined.
 .UNINDENT
 .SH GENERAL CONFIGURATION IN SECTION [DHCPY6D]
@@ -227,7 +227,7 @@ Ignore clients if no trace of them can be found in the neighbor cache.
 \fIDefault: yes\fP
 .TP
 .B \fBrequest_limit = yes|no\fP
-Enables request limits for clients wich can be controled by \fIrequest_limit_time\fP and \fIrequest_limit_count\fP\&.
+Enables request limits for clients which can be controlled by \fIrequest_limit_time\fP and \fIrequest_limit_count\fP\&.
 \fIDefault: no\fP
 .TP
 .B \fBrequest_limit_identification = mac|llip\fP
@@ -297,7 +297,7 @@ Maximum hex limit of range, highest is ffff.
 .INDENT 0.0
 .TP
 .B \fBpattern= $prefix$::$mac$|$eui64$|$id$|$range$|$random$\fP
-Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+Patterns allow one to design the addresses according to their category. See examples section below to make it more clear.
 .INDENT 7.0
 .TP
 .B \fB$mac$\fP
@@ -374,7 +374,7 @@ Maximum hex limit of range, highest is ffff.
 .INDENT 0.0
 .TP
 .B \fBpattern= $prefix$:$range$::\fP
-Patterns allow to design the addresses according to their category. See examples section below to make it more clear.
+Patterns allow one to design the addresses according to their category. See examples section below to make it more clear.
 .INDENT 7.0
 .TP
 .B \fB$range$\fP
@@ -411,7 +411,7 @@ A class can contain as many addresses as needed. Their names have to be separate
 If a class does not contain any addresses clients won\(aqt get any address except they have one fixed defined in client configuration file or database.
 .TP
 .B \fBprefixes = <prefix_name> [<address_name> ...]\fP
-A class can contain prefixes \- even most probably only one prefix will be usefull. \fIName\fP means the \fIname\fP\-part of a prefiy section.
+A class can contain prefixes \- even most probably only one prefix will be useful. \fIName\fP means the \fIname\fP\-part of a prefiy section.
 .TP
 .B \fBanswer = normal|noaddress|none\fP
 Normally a client will get an answer, but if for whatever reason is a need to give it an \fINoAddrAvail\fP message back or completely ignore the client it can be set here.
@@ -434,14 +434,14 @@ Each class can have its own \fBt1\fP and \fBt2\fP values. The ones from general 
 .INDENT 0.0
 .TP
 .B \fBfilter_duid = <regular_expression>\fP
-Filters allow to apply a class to a client not by configuration but by a matching regular expression filter. Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
+Filters allow one to apply a class to a client not by configuration but by a matching regular expression filter. Most useful might be the filtering by hostname, but maybe there is some use for DUID and MAC address based filtering too.
 The regular expressions are meant to by Python Regular Expressions. See \fI\%https://docs.python.org/2/howto/regex.html\fP and examples section below for details.
 .TP
 .B \fBinterface = <interface> [<interface> ...]\fP
 It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
 .TP
 .B \fBadvertise = addresses|prefixes\fP
-A class per default allows to advertise addresses as well as prefixes if requested. This option allows to narrow the answers down to either \fIaddresses\fP or \fIprefixes\fP\&.
+A class per default allows one to advertise addresses as well as prefixes if requested. This option allows one to narrow the answers down to either \fIaddresses\fP or \fIprefixes\fP\&.
 \fIDefault: addresses\fP
 .TP
 .B \fBcall_up = <executable> [$prefix$] [$length$] [$router$]\fP
@@ -1024,7 +1024,7 @@ request_limit_identification = llip
 ignore_iaid = yes
 ignore_unknown_clients = yes
 
-advertise = adresses prefixes
+advertise = addresses prefixes
 manage_routes_at_start = yes
 
 [address_default]

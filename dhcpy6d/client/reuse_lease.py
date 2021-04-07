@@ -251,7 +251,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                             valid_lifetime=cfg.VALID_LIFETIME,
                                             category=p['category'],
                                             pclass=p['class'],
-                                            route_link_local=True)
+                                            route_link_local=False)
                                 client.prefixes.append(ia)
 
         # important indent here, has to match for...prefixes-loop!

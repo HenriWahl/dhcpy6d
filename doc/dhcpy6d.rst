@@ -7,8 +7,8 @@ MAC address aware DHCPv6 server
 ----------------------------------------------------------------
 
 :Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
-:Date:   2020-04-03
-:Version: 1.0
+:Date:   2020-12-21
+:Version: 1.0.3
 :Manual section: 8
 :Copyright: This manual page is licensed under the GPL-2 license.
 
@@ -63,7 +63,7 @@ Most configuration is done via the configuration file.
     Really activate the DHCPv6 server. This is a precaution to prevent larger network trouble.
 
 **-d, --duid=<duid>**
-    Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d and /lib/systemd/system/dhcpy6d.service repectively.
+    Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d and /lib/systemd/system/dhcpy6d.service respectively.
 
 **-p, --prefix=<prefix>**
     Set the prefix which will be substituted for the $prefix$ variable in address definitions. Useful for setups where the ISP uses a changing prefix.

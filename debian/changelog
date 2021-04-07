@@ -4,7 +4,7 @@ dhcpy6d (1.0.3-1) stable; urgency=medium
     + added option DNS_USE_RNDC
     + improved setup.py
 
- -- Henri Wahl <h.wahl@ifw-dresden.de>  Fri, 20 Nov 2020 17:30:00 +0200
+ -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 21 Dec 2020 17:30:00 +0200
 
 dhcpy6d (1.0.2-1) stable; urgency=medium
 
@@ -61,7 +61,7 @@ dhcpy6d (0.7-1) stable; urgency=medium
   * New upstream release
     + added ntp_server option
     + added request limits
-    + allow to inject prefix - e.g. changed prefix from ISP
+    + allow one to inject prefix - e.g. changed prefix from ISP
     + optimized time requests
     + ignore unknown clients
     + fixes for prefix delegation
