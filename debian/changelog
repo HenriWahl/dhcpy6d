@@ -2,7 +2,6 @@ dhcpy6d (1.0.3-1) stable; urgency=medium
 
   * New upstream release
     + added option DNS_USE_RNDC
-    + improved setup.py
 
  -- Henri Wahl <h.wahl@ifw-dresden.de>  Mon, 21 Dec 2020 17:30:00 +0200
 
