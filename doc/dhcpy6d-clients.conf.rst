@@ -6,7 +6,7 @@ dhcpy6d-clients.conf
 Clients configuration file for DHCPv6 server dhcpy6d
 ----------------------------------------------------
 
-:Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
+:Author: Copyright (C) 2012-2021 Henri Wahl <h.wahl@ifw-dresden.de>
 :Date:   2020-12-21
 :Version: 1.0.3
 :Manual section: 5
@@ -25,7 +25,7 @@ and
 **store_file_config = /path/to/dhcpy6d-clients.conf**
 
 An alternative method to store client configuration is using database storage with SQLite or MySQLor PostgreSQL databases.
-Further details are available at `<https://dhcpy6d.ifw-dresden.de/documentation/config>`_.
+Further details are available at `<https://dhcpy6d.de/documentation/config>`_.
 
 This file follows RFC 822 style parsed by Python ConfigParser module.
 
@@ -142,6 +142,6 @@ See also
 
 * dhcpy6d(8)
 * dhcpy6d.conf(5)
-* `<https://dhcpy6d.ifw-dresden.de>`_
+* `<https://dhcpy6d.de>`_
 * `<https://github.com/HenriWahl/dhcpy6d>`_
 

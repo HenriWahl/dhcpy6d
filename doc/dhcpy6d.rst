@@ -6,7 +6,7 @@ dhcpy6d
 MAC address aware DHCPv6 server
 ----------------------------------------------------------------
 
-:Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
+:Author: Copyright (C) 2012-2021 Henri Wahl <henri@dhcpy6d.de>
 :Date:   2020-12-21
 :Version: 1.0.3
 :Manual section: 8
@@ -111,7 +111,7 @@ See also
 ========
 * dhcpy6d.conf(5)
 * dhcpy6d-clients.conf(5)
-* `<https://dhcpy6d.ifw-dresden.de>`_
+* `<https://dhcpy6d.de>`_
 * `<https://github.com/HenriWahl/dhcpy6d>`_
 
 

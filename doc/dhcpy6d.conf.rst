@@ -6,7 +6,7 @@ dhcpy6d.conf
 Configuration file for DHCPv6 server dhcpy6d
 --------------------------------------------
 
-:Author: Copyright (C) 2012-2020 Henri Wahl <h.wahl@ifw-dresden.de>
+:Author: Copyright (C) 2012-2021 Henri Wahl <henri@dhcpy6d.de>
 :Date:   2020-12-21
 :Version: 1.0.3
 :Manual section: 5
@@ -19,7 +19,7 @@ This file contains the general settings for DHCPv6 server daemon dhcpy6d.
 It follows RFC 822 style parsed by Python ConfigParser module.
 It contains several sections which will be discussed in detail here.
 
-An online documentation is also available at `<https://dhcpy6d.ifw-dresden.de/documentation/config>`_. 
+An online documentation is also available at `<https://dhcpy6d.de/documentation/config>`_.
 
 Boolean settings can be set with *1|0*, *on|off* or *yes|no* values. 
 
@@ -1090,5 +1090,5 @@ See also
 
 * dhcpy6d(8)
 * dhcpy6d-clients.conf(5)
-* `<https://dhcpy6d.ifw-dresden.de>`_
+* `<https://dhcpy6d.de>`_
 * `<https://github.com/HenriWahl/dhcpy6d>`_

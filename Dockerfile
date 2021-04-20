@@ -1,5 +1,5 @@
 FROM python:3.7
-LABEL maintainer=h.wahl@ifw-dresden.de
+LABEL maintainer=henri@dhcpy6d.de
 
 ARG HTTP_PROXY=""
 ENV HTTPS_PROXY $HTTP_PROXY
