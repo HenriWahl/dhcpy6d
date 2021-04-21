@@ -81,8 +81,9 @@ elif [ "$OS" == "redhat" ]; then
   # replace version in the spec file
   sed -i "s|Version:.*|Version: $VERSION|" $SPEC
 
-  # workaround for less changes, but achieve build
-  mv ${FILE}.tar.gz v${VERSION}.tar.gz
+  # workaround for less changes, but achieve build with new GitHub source
+  # TDOO: clean up that build process
+  cp ${FILE}.tar.gz v${VERSION}.tar.gz
 
   # finally build binary rpm
   rpmbuild -bb --define "_topdir $TOPDIR" $SPEC
