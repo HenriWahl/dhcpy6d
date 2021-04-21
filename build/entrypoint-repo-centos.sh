@@ -11,9 +11,6 @@ cd /dhcpy6d
 # import signing key, stored from GitHub secrets in workflow
 gpg --import signing_key.asc
 
-# temporary directory, will come from jekyll repo checkout in the future
-mkdir -p dhcpy6d-jekyll/docs/repo/${RELEASE}/centos
-
 # put package to its later place
 cp -r artifact/*.rpm dhcpy6d-jekyll/docs/repo/${RELEASE}/centos
 
