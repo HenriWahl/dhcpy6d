@@ -83,9 +83,7 @@ elif [ "$OS" == "redhat" ]; then
 
   # workaround for less changes, but achieve build with new GitHub source
   # TDDO: clean up that build process
-  cp ${FILE}.tar.gz ${TOPDIR}/SOURCES/v${VERSION}.tar.gz
-
-  find / ${FILE}.tar.gz
+  cp ${TOPDIR}/SOURCES/${FILE}.tar.gz ${TOPDIR}/SOURCES/v${VERSION}.tar.gz
 
   # finally build binary rpm
   rpmbuild -bb --define "_topdir $TOPDIR" $SPEC

@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH DHCPY6D-CLIENTS.CONF 5 "2018-04-30" "0.7" ""
+.TH DHCPY6D-CLIENTS.CONF 5 "2020-12-21" "1.0.3" ""
 .SH NAME
 dhcpy6d-clients.conf \- Clients configuration file for DHCPv6 server dhcpy6d
 .
@@ -42,7 +42,7 @@ and
 \fBstore_file_config = /path/to/dhcpy6d\-clients.conf\fP
 .sp
 An alternative method to store client configuration is using database storage with SQLite or MySQLor PostgreSQL databases.
-Further details are available at \fI\%https://dhcpy6d.ifw\-dresden.de/documentation/config\fP\&.
+Further details are available at \fI\%https://dhcpy6d.de/documentation/config\fP\&.
 .sp
 This file follows RFC 822 style parsed by Python ConfigParser module.
 .sp
@@ -89,6 +89,9 @@ has to be a hex number in the range 0\-FFFF. The client ID from this directive w
 .TP
 .B \fBaddress = <address> [<address> ...]\fP
 Addresses configured here will be sent to a client in addition to the ones it gets due to its class. Might be useful for some extra static address definitions.
+.TP
+.B \fBprefix = <prefix> [<prefix> ...]\fP
+Prefix configured here will be sent to client in addition to the ones it gets due to its class.
 .UNINDENT
 .SH EXAMPLES
 .sp
@@ -123,6 +126,14 @@ id = 1234
 class = valid_client
 .fi
 .sp
+.nf
+[client5]
+hostname = client5
+mac = 01:01:01:01:01:02
+class = valid_client
+prefix = 2001:cb8::/48
+.fi
+.sp
 .SH LICENSE
 .sp
 This program is free software; you can redistribute it
@@ -152,7 +163,7 @@ dhcpy6d(8)
 .IP \(bu 2
 dhcpy6d.conf(5)
 .IP \(bu 2
-\fI\%https://dhcpy6d.ifw\-dresden.de\fP
+\fI\%https://dhcpy6d.de\fP
 .IP \(bu 2
 \fI\%https://github.com/HenriWahl/dhcpy6d\fP
 .UNINDENT
