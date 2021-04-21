@@ -85,8 +85,7 @@ elif [ "$OS" == "redhat" ]; then
   # TDDO: clean up that build process
   cp ${FILE}.tar.gz ${TOPDIR}/SOURCES/v${VERSION}.tar.gz
 
-  pwd
-  ls -lR
+  find / ${FILE}.tar.gz
 
   # finally build binary rpm
   rpmbuild -bb --define "_topdir $TOPDIR" $SPEC
