@@ -1,3 +1,2 @@
 version=3
-
-https://dhcpy6d.de/download/ .*/dhcpy6d-(.*)\.tar\.gz
+https://github.com/HenriWahl/dhcpy6d/archive/refs/tags/v(.*)\.tar\.gz

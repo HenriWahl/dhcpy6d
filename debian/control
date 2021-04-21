@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 12.1.1~),
                python3-all (>= 3.7.3-1~),
                dh-systemd (>= 12.1.1)
 Build-Depends-Indep: dh-python
-Homepage: https://dhcpy6d.de/
+Homepage: https://dhcpy6d.de
 Vcs-Git: git://github.com/HenriWahl/dhcpy6d.git
 Vcs-Browser: https://github.com/HenriWahl/dhcpy6d
 Standards-Version: 4.2.1
