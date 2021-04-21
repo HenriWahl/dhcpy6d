@@ -16,7 +16,7 @@ Group:             System Environment/Daemons
 
 License:           GPLv2
 URL:               https://dhcpy6d.de
-Source0:           https://github.com/HenriWahl/%{name}/archive/refs/tags/v%{version}.tar.gz
+#Source0:           https://github.com/HenriWahl/%{name}/archive/refs/tags/v%{version}.tar.gz
 # in order to build from tarball
 # tar -zxvf dhcpy6d-%%{version}.tar.gz -C ~/ dhcpy6d-%%{version}/redhat/init.d/dhcpy6d --strip-components=4&& rpmbuild -ta dhcpy6d-%%{version}.tar.gz&& rm -f ~/dhcpy6d
 Source1:           %{name}
