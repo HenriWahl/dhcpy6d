@@ -83,7 +83,7 @@ elif [ "$OS" == "redhat" ]; then
 
   # workaround for less changes, but achieve build with new GitHub source
   # TDDO: clean up that build process
-  cp ${FILE}.tar.gz v${VERSION}.tar.gz
+  cp ${FILE}.tar.gz ${TOPDIR}/SOURCES/v${VERSION}.tar.gz
 
   pwd
   ls -lR
