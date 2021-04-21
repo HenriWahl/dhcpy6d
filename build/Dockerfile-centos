@@ -12,5 +12,9 @@ RUN yum -y install createrepo \
                    sudo \
                    which
 
-CMD cd /dhcpy6d && \
-    /bin/bash build.sh
+# Default build action
+#CMD cd /dhcpy6d && \
+#    /bin/bash build.sh
+
+# flexible entrypoint, mounted as volume
+ENTRYPOINT ["/entrypoint.sh"]

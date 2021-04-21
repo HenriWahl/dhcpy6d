@@ -19,6 +19,10 @@ RUN apt -y install apt-utils \
                    python3-setuptools \
                    sudo
 
-CMD cd /dhcpy6d && \
-    /bin/bash build.sh && \
-    cp /*.deb /dhcpy6d
+# Default build action
+#CMD cd /dhcpy6d && \
+#    /bin/bash build.sh && \
+#    cp /*.deb /dhcpy6d
+
+# flexible entrypoint, mounted as volume
+ENTRYPOINT ["/entrypoint.sh"]
