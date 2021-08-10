@@ -1,6 +1,6 @@
 Changelog for dhcpy6d
 
-2021-03-18 1.0.4
+2021-08-10 1.0.4
 
     Fixed default behavior (route_link_local=no) in clients.conf
 
