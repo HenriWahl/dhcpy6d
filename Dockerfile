@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.9
 LABEL maintainer=henri@dhcpy6d.de
 
 ARG HTTP_PROXY=""
