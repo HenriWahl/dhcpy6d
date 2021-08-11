@@ -37,7 +37,7 @@ class ClientConfig:
     def __init__(self, hostname='', client_class='default', duid='', address=None, prefix=None, mac=None, host_id=''):
         self.HOSTNAME = hostname
         # MACs
-        self.MAC = mac
+        self.MAC = listify_option(mac)
         # fixed addresses
         if address:
             self.ADDRESS = list()
