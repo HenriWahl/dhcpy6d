@@ -238,7 +238,7 @@ def listify_option(option):
     """
     return any comma or space separated option as list
     """
-    if option and not type(option) == list:
+    if option:
         lex = shlex.shlex(option)
         lex.whitespace = WHITESPACE
         lex.wordchars += ':.-/'

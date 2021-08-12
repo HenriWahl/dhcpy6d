@@ -37,7 +37,10 @@ class ClientConfig:
     def __init__(self, hostname='', client_class='default', duid='', address=None, prefix=None, mac=None, host_id=''):
         self.HOSTNAME = hostname
         # MACs
-        self.MAC = listify_option(mac)
+        if type(mac) == list:
+            self.MAC = mac
+        else:
+            self.MAC = listify_option(mac)
         # fixed addresses
         if address:
             self.ADDRESS = list()
@@ -706,9 +709,10 @@ class Store:
             transaction.client_config_dicts = ClientConfigDicts()
 
             if self.config_prefix_support:
+                # 'mac LIKE' is necessary if multiple MACs are stored in config DB
                 query = f"SELECT hostname, mac, duid, class, address, prefix, id FROM {self.table_hosts} WHERE " \
                         f"hostname = '{transaction.hostname}' OR " \
-                        f"mac = '{transaction.mac}' OR " \
+                        f"mac LIKE '%{transaction.mac}%' OR " \
                         f"duid = '{transaction.duid}'"
                 answer = self.query(query)
 
@@ -755,9 +759,10 @@ class Store:
                     # some cleaning
                     del host, mac, duid, address, prefix, client_class, host_id
             else:
+                # 'mac LIKE' is necessary if multiple MACs are stored in config DB
                 query = f"SELECT hostname, mac, duid, class, address, id FROM {self.table_hosts} WHERE " \
                         f"hostname = '{transaction.hostname}' OR " \
-                        f"mac = '{transaction.mac}' OR " \
+                        f"mac LIKE '%{transaction.mac}%' OR " \
                         f"duid = '{transaction.duid}'"
                 answer = self.query(query)
 
