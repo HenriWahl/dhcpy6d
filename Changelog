@@ -1,8 +1,12 @@
 Changelog for dhcpy6d
 
+2021-08-11 1.0.5
+
+    fixed inability to use multiple MACs per host in DB
+
 2021-08-10 1.0.4
 
-    Fixed default behavior (route_link_local=no) in clients.conf
+    fixed default behavior (route_link_local=no) in clients.conf
 
 2020-11-20 1.0.3
 
