@@ -55,7 +55,7 @@ class Option(OptionTemplate):
             else:
                 hostname = transaction.client.hostname
             if not hostname == '':
-                if cfg.DNS_UPDATE == 1:
+                if cfg.DNS_UPDATE:
                     # DNS update done by server - don't care what client wants
                     if cfg.DNS_IGNORE_CLIENT:
                         s = 1
