@@ -113,8 +113,8 @@ class Textfile(Store):
             else:
                 error_exit(f"Textfile client configuration: section [{section.lower()}] "
                            f"does not match hostname '{hostname}'")
-            # not very meaningful in case of databaseless textfile config but for completeness
-            self.connected = True
+        # not very meaningful in case of databaseless textfile config but for completeness
+        self.connected = True
 
     def get_client_config_by_mac(self, transaction):
         """
