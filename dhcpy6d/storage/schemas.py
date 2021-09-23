@@ -185,14 +185,16 @@ def legacy_adjustments(db):
             # non-existing version is False
             db_version = db.get_db_version()
             if db_version is None or int(db_version) == 0:
-                # add table containing meta information like version of database scheme
-                db_operations = ['CREATE TABLE meta (item_key varchar(255) NOT NULL,\
-                                  item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))',
-                                 "INSERT INTO meta (item_key, item_value) VALUES ('version', '1')"]
+                db_operations = []
+                # only create meta table if it does not exist yet
+                if not 'meta' in db.get_tables():
+                    db_operations.append('CREATE TABLE meta (item_key varchar(255) NOT NULL,\
+                                  item_value varchar(255) NOT NULL, PRIMARY KEY (item_key))')
+                # add version of database scheme
+                db_operations.append("INSERT INTO meta (item_key, item_value) VALUES ('version', '1')")
                 for db_operation in db_operations:
                     db.query(db_operation)
-                db.query(db_operation)
-                print(f"{db_operation} in volatile storage succeded.")
+                    print(f"{db_operation} in volatile storage succeded.")
         except Exception as err:
             print(f"\n{db_operation} on volatile database failed.")
             print('Please apply manually or grant necessary permissions.\n')
@@ -304,76 +306,78 @@ def legacy_adjustments(db):
 
     # Extend volatile database to handle prefixes - comes with database version 2
     if int(db.get_db_version()) < 2:
-        if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
-            db.query('CREATE TABLE prefixes (\
-                          prefix varchar(32) NOT NULL,\
-                          length tinyint(4) NOT NULL,\
-                          active tinyint(4) NOT NULL,\
-                          preferred_lifetime int(11) NOT NULL,\
-                          valid_lifetime int(11) NOT NULL,\
-                          hostname varchar(255) NOT NULL,\
-                          type varchar(255) NOT NULL,\
-                          category varchar(255) NOT NULL,\
-                          class varchar(255) NOT NULL,\
-                          mac varchar(17) NOT NULL,\
-                          duid varchar(255) NOT NULL,\
-                          last_update bigint NOT NULL,\
-                          preferred_until bigint NOT NULL,\
-                          valid_until bigint NOT NULL,\
-                          iaid varchar(8) DEFAULT NULL,\
-                          last_message int(11) NOT NULL DEFAULT 0,\
-                          PRIMARY KEY (prefix)\
-                        )')
+        if not 'prefixes' in db.get_tables():
+            if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
+                db.query('CREATE TABLE prefixes (\
+                              prefix varchar(32) NOT NULL,\
+                              length tinyint(4) NOT NULL,\
+                              active tinyint(4) NOT NULL,\
+                              preferred_lifetime int(11) NOT NULL,\
+                              valid_lifetime int(11) NOT NULL,\
+                              hostname varchar(255) NOT NULL,\
+                              type varchar(255) NOT NULL,\
+                              category varchar(255) NOT NULL,\
+                              class varchar(255) NOT NULL,\
+                              mac varchar(17) NOT NULL,\
+                              duid varchar(255) NOT NULL,\
+                              last_update bigint NOT NULL,\
+                              preferred_until bigint NOT NULL,\
+                              valid_until bigint NOT NULL,\
+                              iaid varchar(8) DEFAULT NULL,\
+                              last_message int(11) NOT NULL DEFAULT 0,\
+                              PRIMARY KEY (prefix)\
+                            )')
 
-        elif cfg.STORE_VOLATILE == 'postgresql':
-            db.query('CREATE TABLE prefixes (\
-                          prefix varchar(32) NOT NULL,\
-                          length smallint NOT NULL,\
-                          active smallint NOT NULL,\
-                          preferred_lifetime int NOT NULL,\
-                          valid_lifetime int NOT NULL,\
-                          hostname varchar(255) NOT NULL,\
-                          type varchar(255) NOT NULL,\
-                          category varchar(255) NOT NULL,\
-                          class varchar(255) NOT NULL,\
-                          mac varchar(17) NOT NULL,\
-                          duid varchar(255) NOT NULL,\
-                          last_update bigint NOT NULL,\
-                          preferred_until bigint NOT NULL,\
-                          valid_until bigint NOT NULL,\
-                          iaid varchar(8) DEFAULT NULL,\
-                          last_message int NOT NULL DEFAULT 0,\
-                          PRIMARY KEY (prefix)\
-                        )')
+            elif cfg.STORE_VOLATILE == 'postgresql':
+                db.query('CREATE TABLE prefixes (\
+                              prefix varchar(32) NOT NULL,\
+                              length smallint NOT NULL,\
+                              active smallint NOT NULL,\
+                              preferred_lifetime int NOT NULL,\
+                              valid_lifetime int NOT NULL,\
+                              hostname varchar(255) NOT NULL,\
+                              type varchar(255) NOT NULL,\
+                              category varchar(255) NOT NULL,\
+                              class varchar(255) NOT NULL,\
+                              mac varchar(17) NOT NULL,\
+                              duid varchar(255) NOT NULL,\
+                              last_update bigint NOT NULL,\
+                              preferred_until bigint NOT NULL,\
+                              valid_until bigint NOT NULL,\
+                              iaid varchar(8) DEFAULT NULL,\
+                              last_message int NOT NULL DEFAULT 0,\
+                              PRIMARY KEY (prefix)\
+                            )')
 
         # increase version to 2
         db.query("UPDATE meta SET item_value='2' WHERE item_key='version'")
 
         # All OK
-        print("Adding table 'prefixes' succeeded")
+        print("Table 'prefixes' is OK")
 
     # Extend volatile database to handle routes - comes with database version 3
     if int(db.get_db_version()) < 3:
-        if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
-            db.query('CREATE TABLE routes (\
-                          prefix varchar(32) NOT NULL,\
-                          length tinyint(4) NOT NULL,\
-                          router varchar(32) NOT NULL,\
-                          last_update bigint NOT NULL,\
-                          PRIMARY KEY (prefix)\
-                        )')
+        if not 'prefixes' in db.get_tables():
+            if cfg.STORE_VOLATILE in ['sqlite', 'mysql']:
+                db.query('CREATE TABLE routes (\
+                              prefix varchar(32) NOT NULL,\
+                              length tinyint(4) NOT NULL,\
+                              router varchar(32) NOT NULL,\
+                              last_update bigint NOT NULL,\
+                              PRIMARY KEY (prefix)\
+                            )')
 
-        elif cfg.STORE_VOLATILE == 'postgresql':
-            db.query('CREATE TABLE routes (\
-                          prefix varchar(32) NOT NULL,\
-                          length smallint NOT NULL,\
-                          router varchar(32) NOT NULL,\
-                          last_update bigint NOT NULL,\
-                          PRIMARY KEY (prefix)\
-                        )')
+            elif cfg.STORE_VOLATILE == 'postgresql':
+                db.query('CREATE TABLE routes (\
+                              prefix varchar(32) NOT NULL,\
+                              length smallint NOT NULL,\
+                              router varchar(32) NOT NULL,\
+                              last_update bigint NOT NULL,\
+                              PRIMARY KEY (prefix)\
+                            )')
 
         # increase version to 3
         db.query("UPDATE meta SET item_value='3' WHERE item_key='version'")
 
         # All OK
-        print("Adding table 'routes' succeeded")
+        print("Table 'routes' is OK")

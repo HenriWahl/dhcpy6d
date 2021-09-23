@@ -1,5 +1,10 @@
 Changelog for dhcpy6d
 
+2021-09-23
+
+    fixed empty client config file
+    fixed DB updates
+
 2021-08-11 1.0.5
 
     fixed inability to use multiple MACs per host in DB
