@@ -1,6 +1,6 @@
 Changelog for dhcpy6d
 
-2021-09-23
+2021-09-30
 
     fixed empty client config file
     fixed DB updates

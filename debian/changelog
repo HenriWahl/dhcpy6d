@@ -4,7 +4,7 @@ dhcpy6d (1.0.6-1) stable; urgency=medium
     + fixed empty client config file
     + fixed DB updates
 
- -- Henri Wahl <henri@dhcpy6d.de>  Thu, 23 Sep 2021 21:00:00 +0200
+ -- Henri Wahl <henri@dhcpy6d.de>  Thu, 30 Sep 2021 21:00:00 +0200
 
 dhcpy6d (1.0.5-1) stable; urgency=medium
 
