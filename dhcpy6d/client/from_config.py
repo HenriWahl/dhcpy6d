@@ -96,7 +96,7 @@ def from_config(client=None, client_config=None, transaction=None):
                     transaction.client_architecture == client_architecture or
                     transaction.known_client_architecture == client_architecture) and \
                         (not user_class or
-                         transaction.UserClass == user_class):
+                         transaction.user_class == user_class):
                     client.bootfiles.append(cfg.BOOTFILES[bootfile])
 
             # if prefixes are advertised in this class and the client demands a prefix (trough IA_PD)
@@ -147,7 +147,7 @@ def from_config(client=None, client_config=None, transaction=None):
                     transaction.client_architecture == client_architecture or
                     transaction.known_client_architecture == client_architecture) and \
                         (not user_class or
-                         transaction.UserClass == user_class):
+                         transaction.user_class == user_class):
                     client.bootfiles.append(bootfile)
 
     # given client has been modified successfully
