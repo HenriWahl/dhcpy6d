@@ -1,3 +1,10 @@
+dhcpy6d (1.0.8-1) stable; urgency=medium
+
+  * New upstream release
+    + fixed empty addresses transmitted by clients
+
+ -- Henri Wahl <henri@dhcpy6d.de>  Tue, 19 Oct 2021 22:00:00 +0200
+
 dhcpy6d (1.0.7-1) stable; urgency=medium
 
   * New upstream release

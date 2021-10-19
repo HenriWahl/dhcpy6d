@@ -113,6 +113,7 @@ class Option(OptionTemplate):
             for a in range(len(payload[32:]) // 44):
                 address = payload[32:][(a * 56):(a * 56) + 32]
                 # in case an address is asked for twice by one host ignore the twin
-                if address not in transaction.addresses:
+                # sometimes address seems to be EMPTY???
+                if address and len(address) == 32 and address not in transaction.addresses:
                     transaction.addresses.append(address)
         transaction.ia_options.append(CONST.OPTION.IA_TA)
