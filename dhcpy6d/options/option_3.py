@@ -126,6 +126,6 @@ class Option(OptionTemplate):
                 address = payload[32:][(a * 56):(a * 56) + 32]
                 # in case an address is asked for twice by one host ignore the twin
                 # sometimes address seems to be EMPTY???
-                if address and len(address) == 32 and address not in transaction.addresses:
+                if address and colonify_ip6(address) and address not in transaction.addresses:
                     transaction.addresses.append(address)
         transaction.ia_options.append(CONST.OPTION.IA_NA)
