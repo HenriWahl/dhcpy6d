@@ -1,5 +1,9 @@
 Changelog for dhcpy6d
 
+2021-10-30 1.0.8
+
+    fixed acceptance of empty addresses in client requests
+
 2021-10-01 1.0.7
 
     fixed non-existing UserClass
