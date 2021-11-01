@@ -48,7 +48,7 @@ case "$1" in
         touch /var/log/dhcpy6d.log
     fi
     if [ ! -e /var/lib/dhcpy6d/volatile.sqlite ]; then
-        cp /usr/share/dhcpy6d/volatile.sqlite /var/lib/dhcpy6d/volatile.sqlite
+        touch /var/lib/dhcpy6d/volatile.sqlite
     fi
     chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
     chmod 0660 /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
