@@ -74,13 +74,27 @@ install -p -D -m 644 etc/logrotate.d/%{name} %{buildroot}%{_sysconfdir}/logrotat
                   -g %{dhcpy6d_gid} %{dhcpy6d_uid} > /dev/null 2>&1 || :
 %endif
 
+# backup existing volatile.sqlite
+file=/var/lib/%{name}/volatile.sqlite
+if [ ! -f ${file} ]
+    then
+    /bin/cp -a ${file} ${file}.backup-%{version}-%{release}
+fi
+
 %post
 file=/var/log/%{name}.log
 if [ ! -f ${file} ]
     then
     /bin/touch ${file}
 fi
+
 file=/var/lib/%{name}/volatile.sqlite
+# restore backup volatile.sqlite
+if [ -f ${file}.backup-%{version}-%{release} ]
+  /bin/mv ${file}.backup-%{version}-%{release} ${file}
+fi
+
+# set permissions on folder and create empty volatile.sqlite if it does not yet exist
 if [ ! -f ${file} ]
     then
     /bin/touch ${file}
