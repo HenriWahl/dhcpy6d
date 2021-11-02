@@ -132,6 +132,8 @@ fi
 %exclude %{_localstatedir}/log/%{name}.log
 %exclude %{_localstatedir}/lib/%{name}/volatile.sqlite
 %{_unitdir}/%{name}.service
+%dir %attr(0775,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}
+%config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
 
 %changelog
 * Fri Jul 24 2020 Henri Wahl <h.wahl@ifw-dresden.de> - 1.0.1-1
