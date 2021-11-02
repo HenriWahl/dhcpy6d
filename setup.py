@@ -46,9 +46,7 @@ classifiers = [
     'Topic :: System :: Networking'
 ]
 
-data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),
-              ('/var/log', ['var/log/dhcpy6d.log']),
-              ('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',
+data_files = [('/usr/share/doc/dhcpy6d', ['doc/clients-example.conf',
                                           'doc/config.sql',
                                           'doc/dhcpy6d-example.conf',
                                           'doc/dhcpy6d-minimal.conf',
