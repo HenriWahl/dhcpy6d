@@ -91,6 +91,7 @@ fi
 file=/var/lib/%{name}/volatile.sqlite
 # restore backup volatile.sqlite
 if [ -f ${file}.backup-%{version}-%{release} ]
+  then
   /bin/mv ${file}.backup-%{version}-%{release} ${file}
 fi
 
