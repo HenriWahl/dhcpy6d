@@ -76,7 +76,7 @@ install -p -D -m 644 etc/logrotate.d/%{name} %{buildroot}%{_sysconfdir}/logrotat
 
 # backup existing volatile.sqlite
 file=/var/lib/%{name}/volatile.sqlite
-if [ ! -f ${file} ]
+if [ -f ${file} ]
     then
     /bin/cp -a ${file} ${file}.backup-%{version}-%{release}
 fi
