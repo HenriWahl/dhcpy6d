@@ -80,6 +80,11 @@ if [ ! -f ${file} ]
     then
     /bin/touch ${file}
 fi
+file=/var/lib/%{name}/volatile.sqlite
+if [ ! -f ${file} ]
+    then
+    /bin/touch ${file}
+fi
 /bin/chown %{dhcpy6d_uid}:%{dhcpy6d_gid} ${file}
 /bin/chmod 0640 ${file}
 
@@ -124,6 +129,7 @@ fi
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}.conf
 %exclude %{_localstatedir}/log/%{name}.log
+%exclude %{_localstatedir}/lib/%{name}/volatile.sqlite
 %{_unitdir}/%{name}.service
 %dir %attr(0775,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
