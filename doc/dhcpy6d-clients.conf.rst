@@ -99,7 +99,7 @@ The next lines contain some example client definitions:
 | hostname = client3
 | duid = 000100011234567890abcdef1234
 | class = valid_client
-| address = 2001:cb8::babe:1
+| address = 2001:db8::babe:1
 
 | [client4]
 | hostname = client4
@@ -111,7 +111,7 @@ The next lines contain some example client definitions:
 | hostname = client5
 | mac = 01:01:01:01:01:02
 | class = valid_client
-| prefix = 2001:cb8::/48
+| prefix = 2001:db8::/48
 
 License
 =======
