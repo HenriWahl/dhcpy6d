@@ -28,13 +28,15 @@ from ..helpers import (decompress_ip6,
                        convert_prefix_inline)
 from .schemas import (legacy_adjustments,
                       MYSQL_SQLITE)
+from .store_schema import StoreSchema
 
 
 class ClientConfig:
     """
         static client settings object to be stuffed into Hosts dict of Textfile store
     """
-    def __init__(self, hostname='', client_class='default', duid='', address=None, prefix=None, mac=None, host_id=''):
+    def __init__(self, hostname='', client_class='default', duid='', address=None, prefix=None, mac=None, host_id='',
+                 prefix_route_link_local=False):
         self.HOSTNAME = hostname
         # MACs
         if type(mac) == list:
@@ -68,6 +70,7 @@ class ClientConfig:
         self.CLASS = client_class
         self.ID = host_id
         self.DUID = duid
+        self.PREFIX_ROUTE_LINK_LOCAL = prefix_route_link_local
 
 
 class ClientConfigDicts:
@@ -709,8 +712,11 @@ class Store:
             transaction.client_config_dicts = ClientConfigDicts()
 
             if self.config_prefix_support:
+
                 # 'mac LIKE' is necessary if multiple MACs are stored in config DB
-                query = f"SELECT hostname, mac, duid, class, address, prefix, id FROM {self.table_hosts} WHERE " \
+                fields = StoreSchema.get_host_table_fields()
+
+                query = f"SELECT {', '.join(fields)} FROM {self.table_hosts} WHERE " \
                         f"hostname = '{transaction.hostname}' OR " \
                         f"mac LIKE '%{transaction.mac}%' OR " \
                         f"duid = '{transaction.duid}'"
@@ -720,7 +726,12 @@ class Store:
                 # a section here is a host
                 # lowering MAC and DUID information in case they where upper in database
                 for host in answer:
+                    prefix_route_link_local = 0
                     hostname, mac, duid, client_class, address, prefix, host_id = host
+
+                    if 'prefix_route_link_local' in fields:
+                        prefix_route_link_local = host[7]
+
                     # lower some attributes to comply with values from request
                     if mac:
                         mac = listify_option(mac.lower())
@@ -737,7 +748,8 @@ class Store:
                                                                                    client_class=client_class,
                                                                                    address=address,
                                                                                    prefix=prefix,
-                                                                                   host_id=host_id)
+                                                                                   host_id=host_id,
+                                                                                   prefix_route_link_local=prefix_route_link_local)
                     # and put the host objects into index
                     if transaction.client_config_dicts.hosts[hostname].MAC:
                         for m in transaction.client_config_dicts.hosts[hostname].MAC:
