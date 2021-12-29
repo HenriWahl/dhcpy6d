@@ -273,7 +273,7 @@ There can be many address definitions which will be used by classes. Every addre
 
 **pattern = 2001:db8::$mac$|$id$|$range$|$random$**
 
-**pattern= $prefix$::$mac$|$eui64$|$id$|$range$|$random$**
+**pattern= $prefix$|$mac$|$eui64$|$id$|$range$|$random$**
     Patterns allow one to design the addresses according to their category. See examples section below to make it more clear. 
 
     **$mac$**
