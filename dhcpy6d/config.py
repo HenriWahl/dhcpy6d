@@ -1083,7 +1083,7 @@ class Address(ConfigObject):
                  arange='',
                  dns_update=False,
                  dns_zone='',
-                 dns_rev_zone='0.8.b.d.1.0.0.2.ip6.arpa',
+                 dns_rev_zone='8.b.d.0.1.0.0.2.ip6.arpa',
                  dns_ttl='0',
                  valid=True):
         self.CATEGORY = category
