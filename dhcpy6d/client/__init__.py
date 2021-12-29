@@ -218,9 +218,10 @@ class Client:
                 else:
                     client_config = None
 
+
             # If client gave some addresses for RENEW or REBIND consider them
-            if transaction.last_message_received_type is not CONST.MESSAGE.RENEW and \
-               transaction.last_message_received_type is not CONST.MESSAGE.REBIND and \
+            if (transaction.last_message_received_type is CONST.MESSAGE.RENEW or
+                transaction.last_message_received_type is CONST.MESSAGE.REBIND) and \
                not (len(transaction.addresses) == 0 and
                     len(transaction.prefixes) == 0):
                 # use already existing lease
