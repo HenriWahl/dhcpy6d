@@ -237,12 +237,18 @@ def error_exit(message='An error occured.', status=1):
 def listify_option(option):
     """
     return any comma or space separated option as list
+    if erroneously a list has been given return it unchanged
     """
     if option:
-        lex = shlex.shlex(option)
-        lex.whitespace = WHITESPACE
-        lex.wordchars += ':.-/'
-        return list(lex)
+        if type(option) == str:
+            lex = shlex.shlex(option)
+            lex.whitespace = WHITESPACE
+            lex.wordchars += ':.-/'
+            return list(lex)
+        elif type(option) == list:
+            return(option)
+        else:
+            return False
     else:
         return None
 
