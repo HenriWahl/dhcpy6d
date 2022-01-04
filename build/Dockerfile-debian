@@ -8,7 +8,6 @@ RUN apt -y install apt-utils \
                    dpkg-dev \
                    devscripts \
                    dh-python \
-                   dh-systemd \
                    git \
                    gpg \
                    python3-all \
