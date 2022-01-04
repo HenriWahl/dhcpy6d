@@ -7,8 +7,8 @@ Configuration file for DHCPv6 server dhcpy6d
 --------------------------------------------
 
 :Author: Copyright (C) 2012-2021 Henri Wahl <henri@dhcpy6d.de>
-:Date:   2020-12-21
-:Version: 1.0.3
+:Date:   2021-12-29
+:Version: 1.2.0
 :Manual section: 5
 :Copyright: This manual page is licensed under the GPL-2 license.
 
@@ -57,7 +57,11 @@ environments.
     *Default: no*
 
 **interface = <interface> [<interface> ...]**
-    The interfaces the server listens on is defined with keyword interface. Multiple interfaces have to be separated by spaces.
+    The interfaces the server listens on is defined here. Multiple interfaces have to be separated by spaces.
+
+**exclude_interface = <interface> [<interface> ...]**
+    The interfaces the server does not listen on. Multiple interfaces have to be separated by spaces.
+    All interfaces not mentioned here will be used for listening. Added in version 1.2.0.
 
 **serverduid = <longlongserverduid>**
     The server DUID should be configured with serverduid. If there is none dhcpy6d creates a new one at every startup.  Windows clients might run a little bit wild when server DUID changed. You are free to compose your own as long as it follows RFC 3315.

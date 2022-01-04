@@ -35,6 +35,7 @@ from .helpers import (decompress_ip6,
                       error_exit,
                       get_interfaces,
                       listify_option,
+                      LOCALHOST_INTERFACES,
                       send_control_message)
 
 # needed for boolean options
@@ -76,8 +77,10 @@ class Config:
 
         # default settings
         # Server cfg.INTERFACE + addresses
-        self.INTERFACE = 'eth0'
+        self.INTERFACE = ''
         self.ADDRESS = '2001:db8::1'
+        # issue #50 proposes an except-interface option like in dnsmasq - interfaces not to listen at
+        self.EXCLUDE_INTERFACE = ''
         # effective user and group - will have to be set mainly by distribution package
         self.USER = 'root'
         self.GROUP = 'root'
@@ -306,6 +309,9 @@ class Config:
         config = configparser.ConfigParser()
         config.read(configfile)
 
+        # error message prefix for check config some lines later
+        msg_prefix = 'General configuration:'
+
         # whyever sections classes get overwritten sometimes and so some configs had been missing
         # so create classes and addresses here
         for section in config.sections():
@@ -345,6 +351,30 @@ class Config:
                     # ConfigParser seems to be not case sensitive so settings get normalized
                     else:
                         object.__setattr__(self, item[0].upper(), str(item[1]).strip())
+
+                        # treat interface exceptions here already to be able to use non-excluded interfaces in other sections
+                        # to be able to set used interfaces the except_interfaces has to be evaluated here
+                        if item[0].upper() in ['INTERFACE', 'EXCLUDE_INTERFACE']:
+                            # get interfaces as list
+                            self.INTERFACE = listify_option(self.INTERFACE)
+                            self.EXCLUDE_INTERFACE = listify_option(self.EXCLUDE_INTERFACE)
+                            if self.EXCLUDE_INTERFACE:
+                                # just make sure there is either interface or except_interface set
+                                if self.INTERFACE:
+                                    error_exit(f"{msg_prefix} Interface and excluded interface are mutually exclusive.")
+                                else:
+                                    # check if interface is not excluded and not localhost interface
+                                    for interface in self.EXCLUDE_INTERFACE:
+                                        if not interface in get_interfaces():
+                                            error_exit(f"{msg_prefix} Excluded interface '{interface}' is unknown.")
+
+                                # reset interface to be filled with non-excluded interfaces
+                                self.INTERFACE = []
+                                # set non-excluded interfaces
+                                for interface in get_interfaces():
+                                    if not interface in self.EXCLUDE_INTERFACE and \
+                                            not interface in LOCALHOST_INTERFACES:
+                                        self.INTERFACE.append(interface)
                 else:
                     # global PXE boot url schemes
                     if section.lower().startswith('bootfile_'):
@@ -357,7 +387,7 @@ class Config:
                     if section.lower().startswith('address_'):
                         # check if keyword is known - if not, exit
                         if item[0].upper() == 'PREFIX_LENGTH':
-                            # Show a warning because there are no prefix lenghts in DHCPv6
+                            # Show a warning because there are no prefix lengths in DHCPv6
                             sys.stderr.write(f"\nWARNING: Keyword '{item[0]}' in section '{section}' is deprecated "
                                              "and should be removed.\n\n")
                         else:
@@ -431,16 +461,18 @@ class Config:
         # The next paragraphs contain finetuning
         self.IDENTIFICATION = listify_option(self.IDENTIFICATION)
 
-        # get interfaces as list
-        self.INTERFACE = listify_option(self.INTERFACE)
+        # at least something interfacy should be configured
+        if not self.INTERFACE and \
+                not self.EXCLUDE_INTERFACE:
+            error_exit(f"{msg_prefix} Neither interface or excluded interface is defined.")
 
         # create default classes for each interface - if not defined
         # derive from default 'default' class
-        for i in self.INTERFACE:
-            if not 'default_' + i in self.CLASSES:
-                self.CLASSES['default_' + i] = copy.copy(self.CLASSES['default'])
-                self.CLASSES['default_' + i].NAME = 'default_' + i
-                self.CLASSES['default_' + i].INTERFACE = i
+        for interface in self.INTERFACE:
+            if not 'default_' + interface in self.CLASSES:
+                self.CLASSES['default_' + interface] = copy.copy(self.CLASSES['default'])
+                self.CLASSES['default_' + interface].NAME = 'default_' + interface
+                self.CLASSES['default_' + interface].INTERFACE = interface
 
         # lower storage
         self.STORE_CONFIG = self.STORE_CONFIG.lower()
@@ -569,9 +601,6 @@ class Config:
             self.SERVERDUID = self.cli_duid
         if not self.cli_really_do_it is None:
             self.REALLY_DO_IT = BOOLPOOL[self.cli_really_do_it.lower()]
-
-        # check config
-        msg_prefix = 'General configuration:'
 
         # check user and group
         try:
