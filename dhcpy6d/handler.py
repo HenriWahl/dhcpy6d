@@ -557,4 +557,9 @@ class RequestHandler(socketserver.DatagramRequestHandler):
         if command == 'prefix' and len(arguments) == 1:
             cfg.PREFIX = arguments[0]
             volatile_store.store_dynamic_prefix(cfg.PREFIX)
+            # apply dynamic prefix to addresses and prefixes
+            for a in cfg.ADDRESSES:
+                cfg.ADDRESSES[a].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
+            for p in cfg.PREFIXES:
+                cfg.PREFIXES[p].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
         log.info(f'Control message \'{" ".join(control_message_clean)}\' received')
