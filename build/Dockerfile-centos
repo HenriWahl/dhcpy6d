@@ -1,6 +1,9 @@
 FROM centos:8
 LABEL maintainer=henri@dhcpy6d.de
 
+# replace non-existent-anymore CentOS repos
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+
 # get build requirements
 RUN yum -y install createrepo \
                    git \
