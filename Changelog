@@ -1,6 +1,6 @@
 Changelog for dhcpy6d
 
-2022-04-04 1.1.0
+2022-04-04 1.2.0
 
     new option to exclude interface
     fixed dynamic prefix injection
