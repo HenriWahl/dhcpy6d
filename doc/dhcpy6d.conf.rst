@@ -6,9 +6,9 @@ dhcpy6d.conf
 Configuration file for DHCPv6 server dhcpy6d
 --------------------------------------------
 
-:Author: Copyright (C) 2012-2021 Henri Wahl <henri@dhcpy6d.de>
-:Date:   2021-12-29
-:Version: 1.2.0
+:Author: Copyright (C) 2012-2022 Henri Wahl <henri@dhcpy6d.de>
+:Date:   2022-04-04
+:Version: 1.1.0
 :Manual section: 5
 :Copyright: This manual page is licensed under the GPL-2 license.
 
