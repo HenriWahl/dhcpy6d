@@ -1,7 +1,8 @@
 Changelog for dhcpy6d
 
-2022-04-04 1.0.10
+2022-04-04 1.1.0
 
+    new option to exclude interface
     fixed dynamic prefix injection
     fixed volatile.sqlite update trouble
     fixed Debian build dependencies
