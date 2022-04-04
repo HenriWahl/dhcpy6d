@@ -6,7 +6,7 @@ dhcpy6d-clients.conf
 Clients configuration file for DHCPv6 server dhcpy6d
 ----------------------------------------------------
 
-:Author: Copyright (C) 2012-2022 Henri Wahl <h.wahl@ifw-dresden.de>
+:Author: Copyright (C) 2012-2022 Henri Wahl <h.wahl@dhcpy6d.de>
 :Date:   2022-04-04
 :Version: 1.2.0
 :Manual section: 5
