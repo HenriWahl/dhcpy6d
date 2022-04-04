@@ -1,8 +1,13 @@
-dhcpy6d (1.1-20211229) unstable; urgency=medium
+dhcpy6d (1.0.10-1) stable; urgency=medium
 
   * New upstream release
+    + fixed dynamic prefix injection
+    + fixed volatile.sqlite update trouble
+    + fixed Debian build dependencies
+    + fixed documentation
+    + fixed reuse lease
 
- -- Henri Wahl <henri@dhcpy6d.de>  Wed, 29 Dec 2021 20:00:00 +0200
+ -- Henri Wahl <henri@dhcpy6d.de>  Mon, 04 Apr 2022 21:00:00 +0200
 
 dhcpy6d (1.0.9-1) stable; urgency=medium
 

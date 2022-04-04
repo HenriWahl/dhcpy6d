@@ -1,5 +1,13 @@
 Changelog for dhcpy6d
 
+2022-04-04 1.0.10
+
+    fixed dynamic prefix injection
+    fixed volatile.sqlite update trouble
+    fixed Debian build dependencies
+    fixed documentation
+    fixed reuse lease
+
 2021-11-21 1.0.9
 
     fixed overwrite of SQLite DB when upgrading
