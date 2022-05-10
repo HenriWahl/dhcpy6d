@@ -41,11 +41,11 @@ class Option(OptionTemplate):
                     nameserver += inet_pton(AF_INET6, ns)
                 response_string_part = self.convert_to_string(self.number, hexlify(nameserver).decode())
                 options_answer_part = self.number
-        elif len(cfg.NAMESERVER) > 0:
-            # in case several nameservers are given convert them all and add them
-            nameserver = b''
-            for ns in cfg.NAMESERVER:
-                nameserver += inet_pton(AF_INET6, ns)
-            response_string_part = self.convert_to_string(self.number, hexlify(nameserver).decode())
-            options_answer_part = self.number
+            elif len(cfg.NAMESERVER) > 0:
+                # in case several nameservers are given convert them all and add them
+                nameserver = b''
+                for ns in cfg.NAMESERVER:
+                    nameserver += inet_pton(AF_INET6, ns)
+                response_string_part = self.convert_to_string(self.number, hexlify(nameserver).decode())
+                options_answer_part = self.number
         return response_string_part, options_answer_part
