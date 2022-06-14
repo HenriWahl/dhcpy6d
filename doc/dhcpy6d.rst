@@ -7,8 +7,8 @@ MAC address aware DHCPv6 server
 ----------------------------------------------------------------
 
 :Author: Copyright (C) 2012-2022 Henri Wahl <henri@dhcpy6d.de>
-:Date:   2022-05-10
-:Version: 1.2.1
+:Date:   2022-06-14
+:Version: 1.2.2
 :Manual section: 8
 :Copyright: This manual page is licensed under the GPL-2 license.
 

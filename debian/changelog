@@ -1,3 +1,10 @@
+dhcpy6d (1.2.2-1) stable; urgency=medium
+
+  * New upstream release
+    + fixed class interface parsing
+
+ -- Henri Wahl <henri@dhcpy6d.de>  Tue, 14 Jun 2022 21:00:00 +0200
+
 dhcpy6d (1.2.1-1) stable; urgency=medium
 
   * New upstream release

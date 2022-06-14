@@ -1,5 +1,9 @@
 Changelog for dhcpy6d
 
+2022-06-14 1.2.2
+
+    fixed class interface parsing
+
 2022-05-10 1.2.1
 
     fixed option 23
