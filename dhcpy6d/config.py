@@ -454,6 +454,7 @@ class Config:
                                     error_exit(f"Interface '{interface}' used in section '[{section}]' "
                                                f"of configuration file '{configfile}' is not "
                                                "defined in general settings.")
+                                self.CLASSES[section.lower().split('class_')[1]].INTERFACE.append(interface)
                         else:
                             self.CLASSES[section.lower().split('class_')[1]].__setattr__(item[0].upper(),
                                                                                          str(item[1]).strip())
@@ -472,7 +473,7 @@ class Config:
             if not 'default_' + interface in self.CLASSES:
                 self.CLASSES['default_' + interface] = copy.copy(self.CLASSES['default'])
                 self.CLASSES['default_' + interface].NAME = 'default_' + interface
-                self.CLASSES['default_' + interface].INTERFACE = interface
+                self.CLASSES['default_' + interface].INTERFACE = [interface]
 
         # lower storage
         self.STORE_CONFIG = self.STORE_CONFIG.lower()
@@ -542,9 +543,7 @@ class Config:
                 c.NAMESERVER = listify_option(c.NAMESERVER)
             if c.NTP_SERVER != '':
                 c.NTP_SERVER = listify_option(c.NTP_SERVER)
-            if c.INTERFACE != '':
-                c.INTERFACE = listify_option(c.INTERFACE)
-            else:
+            if len(c.INTERFACE) == 0:
                 # use general setting if none specified
                 c.INTERFACE = self.INTERFACE
             # use default T1 and T2 if not defined
@@ -1193,7 +1192,7 @@ class Class:
         # REBIND time
         self.T2 = 0
         # at which interface this class of clients is served
-        self.INTERFACE = ''
+        self.INTERFACE = list()
         # in certain cases it might be useful not to give any address to clients, for example if only a defined group
         # of hosts should get IPv6 addresses and others not. They will get a 'NoAddrsAvail' handler if this option
         # is set to 'noaddress' or no answer at all if set to 'none'
