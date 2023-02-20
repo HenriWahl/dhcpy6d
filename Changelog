@@ -1,5 +1,9 @@
 Changelog for dhcpy6d
 
+2023-02-20 1.2.3
+
+    fixed invalid hostname
+
 2022-06-14 1.2.2
 
     fixed class interface parsing
