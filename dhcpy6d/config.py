@@ -323,13 +323,13 @@ class Config:
         for section in config.sections():
             # global PXE boot url schemes
             if section.startswith('bootfile_'):
-                self.BOOTFILES[section.split('bootfile_')[1]] = BootFile(name=section.split('bootfile_')[1].strip())
+                self.BOOTFILES[section.split('bootfile_', 1)[1]] = BootFile(name=section.split('bootfile_', 1)[1].strip())
             if section.startswith('class_'):
-                self.CLASSES[section.split('class_')[1]] = Class(name=section.split('class_')[1].strip())
+                self.CLASSES[section.split('class_', 1)[1]] = Class(name=section.split('class_', 1)[1].strip())
             if section.startswith('address_'):
-                self.ADDRESSES[section.split('address_')[1].strip()] = Address()
+                self.ADDRESSES[section.split('address_', 1)[1].strip()] = Address()
             if section.startswith('prefix_'):
-                self.PREFIXES[section.split('prefix_')[1].strip()] = Prefix()
+                self.PREFIXES[section.split('prefix_', 1)[1].strip()] = Prefix()
 
         for section in config.sections():
             # go through all items
@@ -384,10 +384,10 @@ class Config:
                 else:
                     # global PXE boot url schemes
                     if section.lower().startswith('bootfile_'):
-                        if not item[0].upper() in self.BOOTFILES[section.lower().split('bootfile_')[1]].__dict__:
+                        if not item[0].upper() in self.BOOTFILES[section.lower().split('bootfile_', 1)[1]].__dict__:
                             error_exit(f"Keyword '{item[0]}' in section '[{section}]' "
                                        f"of configuration file '{configfile}' is unknown.")
-                        self.BOOTFILES[section.lower().split('bootfile_')[1]].__setattr__(item[0].upper(),
+                        self.BOOTFILES[section.lower().split('bootfile_', 1)[1]].__setattr__(item[0].upper(),
                                                                                           str(item[1]).strip())
                     # global address schemes
                     if section.lower().startswith('address_'):
@@ -397,24 +397,24 @@ class Config:
                             sys.stderr.write(f"\nWARNING: Keyword '{item[0]}' in section '{section}' is deprecated "
                                              "and should be removed.\n\n")
                         else:
-                            if not item[0].upper() in self.ADDRESSES[section.lower().split('address_')[1]].__dict__:
+                            if not item[0].upper() in self.ADDRESSES[section.lower().split('address_', 1)[1]].__dict__:
                                 error_exit(f"Keyword '{item[0]}' in section '[{section}]' "
                                            f"of configuration file '{configfile}' is unknown.")
-                        self.ADDRESSES[section.lower().split('address_')[1]].__setattr__(item[0].upper(),
+                        self.ADDRESSES[section.lower().split('address_', 1)[1]].__setattr__(item[0].upper(),
                                                                                          str(item[1]).strip())
 
                     # global prefix schemes
                     if section.lower().startswith('prefix_'):
-                        if not item[0].upper() in self.PREFIXES[section.lower().split('prefix_')[1]].__dict__:
+                        if not item[0].upper() in self.PREFIXES[section.lower().split('prefix_', 1)[1]].__dict__:
                             error_exit(f"Keyword '{item[0]}' in section '[{section}]' "
                                        f"of configuration file '{configfile}' is unknown.")
-                        self.PREFIXES[section.lower().split('prefix_')[1]].__setattr__(item[0].upper(),
+                        self.PREFIXES[section.lower().split('prefix_', 1)[1]].__setattr__(item[0].upper(),
                                                                                        str(item[1]).strip())
 
                     # global classes with their addresses
                     elif section.lower().startswith('class_'):
                         # check if keyword is known - if not, exit
-                        if not item[0].upper() in self.CLASSES[section.lower().split('class_')[1]].__dict__:
+                        if not item[0].upper() in self.CLASSES[section.lower().split('class_', 1)[1]].__dict__:
                             error_exit(f"Keyword '{item[0]}' in section '[{section}]' "
                                        f"of configuration file '{configfile}' is unknown.")
                         if item[0].upper() == 'ADDRESSES':
@@ -424,7 +424,7 @@ class Config:
                             lex.wordchars += WORDCHARS
                             for address in lex:
                                 if len(address) > 0:
-                                    self.CLASSES[section.lower().split('class_')[1]].ADDRESSES.append(address)
+                                    self.CLASSES[section.lower().split('class_', 1)[1]].ADDRESSES.append(address)
                         elif item[0].upper() == 'BOOTFILES':
                             # strip whitespace and separators of bootfiles
                             lex = shlex.shlex(item[1])
@@ -432,7 +432,7 @@ class Config:
                             lex.wordchars += WORDCHARS
                             for bootfile in lex:
                                 if len(bootfile) > 0:
-                                    self.CLASSES[section.lower().split('class_')[1]].BOOTFILES.append(bootfile)
+                                    self.CLASSES[section.lower().split('class_', 1)[1]].BOOTFILES.append(bootfile)
                         elif item[0].upper() == 'PREFIXES':
                             # strip whitespace and separators of prefixes
                             lex = shlex.shlex(item[1])
@@ -440,16 +440,16 @@ class Config:
                             lex.wordchars += WORDCHARS
                             for prefix in lex:
                                 if len(prefix) > 0:
-                                    self.CLASSES[section.lower().split('class_')[1]].PREFIXES.append(prefix)
+                                    self.CLASSES[section.lower().split('class_', 1)[1]].PREFIXES.append(prefix)
                         elif item[0].upper() == 'ADVERTISE':
                             # strip whitespace and separators of advertised IAs
                             lex = shlex.shlex(item[1])
                             lex.whitespace = WHITESPACE
                             lex.wordchars += WORDCHARS
-                            self.CLASSES[section.lower().split('class_')[1]].ADVERTISE[:] = []
+                            self.CLASSES[section.lower().split('class_', 1)[1]].ADVERTISE[:] = []
                             for advertise in lex:
                                 if len(advertise) > 0:
-                                    self.CLASSES[section.lower().split('class_')[1]].ADVERTISE.append(advertise)
+                                    self.CLASSES[section.lower().split('class_', 1)[1]].ADVERTISE.append(advertise)
                         elif item[0].upper() == 'INTERFACE':
                             # strip whitespace and separators of interfaces
                             lex = shlex.shlex(item[1])
@@ -460,9 +460,9 @@ class Config:
                                     error_exit(f"Interface '{interface}' used in section '[{section}]' "
                                                f"of configuration file '{configfile}' is not "
                                                "defined in general settings.")
-                                self.CLASSES[section.lower().split('class_')[1]].INTERFACE.append(interface)
+                                self.CLASSES[section.lower().split('class_', 1)[1]].INTERFACE.append(interface)
                         else:
-                            self.CLASSES[section.lower().split('class_')[1]].__setattr__(item[0].upper(),
+                            self.CLASSES[section.lower().split('class_', 1)[1]].__setattr__(item[0].upper(),
                                                                                          str(item[1]).strip())
 
         # The next paragraphs contain finetuning
