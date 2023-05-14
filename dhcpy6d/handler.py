@@ -115,6 +115,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     else:
                         requests[mac].count += 1
                 del llip
+
+        # default transaction to be existent if any exception occurs
+        transaction = None
+
         try:
             # convert raw message into ascii-bytes
             raw_bytes = binascii.hexlify(self.request[0]).decode()
@@ -381,7 +385,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            log.error(f'handle(): {str(err)} | caused by: {client_address} | transaction: {transaction.id}')
+            if transaction:
+                log.error(f'handle(): {str(err)} | caused by: {client_address} | transaction: {transaction.id}')
+            else:
+                log.error(f'handle(): {str(err)} | caused by: {client_address} | transaction: does not even exist due to exception {err}')
             return None
 
     def build_response(self, message_type_response, transaction, options_request, status=0):
