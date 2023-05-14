@@ -388,7 +388,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             if transaction:
                 log.error(f'handle(): {str(err)} | caused by: {client_address} | transaction: {transaction.id}')
             else:
-                log.error(f'handle(): {str(err)} | caused by: {client_address} | transaction: does not even exist due to exception {err}')
+                log.error(f'handle(): {str(err)} | caused by: {client_address} | transaction: n/a')
             return None
 
     def build_response(self, message_type_response, transaction, options_request, status=0):
