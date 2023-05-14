@@ -44,6 +44,8 @@ BOOLPOOL = {'0': False, '1': True, 'no': False, 'yes': True, 'false': False, 'tr
 
 # whitespace for options with more than one value
 WHITESPACE = ' ,'
+# wordchars for shlex to identify valid names for addresses etc.
+WORDCHARS = ':.-'
 
 # empty default prefix - if needed given by command line argument
 PREFIX = ''
@@ -124,7 +126,8 @@ class Config:
         # config type
         # one of file, mysql, sqlite or none
         self.STORE_CONFIG = 'none'
-        # config schema version
+        # config schema version - default is backward-compatible version 1
+        # version 2 introduces field 'prefix_route_link_local' in client config DB
         self.STORE_CONFIG_SCHEMA_VERSION = 1
 
         # one of mysql, postgresql or sqlite
@@ -418,7 +421,7 @@ class Config:
                             # strip whitespace and separators of addresses
                             lex = shlex.shlex(item[1])
                             lex.whitespace = WHITESPACE
-                            lex.wordchars += ':.'
+                            lex.wordchars += WORDCHARS
                             for address in lex:
                                 if len(address) > 0:
                                     self.CLASSES[section.lower().split('class_')[1]].ADDRESSES.append(address)
@@ -426,7 +429,7 @@ class Config:
                             # strip whitespace and separators of bootfiles
                             lex = shlex.shlex(item[1])
                             lex.whitespace = WHITESPACE
-                            lex.wordchars += ':.'
+                            lex.wordchars += WORDCHARS
                             for bootfile in lex:
                                 if len(bootfile) > 0:
                                     self.CLASSES[section.lower().split('class_')[1]].BOOTFILES.append(bootfile)
@@ -434,7 +437,7 @@ class Config:
                             # strip whitespace and separators of prefixes
                             lex = shlex.shlex(item[1])
                             lex.whitespace = WHITESPACE
-                            lex.wordchars += ':.'
+                            lex.wordchars += WORDCHARS
                             for prefix in lex:
                                 if len(prefix) > 0:
                                     self.CLASSES[section.lower().split('class_')[1]].PREFIXES.append(prefix)
@@ -442,7 +445,7 @@ class Config:
                             # strip whitespace and separators of advertised IAs
                             lex = shlex.shlex(item[1])
                             lex.whitespace = WHITESPACE
-                            lex.wordchars += ':.'
+                            lex.wordchars += WORDCHARS
                             self.CLASSES[section.lower().split('class_')[1]].ADVERTISE[:] = []
                             for advertise in lex:
                                 if len(advertise) > 0:
@@ -451,7 +454,7 @@ class Config:
                             # strip whitespace and separators of interfaces
                             lex = shlex.shlex(item[1])
                             lex.whitespace = WHITESPACE
-                            lex.wordchars += ':.'
+                            lex.wordchars += WORDCHARS
                             for interface in lex:
                                 if interface not in self.INTERFACE:
                                     error_exit(f"Interface '{interface}' used in section '[{section}]' "
