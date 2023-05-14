@@ -124,6 +124,9 @@ class Config:
         # config type
         # one of file, mysql, sqlite or none
         self.STORE_CONFIG = 'none'
+        # config schema version
+        self.STORE_CONFIG_SCHEMA_VERSION = 1
+
         # one of mysql, postgresql or sqlite
         self.STORE_VOLATILE = 'sqlite'
 

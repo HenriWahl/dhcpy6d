@@ -4,6 +4,7 @@ CREATE TABLE hosts (
   class varchar(255) DEFAULT NULL,
   address varchar(255) DEFAULT NULL,
   prefix varchar(255) DEFAULT NULL,
+  prefix_route_link_local INT DEFAULT 0,
   id varchar(255) DEFAULT NULL,
   duid varchar(255) DEFAULT NULL,
   PRIMARY KEY (hostname)

@@ -60,7 +60,7 @@ def from_config(client=None, client_config=None, transaction=None):
                                length=prefix['length'],
                                preferred_lifetime=cfg.PREFERRED_LIFETIME,
                                valid_lifetime=cfg.VALID_LIFETIME,
-                               route_link_local=False)
+                               route_link_local=client_config.PREFIX_ROUTE_LINK_LOCAL)
                 client.prefixes.append(ia_pd)
 
         if not client_config.CLASS == '':
