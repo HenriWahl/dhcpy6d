@@ -59,6 +59,8 @@ class Client:
         self.mac = ''
         # timestamp of last update
         self.last_update = ''
+        # define prefix route behaviour
+        self.prefix_route_link_local = False
 
         # when an transaction is given build the client
         if transaction is not None:

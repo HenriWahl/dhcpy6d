@@ -1,3 +1,10 @@
+dhcpy6d (1.2.4-1) stable; urgency=medium
+
+  * New upstream release
+    + fixed prefix_route_link_local
+
+ -- Henri Wahl <henri@dhcpy6d.de>  Sun, 28 May 2023 21:00:00 +0200
+
 dhcpy6d (1.2.3-1) stable; urgency=medium
 
   * New upstream release

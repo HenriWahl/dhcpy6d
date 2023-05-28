@@ -116,6 +116,10 @@ def from_config(client=None, client_config=None, transaction=None):
                                        route_link_local=cfg.PREFIXES[prefix].ROUTE_LINK_LOCAL)
                         client.prefixes.append(ia_pd)
 
+                # if client link local address should be used for prefix routing enable it
+                if client_config.PREFIX_ROUTE_LINK_LOCAL:
+                    client.prefix_route_link_local = True
+
         if client_config.ADDRESS == client_config.CLASS == '':
             # use default class if no class or address is given
             for address in cfg.CLASSES['default_' + transaction.interface].ADDRESSES:

@@ -47,8 +47,8 @@ def modify_route(transaction, mode):
             # collect possible prefixes, lengths and router ip addresses in list
             routes = list()
             for prefix in transaction.client.prefixes:
-                # use LinkLocal Address of client if wanted
-                if prefix.ROUTE_LINK_LOCAL:
+                # use LinkLocal Address of client if wanted, either by prefix or client configs
+                if prefix.ROUTE_LINK_LOCAL or transaction.client.prefix_route_link_local:
                     router = transaction.client_llip
                 else:
                     if len(transaction.client.addresses) == 1:
