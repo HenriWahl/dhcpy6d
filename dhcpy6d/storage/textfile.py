@@ -56,7 +56,7 @@ class Textfile(Store):
                 self.hosts[hostname] = ClientConfig()
                 for item in config.items(hostname):
                     # lowercase all MAC addresses, DUIDs, IPv6 addresses and prefixes
-                    if item[0].upper() in ['ADDRESS', 'DUID', 'HOSTNAME', 'MAC', 'PREFIX', 'PREFIX', 'PREFIX_ROUTE_LINK_LOCAL']:
+                    if item[0].upper() in ['ADDRESS', 'DUID', 'HOSTNAME', 'MAC', 'PREFIX', 'PREFIX_ROUTE_LINK_LOCAL']:
                         self.hosts[hostname].__setattr__(item[0].upper(), str(item[1]).lower())
                     else:
                         self.hosts[hostname].__setattr__(item[0].upper(), str(item[1]))
