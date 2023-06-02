@@ -29,7 +29,6 @@ from ..globals import (config_answer_queue,
                        volatile_store)
 from ..helpers import error_exit
 
-from .store_schema import StoreSchema
 from .mysql import DBMySQL
 from .postgresql import DBPostgreSQL
 from .sqlite import SQLite
@@ -72,8 +71,6 @@ class QueryQueue(threading.Thread):
 # source of configuration of hosts
 # use client configuration only if needed
 if cfg.STORE_CONFIG:
-    StoreSchema.set_version(cfg.STORE_CONFIG_SCHEMA_VERSION)
-
     if cfg.STORE_CONFIG == 'file':
         config_store = Textfile(config_query_queue, config_answer_queue)
     if cfg.STORE_CONFIG == 'mysql':
@@ -82,6 +79,8 @@ if cfg.STORE_CONFIG:
         config_store = DBPostgreSQL(config_query_queue, config_answer_queue)
     if cfg.STORE_CONFIG == 'sqlite':
         config_store = SQLite(config_query_queue, config_answer_queue, storage_type='config')
+    # set client config schema version after config storage is established
+    config_store.set_client_config_schema_version(cfg.STORE_CONFIG_SCHEMA_VERSION)
 else:
     # dummy configstore if no client config is needed
     config_store = Store(config_query_queue, config_answer_queue)

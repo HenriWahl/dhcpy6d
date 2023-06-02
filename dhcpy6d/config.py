@@ -489,6 +489,12 @@ class Config:
         if self.STORE_CONFIG.lower() == 'none':
             self.STORE_CONFIG = False
 
+        # integerify config schema version
+        try:
+            self.STORE_CONFIG_SCHEMA_VERSION = int(self.STORE_CONFIG_SCHEMA_VERSION)
+        except ValueError:
+            error_exit(f"{msg_prefix} 'storage_config_schema_version' '{self.STORE_CONFIG_SCHEMA_VERSION}' has to be an integer value")
+
         # if no domain search list has been given use DOMAIN
         if len(self.DOMAIN_SEARCH_LIST) == 0:
             self.DOMAIN_SEARCH_LIST = self.DOMAIN
