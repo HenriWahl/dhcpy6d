@@ -28,7 +28,6 @@ from ..helpers import (decompress_ip6,
                        convert_prefix_inline)
 from .schemas import (legacy_adjustments,
                       MYSQL_SQLITE)
-from .store_schema import StoreSchema
 
 
 class ClientConfig:
@@ -95,8 +94,13 @@ class Store:
     # if no tables exist they will be created by create_tables()
     QUERY_TABLES = ''
 
-    # increasing number of SQL schema versions
-    version = 3
+    # increasing number of SQL schema versions for storage of volatile data
+    VOLATILE_SCHEMA_VERSION = 3
+
+    # supported versions of client config database schemas
+    CONFIG_SCHEMA_VERSIONS = [1, 2]
+    # default host config fields in database, may be extended at least by version 2
+    config_fields = ['hostname', 'mac', 'duid', 'class', 'address', 'prefix', 'id']
 
     # link to used database module
     db_module = None
@@ -117,6 +121,8 @@ class Store:
         self.connected = False
         # storage of query answers
         self.answers = {}
+        # schema version of client config entries
+        self.config_schema_version = 1
 
     def query(self, query):
         """
@@ -187,7 +193,7 @@ class Store:
             query = self.SCHEMAS[table]
             self.cursor.execute(query)
         # set initial version
-        self.cursor.execute(f"INSERT INTO meta (item_key, item_value) VALUES ('version', '{self.version}')")
+        self.cursor.execute(f"INSERT INTO meta (item_key, item_value) VALUES ('version', '{self.VOLATILE_SCHEMA_VERSION}')")
 
     def check_storage(self):
         """
@@ -712,11 +718,8 @@ class Store:
             transaction.client_config_dicts = ClientConfigDicts()
 
             if self.config_prefix_support:
-
                 # 'mac LIKE' is necessary if multiple MACs are stored in config DB
-                fields = StoreSchema.get_host_table_fields()
-
-                query = f"SELECT {', '.join(fields)} FROM {self.table_hosts} WHERE " \
+                query = f"SELECT {', '.join(self.config_fields)} FROM {self.table_hosts} WHERE " \
                         f"hostname = '{transaction.hostname}' OR " \
                         f"mac LIKE '%{transaction.mac}%' OR " \
                         f"duid = '{transaction.duid}'"
@@ -726,11 +729,12 @@ class Store:
                 # a section here is a host
                 # lowering MAC and DUID information in case they where upper in database
                 for host in answer:
-                    prefix_route_link_local = 0
-                    hostname, mac, duid, client_class, address, prefix, host_id = host
-
-                    if 'prefix_route_link_local' in fields:
-                        prefix_route_link_local = host[7]
+                    prefix_route_link_local = False
+                    # config schema version 2 adds prefix_route_link_local
+                    if 'prefix_route_link_local' in self.config_fields:
+                        hostname, mac, duid, client_class, address, prefix, host_id, prefix_route_link_local = host
+                    else:
+                        hostname, mac, duid, client_class, address, prefix, host_id = host
 
                     # lower some attributes to comply with values from request
                     if mac:
@@ -919,6 +923,17 @@ class Store:
                     traceback.print_exc(file=sys.stdout)
                     sys.stdout.flush()
                     return None
+
+    def set_client_config_schema_version(self, version):
+        """
+        set client schema version, most probably from settings
+        """
+        if version not in self.CONFIG_SCHEMA_VERSIONS:
+            raise Exception(f'Unsupported client config schema version {version}.')
+        self.config_schema_version = version
+        # extend version 1 fields by version 2
+        if self.config_schema_version >= 2:
+            self.config_fields += ['prefix_route_link_local']
 
     def db_query(self, query):
         """

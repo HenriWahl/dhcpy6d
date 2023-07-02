@@ -1,8 +1,5 @@
 .\" Man page generated from reStructuredText.
 .
-.TH DHCPY6D-CLIENTS.CONF 5 "2020-12-21" "1.0.3" ""
-.SH NAME
-dhcpy6d-clients.conf \- Clients configuration file for DHCPv6 server dhcpy6d
 .
 .nr rst2man-indent-level 0
 .
@@ -30,6 +27,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "DHCPY6D-CLIENTS.CONF" 5 "2022-06-14" "1.2.2"
+.SH NAME
+dhcpy6d-clients.conf \- Clients configuration file for DHCPv6 server dhcpy6d
 .SH DESCRIPTION
 .sp
 This file contains all client configuration data if these options are set in
@@ -92,6 +92,15 @@ Addresses configured here will be sent to a client in addition to the ones it ge
 .TP
 .B \fBprefix = <prefix> [<prefix> ...]\fP
 Prefix configured here will be sent to client in addition to the ones it gets due to its class.
+.TP
+.B \fBprefix_route_linklocal = yes|no\fP
+As default Link Local Address of requesting client is not used as router address for external call.
+Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
+Alternatively the client Link Local Address might be used by enabling this option.
+.sp
+Note, that you must set this configuration option to \fByes\fP when more than one address is assigned to the client.
+In this case, dhcpy6d cannot determine which of the assigned addresses should be used for routing.
+\fIDefault: no\fP
 .UNINDENT
 .SH EXAMPLES
 .sp

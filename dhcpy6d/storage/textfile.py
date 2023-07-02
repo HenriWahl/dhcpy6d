@@ -18,7 +18,7 @@
 
 import configparser
 
-from ..config import cfg
+from ..config import cfg, BOOLPOOL
 from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option, convert_prefix_inline)
@@ -56,7 +56,7 @@ class Textfile(Store):
                 self.hosts[hostname] = ClientConfig()
                 for item in config.items(hostname):
                     # lowercase all MAC addresses, DUIDs, IPv6 addresses and prefixes
-                    if item[0].upper() in ['ADDRESS', 'DUID', 'HOSTNAME', 'MAC', 'PREFIX']:
+                    if item[0].upper() in ['ADDRESS', 'DUID', 'HOSTNAME', 'MAC', 'PREFIX', 'PREFIX_ROUTE_LINK_LOCAL']:
                         self.hosts[hostname].__setattr__(item[0].upper(), str(item[1]).lower())
                     else:
                         self.hosts[hostname].__setattr__(item[0].upper(), str(item[1]))
@@ -95,6 +95,10 @@ class Textfile(Store):
                 # split prefix into address and length, verify address
                 if self.hosts[hostname].PREFIX is not None:
                     self.hosts[hostname].PREFIX = [convert_prefix_inline(x) for x in self.hosts[hostname].PREFIX]
+
+                # boolify prefix route link local setting
+                if self.hosts[hostname].PREFIX_ROUTE_LINK_LOCAL:
+                    self.hosts[hostname].PREFIX_ROUTE_LINK_LOCAL = BOOLPOOL[self.hosts[hostname].PREFIX_ROUTE_LINK_LOCAL]
 
                 # and put the host objects into index
                 if self.hosts[hostname].MAC:

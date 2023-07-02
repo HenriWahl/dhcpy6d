@@ -1,9 +1,10 @@
-dhcpy6d (1.2.3-1) stable; urgency=medium
+dhcpy6d (1.3.1-1) stable; urgency=medium
 
   * New upstream release
+    + added prefix_route_link_local for client config
     + fixed invalid hostname
 
- -- Henri Wahl <henri@dhcpy6d.de>  Mon, 20 Feb 2023 21:00:00 +0200
+ -- Henri Wahl <henri@dhcpy6d.de>  Sat, 03 Jun 2023 21:00:00 +0200
 
 dhcpy6d (1.2.2-1) stable; urgency=medium
 

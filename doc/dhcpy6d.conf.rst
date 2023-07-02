@@ -148,12 +148,18 @@ environments.
 **store_db_password = <database-password>**
     If **store_config** and/or **store_volatile** use a database to store information it has to be set with these self-explanatory options. The same database is used for config and volatile data.
 
+**store_schema_version = <version>**
+    The version of the database schema when using a database to store the client config. Currently supported versions:
+
+    * `1`: The original version of the dhcpy6d config database schema.
+    * `2`: Added the `prefix_route_link_local` field to the `hosts` table. If you want to configure, if the link local IP address is used to route delegated prefixes, you must use at least version `2`.
+
 **cache_mac_llip = yes|no**
     Cache discovered MAC/LLIP pairs in database. If enabled reduces response time and opens dhcpy6d to *possible* MAC/LLIP poisoning. If disabled might increase system load.
     *Default: no*
 
 **identification = <mac> <duid> <hostname>**
-    Clients can be set to be identified by several attributes - MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database.
+    Clients can be set to be identified by several attributes - MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database. See `dhcpy6d-clients.conf(5)` for details.
     Same MAC and different DUIDs might be interesting for clients with multiple OS.
     *Default: mac*
 
@@ -364,6 +370,8 @@ A prefix definition may contain several properties:
     As default Link Local Address of requesting client is not used as router address for external call.
     Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
     Alternatively the client Link Local Address might be used by enabling this option.
+    Note, that you must set this configuration option to **yes** when more than one address is assigned to the client.
+    In this case, dhcpy6d cannot determine which of the assigned addresses should be used for routing.
     *Default: no*
 
 
