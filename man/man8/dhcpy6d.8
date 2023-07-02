@@ -1,8 +1,5 @@
 .\" Man page generated from reStructuredText.
 .
-.TH DHCPY6D 8 "2020-12-21" "1.0.3" ""
-.SH NAME
-dhcpy6d \- MAC address aware DHCPv6 server
 .
 .nr rst2man-indent-level 0
 .
@@ -30,6 +27,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "DHCPY6D" 8 "2022-06-14" "1.2.2"
+.SH NAME
+dhcpy6d \- MAC address aware DHCPv6 server
 .SH SYNOPSIS
 .sp
 \fBdhcpy6d\fP [\fB\-c\fP \fIfile\fP] [\fB\-u\fP \fIuser\fP] [\fB\-g\fP \fIgroup\fP] [\fB\-p\fP \fIprefix\fP] [\fB\-r\fP \fIyes|no\fP] [\fB\-d\fP \fIduid\fP] [\fB\-m\fP \fImessage\fP] [\fB\-G\fP]
@@ -95,8 +95,8 @@ Set the prefix which will be substituted for the $prefix$ variable in address de
 .B \fB\-G, \-\-generate\-duid\fP
 Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
 .TP
-.B \fB\-m, \-\-message "<message>"\fP
-Send message to running dhcpy6d server. At the moment the only valid message is \fI"prefix <prefix>"\fP\&. The value of \fI<prefix>\fP will be used instantly where \fI$prefix$\fP is to be replaced as placeholder in address definitions. This might be of use for dynamic prefixes by ISPs, for example: \fIdhcpy6d \-m "prefix 2001:db8"\fP\&.
+.B \fB\-m, \-\-message \(dq<message>\(dq\fP
+Send message to running dhcpy6d server. At the moment the only valid message is \fI\(dqprefix <prefix>\(dq\fP\&. The value of \fI<prefix>\fP will be used instantly where \fI$prefix$\fP is to be replaced as placeholder in address definitions. This might be of use for dynamic prefixes by ISPs, for example: \fIdhcpy6d \-m \(dqprefix 2001:db8\(dq\fP\&.
 .UNINDENT
 .SH FILES
 .INDENT 0.0

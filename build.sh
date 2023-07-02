@@ -35,7 +35,11 @@ function create_manpages() {
 # find out where script runs at
 get_os
 
-if [ "$OS" == "debian" ]; then
+if [ "$1" = "man" ]
+then
+  echo "Re-generating man pages"
+  create_manpages
+elif [ "$OS" == "debian" ]; then
   echo "Building .deb package"
 
   create_manpages

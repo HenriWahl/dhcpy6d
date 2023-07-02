@@ -1,8 +1,5 @@
 .\" Man page generated from reStructuredText.
 .
-.TH DHCPY6D.CONF 5 "2020-12-21" "1.0.3" ""
-.SH NAME
-dhcpy6d.conf \- Configuration file for DHCPv6 server dhcpy6d
 .
 .nr rst2man-indent-level 0
 .
@@ -30,6 +27,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "DHCPY6D.CONF" 5 "2022-06-14" "1.2.2"
+.SH NAME
+dhcpy6d.conf \- Configuration file for DHCPv6 server dhcpy6d
 .SH DESCRIPTION
 .sp
 This file contains the general settings for DHCPv6 server daemon dhcpy6d.
@@ -74,11 +74,15 @@ Let dhcpy6d \fBreally do it\fP and respond to client requests \- disabling might
 \fIDefault: no\fP
 .TP
 .B \fBinterface = <interface> [<interface> ...]\fP
-The interfaces the server listens on is defined with keyword interface. Multiple interfaces have to be separated by spaces.
+The interfaces the server listens on is defined here. Multiple interfaces have to be separated by spaces.
+.TP
+.B \fBexclude_interface = <interface> [<interface> ...]\fP
+The interfaces the server does not listen on. Multiple interfaces have to be separated by spaces.
+All interfaces not mentioned here will be used for listening. Added in version 1.2.0.
 .TP
 .B \fBserverduid = <longlongserverduid>\fP
 The server DUID should be configured with serverduid. If there is none dhcpy6d creates a new one at every startup.  Windows clients might run a little bit wild when server DUID changed. You are free to compose your own as long as it follows RFC 3315.
-Please note that it has to be in hexadecimal format \- no octals, no "\-", just like in the example below.
+Please note that it has to be in hexadecimal format \- no octals, no \(dq\-\(dq, just like in the example below.
 The example here is a DUID\-LLT (Link\-layer Address Plus Time) even if it should be a DUID\-TLL as timestamp comes first.
 It is composed of \fIDUID\-type(LLT=1)\fP + \fIHardware\-type(Ethernet=1)\fP + \fIUnixtime\-in\-hexadecimal\fP + \fIMAC\-address\fP what makes a \fI0001\fP + \fI0001\fP + \fI11fb5dc9\fP + \fI01023472a6c5\fP = \fB0001000111fb5dc901023472a6c5\fP\&.
 .TP
@@ -122,7 +126,7 @@ If logs should go to syslog it is set here.
 \fIDefault: no\fP
 .TP
 .B \fBlog_syslog_destination = syslogserver\fP
-An UDP syslog server may be used if \fBlog_syslog_destination\fP points to it. Optionally a port other than default 514 can be set when adding ":<port>" to the destination.
+An UDP syslog server may be used if \fBlog_syslog_destination\fP points to it. Optionally a port other than default 514 can be set when adding \(dq:<port>\(dq to the destination.
 .TP
 .B \fBlog_syslog_facility = <log\-facility>\fP
 The default syslog facility is \fIdaemon\fP but can be changed here.
@@ -163,12 +167,21 @@ If set to \fIsqlite\fP a SQLite database file must be defined.
 .B \fBstore_db_password = <database\-password>\fP
 If \fBstore_config\fP and/or \fBstore_volatile\fP use a database to store information it has to be set with these self\-explanatory options. The same database is used for config and volatile data.
 .TP
+.B \fBstore_schema_version = <version>\fP
+The version of the database schema when using a database to store the client config. Currently supported versions:
+.INDENT 7.0
+.IP \(bu 2
+\fI1\fP: The original version of the dhcpy6d config database schema.
+.IP \(bu 2
+\fI2\fP: Added the \fIprefix_route_link_local\fP field to the \fIhosts\fP table. If you want to configure, if the link local IP address is used to route delegated prefixes, you must use at least version \fI2\fP\&.
+.UNINDENT
+.TP
 .B \fBcache_mac_llip = yes|no\fP
 Cache discovered MAC/LLIP pairs in database. If enabled reduces response time and opens dhcpy6d to \fIpossible\fP MAC/LLIP poisoning. If disabled might increase system load.
 \fIDefault: no\fP
 .TP
 .B \fBidentification = <mac> <duid> <hostname>\fP
-Clients can be set to be identified by several attributes \- MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database.
+Clients can be set to be identified by several attributes \- MAC address, DUID or hostname. At least one of mac, duid or hostname is necessary. Hostname is the one sent in client request with DHCPv6 option 39. Identification is used to get the correct settings for the client from config file or database. See \fIdhcpy6d\-clients.conf(5)\fP for details.
 Same MAC and different DUIDs might be interesting for clients with multiple OS.
 \fIDefault: mac\fP
 .TP
@@ -401,6 +414,8 @@ As default preferred and valid lifetime are set in general settings, but it is c
 As default Link Local Address of requesting client is not used as router address for external call.
 Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
 Alternatively the client Link Local Address might be used by enabling this option.
+Note, that you must set this configuration option to \fByes\fP when more than one address is assigned to the client.
+In this case, dhcpy6d cannot determine which of the assigned addresses should be used for routing.
 \fIDefault: no\fP
 .UNINDENT
 .SH CLASS DEFINITIONS IN MULTIPLE [CLASS_<CLASS_NAME>] SECTIONS
@@ -489,7 +504,7 @@ Example:
 .UNINDENT
 .SS Default Class
 .sp
-At the moment every client which does not match any other class by client configuration or filter automatically matches the class "default".
+At the moment every client which does not match any other class by client configuration or filter automatically matches the class \(dqdefault\(dq.
 This class could get an address scheme too. It should be enough if \(aqaddress_default\(aq is defined, only if unknown clients should get extra nameservers etc. a \(aqclass_default\(aq has to be set.
 .INDENT 0.0
 .TP
@@ -620,7 +635,7 @@ nameserver = fd00:db8::53
 domain = example.com
 
 # Domain search list for option 24 \- domain search list.
-# If omitted the value of option "domain" above is taken as default.
+# If omitted the value of option \(dqdomain\(dq above is taken as default.
 domain_search_list = example.com
 
 # Do logging.
@@ -667,7 +682,7 @@ pattern = 2001:db8::$random64$
 [address_default]
 # Unknown clients will get an internal ULA range\-based address.
 category = range
-# The keyword "range" sets the range used in pattern.
+# The keyword \(dqrange\(dq sets the range used in pattern.
 range = 1000\-1fff
 # This pattern results in addresses like fd00::1234.
 pattern = fd00::$range$
@@ -725,7 +740,7 @@ group = dhcpy6d
 domain = example.com
 
 # Domain search list for option 24 \- domain search list.
-# If omited the value of option "domain" above is taken as default.
+# If omited the value of option \(dqdomain\(dq above is taken as default.
 domain_search_list = example.com
 
 # Do logging.
@@ -790,7 +805,7 @@ pattern = fd02::$id$
 [address_default]
 # Unknown clients will get an internal ULA range\-based address.
 category = range
-# The keyword "range" sets the range used in pattern.
+# The keyword \(dqrange\(dq sets the range used in pattern.
 range = 1000\-1FFF
 # This pattern results in addresses like fd00::1234.
 pattern = fd00::$range$
@@ -859,7 +874,7 @@ nameserver = fd00:db8::53
 domain = example.com
 
 # Domain search list for option 24 \- domain search list.
-# If omited the value of option "domain" above is taken as default.
+# If omited the value of option \(dqdomain\(dq above is taken as default.
 domain_search_list = example.com
 
 # This works at the moment only for ISC Bind nameservers.
@@ -924,7 +939,7 @@ dns_rev_zone = 8.b.d.0.1.0.0.2.ip6.arpa
 [address_default]
 # Unknown clients will get an internal ULA range\-based address.
 category = range
-# The keyword "range" sets the range used in pattern.
+# The keyword \(dqrange\(dq sets the range used in pattern.
 range = 1000\-1FFF
 # This pattern results in addresses like fd00::1234.
 pattern = fd00::$range$
