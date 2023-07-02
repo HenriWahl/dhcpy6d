@@ -1,6 +1,6 @@
 Changelog for dhcpy6d
 
-2023-07-03 1.4.0
+2023-07-02 1.4.0
 
     added prefix_route_link_local for client config
 

@@ -3,7 +3,7 @@ dhcpy6d (1.4.0-1) stable; urgency=medium
   * New upstream release
     + added prefix_route_link_local for client config
 
- -- Henri Wahl <henri@dhcpy6d.de>  Sun, 03 Jul 2023 21:00:00 +0200
+ -- Henri Wahl <henri@dhcpy6d.de>  Sun, 02 Jul 2023 21:00:00 +0200
 
 dhcpy6d (1.2.2-1) stable; urgency=medium
 
