@@ -79,7 +79,7 @@ These attributes do not serve for identification of a client but for appropriate
 **prefix = <prefix> [<prefix> ...]**
     Prefix configured here will be sent to client in addition to the ones it gets due to its class.
 
-**prefix_route_linklocal = yes|no**
+**prefix_route_link_local = yes|no**
     As default Link Local Address of requesting client is not used as router address for external call.
     Instead the client should be able to retrieve exactly 1 address from server to be used as router for the delegated prefix.
     Alternatively the client Link Local Address might be used by enabling this option.
