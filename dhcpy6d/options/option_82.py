@@ -25,6 +25,6 @@ class Option(OptionTemplate):
     Option 32 Information Refresh Time
     """
     def build(self, **kwargs):
-        response_string_part = self.convert_to_string(self.number, f'{int(cfg.INFORMATION_REFRESH_TIME):08x}')
+        response_string_part = self.convert_to_string(self.number, f'{int(cfg.MAX_SOLICITATION_REFRESH_TIME):08x}')
         # options in answer to be logged
         return response_string_part, self.number
