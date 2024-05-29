@@ -497,6 +497,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_string += build_option(CONST.OPTION.STATUS_CODE,
                                                         f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
+
+                        # just a test for https://github.com/HenriWahl/dhcpy6d/issues/64
+                        response_string += build_option(CONST.OPTION.RECONF_ACCEPT)
+
                         # options in answer to be logged
                         options_answer.append(CONST.OPTION.STATUS_CODE)
 
