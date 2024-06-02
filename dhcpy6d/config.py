@@ -125,7 +125,7 @@ class Config:
 
         # SOL_MAX_RT Option 82
         # see https://www.rfc-editor.org/rfc/rfc8415.html#page-127
-        self.MAX_SOLICITATION_REFRESH_TIME = '1200'
+        self.SOLICITATION_REFRESH_TIME = '1200'
 
         # config type
         # one of file, mysql, sqlite or none
@@ -732,11 +732,11 @@ class Config:
                        f"'{self.INFORMATION_REFRESH_TIME}' is pretty short.")
 
         # check max solicitation refresh time
-        if not self.MAX_SOLICITATION_REFRESH_TIME.isdigit():
-            error_exit(f"{msg_prefix} Max solicitation refresh time '{self.MAX_SOLICITATION_REFRESH_TIME}' is invalid.")
-        elif not 60 <= int(self.MAX_SOLICITATION_REFRESH_TIME) <= 86400:
+        if not self.SOLICITATION_REFRESH_TIME.isdigit():
+            error_exit(f"{msg_prefix} Max solicitation refresh time '{self.SOLICITATION_REFRESH_TIME}' is invalid.")
+        elif not 60 <= int(self.SOLICITATION_REFRESH_TIME) <= 86400:
             error_exit(f"{msg_prefix} Max solicitation refresh time preference "
-                       f"'{self.MAX_SOLICITATION_REFRESH_TIME}' is not greater or equal to 60 and neither smaller or equal to 86400.")
+                       f"'{self.SOLICITATION_REFRESH_TIME}' is not greater or equal to 60 and neither smaller or equal to 86400.")
 
         # check validity of configuration source
         if self.STORE_CONFIG not in ['mysql', 'postgresql', 'sqlite', 'file', False]:
