@@ -47,7 +47,7 @@ class QueryQueue(threading.Thread):
         self.query_queue = query_queue
         self.answer_queue = answer_queue
         self.store = store_type
-        self.setDaemon(True)
+        self.daemon = True
 
     def run(self):
         """

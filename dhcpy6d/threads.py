@@ -49,7 +49,7 @@ class DNSQueryThread(Thread):
 
     def __init__(self):
         Thread.__init__(self, name='DNSQuery')
-        self.setDaemon(True)
+        self.daemon = True
 
     def run(self):
         # wait for new queries in queue until the end of the world
@@ -99,7 +99,7 @@ class TidyUpThread(Thread):
 
     def __init__(self):
         Thread.__init__(self, name='TidyUp')
-        self.setDaemon(True)
+        self.daemon = True
 
     def run(self):
         try:
@@ -196,7 +196,7 @@ class RouteThread(Thread):
 
     def __init__(self, route_queue):
         Thread.__init__(self, name='Route')
-        self.setDaemon(True)
+        self.daemon = True
         self.route_queue = route_queue
 
     def run(self):
@@ -230,7 +230,7 @@ class TimerThread(Thread):
 
     def __init__(self):
         Thread.__init__(self, name='Timer')
-        self.setDaemon(True)
+        self.daemon = True
 
     def run(self):
         while True:
