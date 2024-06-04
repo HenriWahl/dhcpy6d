@@ -421,6 +421,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             # list of options in answer to be logged
             options_answer = []
 
+            # Option 20 reconfigure accept - for client compatibility, actually
+            # not really supported
+            # https://github.com/HenriWahl/dhcpy6d/issues/64
+            if CONST.OPTION.RECONF_ACCEPT in transaction.options.keys():
+                response_string += build_option(CONST.OPTION.RECONF_ACCEPT, '')
+                options_answer.append(CONST.OPTION.RECONF_ACCEPT)
+
             # build all requested options if they are handled
             for number in options_request:
                 if number in OPTIONS:
@@ -522,9 +529,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     log.info(f'{CONST.MESSAGE_DICT[message_type_response]} | '
                              f'transaction: {transaction.id} | '
                              f'options: {options_answer}')
-
-            # just a test for https://github.com/HenriWahl/dhcpy6d/issues/64
-            response_string += build_option(CONST.OPTION.RECONF_ACCEPT, '')
 
             # handler
             self.response = binascii.unhexlify(response_string)

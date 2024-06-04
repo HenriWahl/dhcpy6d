@@ -45,7 +45,7 @@ class Transaction:
         # last message for following the protocol
         self.last_message_received_type = message_type
         # dictionary for options
-        self.options_raw = options
+        self.options = options
         # default dummy OptionsRequest
         self.options_request = list()
         # timestamp to manage/clean transactions

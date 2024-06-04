@@ -32,7 +32,7 @@ class Option(OptionTemplate):
     regarding RFC 4704 5. there are 3 kinds of client behaviour for N O S:
       - client wants to update DNS itself -> sends 0 0 0
       - client wants server to update DNS -> sends 0 0 1
-       - client wants no server DNS update -> sends 1 0 0
+      - client wants no server DNS update -> sends 1 0 0
     """
 
     def build(self, transaction=None, **kwargs):
