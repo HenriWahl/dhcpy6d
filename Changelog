@@ -1,5 +1,11 @@
 Changelog for dhcpy6d
 
+2023-07-02 1.6.0
+
+    added option 82 support
+    added option 83 support
+    added partly option 20 support
+
 2023-07-02 1.4.0
 
     added prefix_route_link_local for client config

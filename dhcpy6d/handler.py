@@ -422,11 +422,11 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             options_answer = []
 
             # Option 20 reconfigure accept - for client compatibility, actually
-            # not really supported
+            # not really supported, added here to add to options
             # https://github.com/HenriWahl/dhcpy6d/issues/64
-            if CONST.OPTION.RECONF_ACCEPT in transaction.options.keys():
-                response_string += build_option(CONST.OPTION.RECONF_ACCEPT, '')
-                options_answer.append(CONST.OPTION.RECONF_ACCEPT)
+            if CONST.OPTION.RECONF_ACCEPT in transaction.options.keys() and \
+                not CONST.OPTION.RECONF_ACCEPT in options_request:
+                options_request.append(CONST.OPTION.RECONF_ACCEPT)
 
             # build all requested options if they are handled
             for number in options_request:
@@ -454,7 +454,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     volatile_store.db_connect()
 
                 # create error handler - headers have to be recreated because
-                # problems may have arisen while processing and these information
+                # problems may have arisen while processing and this information
                 # is not valid anymore
                 # handler type + transaction id
                 response_string = f'{CONST.MESSAGE.REPLY:02x}'
