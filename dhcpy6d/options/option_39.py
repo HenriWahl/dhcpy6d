@@ -1,6 +1,6 @@
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2022 Henri Wahl <henri@dhcpy6d.de>
+# Copyright (C) 2009-2024 Henri Wahl <henri@dhcpy6d.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ class Option(OptionTemplate):
     regarding RFC 4704 5. there are 3 kinds of client behaviour for N O S:
       - client wants to update DNS itself -> sends 0 0 0
       - client wants server to update DNS -> sends 0 0 1
-       - client wants no server DNS update -> sends 1 0 0
+      - client wants no server DNS update -> sends 1 0 0
     """
 
     def build(self, transaction=None, **kwargs):

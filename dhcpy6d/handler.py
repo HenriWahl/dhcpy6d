@@ -1,6 +1,6 @@
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2022 Henri Wahl <henri@dhcpy6d.de>
+# Copyright (C) 2009-2024 Henri Wahl <henri@dhcpy6d.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -421,6 +421,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             # list of options in answer to be logged
             options_answer = []
 
+            # Option 20 reconfigure accept - for client compatibility, actually
+            # not really supported, added here to add to options
+            # https://github.com/HenriWahl/dhcpy6d/issues/64
+            if CONST.OPTION.RECONF_ACCEPT in transaction.options.keys() and \
+                not CONST.OPTION.RECONF_ACCEPT in options_request:
+                options_request.append(CONST.OPTION.RECONF_ACCEPT)
+
             # build all requested options if they are handled
             for number in options_request:
                 if number in OPTIONS:
@@ -447,7 +454,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     volatile_store.db_connect()
 
                 # create error handler - headers have to be recreated because
-                # problems may have arisen while processing and these information
+                # problems may have arisen while processing and this information
                 # is not valid anymore
                 # handler type + transaction id
                 response_string = f'{CONST.MESSAGE.REPLY:02x}'
@@ -497,6 +504,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         # Option 13 Status Code Option - statuscode is 2: 'No Addresses available'
                         response_string += build_option(CONST.OPTION.STATUS_CODE,
                                                         f'{CONST.STATUS.NO_ADDRESSES_AVAILABLE:04x}')
+
                         # options in answer to be logged
                         options_answer.append(CONST.OPTION.STATUS_CODE)
 
@@ -521,6 +529,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                     log.info(f'{CONST.MESSAGE_DICT[message_type_response]} | '
                              f'transaction: {transaction.id} | '
                              f'options: {options_answer}')
+
             # handler
             self.response = binascii.unhexlify(response_string)
 

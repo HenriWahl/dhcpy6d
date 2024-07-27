@@ -1,6 +1,6 @@
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2022 Henri Wahl <henri@dhcpy6d.de>
+# Copyright (C) 2009-2024 Henri Wahl <henri@dhcpy6d.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ class Transaction:
         # last message for following the protocol
         self.last_message_received_type = message_type
         # dictionary for options
-        self.options_raw = options
+        self.options = options
         # default dummy OptionsRequest
         self.options_request = list()
         # timestamp to manage/clean transactions

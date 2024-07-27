@@ -1,3 +1,12 @@
+dhcpy6d (1.6.0-1) stable; urgency=medium
+
+  * New upstream release
+    + added option 82 support
+    + added option 83 support
+    + added partly option 20 support
+
+ -- Henri Wahl <henri@dhcpy6d.de>  Sat, 27 Jul 2024 00:00:00 +0200
+
 dhcpy6d (1.4.0-1) stable; urgency=medium
 
   * New upstream release

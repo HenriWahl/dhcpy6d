@@ -1,6 +1,6 @@
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2022 Henri Wahl <henri@dhcpy6d.de>
+# Copyright (C) 2009-2024 Henri Wahl <henri@dhcpy6d.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,8 +92,10 @@ OPTION = {1: 'CLIENTID',
           57: 'V6_ACCESS_DOMAIN',
           58: 'SIP_UA_CS_LIST',
           59: 'BOOTFILE_URL',
-          60: 'OPT_BOOTFILE_PARAM',
-          61: 'OPTION_CLIENT_ARCH_TYPE'
+          60: 'BOOTFILE_PARAM',
+          61: 'CLIENT_ARCH_TYPE',
+          82: 'SOL_MAX_RT',
+          83: 'INF_MAX_RT'
           }
 
 STATUS = {0: 'Success',

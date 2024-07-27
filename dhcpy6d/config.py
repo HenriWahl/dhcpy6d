@@ -1,6 +1,6 @@
 # DHCPy6d DHCPv6 Daemon
 #
-# Copyright (C) 2009-2022 Henri Wahl <henri@dhcpy6d.de>
+# Copyright (C) 2009-2024 Henri Wahl <henri@dhcpy6d.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -121,7 +121,11 @@ class Config:
 
         # INFORMATION REFRESH TIME option 32 for option 11 (INFORMATION REQUEST)
         # see RFC http://tools.ietf.org/html/rfc4242
-        self.INFORMATION_REFRESH_TIME = '6000'
+        self.INFORMATION_REFRESH_TIME = '600'
+
+        # SOL_MAX_RT Option 82
+        # see https://www.rfc-editor.org/rfc/rfc8415.html#page-127
+        self.SOLICITATION_REFRESH_TIME = '1200'
 
         # config type
         # one of file, mysql, sqlite or none
@@ -726,6 +730,13 @@ class Config:
         elif not 0 < int(self.INFORMATION_REFRESH_TIME):
             error_exit(f"{msg_prefix} Information refresh time preference "
                        f"'{self.INFORMATION_REFRESH_TIME}' is pretty short.")
+
+        # check max solicitation refresh time
+        if not self.SOLICITATION_REFRESH_TIME.isdigit():
+            error_exit(f"{msg_prefix} Max solicitation refresh time '{self.SOLICITATION_REFRESH_TIME}' is invalid.")
+        elif not 60 <= int(self.SOLICITATION_REFRESH_TIME) <= 86400:
+            error_exit(f"{msg_prefix} Max solicitation refresh time preference "
+                       f"'{self.SOLICITATION_REFRESH_TIME}' is not greater or equal to 60 and neither smaller or equal to 86400.")
 
         # check validity of configuration source
         if self.STORE_CONFIG not in ['mysql', 'postgresql', 'sqlite', 'file', False]:
