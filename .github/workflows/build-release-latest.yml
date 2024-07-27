@@ -15,7 +15,7 @@ jobs:
       dist: debian
     steps:
       # get source
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       # build container image for package creation
       - run: /usr/bin/docker build -t build-${{ github.job }} -f build/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
@@ -27,7 +27,7 @@ jobs:
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           path: ./*.deb
           retention-days: 1
@@ -38,7 +38,7 @@ jobs:
       dist: centos
     steps:
       # get source
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       # build container image for package creation
       - run: /usr/bin/docker build -t build-${{ github.job }} -f build/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
@@ -50,7 +50,7 @@ jobs:
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           path: ./*.rpm
           retention-days: 1
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-debian, build-centos]
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
       - run: cd artifact && md5sum *dhcpy6d* > md5sums.txt
       - run: cd artifact && sha256sum *dhcpy6d* > sha256sums.txt
       - uses: marvinpinto/action-automatic-releases@latest
