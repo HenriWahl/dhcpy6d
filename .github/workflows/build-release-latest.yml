@@ -63,10 +63,10 @@ jobs:
     needs: [build-debian, build-centos]
     steps:
       - uses: actions/download-artifact@v4
-      - run: md5sum build-debian/*dhcpy6d* > md5sums.txt
-      - run: md5sum build-centos/*dhcpy6d* >> md5sums.txt
-      - run: sha256sum build-debian/*dhcpy6d* > sha256sums.txt
-      - run: sha256sum build-centos/*dhcpy6d* >> sha256sums.txt
+      - run: cd build-debian && md5sum build-debian/*dhcpy6d* > ../md5sums.txt
+      - run: cd build-debian && sha256sum build-debian/*dhcpy6d* > ../sha256sums.txt
+      - run: cd build-centos && md5sum build-centos/*dhcpy6d* >> ../md5sums.txt
+      - run: cd build-centos && sha256sum build-centos/*dhcpy6d* >> ../sha256sums.txt
       - uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
