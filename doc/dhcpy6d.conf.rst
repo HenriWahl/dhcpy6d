@@ -208,7 +208,13 @@ environments.
 
 **information_refresh_time = <seconds>**
     The lifetime of information given to clients as response to an *information-request* message.
-    *Default: 6000*
+    Used by option 83.
+*Default: 600*
+
+**solicitation_refresh_time = <seconds>**
+    The maximum time a client should wait before retransmitting a *solicit* message.
+    Used by option 82.
+    *Default: 1200*
 
 **ignore_iaid = yes|no**
     Ignore IAID when looking for leases in database. Might be of use in case some clients are changing their IAD for some unknown reason.
