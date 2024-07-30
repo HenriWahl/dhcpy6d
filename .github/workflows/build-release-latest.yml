@@ -31,6 +31,8 @@ jobs:
         with:
           path: ./*.deb
           retention-days: 1
+          name: ${{ github.job }}
+
 
   build-centos:
     runs-on: ubuntu-latest
@@ -54,6 +56,7 @@ jobs:
         with:
           path: ./*.rpm
           retention-days: 1
+          name: ${{ github.job }}
 
   github-release:
     runs-on: ubuntu-latest
@@ -68,4 +71,5 @@ jobs:
           automatic_release_tag: "latest"
           prerelease: true
           files: |
-            artifact/*
+             build-debian/*
+             build-centos/*
