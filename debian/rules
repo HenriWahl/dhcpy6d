@@ -8,7 +8,7 @@ override_dh_auto_install:
 	rm -f debian/dhcpy6d/var/log/dhcpy6d.log
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/*.[0-9]
 	find debian/dhcpy6d/ -name __pycache__ -print0 | xargs -0 --no-run-if-empty rm -rv
-	mv -v debian/dhcpy6d/usr/lib/python3.7 debian/dhcpy6d/usr/lib/python3
+	mv -v debian/dhcpy6d/usr/lib/python3.11 debian/dhcpy6d/usr/lib/python3
 	mv -v debian/dhcpy6d/var/lib/dhcpy6d/volatile.sqlite debian/dhcpy6d/usr/share/dhcpy6d/
 
 override_dh_install:
