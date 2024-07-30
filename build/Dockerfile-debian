@@ -1,4 +1,4 @@
-FROM debian:10
+FROM debian:12
 LABEL maintainer=henri@dhcpy6d.de
 
 # get build requirements
