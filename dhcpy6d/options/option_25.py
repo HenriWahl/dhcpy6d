@@ -20,10 +20,10 @@ from binascii import hexlify
 from socket import (AF_INET6,
                     inet_pton)
 
-from dhcpy6d import collected_macs
 from dhcpy6d.client import Client
 from dhcpy6d.config import cfg
 from dhcpy6d.constants import CONST
+from dhcpy6d.globals import collected_macs
 from dhcpy6d.helpers import (colonify_ip6,
                              combine_prefix_length)
 from dhcpy6d.options import OptionTemplate

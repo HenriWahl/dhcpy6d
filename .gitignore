@@ -1,5 +1,6 @@
 *.conf
 *.pyc
+__pycache__/
 *.yaml
 *.db
 *.log
@@ -12,6 +13,7 @@ build/
 dist/
 .pybuild/
 .venv/
+.venv311/
 
 # Debian package build artifacts
 debian/.debhelper/

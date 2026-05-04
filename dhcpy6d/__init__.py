@@ -22,6 +22,7 @@ import importlib
 import socket
 import socketserver
 import struct
+import sys
 
 _LAZY_EXPORTS = {
     'cfg': ('.config', 'cfg'),
@@ -52,7 +53,7 @@ def __getattr__(name):
     module_name, attribute_name = _LAZY_EXPORTS[name]
     module = importlib.import_module(module_name, __name__)
     attribute = getattr(module, attribute_name)
-    globals()[name] = attribute
+    setattr(sys.modules[__name__], name, attribute)
     return attribute
 
 

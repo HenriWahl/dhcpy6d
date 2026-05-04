@@ -128,6 +128,20 @@ class Store:
         # schema version of client config entries
         self.config_schema_version = 1
 
+    def close(self):
+        """
+        Close any backend resources held by the store.
+        """
+        for resource_name in ('cursor', 'connection'):
+            resource = getattr(self, resource_name, None)
+            close = getattr(resource, 'close', None)
+            if close is not None:
+                try:
+                    close()
+                except Exception:
+                    pass
+        self.connected = False
+
     def query(self, query):
         """
         put queries received into query queue and return the answers from answer queue

@@ -16,6 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+import atexit
 import sys
 import threading
 import traceback
@@ -100,3 +101,20 @@ if not config_store.connected:
     error_exit('Configuration database is not connected!')
 if not volatile_store.connected:
     error_exit('Database for volatile data is not connected!')
+
+
+def close_stores():
+    """
+    Close import-time storage connections during interpreter shutdown.
+    """
+    seen = set()
+    for store in (config_store, volatile_store):
+        if id(store) in seen:
+            continue
+        seen.add(id(store))
+        close = getattr(store, 'close', None)
+        if close is not None:
+            close()
+
+
+atexit.register(close_stores)
