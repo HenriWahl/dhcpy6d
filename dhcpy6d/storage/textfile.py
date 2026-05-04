@@ -87,14 +87,22 @@ class Textfile(Store):
 
                 # Decompress IPv6-Addresses
                 if self.hosts[hostname].ADDRESS is not None:
-                    self.hosts[hostname].ADDRESS = [decompress_ip6(x) for x in self.hosts[hostname].ADDRESS]
+                    decompressed_addresses = []
+                    for x in self.hosts[hostname].ADDRESS:
+                        x = x.replace('$prefix$', cfg.PREFIX)
+                        decompressed_addresses.append(decompress_ip6(x))
+                    self.hosts[hostname].ADDRESS = decompressed_addresses
 
                 # in case of multiple supplied prefixes convert them to list
                 self.hosts[hostname].PREFIX = listify_option(self.hosts[hostname].PREFIX)
 
                 # split prefix into address and length, verify address
                 if self.hosts[hostname].PREFIX is not None:
-                    self.hosts[hostname].PREFIX = [convert_prefix_inline(x) for x in self.hosts[hostname].PREFIX]
+                    converted_prefixes = []
+                    for x in self.hosts[hostname].PREFIX:
+                        x = x.replace('$prefix$', cfg.PREFIX)
+                        converted_prefixes.append(convert_prefix_inline(x))
+                    self.hosts[hostname].PREFIX = converted_prefixes
 
                 # boolify prefix route link local setting
                 if self.hosts[hostname].PREFIX_ROUTE_LINK_LOCAL:

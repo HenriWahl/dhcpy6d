@@ -243,7 +243,7 @@ def listify_option(option):
         if type(option) == str:
             lex = shlex.shlex(option)
             lex.whitespace = WHITESPACE
-            lex.wordchars += ':.-/'
+            lex.wordchars += ':.-/$'
             return list(lex)
         elif type(option) == list:
             return(option)

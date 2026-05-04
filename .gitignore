@@ -4,3 +4,8 @@
 *.db
 *.log
 .idea
+
+# Generated artifacts
+sbin/
+*.egg-info/
+build/lib/

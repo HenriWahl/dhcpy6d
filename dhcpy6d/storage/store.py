@@ -50,6 +50,8 @@ class ClientConfig:
             else:
                 addresses = listify_option(address)
             for a in addresses:
+                if isinstance(a, str):
+                    a = a.replace('$prefix$', cfg.PREFIX)
                 self.ADDRESS.append(decompress_ip6(a))
         else:
             self.ADDRESS = None
@@ -62,6 +64,8 @@ class ClientConfig:
             else:
                 prefixes = listify_option(prefix)
             for p in prefixes:
+                if isinstance(p, str):
+                    p = p.replace('$prefix$', cfg.PREFIX)
                 self.PREFIX.append(convert_prefix_inline(p))
         else:
             self.PREFIX = None
