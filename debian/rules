@@ -20,9 +20,6 @@ override_dh_installsystemd:
 
 # make -f debian/rules get-orig-source
 get-orig-source:
-	python setup.py sdist
+	python3 setup.py sdist
 	mv -v dist/dhcpy6d-*.tar.gz ../dhcpy6d_`dpkg-parsechangelog -SVersion | cut -d- -f1`.orig.tar.gz
-	rm -r MANIFEST dist
-
-# there are no tests - build package anyway
-override_dh_auto_test:
+	rm -rf MANIFEST dist
