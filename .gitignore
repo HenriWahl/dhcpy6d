@@ -9,3 +9,4 @@
 sbin/
 *.egg-info/
 build/lib/
+.pybuild/
