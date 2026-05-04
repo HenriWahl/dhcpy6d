@@ -8,5 +8,17 @@
 # Generated artifacts
 sbin/
 *.egg-info/
-build/lib/
+build/
+dist/
 .pybuild/
+.venv/
+
+# Debian package build artifacts
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.debhelper
+debian/*.debhelper.log
+debian/*.substvars
+debian/tmp/
+debian/dhcpy6d/

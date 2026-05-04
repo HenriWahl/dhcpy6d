@@ -31,7 +31,7 @@ try:
     if not os.path.exists('sbin'):
         os.mkdir('sbin')
     shutil.copyfile('main.py', 'sbin/dhcpy6d')
-    os.chmod('sbin/dhcpy6d', 0o554)
+    os.chmod('sbin/dhcpy6d', 0o755)
 except:
     print('could not copy main.py to sbin/dhcpy6d')
 
