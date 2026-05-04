@@ -18,6 +18,7 @@
 
 """Module dhcpy6d"""
 
+import importlib
 import socket
 import socketserver
 import struct
@@ -49,7 +50,7 @@ def __getattr__(name):
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
     module_name, attribute_name = _LAZY_EXPORTS[name]
-    module = __import__(module_name, globals(), locals(), [attribute_name], 1)
+    module = importlib.import_module(module_name, __name__)
     attribute = getattr(module, attribute_name)
     globals()[name] = attribute
     return attribute
