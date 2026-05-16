@@ -18,6 +18,7 @@
 
 from binascii import (hexlify,
                       unhexlify)
+import ipaddress
 import shlex
 import socket
 import sys
@@ -209,6 +210,39 @@ def combine_prefix_length(prefix, length):
     add prefix and length to 'prefix/length' string
     """
     return f'{prefix}/{length}'
+
+
+def normalize_route_prefix(prefix, length):
+    """
+    normalize route prefix for external helper calls
+    accepts internal 32-char hex notation, regular IPv6 addresses and legacy
+    shortened prefix stems without trailing '::'
+    """
+    if prefix is None:
+        raise Exception('route prefix is empty')
+    if type(prefix) == bytes:
+        prefix = prefix.decode()
+    if type(length) == bytes:
+        length = length.decode()
+
+    prefix = str(prefix).strip().lower()
+    length = str(length).strip()
+
+    if prefix == '':
+        raise Exception('route prefix is empty')
+
+    if '/' in prefix:
+        prefix = prefix.split('/', 1)[0]
+
+    # internally prefixes are often kept as 32-char hex strings
+    if len(prefix) == 32 and ':' not in prefix:
+        prefix = colonify_ip6(prefix)
+    # old or stale route entries may only contain the visible prefix stem
+    elif ':' in prefix and '::' not in prefix and prefix.count(':') < 7:
+        prefix += '::'
+
+    network = ipaddress.IPv6Network(f'{prefix}/{length}', strict=False)
+    return network.network_address.exploded
 
 
 def split_prefix(prefix):

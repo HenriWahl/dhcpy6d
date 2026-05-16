@@ -38,6 +38,7 @@ from .globals import (collected_macs,
                       timer,
                       transactions)
 from .helpers import colonify_ip6
+from .helpers import normalize_route_prefix
 from .log import log
 from .storage import volatile_store
 
@@ -199,18 +200,26 @@ class RouteThread(Thread):
         self.daemon = True
         self.route_queue = route_queue
 
+    @staticmethod
+    def build_route_call(mode, call, prefix, length, router):
+        """
+            render route helper call with a normalized network prefix
+        """
+        return call.replace('$prefix$', normalize_route_prefix(prefix, length)). \
+            replace('$length$', str(length)). \
+            replace('$router$', colonify_ip6(router)). \
+            replace('$mode$', mode)
+
     def run(self):
         """
             wait for new queries in queue until the end of the world
         """
         while True:
             mode, call, prefix, length, router = self.route_queue.get()
-            call_real = call.replace('$prefix$', colonify_ip6(prefix)). \
-                replace('$length$', str(length)). \
-                replace('$router$', colonify_ip6(router)). \
-                replace('$mode$', mode)
+            call_real = f"{call} [prefix={prefix}, length={length}, router={router}, mode={mode}]"
             # subprocess needs list as argument which it gets by split()
             try:
+                call_real = self.build_route_call(mode, call, prefix, length, router)
                 result = subprocess.call(call_real.split(' '))
             except Exception as err:
                 result = err

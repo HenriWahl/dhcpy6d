@@ -19,6 +19,7 @@
 from .config import cfg
 from .globals import (route_queue,
                       timer)
+from .helpers import normalize_route_prefix
 from .log import log
 from .storage import volatile_store
 
@@ -83,10 +84,24 @@ def manage_prefixes_routes():
 
     for prefix in inactive_prefixes:
         length, router, pclass = volatile_store.get_route(prefix)
+        try:
+            normalize_route_prefix(prefix, length)
+        except Exception as err:
+            log.error(f"manage_prefixes_routes: removing invalid persisted route '{prefix}/{length}' via "
+                      f"'{router}': {err}")
+            volatile_store.remove_route(prefix)
+            continue
         if pclass in cfg.CLASSES:
             route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
 
     for prefix in active_prefixes:
         length, router, pclass = volatile_store.get_route(prefix)
+        try:
+            normalize_route_prefix(prefix, length)
+        except Exception as err:
+            log.error(f"manage_prefixes_routes: removing invalid persisted route '{prefix}/{length}' via "
+                      f"'{router}': {err}")
+            volatile_store.remove_route(prefix)
+            continue
         if pclass in cfg.CLASSES:
             route_queue.put(('up', cfg.CLASSES[pclass].CALL_UP, prefix, length, router))

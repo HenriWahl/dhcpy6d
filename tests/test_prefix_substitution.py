@@ -23,7 +23,10 @@ sys.argv = [sys.argv[0], '--config', _TEMP_CONFIG.name]
 import types
 
 _dns = types.ModuleType('dns')
+_dns_query = types.ModuleType('dns.query')
+_dns_reversename = types.ModuleType('dns.reversename')
 _dns_resolver = types.ModuleType('dns.resolver')
+_dns_update = types.ModuleType('dns.update')
 _dns_tsigkeyring = types.ModuleType('dns.tsigkeyring')
 
 
@@ -40,10 +43,16 @@ _dns_resolver.Resolver = _DummyResolver
 _dns_resolver.NoAnswer = _DummyDnsError
 _dns_resolver.NoNameservers = _DummyDnsError
 _dns_tsigkeyring.from_text = lambda *_args, **_kwargs: {}
+_dns.query = _dns_query
+_dns.reversename = _dns_reversename
 _dns.resolver = _dns_resolver
+_dns.update = _dns_update
 _dns.tsigkeyring = _dns_tsigkeyring
 sys.modules.setdefault('dns', _dns)
+sys.modules.setdefault('dns.query', _dns_query)
+sys.modules.setdefault('dns.reversename', _dns_reversename)
 sys.modules.setdefault('dns.resolver', _dns_resolver)
+sys.modules.setdefault('dns.update', _dns_update)
 sys.modules.setdefault('dns.tsigkeyring', _dns_tsigkeyring)
 
 _ORIGINAL_CHOWN = os.chown
@@ -52,7 +61,9 @@ os.chown = lambda *_args, **_kwargs: None
 from dhcpy6d.client import Client
 from dhcpy6d.client.from_config import from_config
 from dhcpy6d.config import cfg
+from dhcpy6d.helpers import normalize_route_prefix
 from dhcpy6d.storage.store import ClientConfig
+from dhcpy6d.threads import RouteThread
 
 os.chown = _ORIGINAL_CHOWN
 sys.argv = _ORIGINAL_ARGV
@@ -121,6 +132,44 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertEqual(client.addresses[0].ADDRESS, '20010db8000000000000000000000001')
         self.assertEqual(client.prefixes[0].PREFIX, '20010db8000000000000000000000000')
         self.assertEqual(client.prefixes[0].LENGTH, '64')
+
+    def test_prefix_substitution_keeps_desired_concat_behavior(self):
+        cfg.PREFIX = '2003:a:838:8f'
+
+        cc = ClientConfig(
+            hostname='iserv',
+            client_class='default',
+            address='$prefix$a3::2',
+            prefix='$prefix$::/63',
+        )
+
+        self.assertEqual(cc.ADDRESS, ['2003000a08388fa30000000000000002'])
+        self.assertEqual(
+            cc.PREFIX,
+            [{'address': '2003000a0838008f0000000000000000', 'length': '63'}],
+        )
+
+    def test_route_prefix_normalization_accepts_legacy_replay_value(self):
+        self.assertEqual(
+            normalize_route_prefix('2003:a:838:8f', '63'),
+            '2003:000a:0838:008e:0000:0000:0000:0000',
+        )
+
+    def test_route_thread_build_route_call_normalizes_prefix_argument(self):
+        call = RouteThread.build_route_call(
+            'up',
+            '/usr/sbin/dhcpy6d-add-route $prefix$/$length$ $router$ dmz',
+            '2003000a0838008f0000000000000000',
+            '63',
+            'fe800000000000000000000000000002',
+        )
+
+        self.assertEqual(
+            call,
+            '/usr/sbin/dhcpy6d-add-route '
+            '2003:000a:0838:008e:0000:0000:0000:0000/63 '
+            'fe80:0000:0000:0000:0000:0000:0000:0002 dmz',
+        )
 
 
 if __name__ == "__main__":
