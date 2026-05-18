@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -eu
-
 ENV_FILE="/var/lib/dhcpy6d/environment-prefix"
 DEFAULTS_FILE="/etc/default/dhcpy6d"
 
@@ -55,26 +53,19 @@ case "${reason:-}" in
     BOUND6|RENEW6|REBIND6)
         if [ "${enabled}" != "yes" ]; then
             write_prefix_arg '""'
-            exit 0
-        fi
-
-        prefix="${new_dhcp6_ia_pd1_prefix1:-}"
-        bits="${new_dhcp6_ia_pd1_prefix1_length:-}"
-
-        if [ -z "${prefix}" ] || [ -z "${bits}" ]; then
-            write_prefix_arg '""'
-            exit 0
-        fi
-
-        if ! result="$(derive_prefix_stem "${prefix}" "${bits}")"; then
-            write_prefix_arg '""'
-            exit 0
-        fi
-
-        if [ -n "${result}" ]; then
-            write_prefix_arg "\"--prefix ${result}\""
         else
-            write_prefix_arg '""'
+            prefix="${new_dhcp6_ia_pd1_prefix1:-}"
+            bits="${new_dhcp6_ia_pd1_prefix1_length:-}"
+
+            if [ -z "${prefix}" ] || [ -z "${bits}" ]; then
+                write_prefix_arg '""'
+            elif ! result="$(derive_prefix_stem "${prefix}" "${bits}")"; then
+                write_prefix_arg '""'
+            elif [ -n "${result}" ]; then
+                write_prefix_arg "\"--prefix ${result}\""
+            else
+                write_prefix_arg '""'
+            fi
         fi
         ;;
 esac
