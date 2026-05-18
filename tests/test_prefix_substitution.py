@@ -156,7 +156,7 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertTrue(collision)
 
     def test_inject_dynamic_prefix_uses_concat_when_hextet_can_be_completed(self):
-        value, collision = inject_dynamic_prefix('$prefix$00::/63', '2001:db8:838:8f')
+        value, collision = inject_dynamic_prefix('$prefix$00::/63', '2001:db8:838:8f', allow_legacy_concat=True)
         self.assertEqual(value, '2001:db8:838:8f00::/63')
         self.assertFalse(collision)
 

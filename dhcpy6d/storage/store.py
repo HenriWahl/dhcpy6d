@@ -53,7 +53,7 @@ class ClientConfig:
                 addresses = listify_option(address)
             for a in addresses:
                 if isinstance(a, str):
-                    a, collision = inject_dynamic_prefix(a, cfg.PREFIX)
+                    a, collision = inject_dynamic_prefix(a, cfg.PREFIX, allow_legacy_concat=True)
                     if collision:
                         log.error(f"Client configuration database: implicit $prefix$ concatenation in "
                                   f"ADDRESS '{a}'")
@@ -73,7 +73,7 @@ class ClientConfig:
                 prefixes = listify_option(prefix)
             for p in prefixes:
                 if isinstance(p, str):
-                    p, collision = inject_dynamic_prefix(p, cfg.PREFIX)
+                    p, collision = inject_dynamic_prefix(p, cfg.PREFIX, allow_legacy_concat=True)
                     if collision:
                         log.error(f"Client configuration database: implicit $prefix$ concatenation in "
                                   f"PREFIX '{p}'")

@@ -77,7 +77,9 @@ These attributes do not serve for identification of a client but for appropriate
     Addresses configured here will be sent to a client in addition to the ones it gets due to its class. Might be useful for some extra static address definitions.
     The *$prefix$* placeholder from *--prefix* can be used here as well.
     Recommended style is explicit separation like *$prefix$:19::2*.
-    Older, undocumented forms like *$prefix$19::2* are still accepted for compatibility.
+    Older forms like *$prefix$19::2* are accepted for compatibility and may be interpreted
+    as legacy concat (for example *...:8f* + *19::2* -> *...:8f19::2*) when that still fits into one hextet.
+    If you always want a new hextet, use an explicit separator after *$prefix$*.
 
 **prefix = <prefix> [<prefix> ...]**
     Prefix configured here will be sent to client in addition to the ones it gets due to its class.

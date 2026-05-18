@@ -90,7 +90,7 @@ class Textfile(Store):
                 if self.hosts[hostname].ADDRESS is not None:
                     decompressed_addresses = []
                     for x in self.hosts[hostname].ADDRESS:
-                        x, collision = inject_dynamic_prefix(x, cfg.PREFIX)
+                        x, collision = inject_dynamic_prefix(x, cfg.PREFIX, allow_legacy_concat=True)
                         if collision:
                             log.error(f"Textfile client configuration: implicit $prefix$ concatenation in "
                                       f"ADDRESS '{x}' for host '{self.hosts[hostname].HOSTNAME}'")
@@ -110,7 +110,7 @@ class Textfile(Store):
                 if self.hosts[hostname].PREFIX is not None:
                     converted_prefixes = []
                     for x in self.hosts[hostname].PREFIX:
-                        x, collision = inject_dynamic_prefix(x, cfg.PREFIX)
+                        x, collision = inject_dynamic_prefix(x, cfg.PREFIX, allow_legacy_concat=True)
                         if collision:
                             log.error(f"Textfile client configuration: implicit $prefix$ concatenation in "
                                       f"PREFIX '{x}' for host '{self.hosts[hostname].HOSTNAME}'")

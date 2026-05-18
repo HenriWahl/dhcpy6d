@@ -70,7 +70,9 @@ Most configuration is done via the configuration file.
     Useful for setups where the ISP uses a changing prefix.
     The value is also used for fixed **address** and **prefix** entries in *dhcpy6d-clients.conf*.
     If a hexadecimal character follows directly after *$prefix$* (for example *$prefix$19::2*),
-    dhcpy6d applies compatibility heuristics and inserts a separator automatically.
+    dhcpy6d applies compatibility heuristics.
+    Use explicit separators for deterministic behavior: *$prefix$:19::2* starts a new hextet,
+    while *$prefix$19::2* may be treated as legacy concat and complete the previous hextet.
 
 **-G, --generate-duid**
     Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
@@ -117,4 +119,3 @@ See also
 * dhcpy6d-clients.conf(5)
 * `<https://dhcpy6d.de>`_
 * `<https://github.com/HenriWahl/dhcpy6d>`_
-

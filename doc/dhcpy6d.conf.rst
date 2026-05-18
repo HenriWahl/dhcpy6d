@@ -311,9 +311,14 @@ There can be many address definitions which will be used by classes. Every addre
         This placeholder can be used instead of a literal prefix and uses the prefix given at calling dhcpy6d via the *--prefix* argument like *$prefix$::$id$*.
         If text is appended directly, dhcpy6d keeps compatibility with older, undocumented patterns:
 
-        - new/recommended style: *$prefix$:19::2*
-        - old/legacy style: *$prefix$19::2* (interpreted compatibly)
-        - likely legacy intent for compact suffixes: *$prefix$dead:beef* (interpreted like *$prefix$::dead:beef*)
+        - explicit/new hextet (recommended): *$prefix$:19::2*
+        - legacy concat (when suffix can complete the previous hextet): *$prefix$19::2* -> *...:8f19::2*
+        - legacy compact suffix with colon: *$prefix$dead:beef* (interpreted like *$prefix$::dead:beef*)
+
+        For deterministic behavior, use explicit separators:
+
+        - use *:$suffix* to start a new hextet
+        - use direct concat only if you intentionally want to complete the previous hextet
 
 **ia_type = na|ta**
     IA (Identity Association) types can be one of non-temporary address *na* or temporary address *ta*. Default and probably most used is *na*.

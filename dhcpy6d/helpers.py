@@ -246,7 +246,7 @@ def normalize_route_prefix(prefix, length):
     return network.network_address.exploded
 
 
-def inject_dynamic_prefix(value, dynamic_prefix):
+def inject_dynamic_prefix(value, dynamic_prefix, allow_legacy_concat=False):
     """
     replace $prefix$ in client config values
     if a hexadecimal character follows immediately, force a ':' separator to
@@ -287,7 +287,7 @@ def inject_dynamic_prefix(value, dynamic_prefix):
 
             can_concat = bool(right_hex) and last_hextet_len > 0 and (last_hextet_len + len(right_hex) <= 4)
 
-            if can_concat:
+            if allow_legacy_concat and can_concat:
                 separator_candidates = ['', ':', '::']
             elif '::' in right:
                 separator_candidates = [':', '', '::']

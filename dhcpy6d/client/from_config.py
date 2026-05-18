@@ -45,7 +45,7 @@ def from_config(client=None, client_config=None, transaction=None):
                 if len(address) > 0:
                     # if address contains $prefix$ replace it and decompress it now
                     if '$prefix$' in address:
-                        address, collision = inject_dynamic_prefix(address, cfg.PREFIX)
+                        address, collision = inject_dynamic_prefix(address, cfg.PREFIX, allow_legacy_concat=True)
                         if collision:
                             log.error(f"Client config processing: implicit $prefix$ concatenation in "
                                       f"ADDRESS '{address}' for host '{client_config.HOSTNAME}'")
@@ -70,7 +70,7 @@ def from_config(client=None, client_config=None, transaction=None):
             for prefix in client_config.PREFIX:
                 # if prefix contains $prefix$ replace it and convert it now
                 if isinstance(prefix, str) and '$prefix$' in prefix:
-                    prefix, collision = inject_dynamic_prefix(prefix, cfg.PREFIX)
+                    prefix, collision = inject_dynamic_prefix(prefix, cfg.PREFIX, allow_legacy_concat=True)
                     if collision:
                         log.error(f"Client config processing: implicit $prefix$ concatenation in "
                                   f"PREFIX '{prefix}' for host '{client_config.HOSTNAME}'")
