@@ -82,6 +82,21 @@ def manage_prefixes_routes():
     inactive_prefixes = volatile_store.get_inactive_prefixes()
     active_prefixes = volatile_store.get_active_prefixes()
 
+    def stale_prefix_configuration(prefix):
+        record = volatile_store.get_prefix_record(prefix)
+        if record is None:
+            return True
+        _prefix, length, ptype, pclass, _active = record
+        if pclass not in cfg.CLASSES:
+            return True
+        if ptype not in cfg.CLASSES[pclass].PREFIXES:
+            return True
+        if ptype not in cfg.PREFIXES:
+            return True
+        if str(cfg.PREFIXES[ptype].LENGTH) != str(length):
+            return True
+        return False
+
     for prefix in inactive_prefixes:
         length, router, pclass = volatile_store.get_route(prefix)
         try:
@@ -90,6 +105,13 @@ def manage_prefixes_routes():
             log.error(f"manage_prefixes_routes: removing invalid persisted route '{prefix}/{length}' via "
                       f"'{router}': {err}")
             volatile_store.remove_route(prefix)
+            continue
+        if stale_prefix_configuration(prefix):
+            log.error(f"manage_prefixes_routes: deconfiguring stale route for prefix '{prefix}'")
+            volatile_store.deactivate_prefix(prefix)
+            volatile_store.remove_route(prefix)
+            if pclass in cfg.CLASSES:
+                route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
             continue
         if pclass in cfg.CLASSES:
             route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
@@ -102,6 +124,13 @@ def manage_prefixes_routes():
             log.error(f"manage_prefixes_routes: removing invalid persisted route '{prefix}/{length}' via "
                       f"'{router}': {err}")
             volatile_store.remove_route(prefix)
+            continue
+        if stale_prefix_configuration(prefix):
+            log.error(f"manage_prefixes_routes: deconfiguring stale route for prefix '{prefix}'")
+            volatile_store.deactivate_prefix(prefix)
+            volatile_store.remove_route(prefix)
+            if pclass in cfg.CLASSES:
+                route_queue.put(('down', cfg.CLASSES[pclass].CALL_DOWN, prefix, length, router))
             continue
         if pclass in cfg.CLASSES:
             route_queue.put(('up', cfg.CLASSES[pclass].CALL_UP, prefix, length, router))

@@ -557,6 +557,23 @@ class Store:
         else:
             return None, None, None
 
+    def get_prefix_record(self, prefix):
+        """
+        get persisted prefix metadata needed for stale-config guards
+        """
+        query = f"SELECT prefix, length, type, class, active FROM {self.table_prefixes} WHERE prefix = '{prefix}'"
+        answer = self.query(query)
+        if answer is not None and len(answer) > 0:
+            return answer[0]
+        return None
+
+    def deactivate_prefix(self, prefix):
+        """
+        mark a persisted prefix inactive so it is not reused as active lease
+        """
+        query = f"UPDATE {self.table_prefixes} SET active = 0, last_message = 0 WHERE prefix = '{prefix}'"
+        return self.query(query)
+
     @clean_query_answer
     def release_lease(self, address, now):
         """

@@ -242,31 +242,22 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                                         pclass=p['class'],
                                                         route_link_local=cfg.PREFIXES[p['type']].ROUTE_LINK_LOCAL)
                                             client.prefixes.append(ia)
-                            # add prefixes which are bound to client to advertised prefixes
-                            else:
-                                ia = Prefix(prefix=p['prefix'],
-                                            length=p['length'],
-                                            ptype=p['type'],
-                                            preferred_lifetime=cfg.PREFERRED_LIFETIME,
-                                            valid_lifetime=cfg.VALID_LIFETIME,
-                                            category=p['category'],
-                                            pclass=p['class'],
-                                            route_link_local=False)
-                                client.prefixes.append(ia)
+                            # if the original prefix type is no longer configured, do not
+                            # continue to advertise it as valid. It will be refused later
+                            # with preferred/valid lifetime 0 via transaction prefix diff.
 
         # important indent here, has to match for...prefixes-loop!
         # look for prefixes in transaction that are invalid and add them
         # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
-        if len(client.prefixes) > 0:
-            for p in set(transaction.prefixes).difference(
-                    [decompress_prefix(x.PREFIX, x.LENGTH) for x in client.prefixes]):
-                prefix, length = split_prefix(p)
-                client.prefixes.append(Prefix(prefix=prefix,
-                                              length=length,
-                                              valid=False,
-                                              preferred_lifetime=0,
-                                              valid_lifetime=0))
-                del (prefix, length)
+        for p in set(transaction.prefixes).difference(
+                [decompress_prefix(x.PREFIX, x.LENGTH) for x in client.prefixes]):
+            prefix, length = split_prefix(p)
+            client.prefixes.append(Prefix(prefix=prefix,
+                                          length=length,
+                                          valid=False,
+                                          preferred_lifetime=0,
+                                          valid_lifetime=0))
+            del (prefix, length)
 
     # given client has been modified successfully
     return True

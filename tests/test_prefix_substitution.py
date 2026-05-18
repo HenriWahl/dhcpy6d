@@ -1,4 +1,5 @@
 import atexit
+import importlib
 import os
 import sys
 import tempfile
@@ -63,8 +64,12 @@ from dhcpy6d.client.from_config import from_config
 from dhcpy6d.config import cfg
 from dhcpy6d.helpers import (inject_dynamic_prefix,
                              normalize_route_prefix)
+from dhcpy6d.route import manage_prefixes_routes
 from dhcpy6d.storage.store import ClientConfig
 from dhcpy6d.threads import RouteThread
+from dhcpy6d.globals import route_queue, timer
+from dhcpy6d import route as route_module
+reuse_lease_module = importlib.import_module('dhcpy6d.client.reuse_lease')
 
 os.chown = _ORIGINAL_CHOWN
 sys.argv = _ORIGINAL_ARGV
@@ -98,6 +103,18 @@ class MockClass:
         self.BOOTFILES = []
         self.PREFIXES = []
         self.ADVERTISE = []
+
+
+class MockPrefixTransaction:
+    def __init__(self):
+        self.ia_options = [25]  # IA_PD
+        self.interface = 'eth0'
+        self.hostname = 'iserv'
+        self.duid = '00010001294b6c4f52540045fef0'
+        self.mac = '02:00:c0:a8:ff:31'
+        self.answer = 'normal'
+        self.prefixes = ['2001:0db8:0838:8f00:0000:0000:0000:0000/63']
+        self.addresses = []
 
 
 class PrefixSubstitutionTest(unittest.TestCase):
@@ -160,6 +177,46 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertEqual(value, '2001:db8:838:8f00::/63')
         self.assertFalse(collision)
 
+    def test_client_config_prefix_concat_keeps_8f00_shape(self):
+        cfg.PREFIX = '2001:db8:838:8f'
+        cc = ClientConfig(
+            hostname='iserv',
+            client_class='default',
+            address='$prefix$a3::2',
+            prefix='$prefix$00::/63',
+        )
+        self.assertEqual(cc.ADDRESS, ['20010db808388fa30000000000000002'])
+        self.assertEqual(
+            cc.PREFIX,
+            [{'address': '20010db808388f000000000000000000', 'length': '63'}],
+        )
+
+    def test_integration_prefix_concat_stays_8f00_until_route_call(self):
+        cfg.PREFIX = '2001:db8:838:8f'
+        cc = ClientConfig(
+            hostname='iserv',
+            client_class='default',
+            address='$prefix$a3::2',
+            prefix='$prefix$00::/63',
+        )
+        client = Client()
+        transaction = MockTransaction()
+        transaction.mac = '02:00:c0:a8:ff:31'
+        transaction.duid = '00010001294b6c4f52540045fef0'
+        from_config(client=client, client_config=cc, transaction=transaction)
+
+        self.assertEqual(client.prefixes[0].PREFIX, '20010db808388f000000000000000000')
+        self.assertEqual(client.prefixes[0].LENGTH, '63')
+
+        call = RouteThread.build_route_call(
+            'up',
+            '/usr/sbin/dhcpy6d-add-route $prefix$/$length$ $router$ dmz_office',
+            client.prefixes[0].PREFIX,
+            client.prefixes[0].LENGTH,
+            'fe800000000000000000000000000002',
+        )
+        self.assertIn('2001:0db8:0838:8f00:0000:0000:0000:0000/63', call)
+
     def test_inject_dynamic_prefix_prefers_legacy_double_colon_shape(self):
         value, collision = inject_dynamic_prefix('$prefix$dead:beef', '2001:db8:10')
         self.assertEqual(value, '2001:db8:10::dead:beef')
@@ -186,6 +243,81 @@ class PrefixSubstitutionTest(unittest.TestCase):
             '2001:0db8:0010:0020:0000:0000:0000:0000/63 '
             'fe80:0000:0000:0000:0000:0000:0000:0002 dmz',
         )
+
+    def test_manage_prefixes_routes_deconfigures_stale_active_route(self):
+        class _MockStore:
+            def __init__(self):
+                self.deactivated = []
+                self.removed = []
+
+            def release_free_prefixes(self, _now):
+                return None
+
+            def get_inactive_prefixes(self):
+                return []
+
+            def get_active_prefixes(self):
+                return ['20010db808388f000000000000000000']
+
+            def get_route(self, _prefix):
+                return '63', 'fe800000000000000000000000000002', 'default'
+
+            def get_prefix_record(self, _prefix):
+                # stale: configured class does not contain this prefix type anymore
+                return ('20010db808388f000000000000000000', '63', 'obsolete', 'default', 1)
+
+            def deactivate_prefix(self, prefix):
+                self.deactivated.append(prefix)
+
+            def remove_route(self, prefix):
+                self.removed.append(prefix)
+
+        original_store = route_module.volatile_store
+        mock_store = _MockStore()
+        route_module.volatile_store = mock_store
+        timer.time = 0
+        cfg.CLASSES['default'].CALL_DOWN = '/usr/sbin/dhcpy6d-del-route $prefix$/$length$ $router$'
+        while not route_queue.empty():
+            route_queue.get_nowait()
+        try:
+            manage_prefixes_routes()
+            self.assertEqual(
+                mock_store.deactivated,
+                ['20010db808388f000000000000000000'],
+            )
+            self.assertEqual(
+                mock_store.removed,
+                ['20010db808388f000000000000000000'],
+            )
+            self.assertFalse(route_queue.empty())
+            mode, _call, prefix, _length, _router = route_queue.get_nowait()
+            self.assertEqual(mode, 'down')
+            self.assertEqual(prefix, '20010db808388f000000000000000000')
+        finally:
+            route_module.volatile_store = original_store
+
+    def test_reuse_lease_refuses_unconfigured_prefix_with_zero_lifetimes(self):
+        class _MockLeaseStore:
+            @staticmethod
+            def check_prefix(_prefix, _length, _transaction):
+                return [('iserv', '20010db808388f000000000000000000', '63', 'obsolete', 'range', 'default', 0)]
+
+        original_store = reuse_lease_module.volatile_store
+        reuse_lease_module.volatile_store = _MockLeaseStore()
+        cfg.CLASSES['default'].ADVERTISE = ['prefixes']
+        cfg.CLASSES['default'].PREFIXES = []
+        cfg.CLASSES['default_eth0'] = cfg.CLASSES['default']
+        try:
+            client = Client()
+            transaction = MockPrefixTransaction()
+            reuse_lease_module.reuse_lease(client=client, client_config=None, transaction=transaction)
+            self.assertEqual(len(client.prefixes), 1)
+            self.assertEqual(client.prefixes[0].PREFIX.replace(':', ''), '20010db808388f000000000000000000')
+            self.assertEqual(client.prefixes[0].LENGTH, '63')
+            self.assertEqual(client.prefixes[0].PREFERRED_LIFETIME, 0)
+            self.assertEqual(client.prefixes[0].VALID_LIFETIME, 0)
+        finally:
+            reuse_lease_module.volatile_store = original_store
 
 
 if __name__ == "__main__":
