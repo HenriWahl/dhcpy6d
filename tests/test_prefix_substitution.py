@@ -117,6 +117,18 @@ class MockPrefixTransaction:
         self.addresses = []
 
 
+class MockAddressTransaction:
+    def __init__(self):
+        self.ia_options = [3]  # IA_NA
+        self.interface = 'eth0'
+        self.hostname = 'iserv'
+        self.duid = '00010001294b6c4f52540045fef0'
+        self.mac = '02:00:c0:a8:ff:31'
+        self.answer = 'normal'
+        self.addresses = ['2001:0db8:0838:8fa3:0000:0000:0000:0002']
+        self.prefixes = []
+
+
 class PrefixSubstitutionTest(unittest.TestCase):
     def setUp(self):
         self._old_prefix = cfg.PREFIX
@@ -316,6 +328,36 @@ class PrefixSubstitutionTest(unittest.TestCase):
             self.assertEqual(client.prefixes[0].LENGTH, '63')
             self.assertEqual(client.prefixes[0].PREFERRED_LIFETIME, 0)
             self.assertEqual(client.prefixes[0].VALID_LIFETIME, 0)
+        finally:
+            reuse_lease_module.volatile_store = original_store
+
+    def test_reuse_lease_refuses_unconfigured_address_with_zero_lifetimes(self):
+        class _MockLeaseStore:
+            def __init__(self):
+                self.deactivated = []
+
+            @staticmethod
+            def check_lease(_address, _transaction):
+                return [('iserv', '20010db808388fa30000000000000002', 'obsolete', 'range', 'na', 'default', 0)]
+
+            def deactivate_lease(self, address):
+                self.deactivated.append(address)
+
+        mock_store = _MockLeaseStore()
+        original_store = reuse_lease_module.volatile_store
+        reuse_lease_module.volatile_store = mock_store
+        cfg.CLASSES['default'].ADVERTISE = ['addresses']
+        cfg.CLASSES['default'].ADDRESSES = []
+        cfg.CLASSES['default_eth0'] = cfg.CLASSES['default']
+        try:
+            client = Client()
+            transaction = MockAddressTransaction()
+            reuse_lease_module.reuse_lease(client=client, client_config=None, transaction=transaction)
+            self.assertEqual(len(client.addresses), 1)
+            self.assertEqual(client.addresses[0].ADDRESS.replace(':', ''), '20010db808388fa30000000000000002')
+            self.assertEqual(client.addresses[0].PREFERRED_LIFETIME, 0)
+            self.assertEqual(client.addresses[0].VALID_LIFETIME, 0)
+            self.assertEqual(mock_store.deactivated, ['20010db808388fa30000000000000002'])
         finally:
             reuse_lease_module.volatile_store = original_store
 

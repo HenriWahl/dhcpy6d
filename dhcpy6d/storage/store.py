@@ -574,6 +574,13 @@ class Store:
         query = f"UPDATE {self.table_prefixes} SET active = 0, last_message = 0 WHERE prefix = '{prefix}'"
         return self.query(query)
 
+    def deactivate_lease(self, address):
+        """
+        mark a persisted address lease inactive so it is not reused as active lease
+        """
+        query = f"UPDATE {self.table_leases} SET active = 0, last_message = 0 WHERE address = '{address}'"
+        return self.query(query)
+
     @clean_query_answer
     def release_lease(self, address, now):
         """

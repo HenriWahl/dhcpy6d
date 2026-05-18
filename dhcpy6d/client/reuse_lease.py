@@ -57,6 +57,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                         a = dict(list(
                             zip(('hostname', 'address', 'type', 'category', 'ia_type', 'class', 'preferred_until'),
                                 item)))
+                        stale_configuration = False
                         # if lease exists but no configured client set class to default
                         if client_config is None:
                             client.hostname = transaction.hostname
@@ -157,6 +158,13 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                                      dns_rev_zone=cfg.ADDRESSES[a['type']].DNS_REV_ZONE,
                                                      dns_ttl=cfg.ADDRESSES[a['type']].DNS_TTL)
                                         client.addresses.append(ia)
+                            else:
+                                stale_configuration = True
+                        else:
+                            stale_configuration = True
+
+                        if stale_configuration:
+                            volatile_store.deactivate_lease(a['address'])
 
         # important indent here, has to match for...addresses-loop!
         # look for addresses in transaction that are invalid and add them
