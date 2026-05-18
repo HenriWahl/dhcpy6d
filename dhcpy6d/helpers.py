@@ -271,8 +271,25 @@ def inject_dynamic_prefix(value, dynamic_prefix):
         replacement = dynamic_prefix
         if right and right[0].lower() in string.hexdigits and not dynamic_prefix.endswith(':'):
             # Keep best compatibility with undocumented legacy patterns.
-            # Prefer explicit separators over plain concat.
-            if '::' in right:
+            # Prefer legacy concat when it still fits into one hextet.
+            right_hex = ''
+            for c in right.lower():
+                if c in string.hexdigits:
+                    right_hex += c
+                else:
+                    break
+
+            last_hextet_len = 0
+            if ':' in dynamic_prefix:
+                last = dynamic_prefix.rsplit(':', 1)[1]
+                if last != '':
+                    last_hextet_len = len(last)
+
+            can_concat = bool(right_hex) and last_hextet_len > 0 and (last_hextet_len + len(right_hex) <= 4)
+
+            if can_concat:
+                separator_candidates = ['', ':', '::']
+            elif '::' in right:
                 separator_candidates = [':', '', '::']
             elif ':' in right:
                 separator_candidates = ['::', ':', '']
@@ -283,7 +300,8 @@ def inject_dynamic_prefix(value, dynamic_prefix):
             for separator in separator_candidates:
                 try:
                     # only validate the immediate expansion candidate
-                    decompress_ip6(dynamic_prefix + separator + right)
+                    right_for_validation = right.split('/', 1)[0]
+                    decompress_ip6(dynamic_prefix + separator + right_for_validation)
                     chosen_separator = separator
                     break
                 except Exception:

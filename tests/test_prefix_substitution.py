@@ -134,7 +134,7 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertEqual(client.prefixes[0].PREFIX, '20010db8000000000000000000000000')
         self.assertEqual(client.prefixes[0].LENGTH, '64')
 
-    def test_prefix_substitution_inserts_separator_on_collision(self):
+    def test_prefix_substitution_keeps_legacy_concat_when_it_fits(self):
         cfg.PREFIX = '2001:db8:10:20'
 
         cc = ClientConfig(
@@ -144,16 +144,21 @@ class PrefixSubstitutionTest(unittest.TestCase):
             prefix='$prefix$::/63',
         )
 
-        self.assertEqual(cc.ADDRESS, ['20010db80010002000a3000000000002'])
+        self.assertEqual(cc.ADDRESS, ['20010db8001020a30000000000000002'])
         self.assertEqual(
             cc.PREFIX,
             [{'address': '20010db8001000200000000000000000', 'length': '63'}],
         )
 
     def test_inject_dynamic_prefix_reports_collision(self):
-        value, collision = inject_dynamic_prefix('$prefix$19::2', '2001:db8:10')
-        self.assertEqual(value, '2001:db8:10:19::2')
+        value, collision = inject_dynamic_prefix('$prefix$19::2', '2001:db8:8317')
+        self.assertEqual(value, '2001:db8:8317:19::2')
         self.assertTrue(collision)
+
+    def test_inject_dynamic_prefix_uses_concat_when_hextet_can_be_completed(self):
+        value, collision = inject_dynamic_prefix('$prefix$00::/63', '2001:db8:838:8f')
+        self.assertEqual(value, '2001:db8:838:8f00::/63')
+        self.assertFalse(collision)
 
     def test_inject_dynamic_prefix_prefers_legacy_double_colon_shape(self):
         value, collision = inject_dynamic_prefix('$prefix$dead:beef', '2001:db8:10')
