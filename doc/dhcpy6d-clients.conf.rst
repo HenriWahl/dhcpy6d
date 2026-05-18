@@ -75,9 +75,13 @@ These attributes do not serve for identification of a client but for appropriate
 
 **address = <address> [<address> ...]**
     Addresses configured here will be sent to a client in addition to the ones it gets due to its class. Might be useful for some extra static address definitions.
+    The *$prefix$* placeholder from *--prefix* can be used here as well.
+    Recommended style is explicit separation like *$prefix$:19::2*.
+    Older, undocumented forms like *$prefix$19::2* are still accepted for compatibility.
 
 **prefix = <prefix> [<prefix> ...]**
     Prefix configured here will be sent to client in addition to the ones it gets due to its class.
+    The *$prefix$* placeholder from *--prefix* can be used here as well.
 
 **prefix_route_link_local = yes|no**
     As default Link Local Address of requesting client is not used as router address for external call.
@@ -152,4 +156,3 @@ See also
 * dhcpy6d.conf(5)
 * `<https://dhcpy6d.de>`_
 * `<https://github.com/HenriWahl/dhcpy6d>`_
-

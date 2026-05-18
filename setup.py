@@ -25,6 +25,7 @@ import os
 import os.path
 from setuptools import setup, find_packages
 import shutil
+import subprocess
 
 # workaround to get dhcpy6d-startscript created
 try:
@@ -34,6 +35,23 @@ try:
     os.chmod('sbin/dhcpy6d', 0o755)
 except:
     print('could not copy main.py to sbin/dhcpy6d')
+
+
+def generate_manpages():
+    """
+    Generate manpages from doc/*.rst if possible.
+    """
+    try:
+        subprocess.check_call(['python3', 'scripts/generate_manpages.py', '--out-dir', '.'])
+    except Exception as err:
+        print(f'could not generate manpages: {err}')
+
+
+def existing(paths):
+    return [p for p in paths if os.path.exists(p)]
+
+
+generate_manpages()
 
 classifiers = [
     'Intended Audience :: System Administrators',
@@ -55,9 +73,9 @@ data_files = [('/var/lib/dhcpy6d', ['var/lib/volatile.sqlite']),
                                           'doc/LICENSE',
                                           'doc/volatile.sql',
                                           'doc/volatile.postgresql']),
-              ('/usr/share/man/man5', ['man/man5/dhcpy6d.conf.5',
-                                       'man/man5/dhcpy6d-clients.conf.5']),
-              ('/usr/share/man/man8', ['man/man8/dhcpy6d.8']),
+              ('/usr/share/man/man5', existing(['man/man5/dhcpy6d.conf.5',
+                                                'man/man5/dhcpy6d-clients.conf.5'])),
+              ('/usr/share/man/man8', existing(['man/man8/dhcpy6d.8'])),
               ('/etc', ['etc/dhcpy6d.conf']),
               ('/usr/sbin', ['sbin/dhcpy6d']),
               ]

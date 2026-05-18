@@ -66,7 +66,11 @@ Most configuration is done via the configuration file.
     Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d and /lib/systemd/system/dhcpy6d.service respectively.
 
 **-p, --prefix=<prefix>**
-    Set the prefix which will be substituted for the $prefix$ variable in address definitions. Useful for setups where the ISP uses a changing prefix.
+    Set the prefix which will be substituted for the $prefix$ variable in address definitions.
+    Useful for setups where the ISP uses a changing prefix.
+    The value is also used for fixed **address** and **prefix** entries in *dhcpy6d-clients.conf*.
+    If a hexadecimal character follows directly after *$prefix$* (for example *$prefix$19::2*),
+    dhcpy6d applies compatibility heuristics and inserts a separator automatically.
 
 **-G, --generate-duid**
     Generate DUID to be used in config file. This argument is used to generate a DUID for /etc/default/dhcpy6d. After generation dhcpy6d exits.
@@ -113,5 +117,4 @@ See also
 * dhcpy6d-clients.conf(5)
 * `<https://dhcpy6d.de>`_
 * `<https://github.com/HenriWahl/dhcpy6d>`_
-
 

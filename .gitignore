@@ -14,6 +14,8 @@ dist/
 .pybuild/
 .venv/
 .venv311/
+man/man5/*.5
+man/man8/*.8
 
 # Debian package build artifacts
 debian/.debhelper/

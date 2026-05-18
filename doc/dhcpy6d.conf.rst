@@ -307,8 +307,13 @@ There can be many address definitions which will be used by classes. Every addre
     **$random64$**
         A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would if privacy extensions were used. The random part will span over 4 octets.
 
-    **$prefix**
+    **$prefix$**
         This placeholder can be used instead of a literal prefix and uses the prefix given at calling dhcpy6d via the *--prefix* argument like *$prefix$::$id$*.
+        If text is appended directly, dhcpy6d keeps compatibility with older, undocumented patterns:
+
+        - new/recommended style: *$prefix$:19::2*
+        - old/legacy style: *$prefix$19::2* (interpreted compatibly)
+        - likely legacy intent for compact suffixes: *$prefix$dead:beef* (interpreted like *$prefix$::dead:beef*)
 
 **ia_type = na|ta**
     IA (Identity Association) types can be one of non-temporary address *na* or temporary address *ta*. Default and probably most used is *na*.

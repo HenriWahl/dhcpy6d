@@ -2,6 +2,10 @@
 %:
 	dh $@ --buildsystem=pybuild --with python3 --with systemd
 
+override_dh_auto_build:
+	python3 scripts/generate_manpages.py --out-dir .
+	dh_auto_build
+
 override_dh_auto_install:
 	dh_auto_install -- --install-args="--install-scripts=/usr/sbin --install-layout=deb"
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/LICENSE
