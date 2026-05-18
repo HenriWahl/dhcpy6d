@@ -50,8 +50,8 @@ case "$1" in
     if [ ! -e /var/lib/dhcpy6d/volatile.sqlite ]; then
         touch /var/lib/dhcpy6d/volatile.sqlite
     fi
-    if [ ! -e /var/lib/dhcpy6d/environment-prefix ]; then
-        echo 'PREFIX_ARG=""' > /var/lib/dhcpy6d/environment-prefix
+    if [ ! -e /var/lib/dhcpy6d/environment-prefix ] || ! grep -q '^PREFIX_OPT=' /var/lib/dhcpy6d/environment-prefix; then
+        printf 'PREFIX_OPT=\nPREFIX_VAL=\n' > /var/lib/dhcpy6d/environment-prefix
     fi
     chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
     chmod 0660 /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite

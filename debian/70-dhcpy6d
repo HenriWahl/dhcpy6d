@@ -13,7 +13,11 @@ fi
 write_prefix_arg() {
     value="$1"
     tmp="$(mktemp)"
-    printf 'PREFIX_ARG=%s\n' "${value}" > "${tmp}"
+    if [ -n "${value}" ]; then
+        printf 'PREFIX_OPT=--prefix\nPREFIX_VAL=%s\n' "${value}" > "${tmp}"
+    else
+        printf 'PREFIX_OPT=\nPREFIX_VAL=\n' > "${tmp}"
+    fi
     if ! cmp -s "${tmp}" "${ENV_FILE}" 2>/dev/null; then
         install -m 0644 -o root -g root "${tmp}" "${ENV_FILE}"
         systemctl -q try-restart dhcpy6d || :
@@ -52,19 +56,19 @@ PY
 case "${reason:-}" in
     BOUND6|RENEW6|REBIND6)
         if [ "${enabled}" != "yes" ]; then
-            write_prefix_arg '""'
+            write_prefix_arg ''
         else
             prefix="${new_dhcp6_ia_pd1_prefix1:-}"
             bits="${new_dhcp6_ia_pd1_prefix1_length:-}"
 
             if [ -z "${prefix}" ] || [ -z "${bits}" ]; then
-                write_prefix_arg '""'
+                write_prefix_arg ''
             elif ! result="$(derive_prefix_stem "${prefix}" "${bits}")"; then
-                write_prefix_arg '""'
+                write_prefix_arg ''
             elif [ -n "${result}" ]; then
-                write_prefix_arg "\"--prefix ${result}\""
+                write_prefix_arg "${result}"
             else
-                write_prefix_arg '""'
+                write_prefix_arg ''
             fi
         fi
         ;;
