@@ -23,6 +23,34 @@ write_prefix_arg() {
     rm -f "${tmp}"
 }
 
+derive_prefix_stem() {
+    prefix="$1"
+    bits="$2"
+
+    python3 - "$prefix" "$bits" <<'PY'
+import ipaddress
+import sys
+
+prefix = sys.argv[1]
+bits = int(sys.argv[2])
+
+if bits < 0 or bits > 128:
+    raise SystemExit(1)
+
+network = ipaddress.IPv6Network(f"{prefix}/{bits}", strict=False)
+hex_network = network.network_address.exploded.replace(":", "")
+nibbles = (bits + 3) // 4
+stem = hex_network[:nibbles]
+
+groups = []
+while stem:
+    groups.append(stem[:4])
+    stem = stem[4:]
+
+print(":".join(groups))
+PY
+}
+
 case "${reason:-}" in
     BOUND6|RENEW6|REBIND6)
         if [ "${enabled}" != "yes" ]; then
@@ -38,20 +66,11 @@ case "${reason:-}" in
             exit 0
         fi
 
-        full_blocks=$((bits / 16))
-        remaining_bits=$((bits % 16))
-
-        if [ "${remaining_bits}" -eq 0 ]; then
-            result="$(printf '%s' "${prefix}" | cut -d':' -f1-"${full_blocks}")"
-        else
-            hex_chars=$(((remaining_bits + 3) / 4))
-            base="$(printf '%s' "${prefix}" | cut -d':' -f1-"${full_blocks}")"
-            target_segment="$(printf '%s' "${prefix}" | cut -d':' -f$((full_blocks + 1)))"
-            partial_segment="$(printf '%s' "${target_segment}" | cut -c1-"${hex_chars}")"
-            result="${base}:${partial_segment}"
+        if ! result="$(derive_prefix_stem "${prefix}" "${bits}")"; then
+            write_prefix_arg '""'
+            exit 0
         fi
 
-        result="$(printf '%s' "${result}" | sed 's/:*$//')"
         if [ -n "${result}" ]; then
             write_prefix_arg "\"--prefix ${result}\""
         else
