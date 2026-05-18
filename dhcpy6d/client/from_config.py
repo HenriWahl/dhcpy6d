@@ -22,7 +22,9 @@ from ..config import (Address,
 from ..constants import CONST
 from ..domain import get_ip_from_dns
 from ..helpers import (decompress_ip6,
-                       convert_prefix_inline)
+                       convert_prefix_inline,
+                       inject_dynamic_prefix)
+from ..log import log
 
 from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
@@ -43,7 +45,10 @@ def from_config(client=None, client_config=None, transaction=None):
                 if len(address) > 0:
                     # if address contains $prefix$ replace it and decompress it now
                     if '$prefix$' in address:
-                        address = address.replace('$prefix$', cfg.PREFIX)
+                        address, collision = inject_dynamic_prefix(address, cfg.PREFIX)
+                        if collision:
+                            log.error(f"Client config processing: implicit $prefix$ concatenation in "
+                                      f"ADDRESS '{address}' for host '{client_config.HOSTNAME}'")
                         address = decompress_ip6(address)
 
                     # fixed addresses are assumed to be non-temporary
@@ -65,7 +70,10 @@ def from_config(client=None, client_config=None, transaction=None):
             for prefix in client_config.PREFIX:
                 # if prefix contains $prefix$ replace it and convert it now
                 if isinstance(prefix, str) and '$prefix$' in prefix:
-                    prefix = prefix.replace('$prefix$', cfg.PREFIX)
+                    prefix, collision = inject_dynamic_prefix(prefix, cfg.PREFIX)
+                    if collision:
+                        log.error(f"Client config processing: implicit $prefix$ concatenation in "
+                                  f"PREFIX '{prefix}' for host '{client_config.HOSTNAME}'")
                     prefix = convert_prefix_inline(prefix)
 
                 ia_pd = Prefix(prefix=prefix['address'],

@@ -18,6 +18,7 @@
 
 from binascii import (hexlify,
                       unhexlify)
+import string
 import ipaddress
 import shlex
 import socket
@@ -243,6 +244,58 @@ def normalize_route_prefix(prefix, length):
 
     network = ipaddress.IPv6Network(f'{prefix}/{length}', strict=False)
     return network.network_address.exploded
+
+
+def inject_dynamic_prefix(value, dynamic_prefix):
+    """
+    replace $prefix$ in client config values
+    if a hexadecimal character follows immediately, force a ':' separator to
+    avoid creating overlong hextets (collision-prone concat)
+    returns tuple(value, collision_detected)
+    """
+    if not isinstance(value, str) or '$prefix$' not in value:
+        return value, False
+
+    if dynamic_prefix is None:
+        dynamic_prefix = ''
+    # dynamic prefix should not carry prefix length in textual replacements
+    dynamic_prefix = str(dynamic_prefix).split('/', 1)[0]
+
+    marker = '$prefix$'
+    collision = False
+    result = ''
+    rest = value
+
+    while marker in rest:
+        left, right = rest.split(marker, 1)
+        replacement = dynamic_prefix
+        if right and right[0].lower() in string.hexdigits and not dynamic_prefix.endswith(':'):
+            # Keep best compatibility with undocumented legacy patterns.
+            # Prefer explicit separators over plain concat.
+            if '::' in right:
+                separator_candidates = [':', '', '::']
+            elif ':' in right:
+                separator_candidates = ['::', ':', '']
+            else:
+                separator_candidates = [':', '', '::']
+
+            chosen_separator = ':'
+            for separator in separator_candidates:
+                try:
+                    # only validate the immediate expansion candidate
+                    decompress_ip6(dynamic_prefix + separator + right)
+                    chosen_separator = separator
+                    break
+                except Exception:
+                    continue
+
+            replacement = dynamic_prefix + chosen_separator
+            collision = chosen_separator != ''
+        result += left + replacement
+        rest = right
+
+    result += rest
+    return result, collision
 
 
 def split_prefix(prefix):

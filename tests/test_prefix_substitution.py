@@ -61,7 +61,8 @@ os.chown = lambda *_args, **_kwargs: None
 from dhcpy6d.client import Client
 from dhcpy6d.client.from_config import from_config
 from dhcpy6d.config import cfg
-from dhcpy6d.helpers import normalize_route_prefix
+from dhcpy6d.helpers import (inject_dynamic_prefix,
+                             normalize_route_prefix)
 from dhcpy6d.storage.store import ClientConfig
 from dhcpy6d.threads import RouteThread
 
@@ -133,8 +134,8 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertEqual(client.prefixes[0].PREFIX, '20010db8000000000000000000000000')
         self.assertEqual(client.prefixes[0].LENGTH, '64')
 
-    def test_prefix_substitution_keeps_desired_concat_behavior(self):
-        cfg.PREFIX = '2003:a:838:8f'
+    def test_prefix_substitution_inserts_separator_on_collision(self):
+        cfg.PREFIX = '2001:db8:10:20'
 
         cc = ClientConfig(
             hostname='iserv',
@@ -143,23 +144,33 @@ class PrefixSubstitutionTest(unittest.TestCase):
             prefix='$prefix$::/63',
         )
 
-        self.assertEqual(cc.ADDRESS, ['2003000a08388fa30000000000000002'])
+        self.assertEqual(cc.ADDRESS, ['20010db80010002000a3000000000002'])
         self.assertEqual(
             cc.PREFIX,
-            [{'address': '2003000a0838008f0000000000000000', 'length': '63'}],
+            [{'address': '20010db8001000200000000000000000', 'length': '63'}],
         )
+
+    def test_inject_dynamic_prefix_reports_collision(self):
+        value, collision = inject_dynamic_prefix('$prefix$19::2', '2001:db8:10')
+        self.assertEqual(value, '2001:db8:10:19::2')
+        self.assertTrue(collision)
+
+    def test_inject_dynamic_prefix_prefers_legacy_double_colon_shape(self):
+        value, collision = inject_dynamic_prefix('$prefix$dead:beef', '2001:db8:10')
+        self.assertEqual(value, '2001:db8:10::dead:beef')
+        self.assertTrue(collision)
 
     def test_route_prefix_normalization_accepts_legacy_replay_value(self):
         self.assertEqual(
-            normalize_route_prefix('2003:a:838:8f', '63'),
-            '2003:000a:0838:008e:0000:0000:0000:0000',
+            normalize_route_prefix('2001:db8:10:21', '63'),
+            '2001:0db8:0010:0020:0000:0000:0000:0000',
         )
 
     def test_route_thread_build_route_call_normalizes_prefix_argument(self):
         call = RouteThread.build_route_call(
             'up',
             '/usr/sbin/dhcpy6d-add-route $prefix$/$length$ $router$ dmz',
-            '2003000a0838008f0000000000000000',
+            '20010db8001000210000000000000000',
             '63',
             'fe800000000000000000000000000002',
         )
@@ -167,7 +178,7 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertEqual(
             call,
             '/usr/sbin/dhcpy6d-add-route '
-            '2003:000a:0838:008e:0000:0000:0000:0000/63 '
+            '2001:0db8:0010:0020:0000:0000:0000:0000/63 '
             'fe80:0000:0000:0000:0000:0000:0000:0002 dmz',
         )
 

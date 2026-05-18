@@ -25,7 +25,9 @@ from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option,
                        NeighborCacheRecord,
-                       convert_prefix_inline)
+                       convert_prefix_inline,
+                       inject_dynamic_prefix)
+from ..log import log
 from .schemas import (legacy_adjustments,
                       MYSQL_SQLITE)
 
@@ -51,8 +53,14 @@ class ClientConfig:
                 addresses = listify_option(address)
             for a in addresses:
                 if isinstance(a, str):
-                    a = a.replace('$prefix$', cfg.PREFIX)
-                self.ADDRESS.append(decompress_ip6(a))
+                    a, collision = inject_dynamic_prefix(a, cfg.PREFIX)
+                    if collision:
+                        log.error(f"Client configuration database: implicit $prefix$ concatenation in "
+                                  f"ADDRESS '{a}'")
+                try:
+                    self.ADDRESS.append(decompress_ip6(a))
+                except Exception as err:
+                    error_exit(f"Client configuration database: invalid ADDRESS '{a}': {err}")
         else:
             self.ADDRESS = None
 
@@ -65,8 +73,14 @@ class ClientConfig:
                 prefixes = listify_option(prefix)
             for p in prefixes:
                 if isinstance(p, str):
-                    p = p.replace('$prefix$', cfg.PREFIX)
-                self.PREFIX.append(convert_prefix_inline(p))
+                    p, collision = inject_dynamic_prefix(p, cfg.PREFIX)
+                    if collision:
+                        log.error(f"Client configuration database: implicit $prefix$ concatenation in "
+                                  f"PREFIX '{p}'")
+                try:
+                    self.PREFIX.append(convert_prefix_inline(p))
+                except Exception as err:
+                    error_exit(f"Client configuration database: invalid PREFIX '{p}': {err}")
         else:
             self.PREFIX = None
 

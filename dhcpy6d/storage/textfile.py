@@ -21,7 +21,8 @@ import configparser
 from ..config import cfg, BOOLPOOL
 from ..helpers import (decompress_ip6,
                        error_exit,
-                       listify_option, convert_prefix_inline)
+                       listify_option, convert_prefix_inline, inject_dynamic_prefix)
+from ..log import log
 
 from .store import (ClientConfig,
                     Store)
@@ -89,8 +90,17 @@ class Textfile(Store):
                 if self.hosts[hostname].ADDRESS is not None:
                     decompressed_addresses = []
                     for x in self.hosts[hostname].ADDRESS:
-                        x = x.replace('$prefix$', cfg.PREFIX)
-                        decompressed_addresses.append(decompress_ip6(x))
+                        x, collision = inject_dynamic_prefix(x, cfg.PREFIX)
+                        if collision:
+                            log.error(f"Textfile client configuration: implicit $prefix$ concatenation in "
+                                      f"ADDRESS '{x}' for host '{self.hosts[hostname].HOSTNAME}'")
+                        try:
+                            decompressed_addresses.append(decompress_ip6(x))
+                        except Exception as err:
+                            error_exit(
+                                f"Textfile client configuration: invalid ADDRESS '{x}' "
+                                f"for host '{self.hosts[hostname].HOSTNAME}': {err}"
+                            )
                     self.hosts[hostname].ADDRESS = decompressed_addresses
 
                 # in case of multiple supplied prefixes convert them to list
@@ -100,8 +110,17 @@ class Textfile(Store):
                 if self.hosts[hostname].PREFIX is not None:
                     converted_prefixes = []
                     for x in self.hosts[hostname].PREFIX:
-                        x = x.replace('$prefix$', cfg.PREFIX)
-                        converted_prefixes.append(convert_prefix_inline(x))
+                        x, collision = inject_dynamic_prefix(x, cfg.PREFIX)
+                        if collision:
+                            log.error(f"Textfile client configuration: implicit $prefix$ concatenation in "
+                                      f"PREFIX '{x}' for host '{self.hosts[hostname].HOSTNAME}'")
+                        try:
+                            converted_prefixes.append(convert_prefix_inline(x))
+                        except Exception as err:
+                            error_exit(
+                                f"Textfile client configuration: invalid PREFIX '{x}' "
+                                f"for host '{self.hosts[hostname].HOSTNAME}': {err}"
+                            )
                     self.hosts[hostname].PREFIX = converted_prefixes
 
                 # boolify prefix route link local setting
