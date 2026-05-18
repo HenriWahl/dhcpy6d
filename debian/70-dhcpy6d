@@ -1,0 +1,61 @@
+#!/bin/sh
+
+set -eu
+
+ENV_FILE="/var/lib/dhcpy6d/environment-prefix"
+DEFAULTS_FILE="/etc/default/dhcpy6d"
+
+enabled=no
+if [ -r "${DEFAULTS_FILE}" ]; then
+    # shellcheck disable=SC1090
+    . "${DEFAULTS_FILE}"
+    enabled="${ENABLE_DYNAMIC_PREFIX_FROM_DHCPCD:-no}"
+fi
+
+write_prefix_arg() {
+    value="$1"
+    tmp="$(mktemp)"
+    printf 'PREFIX_ARG=%s\n' "${value}" > "${tmp}"
+    if ! cmp -s "${tmp}" "${ENV_FILE}" 2>/dev/null; then
+        install -m 0644 -o root -g root "${tmp}" "${ENV_FILE}"
+        systemctl -q try-restart dhcpy6d || :
+    fi
+    rm -f "${tmp}"
+}
+
+case "${reason:-}" in
+    BOUND6|RENEW6|REBIND6)
+        if [ "${enabled}" != "yes" ]; then
+            write_prefix_arg '""'
+            exit 0
+        fi
+
+        prefix="${new_dhcp6_ia_pd1_prefix1:-}"
+        bits="${new_dhcp6_ia_pd1_prefix1_length:-}"
+
+        if [ -z "${prefix}" ] || [ -z "${bits}" ]; then
+            write_prefix_arg '""'
+            exit 0
+        fi
+
+        full_blocks=$((bits / 16))
+        remaining_bits=$((bits % 16))
+
+        if [ "${remaining_bits}" -eq 0 ]; then
+            result="$(printf '%s' "${prefix}" | cut -d':' -f1-"${full_blocks}")"
+        else
+            hex_chars=$(((remaining_bits + 3) / 4))
+            base="$(printf '%s' "${prefix}" | cut -d':' -f1-"${full_blocks}")"
+            target_segment="$(printf '%s' "${prefix}" | cut -d':' -f$((full_blocks + 1)))"
+            partial_segment="$(printf '%s' "${target_segment}" | cut -c1-"${hex_chars}")"
+            result="${base}:${partial_segment}"
+        fi
+
+        result="$(printf '%s' "${result}" | sed 's/:*$//')"
+        if [ -n "${result}" ]; then
+            write_prefix_arg "\"--prefix ${result}\""
+        else
+            write_prefix_arg '""'
+        fi
+        ;;
+esac

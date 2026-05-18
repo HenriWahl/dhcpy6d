@@ -1,2 +1,7 @@
 # dhcpy6d is disabled by default
 RUN=no
+
+# Enable dynamic prefix injection from dhcpcd delegated prefix (PD)
+# via /usr/lib/dhcpcd/dhcpcd-hooks/70-dhcpy6d.
+# Values: yes/no
+ENABLE_DYNAMIC_PREFIX_FROM_DHCPCD=no

@@ -50,8 +50,13 @@ case "$1" in
     if [ ! -e /var/lib/dhcpy6d/volatile.sqlite ]; then
         touch /var/lib/dhcpy6d/volatile.sqlite
     fi
+    if [ ! -e /var/lib/dhcpy6d/environment-prefix ]; then
+        echo 'PREFIX_ARG=""' > /var/lib/dhcpy6d/environment-prefix
+    fi
     chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
     chmod 0660 /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
+    chown root:root /var/lib/dhcpy6d/environment-prefix
+    chmod 0644 /var/lib/dhcpy6d/environment-prefix
     # 6. add DUID entry to /etc/default/dhcpy6d if not yet existing
     TMPFILE=`mktemp`
     cat /usr/share/dhcpy6d/default/dhcpy6d  > "${TMPFILE}"

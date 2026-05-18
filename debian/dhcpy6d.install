@@ -1,1 +1,2 @@
 etc/default/dhcpy6d usr/share/dhcpy6d/default/
+debian/70-dhcpy6d usr/lib/dhcpcd/dhcpcd-hooks/
