@@ -72,7 +72,7 @@ setup(name='dhcpy6d',
       url='https://dhcpy6d.de/',
       download_url='https://dhcpy6d.de/download',
       requires=['distro', 'dnspython'],
-      packages=find_packages(),
+      packages=find_packages(exclude=['tests', 'tests.*']),
       classifiers=classifiers,
       data_files=data_files
       )
