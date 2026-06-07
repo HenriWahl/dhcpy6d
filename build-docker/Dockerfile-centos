@@ -10,6 +10,7 @@ RUN yum -y install createrepo \
                    rpm-build \
                    rpm-sign \
                    sudo \
+                   systemd \
                    which
 
 # flexible entrypoint, mounted as volume
