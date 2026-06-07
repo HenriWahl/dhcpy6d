@@ -45,7 +45,6 @@ jobs:
       - run: /usr/bin/docker build -t build-${{ github.job }} -f build-docker/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
       - run: chmod +x build-docker/*.sh
-      - run: ls -lR ${{ github.workspace }}
       # execute container with matching entrypoint
       - run: |
           /usr/bin/docker run --volume ${{ github.workspace }}:/dhcpy6d \
@@ -56,7 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           path: ./*.rpm
-          retention-days: generate_manpages.py
+          retention-days: 1
           name: ${{ github.job }}
 
   github-release:
