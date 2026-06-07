@@ -17,13 +17,13 @@ jobs:
       # get source
       - uses: actions/checkout@v4
       # build container image for package creation
-      - run: /usr/bin/docker build -t build-${{ github.job }} -f build/Dockerfile-${{ env.dist }} .
+      - run: /usr/bin/docker build -t build-${{ github.job }} -f build-docker/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
-      - run: chmod +x build/*.sh
+      - run: chmod +x build-docker/*.sh
       # execute container with matching entrypoint
       - run: |
           /usr/bin/docker run --volume ${{ github.workspace }}:/dhcpy6d \
-                              --volume ${{ github.workspace }}/build/entrypoint-${{ github.job }}.sh:/entrypoint.sh \
+                              --volume ${{ github.workspace }}/build-docker/entrypoint-${{ github.job }}.sh:/entrypoint.sh \
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results
@@ -42,13 +42,13 @@ jobs:
       # get source
       - uses: actions/checkout@v4
       # build container image for package creation
-      - run: /usr/bin/docker build -t build-${{ github.job }} -f build/Dockerfile-${{ env.dist }} .
+      - run: /usr/bin/docker build -t build-${{ github.job }} -f build-docker/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
-      - run: chmod +x build/*.sh
+      - run: chmod +x build-docker/*.sh
       # execute container with matching entrypoint
       - run: |
           /usr/bin/docker run --volume ${{ github.workspace }}:/dhcpy6d \
-                              --volume ${{ github.workspace }}/build/entrypoint-${{ github.job }}.sh:/entrypoint.sh \
+                              --volume ${{ github.workspace }}/build-docker/entrypoint-${{ github.job }}.sh:/entrypoint.sh \
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results

@@ -21,6 +21,10 @@ from ..config import (Address,
                       Prefix)
 from ..constants import CONST
 from ..domain import get_ip_from_dns
+from ..helpers import (decompress_ip6,
+                       convert_prefix_inline,
+                       inject_dynamic_prefix)
+from ..log import log
 
 from .parse_pattern import (parse_pattern_address,
                             parse_pattern_prefix)
@@ -39,6 +43,14 @@ def from_config(client=None, client_config=None, transaction=None):
                     CONST.OPTION.IA_NA in transaction.ia_options:
             for address in client_config.ADDRESS:
                 if len(address) > 0:
+                    # if address contains $prefix$ replace it and decompress it now
+                    if '$prefix$' in address:
+                        address, collision = inject_dynamic_prefix(address, cfg.PREFIX, allow_legacy_concat=True)
+                        if collision:
+                            log.error(f"Client config processing: implicit $prefix$ concatenation in "
+                                      f"ADDRESS '{address}' for host '{client_config.HOSTNAME}'")
+                        address = decompress_ip6(address)
+
                     # fixed addresses are assumed to be non-temporary
                     #
                     # todo: lifetime of address should be set by config too
@@ -56,6 +68,14 @@ def from_config(client=None, client_config=None, transaction=None):
         if client_config.PREFIX is not None and \
                     CONST.OPTION.IA_PD in transaction.ia_options:
             for prefix in client_config.PREFIX:
+                # if prefix contains $prefix$ replace it and convert it now
+                if isinstance(prefix, str) and '$prefix$' in prefix:
+                    prefix, collision = inject_dynamic_prefix(prefix, cfg.PREFIX, allow_legacy_concat=True)
+                    if collision:
+                        log.error(f"Client config processing: implicit $prefix$ concatenation in "
+                                  f"PREFIX '{prefix}' for host '{client_config.HOSTNAME}'")
+                    prefix = convert_prefix_inline(prefix)
+
                 ia_pd = Prefix(prefix=prefix['address'],
                                length=prefix['length'],
                                preferred_lifetime=cfg.PREFERRED_LIFETIME,

@@ -2,13 +2,21 @@
 %:
 	dh $@ --buildsystem=pybuild --with python3 --with systemd
 
+override_dh_auto_build:
+	python3 scripts/generate_manpages.py --out-dir .
+	dh_auto_build
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f man/man5/dhcpy6d.conf.5 man/man5/dhcpy6d-clients.conf.5 man/man8/dhcpy6d.8
+
 override_dh_auto_install:
 	dh_auto_install -- --install-args="--install-scripts=/usr/sbin --install-layout=deb"
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/LICENSE
 	rm -f debian/dhcpy6d/var/log/dhcpy6d.log
 	rm -f debian/dhcpy6d/usr/share/doc/dhcpy6d/*.[0-9]
 	find debian/dhcpy6d/ -name __pycache__ -print0 | xargs -0 --no-run-if-empty rm -rv
-	mv -v debian/dhcpy6d/usr/lib/python3.11 debian/dhcpy6d/usr/lib/python3
+	mv -v "debian/dhcpy6d/usr/lib/python$$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")" debian/dhcpy6d/usr/lib/python3
 	mv -v debian/dhcpy6d/var/lib/dhcpy6d/volatile.sqlite debian/dhcpy6d/usr/share/dhcpy6d/
 
 override_dh_install:
@@ -20,9 +28,6 @@ override_dh_installsystemd:
 
 # make -f debian/rules get-orig-source
 get-orig-source:
-	python setup.py sdist
+	python3 setup.py sdist
 	mv -v dist/dhcpy6d-*.tar.gz ../dhcpy6d_`dpkg-parsechangelog -SVersion | cut -d- -f1`.orig.tar.gz
-	rm -r MANIFEST dist
-
-# there are no tests - build package anyway
-override_dh_auto_test:
+	rm -rf MANIFEST dist

@@ -27,6 +27,7 @@ BuildArch: noarch
 BuildRequires: python3
 BuildRequires: python3-setuptools
 BuildRequires: python3-devel
+BuildRequires: python3-docutils
 Requires: python3
 
 BuildRequires: systemd
@@ -56,6 +57,7 @@ Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by D
 %setup -q
 
 %build
+%{__python3} scripts/generate_manpages.py --out-dir .
 %py3_build
 #CFLAGS="%{optflags}" %{__python3} setup.py build
 

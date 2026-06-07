@@ -62,7 +62,7 @@ def parse_pattern_address(address, client_config, transaction):
         if advertised_address:
             a = advertised_address
         else:
-            ra = str(hex(random.getrandbits(64)))[2:][:-1]
+            ra = f'{random.getrandbits(64):016x}'
             ra = ':'.join((ra[0:4], ra[4:8], ra[8:12], ra[12:16]))
             # subject to change....
             a = a.replace('$random64$', ra)

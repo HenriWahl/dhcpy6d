@@ -25,7 +25,9 @@ from ..helpers import (decompress_ip6,
                        error_exit,
                        listify_option,
                        NeighborCacheRecord,
-                       convert_prefix_inline)
+                       convert_prefix_inline,
+                       inject_dynamic_prefix)
+from ..log import log
 from .schemas import (legacy_adjustments,
                       MYSQL_SQLITE)
 
@@ -50,7 +52,15 @@ class ClientConfig:
             else:
                 addresses = listify_option(address)
             for a in addresses:
-                self.ADDRESS.append(decompress_ip6(a))
+                if isinstance(a, str):
+                    a, collision = inject_dynamic_prefix(a, cfg.PREFIX, allow_legacy_concat=True)
+                    if collision:
+                        log.error(f"Client configuration database: implicit $prefix$ concatenation in "
+                                  f"ADDRESS '{a}'")
+                try:
+                    self.ADDRESS.append(decompress_ip6(a))
+                except Exception as err:
+                    error_exit(f"Client configuration database: invalid ADDRESS '{a}': {err}")
         else:
             self.ADDRESS = None
 
@@ -62,7 +72,15 @@ class ClientConfig:
             else:
                 prefixes = listify_option(prefix)
             for p in prefixes:
-                self.PREFIX.append(convert_prefix_inline(p))
+                if isinstance(p, str):
+                    p, collision = inject_dynamic_prefix(p, cfg.PREFIX, allow_legacy_concat=True)
+                    if collision:
+                        log.error(f"Client configuration database: implicit $prefix$ concatenation in "
+                                  f"PREFIX '{p}'")
+                try:
+                    self.PREFIX.append(convert_prefix_inline(p))
+                except Exception as err:
+                    error_exit(f"Client configuration database: invalid PREFIX '{p}': {err}")
         else:
             self.PREFIX = None
 
@@ -123,6 +141,20 @@ class Store:
         self.answers = {}
         # schema version of client config entries
         self.config_schema_version = 1
+
+    def close(self):
+        """
+        Close any backend resources held by the store.
+        """
+        for resource_name in ('cursor', 'connection'):
+            resource = getattr(self, resource_name, None)
+            close = getattr(resource, 'close', None)
+            if close is not None:
+                try:
+                    close()
+                except Exception:
+                    pass
+        self.connected = False
 
     def query(self, query):
         """
@@ -524,6 +556,30 @@ class Store:
                 return None, None, None
         else:
             return None, None, None
+
+    def get_prefix_record(self, prefix):
+        """
+        get persisted prefix metadata needed for stale-config guards
+        """
+        query = f"SELECT prefix, length, type, class, active FROM {self.table_prefixes} WHERE prefix = '{prefix}'"
+        answer = self.query(query)
+        if answer is not None and len(answer) > 0:
+            return answer[0]
+        return None
+
+    def deactivate_prefix(self, prefix):
+        """
+        mark a persisted prefix inactive so it is not reused as active lease
+        """
+        query = f"UPDATE {self.table_prefixes} SET active = 0, last_message = 0 WHERE prefix = '{prefix}'"
+        return self.query(query)
+
+    def deactivate_lease(self, address):
+        """
+        mark a persisted address lease inactive so it is not reused as active lease
+        """
+        query = f"UPDATE {self.table_leases} SET active = 0, last_message = 0 WHERE address = '{address}'"
+        return self.query(query)
 
     @clean_query_answer
     def release_lease(self, address, now):

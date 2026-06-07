@@ -27,9 +27,7 @@ function create_manpages() {
   fi
 
   echo "Creating manpages from RST files"
-  rst2man doc/dhcpy6d.rst man/man8/dhcpy6d.8
-  rst2man doc/dhcpy6d.conf.rst man/man5/dhcpy6d.conf.5
-  rst2man doc/dhcpy6d-clients.conf.rst man/man5/dhcpy6d-clients.conf.5
+  python3 scripts/generate_manpages.py --out-dir .
 }
 
 # find out where script runs at

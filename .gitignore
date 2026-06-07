@@ -1,6 +1,28 @@
 *.conf
 *.pyc
+__pycache__/
 *.yaml
 *.db
 *.log
 .idea
+
+# Generated artifacts
+sbin/
+*.egg-info/
+build/
+dist/
+.pybuild/
+.venv/
+.venv311/
+man/man5/*.5
+man/man8/*.8
+
+# Debian package build artifacts
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.debhelper
+debian/*.debhelper.log
+debian/*.substvars
+debian/tmp/
+debian/dhcpy6d/

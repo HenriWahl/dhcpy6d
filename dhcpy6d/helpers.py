@@ -18,6 +18,8 @@
 
 from binascii import (hexlify,
                       unhexlify)
+import string
+import ipaddress
 import shlex
 import socket
 import sys
@@ -211,6 +213,109 @@ def combine_prefix_length(prefix, length):
     return f'{prefix}/{length}'
 
 
+def normalize_route_prefix(prefix, length):
+    """
+    normalize route prefix for external helper calls
+    accepts internal 32-char hex notation, regular IPv6 addresses and legacy
+    shortened prefix stems without trailing '::'
+    """
+    if prefix is None:
+        raise Exception('route prefix is empty')
+    if type(prefix) == bytes:
+        prefix = prefix.decode()
+    if type(length) == bytes:
+        length = length.decode()
+
+    prefix = str(prefix).strip().lower()
+    length = str(length).strip()
+
+    if prefix == '':
+        raise Exception('route prefix is empty')
+
+    if '/' in prefix:
+        prefix = prefix.split('/', 1)[0]
+
+    # internally prefixes are often kept as 32-char hex strings
+    if len(prefix) == 32 and ':' not in prefix:
+        prefix = colonify_ip6(prefix)
+    # old or stale route entries may only contain the visible prefix stem
+    elif ':' in prefix and '::' not in prefix and prefix.count(':') < 7:
+        prefix += '::'
+
+    network = ipaddress.IPv6Network(f'{prefix}/{length}', strict=False)
+    return network.network_address.exploded
+
+
+def inject_dynamic_prefix(value, dynamic_prefix, allow_legacy_concat=False):
+    """
+    replace $prefix$ in client config values
+    if a hexadecimal character follows immediately, force a ':' separator to
+    avoid creating overlong hextets (collision-prone concat)
+    returns tuple(value, collision_detected)
+    """
+    if not isinstance(value, str) or '$prefix$' not in value:
+        return value, False
+
+    if dynamic_prefix is None:
+        dynamic_prefix = ''
+    # dynamic prefix should not carry prefix length in textual replacements
+    dynamic_prefix = str(dynamic_prefix).split('/', 1)[0]
+
+    marker = '$prefix$'
+    collision = False
+    result = ''
+    rest = value
+
+    while marker in rest:
+        left, right = rest.split(marker, 1)
+        replacement = dynamic_prefix
+        if right and right[0].lower() in string.hexdigits and not dynamic_prefix.endswith(':'):
+            # Keep best compatibility with undocumented legacy patterns.
+            # Prefer legacy concat when it still fits into one hextet.
+            right_hex = ''
+            for c in right.lower():
+                if c in string.hexdigits:
+                    right_hex += c
+                else:
+                    break
+
+            last_hextet_len = 0
+            if ':' in dynamic_prefix:
+                last = dynamic_prefix.rsplit(':', 1)[1]
+                if last != '':
+                    last_hextet_len = len(last)
+
+            can_concat = bool(right_hex) and last_hextet_len > 0 and (last_hextet_len + len(right_hex) <= 4)
+
+            if allow_legacy_concat and can_concat:
+                separator_candidates = ['', ':', '::']
+            elif '::' in right:
+                separator_candidates = [':', '', '::']
+            elif ':' in right:
+                separator_candidates = ['::', ':', '']
+            else:
+                separator_candidates = [':', '', '::']
+
+            chosen_separator = ':'
+            for separator in separator_candidates:
+                try:
+                    # only validate the immediate expansion candidate
+                    right_for_validation = right.split('/', 1)[0]
+                    decompress_ip6(dynamic_prefix + separator + right_for_validation)
+                    chosen_separator = separator
+                    break
+                except Exception:
+                    continue
+
+            replacement = dynamic_prefix + chosen_separator
+            collision = chosen_separator != ''
+        result += left + replacement
+        rest = right
+
+    result += rest
+    return result, collision
+
+
 def split_prefix(prefix):
     """
     split prefix and length from 'prefix/length' notation
@@ -243,7 +348,7 @@ def listify_option(option):
         if type(option) == str:
             lex = shlex.shlex(option)
             lex.whitespace = WHITESPACE
-            lex.wordchars += ':.-/'
+            lex.wordchars += ':.-/$'
             return list(lex)
         elif type(option) == list:
             return(option)

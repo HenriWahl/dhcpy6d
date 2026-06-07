@@ -117,20 +117,20 @@ def get_neighbor_cache_linux(if_number, now):
                                                                                           answer_pos)
             # basic safety checks for received data (imitates NLMSG_OK)
             if nlmsg_len < struct.calcsize(f'<{nlmsghdr_fmt}'):
-                log.warn('broken data from netlink (position {0}, nlmsg_len {1}): '
-                         'nlmsg_len is smaller than structure size'.format(answer_pos, nlmsg_len))
+                log.warning('broken data from netlink (position {0}, nlmsg_len {1}): '
+                            'nlmsg_len is smaller than structure size'.format(answer_pos, nlmsg_len))
                 break
             if answer_len - answer_pos < struct.calcsize(f'<{nlmsghdr_fmt}'):
-                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
-                         'received data size is smaller than structure size')
+                log.warning(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                            'received data size is smaller than structure size')
                 break
             if answer_len - answer_pos < nlmsg_len:
-                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
-                         'received dcolonify_ata size is smaller than nlmsg_len')
+                log.warning(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                            'received dcolonify_ata size is smaller than nlmsg_len')
                 break
             if pid != nlmsg_pid or seq != nlmsg_seq:
-                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
-                         f'invalid seq ({seq} x {nlmsg_seq}) or pid ({pid} x {nlmsg_pid})')
+                log.warning(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                            f'invalid seq ({seq} x {nlmsg_seq}) or pid ({pid} x {nlmsg_pid})')
                 break
 
             # data for this Routing/device hook record
@@ -141,12 +141,12 @@ def get_neighbor_cache_linux(if_number, now):
             if nlmsg_type == NLMSG_ERROR:
                 nlmsgerr_error, nlmsgerr_len, nlmsgerr_type, nlmsgerr_flags, nlmsgerr_seq, nlmsgerr_pid = \
                     struct.unpack_from('<sIHHII', nlmsg_data)
-                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
-                         f'invalid message (errno {nlmsgerr_error})')
+                log.warning(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                            f'invalid message (errno {nlmsgerr_error})')
                 break
             if nlmsg_type not in [RTM_NEWNEIGH, RTM_DELNEIGH, RTM_GETNEIGH]:
-                log.warn(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
-                         f'this is really weird, wrong message type {nlmsg_type}')
+                log.warning(f'broken data from netlink (position {answer_pos}, length avail {answer_len - answer_pos}): '
+                            f'this is really weird, wrong message type {nlmsg_type}')
                 break
 
             curr_pos = answer_pos + nlmsg_header_len
@@ -195,9 +195,9 @@ def get_neighbor_cache_linux(if_number, now):
                 if nda['NDM_IFINDEX'] not in if_number:
                     log.debug(f"can't find device for interface index {nda['NDM_IFINDEX']}")
                 elif 'NDA_DST' not in nda:
-                    log.warn(f"can't find destination address (wrong entry state: {nda['NDM_STATE']}?!)")
+                    log.warning(f"can't find destination address (wrong entry state: {nda['NDM_STATE']}?!)")
                 elif 'NDA_LLADDR' not in nda:
-                    log.warn(f"can't find local hardware address (wrong entry state: {nda['NDM_STATE']}?!)")
+                    log.warning(f"can't find local hardware address (wrong entry state: {nda['NDM_STATE']}?!)")
                 else:
                     if if_number[nda['NDM_IFINDEX']] in cfg.INTERFACE and not nda['NDA_LLADDR'].startswith('33:33:'):
                         # store neighbor caches entries
@@ -211,8 +211,8 @@ def get_neighbor_cache_linux(if_number, now):
             answer_pos += nlmsg_len
 
     except struct.error as e:
-        log.warn(f'broken data from netlink (position {answer_pos}, '
-                 f'data[{curr_pos}:{answer_len}] = {hexlify(answer[curr_pos:curr_pos + 8])}...): {str(e)}')
+        log.warning(f'broken data from netlink (position {answer_pos}, '
+                    f'data[{curr_pos}:{answer_len}] = {hexlify(answer[curr_pos:curr_pos + 8])}...): {str(e)}')
 
     # clean up
     s.close()

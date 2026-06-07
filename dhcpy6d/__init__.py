@@ -18,24 +18,43 @@
 
 """Module dhcpy6d"""
 
+import importlib
 import socket
 import socketserver
 import struct
+import sys
 
-from .config import cfg
-from .globals import (collected_macs,
-                      IF_NAME,
-                      IF_NUMBER,
-                      NC,
-                      OS,
-                      timer)
-from .helpers import (colonify_ip6,
-                      colonify_mac,
-                      correct_mac,
-                      decompress_ip6,
-                      NeighborCacheRecord)
-from .log import log
-from .storage import volatile_store
+_LAZY_EXPORTS = {
+    'cfg': ('.config', 'cfg'),
+    'collected_macs': ('.globals', 'collected_macs'),
+    'IF_NAME': ('.globals', 'IF_NAME'),
+    'IF_NUMBER': ('.globals', 'IF_NUMBER'),
+    'NC': ('.globals', 'NC'),
+    'OS': ('.globals', 'OS'),
+    'timer': ('.globals', 'timer'),
+    'colonify_ip6': ('.helpers', 'colonify_ip6'),
+    'colonify_mac': ('.helpers', 'colonify_mac'),
+    'correct_mac': ('.helpers', 'correct_mac'),
+    'decompress_ip6': ('.helpers', 'decompress_ip6'),
+    'NeighborCacheRecord': ('.helpers', 'NeighborCacheRecord'),
+    'log': ('.log', 'log'),
+    'volatile_store': ('.storage', 'volatile_store'),
+}
+
+
+def load_tests(loader, tests, pattern):
+    return tests
+
+
+def __getattr__(name):
+    if name not in _LAZY_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, attribute_name = _LAZY_EXPORTS[name]
+    module = importlib.import_module(module_name, __name__)
+    attribute = getattr(module, attribute_name)
+    setattr(sys.modules[__name__], name, attribute)
+    return attribute
 
 
 class UDPMulticastIPv6(socketserver.UnixDatagramServer):
@@ -47,6 +66,9 @@ class UDPMulticastIPv6(socketserver.UnixDatagramServer):
         """
             multicast & python: http://code.activestate.com/recipes/442490/
         """
+        from .config import cfg
+        from .globals import IF_NAME, IF_NUMBER
+
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # multicast parameters
         # hop is one because it is all about the same subnet
