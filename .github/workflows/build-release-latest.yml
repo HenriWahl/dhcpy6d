@@ -15,7 +15,7 @@ jobs:
       dist: debian
     steps:
       # get source
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       # build container image for package creation
       - run: /usr/bin/docker build -t build-${{ github.job }} -f build-docker/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
@@ -27,7 +27,7 @@ jobs:
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           path: ./*.deb
           retention-days: 1
@@ -40,7 +40,7 @@ jobs:
       dist: centos
     steps:
       # get source
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       # build container image for package creation
       - run: /usr/bin/docker build -t build-${{ github.job }} -f build-docker/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
@@ -52,7 +52,7 @@ jobs:
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           path: ./*.rpm
           retention-days: 1

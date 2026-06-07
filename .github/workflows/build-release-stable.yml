@@ -26,7 +26,7 @@ jobs:
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v7
         with:
           path: ./*.deb
           retention-days: 1
@@ -49,7 +49,7 @@ jobs:
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
       # upload results
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v7
         with:
           path: ./*.rpm
           retention-days: 1
