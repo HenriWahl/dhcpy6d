@@ -48,7 +48,7 @@ jobs:
       # execute container with matching entrypoint
       - run: |
           /usr/bin/docker run --volume ${{ github.workspace }}:/dhcpy6d \
-                              --volume ${{ github.workspace }}/scripts:/scripts \
+                              --volume ${{ github.workspace }}/scripts:/dhcpy6d/scripts \
                               --volume ${{ github.workspace }}/build-docker/entrypoint-${{ github.job }}.sh:/entrypoint.sh \
                               --entrypoint /entrypoint.sh \
                               build-${{ github.job }}
