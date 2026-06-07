@@ -1,4 +1,4 @@
-FROM rockylinux:8
+FROM rockylinux:9
 LABEL maintainer=henri@dhcpy6d.de
 
 # get build requirements
