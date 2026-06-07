@@ -45,6 +45,7 @@ jobs:
       - run: /usr/bin/docker build -t build-${{ github.job }} -f build-docker/Dockerfile-${{ env.dist }} .
       # make entrypoints executable
       - run: chmod +x build-docker/*.sh
+      - run: ls -lR ${{ github.workspace }}
       # execute container with matching entrypoint
       - run: |
           /usr/bin/docker run --volume ${{ github.workspace }}:/dhcpy6d \
