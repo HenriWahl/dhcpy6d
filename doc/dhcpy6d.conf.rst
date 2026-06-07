@@ -209,7 +209,7 @@ environments.
 **information_refresh_time = <seconds>**
     The lifetime of information given to clients as response to an *information-request* message.
     Used by option 83.
-*Default: 600*
+    *Default: 600*
 
 **solicitation_refresh_time = <seconds>**
     The maximum time a client should wait before retransmitting a *solicit* message.
