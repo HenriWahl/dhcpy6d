@@ -57,6 +57,9 @@ Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by D
 %setup -q
 
 %build
+ls -lR
+#%{__python3} scripts/generate_manpages.py --out-dir .
+rm -rf tests
 %py3_build
 #CFLAGS="%{optflags}" %{__python3} setup.py build
 
