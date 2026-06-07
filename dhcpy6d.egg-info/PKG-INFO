@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: dhcpy6d
+Version: 1.6.0
+Summary: DHCPv6 server daemon
+Home-page: https://dhcpy6d.de/
+Download-URL: https://dhcpy6d.de/download
+Author: Henri Wahl
+Author-email: henri@dhcpy6d.de
+License: GNU GPL v2
+Classifier: Intended Audience :: System Administrators
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: POSIX
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Topic :: System :: Networking
+Requires: distro
+Requires: dnspython
+License-File: LICENSE
+
+Dhcpy6d delivers IPv6 addresses for DHCPv6 clients, which can be identified by DUID, hostname or MAC address as in the good old IPv4 days. It allows easy dualstack transition, addresses may be generated randomly, by range, by DNS, by arbitrary ID or MAC address. Clients can get more than one address, leases and client configuration can be stored in databases and DNS can be updated dynamically.
