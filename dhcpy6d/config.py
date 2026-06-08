@@ -845,11 +845,17 @@ class Config:
         if self.REQUEST_LIMIT_IDENTIFICATION not in ['mac', 'llip']:
             error_exit(f"{msg_prefix} Request limit identification must be one of 'mac' or 'llip'.")
 
+        # check if cleaning interval is a number
+        if not self.CLEANING_INTERVAL.isdigit():
+            error_exit(f"{msg_prefix} Cleaning interval "
+                       f"'{self.CLEANING_INTERVAL}' is invalid.")
+
         # Make integers of number strings to avoid later repeated conversion
         # more to come...
         self.REQUEST_LIMIT_TIME = int(self.REQUEST_LIMIT_TIME)
         self.REQUEST_LIMIT_COUNT = int(self.REQUEST_LIMIT_COUNT)
         self.REQUEST_LIMIT_RELEASE_TIME = int(self.REQUEST_LIMIT_RELEASE_TIME)
+        self.CLEANING_INTERVAL = int(self.CLEANING_INTERVAL)
 
         # cruise through classes
         # more checks to come...
