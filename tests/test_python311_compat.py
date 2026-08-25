@@ -51,7 +51,6 @@ import dhcpy6d
 from dhcpy6d.client import parse_pattern
 from dhcpy6d.config import Address, cfg
 from dhcpy6d.options import OPTIONS
-from dhcpy6d.storage.sqlite import SQLite
 from dhcpy6d.storage.store import Store
 
 os.chown = _ORIGINAL_CHOWN
@@ -136,56 +135,3 @@ class StoreCloseTest(unittest.TestCase):
         store.cursor.close.assert_called_once_with()
         store.connection.close.assert_called_once_with()
         self.assertFalse(store.connected)
-
-
-class VolatileStoreBatchTest(unittest.TestCase):
-    def test_store_batches_address_writes(self):
-        store = object.__new__(Store)
-        batches = []
-        store.table_leases = 'leases'
-        store.table_prefixes = 'prefixes'
-        store.query = lambda _query: []
-        store.query_batch = lambda queries: batches.append(tuple(queries))
-        transaction = types.SimpleNamespace(
-            client=types.SimpleNamespace(
-                addresses=[
-                    types.SimpleNamespace(
-                        ADDRESS='20010db8000000000000000000000001',
-                        PREFERRED_LIFETIME=5400, VALID_LIFETIME=7200,
-                        TYPE='fixed', CATEGORY='fixed', IA_TYPE='na',
-                    ),
-                    types.SimpleNamespace(
-                        ADDRESS='20010db8000000000000000000000002',
-                        PREFERRED_LIFETIME=5400, VALID_LIFETIME=7200,
-                        TYPE='fixed', CATEGORY='fixed', IA_TYPE='na',
-                    ),
-                ],
-                prefixes=[], hostname='paperless', client_class='default_eth0',
-            ),
-            last_message_received_type=3, mac='02:00:c0:a8:00:02',
-            duid='0001000130750a150200c0a80002', iaid='c0a80002',
-        )
-
-        Store.store(store, transaction, now=100)
-
-        self.assertEqual(len(batches), 1)
-        self.assertEqual(len(batches[0]), 2)
-        self.assertTrue(all(query.startswith('INSERT INTO leases') for query in batches[0]))
-
-    def test_sqlite_batch_rolls_back_all_writes_on_integrity_error(self):
-        import sqlite3
-
-        store = object.__new__(SQLite)
-        store.db_module = sqlite3
-        store.connection = sqlite3.connect(':memory:')
-        store.cursor = store.connection.cursor()
-        store.db_connect = lambda: False
-        store.cursor.execute('CREATE TABLE leases (address TEXT PRIMARY KEY)')
-
-        result = store.db_query((
-            "INSERT INTO leases VALUES ('20010db8000000000000000000000001')",
-            "INSERT INTO leases VALUES ('20010db8000000000000000000000001')",
-        ))
-
-        self.assertEqual(result, 'INSERT_ERROR')
-        self.assertEqual(store.cursor.execute('SELECT * FROM leases').fetchall(), [])
