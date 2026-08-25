@@ -1,0 +1,75 @@
+#!/bin/sh
+
+ENV_FILE="/var/lib/dhcpy6d/environment-prefix"
+DEFAULTS_FILE="/etc/default/dhcpy6d"
+
+enabled=no
+if [ -r "${DEFAULTS_FILE}" ]; then
+    # shellcheck disable=SC1090
+    . "${DEFAULTS_FILE}"
+    enabled="${ENABLE_DYNAMIC_PREFIX_FROM_DHCPCD:-no}"
+fi
+
+write_prefix_arg() {
+    value="$1"
+    tmp="$(mktemp)"
+    if [ -n "${value}" ]; then
+        printf 'PREFIX_OPT=--prefix\nPREFIX_VAL=%s\n' "${value}" > "${tmp}"
+    else
+        printf 'PREFIX_OPT=\nPREFIX_VAL=\n' > "${tmp}"
+    fi
+    if ! cmp -s "${tmp}" "${ENV_FILE}" 2>/dev/null; then
+        install -m 0644 -o root -g root "${tmp}" "${ENV_FILE}"
+        systemctl -q try-restart dhcpy6d || :
+    fi
+    rm -f "${tmp}"
+}
+
+derive_prefix_stem() {
+    prefix="$1"
+    bits="$2"
+
+    python3 - "$prefix" "$bits" <<'PY'
+import ipaddress
+import sys
+
+prefix = sys.argv[1]
+bits = int(sys.argv[2])
+
+if bits < 0 or bits > 128:
+    raise SystemExit(1)
+
+network = ipaddress.IPv6Network(f"{prefix}/{bits}", strict=False)
+hex_network = network.network_address.exploded.replace(":", "")
+nibbles = (bits + 3) // 4
+stem = hex_network[:nibbles]
+
+groups = []
+while stem:
+    groups.append(stem[:4])
+    stem = stem[4:]
+
+print(":".join(groups))
+PY
+}
+
+case "${reason:-}" in
+    BOUND6|RENEW6|REBIND6)
+        if [ "${enabled}" != "yes" ]; then
+            write_prefix_arg ''
+        else
+            prefix="${new_dhcp6_ia_pd1_prefix1:-}"
+            bits="${new_dhcp6_ia_pd1_prefix1_length:-}"
+
+            if [ -z "${prefix}" ] || [ -z "${bits}" ]; then
+                write_prefix_arg ''
+            elif ! result="$(derive_prefix_stem "${prefix}" "${bits}")"; then
+                write_prefix_arg ''
+            elif [ -n "${result}" ]; then
+                write_prefix_arg "${result}"
+            else
+                write_prefix_arg ''
+            fi
+        fi
+        ;;
+esac
