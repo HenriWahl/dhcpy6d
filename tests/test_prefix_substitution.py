@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 
 
 # dhcpy6d parses CLI args at import time, so provide a minimal portable config first.
@@ -70,6 +71,7 @@ from dhcpy6d.threads import RouteThread
 from dhcpy6d.globals import route_queue, timer
 from dhcpy6d import route as route_module
 reuse_lease_module = importlib.import_module('dhcpy6d.client.reuse_lease')
+from_config_module = importlib.import_module('dhcpy6d.client.from_config')
 
 os.chown = _ORIGINAL_CHOWN
 sys.argv = _ORIGINAL_ARGV
@@ -162,6 +164,42 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertEqual(client.addresses[0].ADDRESS, '20010db8000000000000000000000001')
         self.assertEqual(client.prefixes[0].PREFIX, '20010db8000000000000000000000000')
         self.assertEqual(client.prefixes[0].LENGTH, '64')
+
+    def test_from_config_does_not_duplicate_fixed_address_from_class(self):
+        fixed_address = '20010db808388f000000c0fffea80002'
+        random_address = '20010db808388f000123456789abcdef'
+        original_addresses = cfg.ADDRESSES
+        original_parse_pattern_address = from_config_module.parse_pattern_address
+        cfg.CLASSES['default'].ADDRESSES = ['class_eui64', 'class_random']
+        cfg.ADDRESSES = {
+            'class_eui64': SimpleNamespace(
+                CATEGORY='eui64', IA_TYPE='na', PREFERRED_LIFETIME=5400,
+                VALID_LIFETIME=7200, CLASS='default', TYPE='class_eui64',
+                DNS_UPDATE=False, DNS_ZONE='', DNS_REV_ZONE='', DNS_TTL=0,
+            ),
+            'class_random': SimpleNamespace(
+                CATEGORY='random', IA_TYPE='ta', PREFERRED_LIFETIME=5400,
+                VALID_LIFETIME=7200, CLASS='default', TYPE='class_random',
+                DNS_UPDATE=False, DNS_ZONE='', DNS_REV_ZONE='', DNS_TTL=0,
+            ),
+        }
+        from_config_module.parse_pattern_address = lambda address, *_args: (
+            fixed_address if address.TYPE == 'class_eui64' else random_address
+        )
+        try:
+            client = Client()
+            transaction = MockTransaction()
+            client_config = ClientConfig(
+                hostname='paperless', client_class='default', address=fixed_address,
+            )
+            from_config(client=client, client_config=client_config, transaction=transaction)
+            self.assertEqual(
+                [(address.ADDRESS, address.IA_TYPE) for address in client.addresses],
+                [(fixed_address, 'na'), (random_address, 'ta')],
+            )
+        finally:
+            cfg.ADDRESSES = original_addresses
+            from_config_module.parse_pattern_address = original_parse_pattern_address
 
     def test_prefix_substitution_keeps_legacy_concat_when_it_fits(self):
         cfg.PREFIX = '2001:db8:10:20'
