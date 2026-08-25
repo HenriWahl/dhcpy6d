@@ -172,6 +172,14 @@ class Store:
                     answer = self.answers.pop(query)
         return answer
 
+    def query_batch(self, queries):
+        """Execute write queries in order.
+
+        Backends with transaction support may override this to make a batch
+        atomic. The default preserves the existing behavior.
+        """
+        return [self.query(query) for query in queries]
+
     def clean_query_answer(method):
         """
         decorate repeatedly but not everywhere used cleaning of query answer
@@ -265,6 +273,7 @@ class Store:
         """
         # only if client exists
         if transaction.client:
+            write_queries = []
             for a in transaction.client.addresses:
                 if a.ADDRESS is not None:
                     query = f"SELECT address FROM {self.table_leases} WHERE address = '{a.ADDRESS}'"
@@ -291,14 +300,9 @@ class Store:
                                     f"'{now}', " \
                                     f"'{now + int(a.PREFERRED_LIFETIME)}', " \
                                     f"'{now + int(a.VALID_LIFETIME)}')"
-                            answer = self.query(query)
-                            # for unknown reasons sometime a lease shall be inserted which already exists
-                            # in this case go further (aka continue) and do an update instead of an insert
-                            if answer == 'INSERT_ERROR':
-                                print('IntegrityError:', query)
-                            else:
-                                # jump to next item of loop
-                                continue
+                            write_queries.append(query)
+                            # jump to next item of loop
+                            continue
                         # otherwise update it if not a random address
                         if a.CATEGORY != 'random':
                             query = f"UPDATE {self.table_leases} " \
@@ -324,7 +328,7 @@ class Store:
                                     f"SET active = 1, " \
                                     f"last_message = {transaction.last_message_received_type} " \
                                     f"WHERE address = '{a.ADDRESS}'"
-                        self.query(query)
+                        write_queries.append(query)
 
             for p in transaction.client.prefixes:
                 if p.PREFIX is not None:
@@ -352,12 +356,8 @@ class Store:
                                     f"'{now}', " \
                                     f"'{now + int(p.PREFERRED_LIFETIME)}', " \
                                     f"'{now + int(p.VALID_LIFETIME)}')"
-                            answer = self.query(query)
-                            # for unknow reasons sometime a lease shall be inserted which already exists
-                            # in this case go further (aka continue) and do an update instead of an insert
-                            # doing this here for prefixes is just a precautional measure
-                            if answer != 'INSERT_ERROR':
-                                continue
+                            write_queries.append(query)
+                            continue
                         # otherwise update it if not a random prefix
                         # anyway right now only the categories 'range' and 'id' exist
                         if p.CATEGORY != 'random':
@@ -382,7 +382,9 @@ class Store:
                                     f"SET last_message = {transaction.last_message_received_type}, " \
                                     f"active = 1 " \
                                     f"WHERE prefix = '{p.PREFIX}'"
-                        self.query(query)
+                        write_queries.append(query)
+            if write_queries:
+                self.query_batch(write_queries)
             return True
         # if no client -> False
         return False

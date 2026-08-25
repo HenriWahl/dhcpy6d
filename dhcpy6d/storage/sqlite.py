@@ -71,6 +71,14 @@ class SQLite(Store):
         execute query on DB
         """
         try:
+            if isinstance(query, tuple):
+                self.cursor.execute('BEGIN')
+                for statement in query:
+                    self.cursor.execute(statement)
+                self.connection.commit()
+                self.connected = True
+                return []
+
             self.cursor.execute(query)
             # commit only if explicitly wanted
             if query.startswith('INSERT'):
@@ -81,6 +89,8 @@ class SQLite(Store):
                 self.connection.commit()
             self.connected = True
         except self.db_module.IntegrityError:
+            if isinstance(query, tuple):
+                self.connection.rollback()
             return 'INSERT_ERROR'
         except Exception as err:
             # try to reestablish database connection
@@ -91,3 +101,7 @@ class SQLite(Store):
 
         result = self.cursor.fetchall()
         return result
+
+    def query_batch(self, queries):
+        """Run a group of lease writes in one SQLite transaction."""
+        return self.query(tuple(queries))
