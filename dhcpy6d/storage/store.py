@@ -180,6 +180,33 @@ class Store:
         """
         return [self.query(query) for query in queries]
 
+    def query_async(self, query, callback=None):
+        """Submit a write without waiting for its database result."""
+        from . import AsyncQuery
+        self.query_queue.put(AsyncQuery(query, callback))
+
+    def query_batch_async(self, queries, callback=None):
+        """Submit a group of writes without waiting for its database result."""
+        self.query_async(tuple(queries), callback)
+
+    def reserve_advertised_leases(self, transaction):
+        """Keep a SOLICIT allocation visible until its async write finishes."""
+        if transaction.last_message_received_type != 1:
+            return None
+        reservations = getattr(self, 'pending_advertised_leases', None)
+        if reservations is None:
+            reservations = {}
+            self.pending_advertised_leases = reservations
+        token = id(transaction)
+        reservations[token] = (transaction.mac, transaction.duid, transaction.iaid,
+                               [(address.ADDRESS, address.CATEGORY, address.TYPE)
+                                for address in transaction.client.addresses])
+        return token
+
+    def release_advertised_lease_reservation(self, token):
+        if token is not None:
+            self.pending_advertised_leases.pop(token, None)
+
     def clean_query_answer(method):
         """
         decorate repeatedly but not everywhere used cleaning of query answer
@@ -267,7 +294,7 @@ class Store:
             self.config_prefix_support = True
             return True
 
-    def store(self, transaction, now):
+    def store(self, transaction, now, wait_for_writes=True):
         """
         store lease in lease DB
         """
@@ -384,7 +411,14 @@ class Store:
                                     f"WHERE prefix = '{p.PREFIX}'"
                         write_queries.append(query)
             if write_queries:
-                self.query_batch(write_queries)
+                if wait_for_writes:
+                    self.query_batch(write_queries)
+                else:
+                    reservation = self.reserve_advertised_leases(transaction)
+                    self.query_batch_async(
+                        write_queries,
+                        callback=lambda _answer: self.release_advertised_lease_reservation(reservation),
+                    )
             return True
         # if no client -> False
         return False
@@ -666,6 +700,13 @@ class Store:
         """
         check if there are already advertised addresses for client
         """
+        for mac, duid, iaid, leases in getattr(self, 'pending_advertised_leases', {}).values():
+            if mac == transaction.mac and duid == transaction.duid and \
+                    (cfg.IGNORE_IAID or iaid == transaction.iaid):
+                for address, pending_category, pending_type in leases:
+                    if pending_category == category and pending_type == atype:
+                        return address
+
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
             query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND " \

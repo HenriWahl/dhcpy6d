@@ -1,6 +1,8 @@
 import os
+import queue
 import sys
 import tempfile
+import time
 import types
 import unittest
 
@@ -48,6 +50,7 @@ os.chown = lambda *_args, **_kwargs: None
 
 from dhcpy6d.storage.sqlite import SQLite
 from dhcpy6d.storage.store import Store
+from dhcpy6d.storage import QueryQueue
 
 os.chown = _ORIGINAL_CHOWN
 sys.argv = _ORIGINAL_ARGV
@@ -66,14 +69,9 @@ def tearDownModule():
 
 
 class VolatileStoreBatchTest(unittest.TestCase):
-    def test_store_batches_address_writes(self):
-        store = object.__new__(Store)
-        batches = []
-        store.table_leases = 'leases'
-        store.table_prefixes = 'prefixes'
-        store.query = lambda _query: []
-        store.query_batch = lambda queries: batches.append(tuple(queries))
-        transaction = types.SimpleNamespace(
+    @staticmethod
+    def transaction():
+        return types.SimpleNamespace(
             client=types.SimpleNamespace(
                 addresses=[
                     types.SimpleNamespace(
@@ -93,11 +91,73 @@ class VolatileStoreBatchTest(unittest.TestCase):
             duid='0001000130750a150200c0a80002', iaid='c0a80002',
         )
 
-        Store.store(store, transaction, now=100)
+    def test_store_batches_address_writes(self):
+        store = object.__new__(Store)
+        batches = []
+        store.table_leases = 'leases'
+        store.table_prefixes = 'prefixes'
+        store.query = lambda _query: []
+        store.query_batch = lambda queries: batches.append(tuple(queries))
+        Store.store(store, self.transaction(), now=100)
 
         self.assertEqual(len(batches), 1)
         self.assertEqual(len(batches[0]), 2)
         self.assertTrue(all(query.startswith('INSERT INTO leases') for query in batches[0]))
+
+    def test_store_queues_write_batch_without_waiting(self):
+        store = object.__new__(Store)
+        batches = []
+        store.table_leases = 'leases'
+        store.table_prefixes = 'prefixes'
+        store.query = lambda _query: []
+        store.query_batch = lambda _queries: self.fail('synchronous write used')
+        store.query_batch_async = lambda queries, callback=None: batches.append(tuple(queries))
+
+        Store.store(store, self.transaction(), now=100, wait_for_writes=False)
+
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(len(batches[0]), 2)
+
+    def test_async_advertised_lease_is_reserved_before_sqlite_commit(self):
+        store = object.__new__(Store)
+        store.table_leases = 'leases'
+        store.table_prefixes = 'prefixes'
+        store.query = lambda _query: []
+        store.query_batch_async = lambda _queries, callback=None: None
+        transaction = self.transaction()
+        transaction.last_message_received_type = 1
+        transaction.client.addresses[0].CATEGORY = 'random'
+        transaction.client.addresses[0].TYPE = 'dynamic'
+
+        Store.store(store, transaction, now=100, wait_for_writes=False)
+
+        self.assertEqual(
+            Store.check_advertised_lease(store, transaction, category='random', atype='dynamic'),
+            '20010db8000000000000000000000001',
+        )
+
+    def test_async_query_does_not_create_an_answer(self):
+        query_queue = queue.Queue()
+        answer_queue = queue.Queue()
+        store = object.__new__(Store)
+        store.query_queue = query_queue
+        store.answer_queue = answer_queue
+        calls = []
+        worker_store = types.SimpleNamespace(
+            db_query=lambda query: calls.append(query) or [],
+        )
+        worker = QueryQueue(store_type=worker_store,
+                            query_queue=query_queue,
+                            answer_queue=answer_queue)
+        worker.start()
+
+        store.query_async('UPDATE leases SET active = 1')
+
+        deadline = time.monotonic() + 1
+        while not calls and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertEqual(calls, ['UPDATE leases SET active = 1'])
+        self.assertTrue(answer_queue.empty())
 
     def test_sqlite_batch_rolls_back_all_writes_on_integrity_error(self):
         import sqlite3
