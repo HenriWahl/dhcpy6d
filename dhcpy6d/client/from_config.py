@@ -84,31 +84,29 @@ def from_config(client=None, client_config=None, transaction=None):
                 client.prefixes.append(ia_pd)
 
         if not client_config.CLASS == '':
-            # A fixed client address list is authoritative.  Adding class
-            # addresses here creates IAADDRs which the client did not request
-            # and makes ISC dhclient discard the subsequent REPLY.
-            if not client.addresses:
-                # add all addresses which belong to that class
-                for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
-                    # addresses of category 'dns' will be searched in DNS
-                    if cfg.ADDRESSES[address].CATEGORY == 'dns':
-                        a = get_ip_from_dns(client.hostname)
-                    else:
-                        a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction)
-                    # in case range has been exceeded a will be None
-                    if a:
-                        ia = Address(address=a,
-                                     ia_type=cfg.ADDRESSES[address].IA_TYPE,
-                                     preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
-                                     valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
-                                     category=cfg.ADDRESSES[address].CATEGORY,
-                                     aclass=cfg.ADDRESSES[address].CLASS,
-                                     atype=cfg.ADDRESSES[address].TYPE,
-                                     dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
-                                     dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
-                                     dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
-                                     dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
-                        client.addresses.append(ia)
+            # add all addresses which belong to that class
+            configured_addresses = {decompress_ip6(address.ADDRESS) for address in client.addresses}
+            for address in cfg.CLASSES[client_config.CLASS].ADDRESSES:
+                # addresses of category 'dns' will be searched in DNS
+                if cfg.ADDRESSES[address].CATEGORY == 'dns':
+                    a = get_ip_from_dns(client.hostname)
+                else:
+                    a = parse_pattern_address(cfg.ADDRESSES[address], client_config, transaction)
+                # in case range has been exceeded a will be None
+                if a and decompress_ip6(a) not in configured_addresses:
+                    ia = Address(address=a,
+                                 ia_type=cfg.ADDRESSES[address].IA_TYPE,
+                                 preferred_lifetime=cfg.ADDRESSES[address].PREFERRED_LIFETIME,
+                                 valid_lifetime=cfg.ADDRESSES[address].VALID_LIFETIME,
+                                 category=cfg.ADDRESSES[address].CATEGORY,
+                                 aclass=cfg.ADDRESSES[address].CLASS,
+                                 atype=cfg.ADDRESSES[address].TYPE,
+                                 dns_update=cfg.ADDRESSES[address].DNS_UPDATE,
+                                 dns_zone=cfg.ADDRESSES[address].DNS_ZONE,
+                                 dns_rev_zone=cfg.ADDRESSES[address].DNS_REV_ZONE,
+                                 dns_ttl=cfg.ADDRESSES[address].DNS_TTL)
+                    client.addresses.append(ia)
+                    configured_addresses.add(decompress_ip6(a))
 
             # add all bootfiles which belong to that class
             for bootfile in cfg.CLASSES[client_config.CLASS].BOOTFILES:

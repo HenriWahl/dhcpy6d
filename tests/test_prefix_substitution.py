@@ -165,7 +165,7 @@ class PrefixSubstitutionTest(unittest.TestCase):
         self.assertEqual(client.prefixes[0].PREFIX, '20010db8000000000000000000000000')
         self.assertEqual(client.prefixes[0].LENGTH, '64')
 
-    def test_from_config_uses_fixed_client_addresses_without_class_extras(self):
+    def test_from_config_does_not_duplicate_fixed_address_from_class(self):
         fixed_address = '20010db808388f000000c0fffea80002'
         random_address = '20010db808388f000123456789abcdef'
         original_addresses = cfg.ADDRESSES
@@ -195,7 +195,7 @@ class PrefixSubstitutionTest(unittest.TestCase):
             from_config(client=client, client_config=client_config, transaction=transaction)
             self.assertEqual(
                 [(address.ADDRESS, address.IA_TYPE) for address in client.addresses],
-                [(fixed_address, 'na')],
+                [(fixed_address, 'na'), (random_address, 'ta')],
             )
         finally:
             cfg.ADDRESSES = original_addresses
