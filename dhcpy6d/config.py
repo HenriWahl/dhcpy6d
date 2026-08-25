@@ -846,7 +846,7 @@ class Config:
             error_exit(f"{msg_prefix} Request limit identification must be one of 'mac' or 'llip'.")
 
         # check if cleaning interval is a number
-        if not self.CLEANING_INTERVAL.isdigit():
+        if not str(self.CLEANING_INTERVAL).isdigit():
             error_exit(f"{msg_prefix} Cleaning interval "
                        f"'{self.CLEANING_INTERVAL}' is invalid.")
 
