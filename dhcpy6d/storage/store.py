@@ -180,6 +180,10 @@ class Store:
         """
         return [self.query(query) for query in queries]
 
+    def db_query_batch(self, queries):
+        """Execute a write batch directly in a database worker."""
+        return [self.db_query(query) for query in queries]
+
     def query_async(self, query, callback=None):
         """Submit a write without waiting for its database result."""
         from . import AsyncQuery
@@ -206,6 +210,16 @@ class Store:
     def release_advertised_lease_reservation(self, token):
         if token is not None:
             self.pending_advertised_leases.pop(token, None)
+
+    def store_async(self, transaction, now):
+        """Queue all lease reads and writes outside the DHCP response path."""
+        from . import AsyncStore
+        reservation = self.reserve_advertised_leases(transaction)
+        self.query_queue.put(AsyncStore(
+            transaction,
+            now,
+            callback=lambda _answer: self.release_advertised_lease_reservation(reservation),
+        ))
 
     def clean_query_answer(method):
         """
@@ -294,17 +308,20 @@ class Store:
             self.config_prefix_support = True
             return True
 
-    def store(self, transaction, now, wait_for_writes=True):
+    def store(self, transaction, now, wait_for_writes=True, query_function=None, batch_function=None):
         """
         store lease in lease DB
         """
+        query_function = query_function or self.query
+        batch_function = batch_function or self.query_batch
+
         # only if client exists
         if transaction.client:
             write_queries = []
             for a in transaction.client.addresses:
                 if a.ADDRESS is not None:
                     query = f"SELECT address FROM {self.table_leases} WHERE address = '{a.ADDRESS}'"
-                    answer = self.query(query)
+                    answer = query_function(query)
                     if answer is not None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
@@ -360,7 +377,7 @@ class Store:
             for p in transaction.client.prefixes:
                 if p.PREFIX is not None:
                     query = f"SELECT prefix FROM {self.table_prefixes} WHERE prefix = '{p.PREFIX}'"
-                    answer = self.query(query)
+                    answer = query_function(query)
                     if answer is not None:
                         # if prefix is not leased yet add it
                         if len(answer) == 0:
@@ -412,7 +429,7 @@ class Store:
                         write_queries.append(query)
             if write_queries:
                 if wait_for_writes:
-                    self.query_batch(write_queries)
+                    batch_function(write_queries)
                 else:
                     reservation = self.reserve_advertised_leases(transaction)
                     self.query_batch_async(

@@ -105,3 +105,7 @@ class SQLite(Store):
     def query_batch(self, queries):
         """Run a group of lease writes in one SQLite transaction."""
         return self.query(tuple(queries))
+
+    def db_query_batch(self, queries):
+        """Run a group of lease writes directly in one SQLite transaction."""
+        return self.db_query(tuple(queries))

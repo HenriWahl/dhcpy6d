@@ -48,6 +48,7 @@ sys.modules.setdefault('dns.tsigkeyring', _dns_tsigkeyring)
 _ORIGINAL_CHOWN = os.chown
 os.chown = lambda *_args, **_kwargs: None
 
+import dhcpy6d.storage as storage
 from dhcpy6d.storage.sqlite import SQLite
 from dhcpy6d.storage.store import Store
 from dhcpy6d.storage import QueryQueue
@@ -157,6 +158,41 @@ class VolatileStoreBatchTest(unittest.TestCase):
         while not calls and time.monotonic() < deadline:
             time.sleep(0.01)
         self.assertEqual(calls, ['UPDATE leases SET active = 1'])
+        self.assertTrue(answer_queue.empty())
+
+    def test_store_async_queues_complete_lease_work(self):
+        store = object.__new__(Store)
+        store.query_queue = queue.Queue()
+        transaction = self.transaction()
+
+        Store.store_async(store, transaction, now=100)
+
+        queued = store.query_queue.get_nowait()
+        self.assertIsInstance(queued, storage.AsyncStore)
+        self.assertIs(queued.transaction, transaction)
+
+    def test_async_store_runs_without_creating_an_answer(self):
+        query_queue = queue.Queue()
+        answer_queue = queue.Queue()
+        calls = []
+        transaction = self.transaction()
+        worker_store = types.SimpleNamespace(
+            db_query=lambda query: calls.append(('query', query)) or [],
+            db_query_batch=lambda queries: calls.append(('batch', queries)) or [],
+            store=lambda transaction, now, query_function, batch_function:
+                calls.append(('store', transaction, now, query_function, batch_function)) or True,
+        )
+        worker = QueryQueue(store_type=worker_store,
+                            query_queue=query_queue,
+                            answer_queue=answer_queue)
+        worker.start()
+
+        query_queue.put(storage.AsyncStore(transaction, 100))
+
+        deadline = time.monotonic() + 1
+        while not calls and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertEqual(calls[0][0:3], ('store', transaction, 100))
         self.assertTrue(answer_queue.empty())
 
     def test_sqlite_batch_rolls_back_all_writes_on_integrity_error(self):
