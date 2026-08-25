@@ -399,6 +399,79 @@ class PrefixSubstitutionTest(unittest.TestCase):
         finally:
             reuse_lease_module.volatile_store = original_store
 
+    def test_reuse_lease_deactivates_fixed_address_removed_from_client_configuration(self):
+        class _MockLeaseStore:
+            def __init__(self):
+                self.deactivated = []
+
+            @staticmethod
+            def check_lease(_address, _transaction):
+                return [('iserv', '20010db808388fa30000000000000002', 'fixed', 'fixed', 'na', 'default', 0)]
+
+            def deactivate_lease(self, address):
+                self.deactivated.append(address)
+
+        mock_store = _MockLeaseStore()
+        original_store = reuse_lease_module.volatile_store
+        reuse_lease_module.volatile_store = mock_store
+        cfg.CLASSES['default'].ADVERTISE = ['addresses']
+        cfg.CLASSES['default'].ADDRESSES = []
+        cfg.CLASSES['default_eth0'] = cfg.CLASSES['default']
+        client_config = ClientConfig(
+            hostname='iserv',
+            client_class='default',
+            address='2001:db8:838:8fa3::3',
+        )
+        try:
+            client = Client()
+            transaction = MockAddressTransaction()
+            reuse_lease_module.reuse_lease(client=client, client_config=client_config, transaction=transaction)
+            addresses = {address.ADDRESS.replace(':', ''): address for address in client.addresses}
+            self.assertEqual(set(addresses), {
+                '20010db808388fa30000000000000002',
+                '20010db808388fa30000000000000003',
+            })
+            self.assertEqual(addresses['20010db808388fa30000000000000002'].PREFERRED_LIFETIME, 0)
+            self.assertEqual(addresses['20010db808388fa30000000000000002'].VALID_LIFETIME, 0)
+            self.assertEqual(mock_store.deactivated, ['20010db808388fa30000000000000002'])
+        finally:
+            reuse_lease_module.volatile_store = original_store
+
+    def test_reuse_lease_restores_fixed_address_missing_from_renew(self):
+        class _MockLeaseStore:
+            @staticmethod
+            def check_lease(_address, _transaction):
+                return [('iserv', '20010db808388fa30000000000000002', 'fixed', 'fixed', 'na', 'default', 0)]
+
+            @staticmethod
+            def deactivate_lease(_address):
+                raise AssertionError('configured fixed lease must remain active')
+
+        original_store = reuse_lease_module.volatile_store
+        reuse_lease_module.volatile_store = _MockLeaseStore()
+        cfg.CLASSES['default'].ADVERTISE = ['addresses']
+        cfg.CLASSES['default'].ADDRESSES = []
+        cfg.CLASSES['default_eth0'] = cfg.CLASSES['default']
+        client_config = ClientConfig(
+            hostname='iserv',
+            client_class='default',
+            address=['2001:db8:838:8fa3::2', '2001:db8:838:8fa3::3'],
+        )
+        try:
+            client = Client()
+            transaction = MockAddressTransaction()
+            transaction.addresses = ['20010db808388fa30000000000000002']
+            reuse_lease_module.reuse_lease(client=client, client_config=client_config, transaction=transaction)
+            self.assertEqual(
+                {address.ADDRESS.replace(':', '') for address in client.addresses},
+                {
+                    '20010db808388fa30000000000000002',
+                    '20010db808388fa30000000000000003',
+                },
+            )
+        finally:
+            reuse_lease_module.volatile_store = original_store
+
 
 if __name__ == "__main__":
     unittest.main()
