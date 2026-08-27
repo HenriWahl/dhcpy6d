@@ -254,6 +254,20 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                             # continue to advertise it as valid. It will be refused later
                             # with preferred/valid lifetime 0 via transaction prefix diff.
 
+        if client_config is not None and client_config.PREFIX is not None and \
+                transaction.interface in cfg.CLASSES[client.client_class].INTERFACE:
+            active_prefixes = {decompress_prefix(prefix.PREFIX, prefix.LENGTH)
+                               for prefix in client.prefixes}
+            for prefix in client_config.PREFIX:
+                configured_prefix = decompress_prefix(prefix['address'], prefix['length'])
+                if configured_prefix not in active_prefixes:
+                    client.prefixes.append(Prefix(prefix=prefix['address'],
+                                                  length=prefix['length'],
+                                                  preferred_lifetime=cfg.PREFERRED_LIFETIME,
+                                                  valid_lifetime=cfg.VALID_LIFETIME,
+                                                  route_link_local=False))
+                    active_prefixes.add(configured_prefix)
+
         # important indent here, has to match for...prefixes-loop!
         # look for prefixes in transaction that are invalid and add them
         # to client prefixes with flag invalid and a RFC-compliant lifetime of 0
