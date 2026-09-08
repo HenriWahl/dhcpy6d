@@ -49,7 +49,7 @@ os.chown = lambda *_args, **_kwargs: None
 
 import dhcpy6d
 from dhcpy6d.client import parse_pattern
-from dhcpy6d.config import Address
+from dhcpy6d.config import Address, cfg
 from dhcpy6d.options import OPTIONS
 from dhcpy6d.storage.store import Store
 
@@ -67,6 +67,12 @@ def tearDownModule():
                 os.unlink(path)
             except FileNotFoundError:
                 pass
+
+
+class ConfigurationDefaultsTest(unittest.TestCase):
+    def test_default_cleaning_interval_is_accepted_and_converted_to_int(self):
+        self.assertEqual(cfg.CLEANING_INTERVAL, 10)
+        self.assertIsInstance(cfg.CLEANING_INTERVAL, int)
 
 
 class LazyExportTest(unittest.TestCase):
