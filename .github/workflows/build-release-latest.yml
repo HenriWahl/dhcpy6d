@@ -67,7 +67,7 @@ jobs:
       - run: cd build-debian && sha256sum *dhcpy6d* > ../sha256sums.txt
       - run: cd build-centos && md5sum *dhcpy6d* >> ../md5sums.txt
       - run: cd build-centos && sha256sum *dhcpy6d* >> ../sha256sums.txt
-      - uses: marvinpinto/action-automatic-releases@latest
+      - uses: ncipollo/release-action@v1.21.0
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
