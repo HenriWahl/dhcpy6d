@@ -210,6 +210,16 @@ class Client:
                 if len(id_attributes) > 0:
                     client_config = set.intersection(*id_attributes)
 
+                    # A configured class may be restricted to one or more interfaces. Apply that
+                    # restriction before requiring a unique client so the same identity can have
+                    # distinct configurations on different links. Multiple matches on the same
+                    # interface deliberately remain ambiguous.
+                    client_config = {
+                        candidate for candidate in client_config
+                        if candidate.CLASS in cfg.CLASSES and
+                        transaction.interface in cfg.CLASSES[candidate.CLASS].INTERFACE
+                    }
+
                     # if exactly one client has been identified use that config
                     if len(client_config) == 1:
                         # reuse client_config, grab it out of the set
