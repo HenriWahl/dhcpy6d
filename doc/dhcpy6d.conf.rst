@@ -428,6 +428,10 @@ A client gets the addresses, nameserver and T1/T2 values of the class which it i
 
 **interface = <interface> [<interface> ...]**
     It is possible to let a class only apply on specific interfaces. These have to be separated by spaces.
+    The restriction is also applied when identifying configured clients. If the same identity occurs in
+    multiple client configurations, their classes can use distinct interfaces to select the configuration
+    for the link on which the request was received. More than one matching configuration on the same
+    interface remains ambiguous and is not selected.
 
 **advertise = addresses|prefixes**
     A class per default allows one to advertise addresses as well as prefixes if requested. This option allows one to narrow the answers down to either *addresses* or *prefixes*.

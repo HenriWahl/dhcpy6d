@@ -50,6 +50,10 @@ Mandatory client attribute  'class'
 **class = <class>**
     Every client needs a class. If a client is identified, it depends from its class, which addresses it will get.
     This relation is configured in *dhcpy6d.conf*.
+    When that class is restricted to one or more interfaces, the client configuration is considered for
+    identification only on those interfaces. This allows the same identity, for example a MAC address, to
+    have distinct client configurations on different links. The identity still has to select exactly one
+    client configuration on the receiving interface.
 
 Semi-mandatory client attributes
 --------------------------------
