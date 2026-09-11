@@ -34,6 +34,7 @@ import socket
 
 from dhcpy6d import UDPMulticastIPv6
 from dhcpy6d.config import cfg
+from dhcpy6d.pidfile import write_pid_file
 
 from dhcpy6d.globals import (config_answer_queue,
                              config_query_queue,
@@ -54,10 +55,12 @@ from dhcpy6d.threads import (DNSQueryThread,
                              TimerThread)
 
 
+
 # main part, initializing all stuff
 def run():
     log.info('Starting dhcpy6d daemon...')
     log.info(f'Server DUID: {cfg.SERVERDUID}')
+    write_pid_file(cfg.cli_pid_file)
 
     # configure SocketServer
     UDPMulticastIPv6.address_family = socket.AF_INET6

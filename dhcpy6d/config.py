@@ -258,11 +258,11 @@ class Config:
 
         # config file from command line
         # default config file and cli values
-        configfile = self.cli_options = self.cli_user = self.cli_group = self.cli_duid = self.cli_really_do_it = None
+        configfile = self.cli_options = self.cli_user = self.cli_group = self.cli_duid = self.cli_really_do_it = self.cli_pid_file = None
         # get multiple options
         try:
             self.cli_options, cli_remains = getopt.gnu_getopt(sys.argv[1:],
-                                                              'c:u:g:d:r:p:m:G',
+                                                              'c:u:g:d:r:p:m:P:G',
                                                               ['config=',
                                                                'user=',
                                                                'group=',
@@ -270,6 +270,7 @@ class Config:
                                                                'really-do-it=',
                                                                'prefix=',
                                                                'message=',
+                                                               'pid-file=',
                                                                'generate-duid'])
             for opt, arg in self.cli_options:
                 if opt in ('-c', '--config'):
@@ -288,6 +289,8 @@ class Config:
                 if opt in ('-m', '--message'):
                     send_control_message(arg)
                     sys.exit(0)
+                if opt in ('-P', '--pid-file'):
+                    self.cli_pid_file = arg
                 if opt in ('-G', '--generate-duid'):
                     print(generate_duid())
                     sys.exit(0)

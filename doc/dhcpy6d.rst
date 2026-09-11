@@ -16,7 +16,7 @@ MAC address aware DHCPv6 server
 Synopsis
 ========
 
-**dhcpy6d** [**-c** *file*] [**-u** *user*] [**-g** *group*] [**-p** *prefix*] [**-r** *yes|no*] [**-d** *duid*] [**-m** *message*] [**-G**]
+**dhcpy6d** [**-c** *file*] [**-u** *user*] [**-g** *group*] [**-p** *prefix*] [**-P** *pidfile*] [**-r** *yes|no*] [**-d** *duid*] [**-m** *message*] [**-G**]
 
 
 Description
@@ -64,6 +64,10 @@ Most configuration is done via the configuration file.
 
 **-d, --duid=<duid>**
     Set the DUID for the server. This argument is used by /etc/init.d/dhcpy6d and /lib/systemd/system/dhcpy6d.service respectively.
+
+**-P, --pid-file=<path>**
+    Write the running daemon's PID to *path*. The Debian systemd unit uses
+    */run/dhcpy6d/dhcpy6d.pid* in its runtime directory.
 
 **-p, --prefix=<prefix>**
     Set the prefix which will be substituted for the $prefix$ variable in address definitions.

@@ -6,8 +6,13 @@ After=network-online.target
 After=time-sync.target
 
 [Service]
+Type=exec
+RuntimeDirectory=dhcpy6d
+PIDFile=/run/dhcpy6d/dhcpy6d.pid
+Restart=on-failure
+RestartSec=5
 EnvironmentFile=/etc/default/dhcpy6d
-ExecStart=/usr/sbin/dhcpy6d --config /etc/dhcpy6d.conf --user dhcpy6d --group dhcpy6d --really-do-it ${RUN} --duid ${DUID}
+ExecStart=/usr/sbin/dhcpy6d --config /etc/dhcpy6d.conf --user dhcpy6d --group dhcpy6d --really-do-it ${RUN} --duid ${DUID} --pid-file /run/dhcpy6d/dhcpy6d.pid
 
 [Install]
 WantedBy=multi-user.target
