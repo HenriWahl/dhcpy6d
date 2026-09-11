@@ -83,6 +83,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                 elif a['category'] == 'fixed' and client_config.ADDRESS is not None:
                                     if address not in client_config.ADDRESS:
                                         use_lease = False
+                                        stale_configuration = True
                                 elif a['category'] == 'dns':
                                     use_lease = False
 
@@ -165,6 +166,19 @@ def reuse_lease(client=None, client_config=None, transaction=None):
 
                         if stale_configuration:
                             volatile_store.deactivate_lease(a['address'])
+
+        if client_config is not None and client_config.ADDRESS is not None and \
+                transaction.interface in cfg.CLASSES[client.client_class].INTERFACE:
+            active_addresses = {decompress_ip6(address.ADDRESS) for address in client.addresses}
+            for address in client_config.ADDRESS:
+                if address not in active_addresses:
+                    client.addresses.append(Address(address=address,
+                                                    ia_type='na',
+                                                    preferred_lifetime=cfg.PREFERRED_LIFETIME,
+                                                    valid_lifetime=cfg.VALID_LIFETIME,
+                                                    category='fixed',
+                                                    aclass='fixed',
+                                                    atype='fixed'))
 
         # important indent here, has to match for...addresses-loop!
         # look for addresses in transaction that are invalid and add them
