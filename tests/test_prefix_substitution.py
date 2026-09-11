@@ -400,5 +400,59 @@ class PrefixSubstitutionTest(unittest.TestCase):
             reuse_lease_module.volatile_store = original_store
 
 
+class PrefixOptionSubstitutionTest(unittest.TestCase):
+    def test_keeps_empty_literal_ipv6_options_empty(self):
+        from dhcpy6d.config import BootFile, Class, inject_dynamic_prefix_options
+
+        class Config:
+            ADDRESS = '$prefix$19::1'
+            NAMESERVER = ''
+            NTP_SERVER = ''
+            SNTP_SERVERS = ''
+            DNS_UPDATE_NAMESERVER = ''
+            CLASSES = {'default': Class('default')}
+            BOOTFILES = {'pxe': BootFile('pxe')}
+
+        Config.BOOTFILES['pxe'].BOOTFILE_URL = ''
+        Config.CLASSES['default'].NAMESERVER = ''
+        Config.CLASSES['default'].NTP_SERVER = ''
+
+        inject_dynamic_prefix_options(Config, '2001:db8:100:20')
+
+        self.assertEqual(Config.NAMESERVER, '')
+        self.assertEqual(Config.NTP_SERVER, '')
+        self.assertEqual(Config.SNTP_SERVERS, '')
+        self.assertEqual(Config.DNS_UPDATE_NAMESERVER, '')
+        self.assertEqual(Config.CLASSES['default'].NAMESERVER, '')
+        self.assertEqual(Config.CLASSES['default'].NTP_SERVER, '')
+
+    def test_expands_global_and_class_literal_ipv6_options(self):
+        from dhcpy6d.config import BootFile, Class, inject_dynamic_prefix_options
+
+        class Config:
+            ADDRESS = '$prefix$19::1'
+            NAMESERVER = '$prefix$19::53 fd00::53'
+            NTP_SERVER = '$prefix$19::123 time.example.test'
+            SNTP_SERVERS = '$prefix$19::124'
+            DNS_UPDATE_NAMESERVER = '$prefix$19::5353'
+            CLASSES = {'default': Class('default')}
+            BOOTFILES = {'pxe': BootFile('pxe')}
+
+        Config.BOOTFILES['pxe'].BOOTFILE_URL = 'tftp://[$prefix$19::1]/default.ipxe'
+        Config.CLASSES['default'].NAMESERVER = '$prefix$19::54'
+        Config.CLASSES['default'].NTP_SERVER = '$prefix$19::125 ntp.example.test'
+        inject_dynamic_prefix_options(Config, '2001:db8:100:20')
+
+        self.assertEqual(Config.ADDRESS, '2001:db8:100:2019::1')
+        self.assertEqual(Config.NAMESERVER, '2001:db8:100:2019::53 fd00::53')
+        self.assertEqual(Config.NTP_SERVER, '2001:db8:100:2019::123 time.example.test')
+        self.assertEqual(Config.SNTP_SERVERS, '2001:db8:100:2019::124')
+        self.assertEqual(Config.DNS_UPDATE_NAMESERVER, '2001:db8:100:2019::5353')
+        self.assertEqual(Config.BOOTFILES['pxe'].BOOTFILE_URL, 'tftp://[2001:db8:100:2019::1]/default.ipxe')
+        self.assertEqual(Config.CLASSES['default'].NAMESERVER, '2001:db8:100:2019::54')
+        self.assertEqual(Config.CLASSES['default'].NTP_SERVER,
+                         '2001:db8:100:2019::125 ntp.example.test')
+
+
 if __name__ == "__main__":
     unittest.main()

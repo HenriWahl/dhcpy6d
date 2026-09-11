@@ -34,9 +34,48 @@ import uuid
 from .helpers import (decompress_ip6,
                       error_exit,
                       get_interfaces,
+                      inject_dynamic_prefix,
                       listify_option,
                       LOCALHOST_INTERFACES,
                       send_control_message)
+
+def inject_dynamic_prefix_options(config, dynamic_prefix):
+    """Expand $prefix$ in scalar DHCPv6 option values before validation.
+
+    Patterns already carry their own prototype handling.  These options are
+    literal IPv6 addresses and therefore need the same compatibility-aware
+    expansion before they are listified and encoded.
+    """
+    if not dynamic_prefix:
+        return
+
+    def expand(value):
+        values = listify_option(value)
+        if values is None:
+            return value
+        return ' '.join(inject_dynamic_prefix(item, dynamic_prefix,
+                                               allow_legacy_concat=True)[0]
+                        for item in values)
+
+    config.ADDRESS = inject_dynamic_prefix(config.ADDRESS, dynamic_prefix,
+                                           allow_legacy_concat=True)[0]
+    config.NAMESERVER = expand(config.NAMESERVER)
+    config.NTP_SERVER = expand(config.NTP_SERVER)
+    config.SNTP_SERVERS = expand(config.SNTP_SERVERS)
+    config.DNS_UPDATE_NAMESERVER = inject_dynamic_prefix(
+        config.DNS_UPDATE_NAMESERVER, dynamic_prefix, allow_legacy_concat=True)[0]
+    for bootfile in config.BOOTFILES.values():
+        # URLs contain the IPv6 literal in brackets; expand that literal rather
+        # than validating the complete URL as an IPv6 address.
+        bootfile.BOOTFILE_URL = re.sub(
+            r'\[([^]]+)\]',
+            lambda match: '[' + inject_dynamic_prefix(
+                match.group(1), dynamic_prefix, allow_legacy_concat=True)[0] + ']',
+            bootfile.BOOTFILE_URL)
+    for client_class in config.CLASSES.values():
+        client_class.NAMESERVER = expand(client_class.NAMESERVER)
+        client_class.NTP_SERVER = expand(client_class.NTP_SERVER)
+
 
 # needed for boolean options
 BOOLPOOL = {'0': False, '1': True, 'no': False, 'yes': True, 'false': False, 'true': True, False: False, True: True,
@@ -468,6 +507,9 @@ class Config:
                         else:
                             self.CLASSES[section.lower().split('class_', 1)[1]].__setattr__(item[0].upper(),
                                                                                          str(item[1]).strip())
+
+        # Expand literal server and option addresses before listification and validation.
+        inject_dynamic_prefix_options(self, self.PREFIX)
 
         # The next paragraphs contain finetuning
         self.IDENTIFICATION = listify_option(self.IDENTIFICATION)

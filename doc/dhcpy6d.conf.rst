@@ -83,6 +83,7 @@ environments.
 
 **nameserver = <nameserver-address> [<nameserver-address> ...]**
     If an address type is of category *dns* at least one nameserver has to be given here. If more than one is needed they have to be separated by spaces.
+    Literal IPv6 entries may use *$prefix$* when dhcpy6d is started with *--prefix*; see the placeholder section below.
 
 **domain = <domain-name>**
     The domain to be used with FQDN hostnames for option 39.
@@ -91,7 +92,10 @@ environments.
     Domain search lists to be used with option 24. If none is given the value of domain above is used. Multiple domains have to be separated by space or comma.
 
 **ntp_server = <ntp_server> [<ntp_server> ...]**
-    NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56.
+    NTP servers to be used. <ntp_server> can be unicast addresses, multicast addresses or FQDNs following RFC 5908 for DHCPv6 option 56. Literal IPv6 entries may use *$prefix$*; FQDN entries are not changed.
+
+**sntp_servers = <sntp-server-address> [<sntp-server-address> ...]**
+    Legacy DHCPv6 option 31 server addresses. Literal IPv6 entries may use *$prefix$*.
 
 **log = yes|no**
     Enable logging.
@@ -174,7 +178,8 @@ environments.
     Dynamically update DNS. This works at the moment only with Bind DNS, but might be extended to others, maybe via call of an external command.
     *Default: no*
 
-**dns_update_nameserver = <nameserver-address> [<nameserver-address> ...]**
+**dns_update_nameserver = <nameserver-address>**
+    DNS update endpoint. A literal IPv6 entry may use *$prefix$*.
 
 **dns_use_rndc = yes|no**
     DNS updates might be able without RNDC key but this is not advised.
@@ -308,7 +313,7 @@ There can be many address definitions which will be used by classes. Every addre
         A 64 bit random address will be generated in place of this variable. Clients get a random address just like they would if privacy extensions were used. The random part will span over 4 octets.
 
     **$prefix$**
-        This placeholder can be used instead of a literal prefix and uses the prefix given at calling dhcpy6d via the *--prefix* argument like *$prefix$::$id$*.
+        This placeholder can be used in address/prefix patterns, fixed client values, and literal IPv6 settings (server address, DNS update endpoint, nameserver, NTP server, and SNTP server). It uses the prefix given at calling dhcpy6d via the *--prefix* argument like *$prefix$::$id$*.
         If text is appended directly, dhcpy6d keeps compatibility with older, undocumented patterns:
 
         - explicit/new hextet (recommended): *$prefix$:19::2*
