@@ -105,6 +105,43 @@ class VolatileStoreBatchTest(unittest.TestCase):
         self.assertEqual(len(batches[0]), 2)
         self.assertTrue(all(query.startswith('INSERT INTO leases') for query in batches[0]))
 
+    def test_store_deduplicates_address_writes_in_one_batch(self):
+        store = object.__new__(Store)
+        batches = []
+        store.table_leases = 'leases'
+        store.table_prefixes = 'prefixes'
+        store.query = lambda _query: []
+        store.query_batch = lambda queries: batches.append(tuple(queries))
+        transaction = self.transaction()
+        transaction.client.addresses.append(transaction.client.addresses[0])
+
+        Store.store(store, transaction, now=100)
+
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(len(batches[0]), 2)
+
+    def test_store_deduplicates_prefix_writes_in_one_batch(self):
+        store = object.__new__(Store)
+        batches = []
+        store.table_leases = 'leases'
+        store.table_prefixes = 'prefixes'
+        store.query = lambda _query: []
+        store.query_batch = lambda queries: batches.append(tuple(queries))
+        transaction = self.transaction()
+        prefix = types.SimpleNamespace(
+            PREFIX='20010db8000000000000000000000000', LENGTH='64',
+            PREFERRED_LIFETIME=5400, VALID_LIFETIME=7200,
+            TYPE='fixed', CATEGORY='fixed',
+        )
+        transaction.client.addresses = []
+        transaction.client.prefixes = [prefix, prefix]
+
+        Store.store(store, transaction, now=100)
+
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(len(batches[0]), 1)
+        self.assertTrue(batches[0][0].startswith('INSERT INTO prefixes'))
+
     def test_store_queues_write_batch_without_waiting(self):
         store = object.__new__(Store)
         batches = []
@@ -137,6 +174,23 @@ class VolatileStoreBatchTest(unittest.TestCase):
             '20010db8000000000000000000000001',
         )
 
+    def test_advertised_lease_reservation_ignores_empty_addresses(self):
+        store = object.__new__(Store)
+        transaction = self.transaction()
+        transaction.last_message_received_type = 1
+        transaction.client.addresses[0].ADDRESS = None
+        transaction.client.addresses[0].CATEGORY = 'random'
+        transaction.client.addresses[0].TYPE = 'dynamic'
+        transaction.client.addresses[1].CATEGORY = 'random'
+        transaction.client.addresses[1].TYPE = 'dynamic'
+
+        Store.reserve_advertised_leases(store, transaction)
+
+        self.assertEqual(
+            Store.check_advertised_lease(store, transaction, category='random', atype='dynamic'),
+            '20010db8000000000000000000000002',
+        )
+
     def test_async_query_does_not_create_an_answer(self):
         query_queue = queue.Queue()
         answer_queue = queue.Queue()
@@ -159,6 +213,29 @@ class VolatileStoreBatchTest(unittest.TestCase):
             time.sleep(0.01)
         self.assertEqual(calls, ['UPDATE leases SET active = 1'])
         self.assertTrue(answer_queue.empty())
+
+    def test_async_batch_uses_the_backend_batch_interface(self):
+        query_queue = queue.Queue()
+        answer_queue = queue.Queue()
+        store = object.__new__(Store)
+        store.query_queue = query_queue
+        store.answer_queue = answer_queue
+        calls = []
+        worker_store = types.SimpleNamespace(
+            db_query=lambda query: calls.append(('query', query)) or [],
+            db_query_batch=lambda queries: calls.append(('batch', queries)) or [],
+        )
+        worker = QueryQueue(store_type=worker_store,
+                            query_queue=query_queue,
+                            answer_queue=answer_queue)
+        worker.start()
+
+        store.query_batch_async(['UPDATE leases SET active = 1'])
+
+        deadline = time.monotonic() + 1
+        while not calls and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertEqual(calls, [('batch', ['UPDATE leases SET active = 1'])])
 
     def test_store_async_queues_complete_lease_work(self):
         store = object.__new__(Store)
@@ -211,4 +288,22 @@ class VolatileStoreBatchTest(unittest.TestCase):
         ))
 
         self.assertEqual(result, 'INSERT_ERROR')
+        self.assertEqual(store.cursor.execute('SELECT * FROM leases').fetchall(), [])
+
+    def test_sqlite_batch_rolls_back_all_writes_on_other_errors(self):
+        import sqlite3
+
+        store = object.__new__(SQLite)
+        store.db_module = sqlite3
+        store.connection = sqlite3.connect(':memory:')
+        store.cursor = store.connection.cursor()
+        store.db_connect = lambda: False
+        store.cursor.execute('CREATE TABLE leases (address TEXT PRIMARY KEY)')
+
+        result = store.db_query((
+            "INSERT INTO leases VALUES ('20010db8000000000000000000000001')",
+            'INSERT INTO missing_table VALUES (1)',
+        ))
+
+        self.assertIsNone(result)
         self.assertEqual(store.cursor.execute('SELECT * FROM leases').fetchall(), [])

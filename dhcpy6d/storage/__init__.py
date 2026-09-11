@@ -46,6 +46,13 @@ class AsyncQuery:
         self.callback = callback
 
 
+class AsyncBatch:
+    """A write batch whose backend controls transactional execution."""
+    def __init__(self, queries, callback=None):
+        self.queries = queries
+        self.callback = callback
+
+
 class AsyncStore:
     """A complete lease-store operation run by the database worker."""
     def __init__(self, transaction, now, callback=None):
@@ -73,6 +80,7 @@ class QueryQueue(threading.Thread):
         while True:
             queued_query = self.query_queue.get()
             async_query = isinstance(queued_query, AsyncQuery)
+            async_batch = isinstance(queued_query, AsyncBatch)
             async_store = isinstance(queued_query, AsyncStore)
             query = queued_query.query if async_query else queued_query
             try:
@@ -80,6 +88,8 @@ class QueryQueue(threading.Thread):
                     answer = self.store.store(queued_query.transaction, queued_query.now,
                                               query_function=self.store.db_query,
                                               batch_function=self.store.db_query_batch)
+                elif async_batch:
+                    answer = self.store.db_query_batch(queued_query.queries)
                 else:
                     answer = self.store.db_query(query)
             except Exception as error:
@@ -87,7 +97,7 @@ class QueryQueue(threading.Thread):
                 sys.stdout.flush()
                 answer = error
 
-            if not async_query and not async_store:
+            if not async_query and not async_batch and not async_store:
                 self.answer_queue.put({query: answer})
             elif queued_query.callback is not None:
                 queued_query.callback(answer)

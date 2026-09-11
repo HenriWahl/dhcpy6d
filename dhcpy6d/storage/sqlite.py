@@ -93,6 +93,8 @@ class SQLite(Store):
                 self.connection.rollback()
             return 'INSERT_ERROR'
         except Exception as err:
+            if isinstance(query, tuple):
+                self.connection.rollback()
             # try to reestablish database connection
             print(f'Error: {str(err.args[0])}')
             print(f'Query: {query}')

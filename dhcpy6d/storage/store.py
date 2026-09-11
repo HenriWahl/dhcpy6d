@@ -191,7 +191,8 @@ class Store:
 
     def query_batch_async(self, queries, callback=None):
         """Submit a group of writes without waiting for its database result."""
-        self.query_async(tuple(queries), callback)
+        from . import AsyncBatch
+        self.query_queue.put(AsyncBatch(queries, callback))
 
     def reserve_advertised_leases(self, transaction):
         """Keep a SOLICIT allocation visible until its async write finishes."""
@@ -204,7 +205,8 @@ class Store:
         token = id(transaction)
         reservations[token] = (transaction.mac, transaction.duid, transaction.iaid,
                                [(address.ADDRESS, address.CATEGORY, address.TYPE)
-                                for address in transaction.client.addresses])
+                                for address in transaction.client.addresses
+                                if address.ADDRESS is not None])
         return token
 
     def release_advertised_lease_reservation(self, token):
@@ -318,8 +320,13 @@ class Store:
         # only if client exists
         if transaction.client:
             write_queries = []
+            stored_addresses = set()
+            stored_prefixes = set()
             for a in transaction.client.addresses:
                 if a.ADDRESS is not None:
+                    if a.ADDRESS in stored_addresses:
+                        continue
+                    stored_addresses.add(a.ADDRESS)
                     query = f"SELECT address FROM {self.table_leases} WHERE address = '{a.ADDRESS}'"
                     answer = query_function(query)
                     if answer is not None:
@@ -376,6 +383,10 @@ class Store:
 
             for p in transaction.client.prefixes:
                 if p.PREFIX is not None:
+                    prefix_key = (p.PREFIX, p.LENGTH)
+                    if prefix_key in stored_prefixes:
+                        continue
+                    stored_prefixes.add(prefix_key)
                     query = f"SELECT prefix FROM {self.table_prefixes} WHERE prefix = '{p.PREFIX}'"
                     answer = query_function(query)
                     if answer is not None:
