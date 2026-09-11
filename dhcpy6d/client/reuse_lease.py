@@ -265,7 +265,7 @@ def reuse_lease(client=None, client_config=None, transaction=None):
                                                   length=prefix['length'],
                                                   preferred_lifetime=cfg.PREFERRED_LIFETIME,
                                                   valid_lifetime=cfg.VALID_LIFETIME,
-                                                  route_link_local=False))
+                                                  route_link_local=client_config.PREFIX_ROUTE_LINK_LOCAL))
                     active_prefixes.add(configured_prefix)
 
         # important indent here, has to match for...prefixes-loop!
