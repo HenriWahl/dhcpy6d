@@ -400,10 +400,32 @@ class PrefixSubstitutionTest(unittest.TestCase):
             reuse_lease_module.volatile_store = original_store
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 class PrefixOptionSubstitutionTest(unittest.TestCase):
+    def test_keeps_empty_literal_ipv6_options_empty(self):
+        from dhcpy6d.config import BootFile, Class, inject_dynamic_prefix_options
+
+        class Config:
+            ADDRESS = '$prefix$19::1'
+            NAMESERVER = ''
+            NTP_SERVER = ''
+            SNTP_SERVERS = ''
+            DNS_UPDATE_NAMESERVER = ''
+            CLASSES = {'default': Class('default')}
+            BOOTFILES = {'pxe': BootFile('pxe')}
+
+        Config.BOOTFILES['pxe'].BOOTFILE_URL = ''
+        Config.CLASSES['default'].NAMESERVER = ''
+        Config.CLASSES['default'].NTP_SERVER = ''
+
+        inject_dynamic_prefix_options(Config, '2001:db8:100:20')
+
+        self.assertEqual(Config.NAMESERVER, '')
+        self.assertEqual(Config.NTP_SERVER, '')
+        self.assertEqual(Config.SNTP_SERVERS, '')
+        self.assertEqual(Config.DNS_UPDATE_NAMESERVER, '')
+        self.assertEqual(Config.CLASSES['default'].NAMESERVER, '')
+        self.assertEqual(Config.CLASSES['default'].NTP_SERVER, '')
+
     def test_expands_global_and_class_literal_ipv6_options(self):
         from dhcpy6d.config import BootFile, Class, inject_dynamic_prefix_options
 
@@ -430,3 +452,7 @@ class PrefixOptionSubstitutionTest(unittest.TestCase):
         self.assertEqual(Config.CLASSES['default'].NAMESERVER, '2001:db8:100:2019::54')
         self.assertEqual(Config.CLASSES['default'].NTP_SERVER,
                          '2001:db8:100:2019::125 ntp.example.test')
+
+
+if __name__ == "__main__":
+    unittest.main()

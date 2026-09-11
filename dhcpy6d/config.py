@@ -51,6 +51,8 @@ def inject_dynamic_prefix_options(config, dynamic_prefix):
 
     def expand(value):
         values = listify_option(value)
+        if values is None:
+            return value
         return ' '.join(inject_dynamic_prefix(item, dynamic_prefix,
                                                allow_legacy_concat=True)[0]
                         for item in values)
