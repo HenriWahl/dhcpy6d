@@ -172,6 +172,57 @@ class Store:
                     answer = self.answers.pop(query)
         return answer
 
+    def query_batch(self, queries):
+        """Execute write queries in order.
+
+        Backends with transaction support may override this to make a batch
+        atomic. The default preserves the existing behavior.
+        """
+        return [self.query(query) for query in queries]
+
+    def db_query_batch(self, queries):
+        """Execute a write batch directly in a database worker."""
+        return [self.db_query(query) for query in queries]
+
+    def query_async(self, query, callback=None):
+        """Submit a write without waiting for its database result."""
+        from . import AsyncQuery
+        self.query_queue.put(AsyncQuery(query, callback))
+
+    def query_batch_async(self, queries, callback=None):
+        """Submit a group of writes without waiting for its database result."""
+        from . import AsyncBatch
+        self.query_queue.put(AsyncBatch(queries, callback))
+
+    def reserve_advertised_leases(self, transaction):
+        """Keep a SOLICIT allocation visible until its async write finishes."""
+        if transaction.last_message_received_type != 1:
+            return None
+        reservations = getattr(self, 'pending_advertised_leases', None)
+        if reservations is None:
+            reservations = {}
+            self.pending_advertised_leases = reservations
+        token = id(transaction)
+        reservations[token] = (transaction.mac, transaction.duid, transaction.iaid,
+                               [(address.ADDRESS, address.CATEGORY, address.TYPE)
+                                for address in transaction.client.addresses
+                                if address.ADDRESS is not None])
+        return token
+
+    def release_advertised_lease_reservation(self, token):
+        if token is not None:
+            self.pending_advertised_leases.pop(token, None)
+
+    def store_async(self, transaction, now):
+        """Queue all lease reads and writes outside the DHCP response path."""
+        from . import AsyncStore
+        reservation = self.reserve_advertised_leases(transaction)
+        self.query_queue.put(AsyncStore(
+            transaction,
+            now,
+            callback=lambda _answer: self.release_advertised_lease_reservation(reservation),
+        ))
+
     def clean_query_answer(method):
         """
         decorate repeatedly but not everywhere used cleaning of query answer
@@ -259,16 +310,25 @@ class Store:
             self.config_prefix_support = True
             return True
 
-    def store(self, transaction, now):
+    def store(self, transaction, now, wait_for_writes=True, query_function=None, batch_function=None):
         """
         store lease in lease DB
         """
+        query_function = query_function or self.query
+        batch_function = batch_function or self.query_batch
+
         # only if client exists
         if transaction.client:
+            write_queries = []
+            stored_addresses = set()
+            stored_prefixes = set()
             for a in transaction.client.addresses:
                 if a.ADDRESS is not None:
+                    if a.ADDRESS in stored_addresses:
+                        continue
+                    stored_addresses.add(a.ADDRESS)
                     query = f"SELECT address FROM {self.table_leases} WHERE address = '{a.ADDRESS}'"
-                    answer = self.query(query)
+                    answer = query_function(query)
                     if answer is not None:
                         # if address is not leased yet add it
                         if len(answer) == 0:
@@ -291,14 +351,9 @@ class Store:
                                     f"'{now}', " \
                                     f"'{now + int(a.PREFERRED_LIFETIME)}', " \
                                     f"'{now + int(a.VALID_LIFETIME)}')"
-                            answer = self.query(query)
-                            # for unknown reasons sometime a lease shall be inserted which already exists
-                            # in this case go further (aka continue) and do an update instead of an insert
-                            if answer == 'INSERT_ERROR':
-                                print('IntegrityError:', query)
-                            else:
-                                # jump to next item of loop
-                                continue
+                            write_queries.append(query)
+                            # jump to next item of loop
+                            continue
                         # otherwise update it if not a random address
                         if a.CATEGORY != 'random':
                             query = f"UPDATE {self.table_leases} " \
@@ -324,12 +379,16 @@ class Store:
                                     f"SET active = 1, " \
                                     f"last_message = {transaction.last_message_received_type} " \
                                     f"WHERE address = '{a.ADDRESS}'"
-                        self.query(query)
+                        write_queries.append(query)
 
             for p in transaction.client.prefixes:
                 if p.PREFIX is not None:
+                    prefix_key = (p.PREFIX, p.LENGTH)
+                    if prefix_key in stored_prefixes:
+                        continue
+                    stored_prefixes.add(prefix_key)
                     query = f"SELECT prefix FROM {self.table_prefixes} WHERE prefix = '{p.PREFIX}'"
-                    answer = self.query(query)
+                    answer = query_function(query)
                     if answer is not None:
                         # if prefix is not leased yet add it
                         if len(answer) == 0:
@@ -352,12 +411,8 @@ class Store:
                                     f"'{now}', " \
                                     f"'{now + int(p.PREFERRED_LIFETIME)}', " \
                                     f"'{now + int(p.VALID_LIFETIME)}')"
-                            answer = self.query(query)
-                            # for unknow reasons sometime a lease shall be inserted which already exists
-                            # in this case go further (aka continue) and do an update instead of an insert
-                            # doing this here for prefixes is just a precautional measure
-                            if answer != 'INSERT_ERROR':
-                                continue
+                            write_queries.append(query)
+                            continue
                         # otherwise update it if not a random prefix
                         # anyway right now only the categories 'range' and 'id' exist
                         if p.CATEGORY != 'random':
@@ -382,7 +437,16 @@ class Store:
                                     f"SET last_message = {transaction.last_message_received_type}, " \
                                     f"active = 1 " \
                                     f"WHERE prefix = '{p.PREFIX}'"
-                        self.query(query)
+                        write_queries.append(query)
+            if write_queries:
+                if wait_for_writes:
+                    batch_function(write_queries)
+                else:
+                    reservation = self.reserve_advertised_leases(transaction)
+                    self.query_batch_async(
+                        write_queries,
+                        callback=lambda _answer: self.release_advertised_lease_reservation(reservation),
+                    )
             return True
         # if no client -> False
         return False
@@ -664,6 +728,13 @@ class Store:
         """
         check if there are already advertised addresses for client
         """
+        for mac, duid, iaid, leases in getattr(self, 'pending_advertised_leases', {}).values():
+            if mac == transaction.mac and duid == transaction.duid and \
+                    (cfg.IGNORE_IAID or iaid == transaction.iaid):
+                for address, pending_category, pending_type in leases:
+                    if pending_category == category and pending_type == atype:
+                        return address
+
         # attributes to identify host and lease
         if cfg.IGNORE_IAID:
             query = f"SELECT address FROM {self.table_leases} WHERE last_message = 1 AND " \

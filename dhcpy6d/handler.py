@@ -258,7 +258,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                         transaction.options_request)
 
                                     # store leases for addresses and lock advertised address
-                                    volatile_store.store(deepcopy(transaction), timer.time)
+                                    volatile_store.store_async(deepcopy(transaction), timer.time)
 
                                 # REQUEST
                                 # if last request was a REQUEST (type 3) send a REPLY (type 7) back
@@ -280,7 +280,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                             [CONST.OPTION.PREFERENCE] +
                                                             [CONST.OPTION.RAPID_COMMIT] + transaction.options_request)
                                     # store leases for addresses
-                                    volatile_store.store(deepcopy(transaction), timer.time)
+                                    volatile_store.store_async(deepcopy(transaction), timer.time)
 
                                     # run external script for setting a route to the delegated prefix
                                     if CONST.OPTION.IA_PD in transaction.ia_options:
@@ -315,7 +315,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                         [CONST.OPTION.PREFERENCE] +
                                                         transaction.options_request)
                                     # store leases for addresses
-                                    volatile_store.store(deepcopy(transaction), timer.time)
+                                    volatile_store.store_async(deepcopy(transaction), timer.time)
                                     if cfg.DNS_UPDATE:
                                         dns_update(transaction)
 
@@ -328,7 +328,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                                         [CONST.OPTION.PREFERENCE] +
                                                         transaction.options_request)
                                     # store leases for addresses
-                                    volatile_store.store(deepcopy(transaction), timer.time)
+                                    volatile_store.store_async(deepcopy(transaction), timer.time)
 
                                 # RELEASE
                                 # if last request was a RELEASE (type 8) send a REPLY (type 7) back
