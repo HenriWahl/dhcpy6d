@@ -50,6 +50,7 @@ os.chown = lambda *_args, **_kwargs: None
 import dhcpy6d
 from dhcpy6d.client import parse_pattern
 from dhcpy6d.config import Address, cfg
+from dhcpy6d import handler as handler_module
 from dhcpy6d.options import OPTIONS
 from dhcpy6d.storage.store import Store
 
@@ -106,6 +107,62 @@ class OptionImportTest(unittest.TestCase):
     def test_mac_dependent_options_load_without_package_lazy_export(self):
         for option_number in (3, 4, 25):
             self.assertIn(option_number, OPTIONS)
+
+
+class RouteRenewalTest(unittest.TestCase):
+    def test_renew_and_rebind_restore_delegated_prefix_routes(self):
+        class Transaction:
+            def __init__(self, transaction_id, client_llip, interface, message_type, options):
+                self.id = transaction_id
+                self.client_llip = client_llip
+                self.interface = interface
+                self.last_message_received_type = message_type
+                self.duid = '00010001'
+                self.ia_options = [25]
+                self.options_request = []
+                self.rapid_commit = False
+                self.client = None
+                self.counter = 1
+
+            @staticmethod
+            def get_options_string():
+                return ''
+
+        class Client:
+            def __init__(self, transaction):
+                transaction.client = types.SimpleNamespace(
+                    client_class='fixed_eth0', prefixes=[])
+
+        original = {name: getattr(cfg, name) for name in
+                    ('IGNORE_MAC', 'IGNORE_UNKNOWN_CLIENTS', 'REQUEST_LIMIT',
+                     'INTERFACE', 'DNS_UPDATE')}
+        transactions = handler_module.transactions.copy()
+        handler_module.transactions.clear()
+        try:
+            cfg.IGNORE_MAC = True
+            cfg.IGNORE_UNKNOWN_CLIENTS = False
+            cfg.REQUEST_LIMIT = 0
+            cfg.INTERFACE = ['eth0']
+            cfg.DNS_UPDATE = False
+            for message_type in (handler_module.CONST.MESSAGE.RENEW,
+                                 handler_module.CONST.MESSAGE.REBIND):
+                handler = object.__new__(handler_module.RequestHandler)
+                handler.client_address = ('fe80::1', 547, 0, 1)
+                handler.request = (bytes.fromhex(
+                    f'{message_type:02x}0000010001000400010001'), None)
+                handler.build_response = mock.Mock()
+                with mock.patch.object(handler_module.socket, 'if_indextoname', return_value='eth0'), \
+                     mock.patch.object(handler_module, 'Transaction', Transaction), \
+                     mock.patch.object(handler_module, 'Client', Client), \
+                     mock.patch.object(handler_module.volatile_store, 'store'), \
+                     mock.patch.object(handler_module, 'modify_route') as modify_route:
+                    handler.handle()
+                modify_route.assert_called_once_with(mock.ANY, 'up')
+        finally:
+            handler_module.transactions.clear()
+            handler_module.transactions.update(transactions)
+            for name, value in original.items():
+                setattr(cfg, name, value)
 
 
 class RandomAddressPatternTest(unittest.TestCase):
