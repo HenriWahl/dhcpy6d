@@ -205,7 +205,7 @@ def get_neighbor_cache_linux(if_number, now):
                                                      mac=nda['NDA_LLADDR'],
                                                      interface=if_number[nda['NDM_IFINDEX']],
                                                      now=now)
-                        result[record.llip] = record
+                        result[(record.interface, record.llip)] = record
 
             # move to next record
             answer_pos += nlmsg_len
@@ -220,50 +220,40 @@ def get_neighbor_cache_linux(if_number, now):
     return result
 
 
-def collect_macs(now):
-    """
-    collect MAC address from clients to link local addresses with MACs
-    if a client has a new MAC the LLIP changes - with privacy extension enabled anyway
-    calls local ip command to get neighbor cache - any more sophisticated idea is welcome!
+def remember_neighbor(record):
+    """Keep one MAC per interface-scoped neighbour, refreshing replacements."""
+    if not record.llip.startswith('fe80'):
+        return
+    key = (record.interface, record.llip)
+    old = collected_macs.get(key)
+    if old is not None and old.mac == record.mac:
+        return
+    collected_macs[key] = record
+    if cfg.LOG_MAC_LLIP:
+        log.info(f'collected mac {record.mac} for llip {colonify_ip6(record.llip)}%{record.interface}')
+    if cfg.CACHE_MAC_LLIP:
+        volatile_store.store_mac_llip(record.mac, record.llip, record.timestamp, record.interface)
 
-    The Linux netlink method is considered stable now.
-    """
+
+def collect_macs(now):
+    """Learn neighbours without merging identical link-local IPs on different links."""
     try:
-        # Linux can use kernel neighbor cache
         if OS == 'Linux':
-            for host in list(get_neighbor_cache_linux(IF_NUMBER, timer.time).values()):
-                if host.llip not in collected_macs:
-                    if host.llip.startswith('fe80'):
-                        collected_macs[host.llip] = host
-                        if cfg.LOG_MAC_LLIP:
-                            log.info(f'collected mac {host.mac} for llip {colonify_ip6(host.llip)}')
-                        if cfg.CACHE_MAC_LLIP:
-                            volatile_store.store_mac_llip(host.mac, host.llip, timer.time)
+            for host in get_neighbor_cache_linux(IF_NUMBER, now).values():
+                remember_neighbor(host)
         else:
-            # subject to change - other distros might have other paths - might become a task
-            # for a setup routine to find appropriate paths
             for host in subprocess.getoutput(NC[OS]['call']).splitlines():
-                # get fragments of output line
                 frags = shlex.split(host)
-                if frags[NC[OS]['dev']] in cfg.INTERFACE and len(frags) >= NC[OS]['len']:
-                    # get rid of %interface
-                    frags[NC[OS]['llip']] = decompress_ip6(frags[NC[OS]['llip']].split('%')[0])
-                    if frags[NC[OS]['mac']] == '(incomplete)':
-                        continue
-                    # correct maybe shortened MAC
-                    frags[NC[OS]['mac']] = correct_mac(frags[NC[OS]['mac']])
-                    # put non yet existing LLIPs into dictionary - if they have MACs
-                    if not frags[NC[OS]['llip']] in collected_macs and \
-                       frags[NC[OS]['llip']].lower().startswith('fe80') and \
-                       ':' in frags[NC[OS]['mac']]:
-                        collected_macs[frags[NC[OS]['llip']]] = NeighborCacheRecord(llip=frags[NC[OS]['llip']],
-                                                                                    mac=frags[NC[OS]['mac']],
-                                                                                    interface=frags[NC[OS]['dev']],
-                                                                                    now=now)
-                        if cfg.LOG_MAC_LLIP:
-                            log.info(f"collected mac {frags[NC[OS]['mac']]} for "
-                                     f"llip {colonify_ip6(frags[NC[OS]['llip']])}")
-                        volatile_store.store_mac_llip(frags[NC[OS]['mac']], frags[NC[OS]['llip']], timer.time)
+                if len(frags) < NC[OS]['len'] or frags[NC[OS]['dev']] not in cfg.INTERFACE:
+                    continue
+                if frags[NC[OS]['mac']] == '(incomplete)':
+                    continue
+                mac = correct_mac(frags[NC[OS]['mac']])
+                if ':' not in mac:
+                    continue
+                remember_neighbor(NeighborCacheRecord(
+                    llip=decompress_ip6(frags[NC[OS]['llip']].split('%')[0]),
+                    mac=mac, interface=frags[NC[OS]['dev']], now=now))
     except Exception as err:
         traceback.print_exc(file=sys.stdout)
         sys.stdout.flush()

@@ -85,28 +85,30 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             # even if 'lo' has the index 1
             interface = ''
 
+        client_key = (interface, decompress_ip6(client_address))
+
         # avoid processing requests of unknown clients which cannot be found in the neighbor cache table
         # only makes sense if classes are not ignored and thus the neighbor cache is used
         if not cfg.IGNORE_MAC and cfg.IGNORE_UNKNOWN_CLIENTS:
-            if client_address in requests_blacklist:
+            if client_key in requests_blacklist:
                 return False
 
         # check if we are limiting requests
         if cfg.REQUEST_LIMIT:
             if cfg.REQUEST_LIMIT_IDENTIFICATION == 'llip':
                 # avoid further processing if client is known to be bad
-                if client_address in requests_blacklist:
+                if client_key in requests_blacklist:
                     return False
                 # add client to requests tracker if not known, otherwise raise counter
-                if client_address not in requests:
-                    requests[client_address] = Request(client_address)
+                if client_key not in requests:
+                    requests[client_key] = Request(client_key)
                 else:
-                    requests[client_address].count += 1
+                    requests[client_key].count += 1
             # otherwise a MAC address
             else:
                 llip = decompress_ip6(client_address)
-                if llip in collected_macs:
-                    mac = deepcopy(collected_macs[llip].mac)
+                if (interface, llip) in collected_macs:
+                    mac = deepcopy(collected_macs[(interface, llip)].mac)
                     if mac in requests_blacklist:
                         return False
                     # add client to requests tracker if not known, otherwise raise counter
@@ -172,7 +174,7 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 if message_type in CONST.MESSAGE_DICT:
                     client_llip = decompress_ip6(client_address)
                     # 2. create Transaction object if not yet done
-                    identifier = client_llip + transaction_id
+                    identifier = (interface, client_llip, transaction_id)
                     if identifier not in transactions:
                         transactions[identifier] = Transaction(transaction_id,
                                                                client_llip,
@@ -182,8 +184,8 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                         # shortcut to transactions[identifier]
                         transaction = transactions[identifier]
                         # add client MAC address to transaction object
-                        if transaction.client_llip in collected_macs and not cfg.IGNORE_MAC:
-                            transaction.mac = collected_macs[transaction.client_llip].mac
+                        if (transaction.interface, transaction.client_llip) in collected_macs and not cfg.IGNORE_MAC:
+                            transaction.mac = collected_macs[(transaction.interface, transaction.client_llip)].mac
                     else:
                         # shortcut to transactions[identifier]
                         transaction = transactions[identifier]
@@ -205,14 +207,14 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                             transaction.counter = 0
                         else:
                             # client will get answer if its LLIP & MAC is known
-                            if transaction.client_llip not in collected_macs:
+                            if (transaction.interface, transaction.client_llip) not in collected_macs:
                                 if not cfg.IGNORE_MAC:
                                     # complete MAC collection - will make most sense on Linux
                                     # and its native neighborcache access
                                     collect_macs(timer.time)
 
                                     # when still no trace of the client in neighbor cache then send silly signal back
-                                    if transaction.client_llip not in collected_macs:
+                                    if (transaction.interface, transaction.client_llip) not in collected_macs:
                                         # if not known send status code option failure to get
                                         # LLIP/MAC mapping from neighbor cache
                                         # status code 'Success' sounds silly but works best
@@ -223,16 +225,16 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                                         # complete MAC collection
                                         collect_macs(timer.time)
                                         # if client cannot be found in collected MACs
-                                        if transaction.client_llip not in collected_macs:
-                                            if cfg.IGNORE_UNKNOWN_CLIENTS and client_address in requests:
-                                                if requests[client_address].count > 1:
-                                                    requests_blacklist[client_address] = Request(client_address)
+                                        if (transaction.interface, transaction.client_llip) not in collected_macs:
+                                            if cfg.IGNORE_UNKNOWN_CLIENTS and client_key in requests:
+                                                if requests[client_key].count > 1:
+                                                    requests_blacklist[client_key] = Request(client_key)
                                                     log.info(f"Blacklisting unknown client {client_address}")
                                                     return False
 
                                     # try to add client MAC address to transaction object
                                     try:
-                                        transaction.mac = collected_macs[transaction.client_llip].mac
+                                        transaction.mac = collected_macs[(transaction.interface, transaction.client_llip)].mac
                                     except KeyError:
                                         # MAC not yet found :-(
                                         if cfg.LOG_MAC_LLIP:
@@ -241,10 +243,10 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
                             # if finally there is some info about the client or MACs
                             # it plays no role try to answer the request
-                            if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
+                            if (transaction.interface, transaction.client_llip) in collected_macs or cfg.IGNORE_MAC:
                                 if not cfg.IGNORE_MAC:
                                     if transaction.mac == DUMMY_MAC:
-                                        transaction.mac = collected_macs[transaction.client_llip].mac
+                                        transaction.mac = collected_macs[(transaction.interface, transaction.client_llip)].mac
 
                                 # ADVERTISE
                                 # if last request was a SOLICIT send an ADVERTISE (type 2) back

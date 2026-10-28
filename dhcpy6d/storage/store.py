@@ -113,7 +113,7 @@ class Store:
     QUERY_TABLES = ''
 
     # increasing number of SQL schema versions for storage of volatile data
-    VOLATILE_SCHEMA_VERSION = 3
+    VOLATILE_SCHEMA_VERSION = 4
 
     # supported versions of client config database schemas
     CONFIG_SCHEMA_VERSIONS = [1, 2]
@@ -926,20 +926,16 @@ class Store:
                             mac=mac,
                             host_id=host_id)
 
-    def store_mac_llip(self, mac, link_local_ip, now):
-        """
-            store MAC-link-local-ip-mapping
-        """
-        query = f"SELECT mac FROM macs_llips WHERE mac='{mac}'"
-        db_entry = self.query(query)
-        # if known already update timestamp of MAC-link-local-ip-mapping
-        if not db_entry or db_entry == []:
-            query = f"INSERT INTO macs_llips (mac, link_local_ip, last_update) " \
-                    f"VALUES ('{mac}', '{link_local_ip}', '{now}')"
-            self.query(query)
+    def store_mac_llip(self, mac, link_local_ip, now, interface):
+        """Persist a neighbour mapping within its receiving interface."""
+        # Values are learned from the kernel; escape interface names for SQL.
+        interface = interface.replace("'", "''")
+        scope = f"interface='{interface}' AND link_local_ip='{link_local_ip}'"
+        if not self.query(f"SELECT mac FROM {self.table_macs_llips} WHERE {scope}"):
+            self.query(f"INSERT INTO {self.table_macs_llips} (mac, link_local_ip, last_update, interface) "
+                       f"VALUES ('{mac}', '{link_local_ip}', '{now}', '{interface}')")
         else:
-            query = f"UPDATE macs_llips SET link_local_ip = '{link_local_ip}', last_update = '{now}' WHERE mac = '{mac}'"
-            self.query(query)
+            self.query(f"UPDATE {self.table_macs_llips} SET mac='{mac}', last_update='{now}' WHERE {scope}")
 
     @clean_query_answer
     def get_dynamic_prefix(self):
@@ -966,14 +962,14 @@ class Store:
             collect all known MACs and link local addresses from database at startup
             to reduce attempts to read neighbor cache
         """
-        query = f'SELECT link_local_ip, mac, last_update FROM {self.table_macs_llips}'
+        query = f'SELECT link_local_ip, mac, last_update, interface FROM {self.table_macs_llips}'
         answer = self.query(query)
         if answer:
             for m in answer:
                 try:
                     # m[0] is LLIP, m[1] is the matching MAC
-                    # interface is ignored
-                    collected_macs[m[0]] = NeighborCacheRecord(llip=m[0], mac=m[1], now=m[2])
+                    # Link-local addresses are meaningful only within an interface.
+                    collected_macs[(m[3], m[0])] = NeighborCacheRecord(llip=m[0], mac=m[1], now=m[2], interface=m[3])
                 except Exception as err:
                     print(err)
                     traceback.print_exc(file=sys.stdout)

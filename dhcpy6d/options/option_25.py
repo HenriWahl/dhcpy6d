@@ -39,7 +39,7 @@ class Option(OptionTemplate):
         options_answer_part = None
 
         # check if MAC of LLIP is really known
-        if transaction.client_llip in collected_macs or cfg.IGNORE_MAC:
+        if (transaction.interface, transaction.client_llip) in collected_macs or cfg.IGNORE_MAC:
             # collect client information
             if transaction.client is None:
                 transaction.client = Client(transaction)

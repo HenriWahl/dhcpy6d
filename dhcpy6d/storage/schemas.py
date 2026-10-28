@@ -56,7 +56,8 @@ MYSQL_SQLITE['macs_llips'] = '''
                         mac varchar(17) NOT NULL,
                         link_local_ip varchar(39) NOT NULL,
                         last_update bigint NOT NULL,
-                        PRIMARY KEY (mac)
+                        interface varchar(64) NOT NULL,
+                        PRIMARY KEY (interface, link_local_ip)
                         );
                         '''
 MYSQL_SQLITE['prefixes'] = '''
@@ -126,7 +127,8 @@ POSTGRESQL_SCHEMA['macs_llips'] = '''
                                 mac varchar(17) NOT NULL,
                                 link_local_ip varchar(39) NOT NULL,
                                 last_update bigint NOT NULL,
-                                PRIMARY KEY (mac)
+                                interface varchar(64) NOT NULL,
+                                PRIMARY KEY (interface, link_local_ip)
                                 );
                                 '''
 POSTGRESQL_SCHEMA['prefixes'] = '''
@@ -381,3 +383,11 @@ def legacy_adjustments(db):
 
         # All OK
         print("Table 'routes' is OK")
+
+    # Legacy mappings have no interface and cannot safely identify a neighbour.
+    # Rebuild only this disposable cache; leases and prefix routes are retained.
+    if int(db.get_db_version()) < 4:
+        db.query('DROP TABLE IF EXISTS macs_llips')
+        db.query(db.SCHEMAS['macs_llips'])
+        db.query("UPDATE meta SET item_value='4' WHERE item_key='version'")
+        print("Rebuilt interface-scoped MAC/link-local cache (schema 4)")

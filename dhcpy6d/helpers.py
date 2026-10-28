@@ -50,7 +50,7 @@ class Interface:
 class NeighborCacheRecord:
     """
     object for neighbor cache entries to be returned by get_neighbor_cache_linux() and in CollectedMACs
-    .interface is only interesting for real neighbor cache records, to be ignored for collected MACs stored in DB
+    .interface scopes the link-local address, including persisted mappings.
     """
 
     def __init__(self, llip='', mac='', interface='', now=0):

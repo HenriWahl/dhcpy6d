@@ -22,7 +22,8 @@ CREATE TABLE macs_llips (
   mac varchar(17) NOT NULL,
   link_local_ip varchar(39) NOT NULL,
   last_update bigint NOT NULL,
-  PRIMARY KEY (mac)
+  interface varchar(64) NOT NULL,
+  PRIMARY KEY (interface, link_local_ip)
 );
 
 CREATE TABLE prefixes (
@@ -59,4 +60,4 @@ CREATE TABLE routes (
   PRIMARY KEY (prefix)
 );
 
-INSERT INTO meta (item_key, item_value) VALUES ('version', '3');
+INSERT INTO meta (item_key, item_value) VALUES ('version', '4');

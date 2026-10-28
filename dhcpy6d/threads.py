@@ -113,7 +113,7 @@ class TidyUpThread(Thread):
                 for transaction in list(transactions.values()):
                     try:
                         if timer.time > transaction.timestamp + cfg.CLEANING_INTERVAL * 10:
-                            transactions.pop(transaction.client_llip + transaction.id)
+                            transactions.pop((transaction.interface, transaction.client_llip, transaction.id))
                     except Exception as err:
                         log.error(f'TidyUp: transaction {str(err)} has already been deleted')
                         traceback.print_exc(file=sys.stdout)
@@ -148,7 +148,7 @@ class TidyUpThread(Thread):
                         if record.timestamp + 60 * cfg.CLEANING_INTERVAL < timestamp:
                             if cfg.LOG_MAC_LLIP:
                                 log.info(f'deleted mac {record.mac} for llip {colonify_ip6(record.llip)}')
-                            collected_macs.pop(record.llip)
+                            collected_macs.pop((record.interface, record.llip), None)
                     del timestamp
                 time.sleep(cfg.CLEANING_INTERVAL)
         except:

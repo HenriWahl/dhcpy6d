@@ -67,9 +67,10 @@ class Timer:
 # global time variable, synchronized by TimerThread
 timer = Timer()
 
-# dictionary to store transactions - key is transaction ID, value a transaction object
+# Transactions are keyed by (interface, expanded link-local IP, transaction ID).
 transactions = {}
 # collected MAC addresses from clients, mapping to link local IPs
+# Neighbour identity is (interface name, expanded link-local address).
 collected_macs = {}
 
 # queues for queries
