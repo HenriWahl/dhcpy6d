@@ -43,7 +43,7 @@ case "$1" in
     fi
     # 4. adjust file and directory permissions
     chown -R $SERVER_USER:$SERVER_GROUP $SERVER_HOME
-    chmod -R 0770 $SERVER_HOME
+    chmod 0770 $SERVER_HOME
     if [ ! -e /var/log/dhcpy6d.log ]; then
         touch /var/log/dhcpy6d.log
     fi
@@ -52,6 +52,8 @@ case "$1" in
     fi
     chown $SERVER_USER:$SERVER_GROUP /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
     chmod 0660 /var/log/dhcpy6d.log /var/lib/dhcpy6d/volatile.sqlite
+    # Preserve private authentication keys and replay counters across upgrades.
+    python3 /usr/share/dhcpy6d/setup-reconfigure-state "$SERVER_HOME" "$SERVER_USER" "$SERVER_GROUP"
     # 6. add DUID entry to /etc/default/dhcpy6d if not yet existing
     TMPFILE=`mktemp`
     cat /usr/share/dhcpy6d/default/dhcpy6d  > "${TMPFILE}"

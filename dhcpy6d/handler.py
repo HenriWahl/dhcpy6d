@@ -23,6 +23,7 @@ import socketserver
 import sys
 import traceback
 
+from . import reconfigure
 from .client import Client
 from .config import cfg
 from .constants import CONST
@@ -421,12 +422,16 @@ class RequestHandler(socketserver.DatagramRequestHandler):
             # list of options in answer to be logged
             options_answer = []
 
-            # Option 20 reconfigure accept - for client compatibility, actually
-            # not really supported, added here to add to options
-            # https://github.com/HenriWahl/dhcpy6d/issues/64
+            # Echo Reconfigure Accept for client compatibility (issue #64).
+            # When RKAP is enabled, final Reply negotiation is handled below.
             if CONST.OPTION.RECONF_ACCEPT in transaction.options.keys() and \
                 not CONST.OPTION.RECONF_ACCEPT in options_request:
                 options_request.append(CONST.OPTION.RECONF_ACCEPT)
+
+            # RKAP negotiation is added to the final successful Reply below.
+            # Do not emit a duplicate or unconditional Reconfigure Accept there.
+            if reconfigure.service is not None and message_type_response == CONST.MESSAGE.REPLY:
+                options_request = [number for number in options_request if number != CONST.OPTION.RECONF_ACCEPT]
 
             # build all requested options if they are handled
             for number in options_request:
@@ -532,6 +537,13 @@ class RequestHandler(socketserver.DatagramRequestHandler):
 
             # handler
             self.response = binascii.unhexlify(response_string)
+            if reconfigure.service is not None and cfg.REALLY_DO_IT:
+                try:
+                    self.response += reconfigure.service.reply_options(transaction, self.response)
+                except Exception as error:
+                    # A key must be durably recorded before advertising support.
+                    # Ordinary DHCP replies remain available if state storage fails.
+                    log.error(f'Reconfigure state update failed: {error}')
 
         except Exception as err:
             traceback.print_exc(file=sys.stdout)
@@ -578,4 +590,6 @@ class RequestHandler(socketserver.DatagramRequestHandler):
                 cfg.ADDRESSES[a].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
             for p in cfg.PREFIXES:
                 cfg.PREFIXES[p].inject_dynamic_prefix_into_prototype(cfg.PREFIX)
+            if reconfigure.service is not None and cfg.PREFIX:
+                reconfigure.service.trigger()
         log.info(f'Control message \'{" ".join(control_message_clean)}\' received')

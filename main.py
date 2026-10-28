@@ -32,7 +32,7 @@ import pwd
 import os
 import socket
 
-from dhcpy6d import UDPMulticastIPv6
+from dhcpy6d import UDPMulticastIPv6, reconfigure
 from dhcpy6d.config import cfg
 
 from dhcpy6d.globals import (config_answer_queue,
@@ -124,6 +124,16 @@ def run():
     os.setgid(grp.getgrnam(cfg.GROUP).gr_gid)
     os.setuid(pwd.getpwnam(cfg.USER).pw_uid)
 
+    # Open private authentication state as the daemon user, after dropping root.
+    if cfg.RECONFIGURE_STATE_FILE and cfg.REALLY_DO_IT:
+        reconfigure.service = reconfigure.ReconfigureService(
+            cfg.RECONFIGURE_STATE_FILE, cfg.SERVERDUID, udp_server.socket, cfg.INTERFACE, log)
+        # Do not prompt clients while the upstream dynamic prefix is unavailable.
+        patterns = list(cfg.ADDRESSES.values()) + list(cfg.PREFIXES.values())
+        if cfg.PREFIX or not any('$prefix$' in item.PATTERN for item in patterns):
+            reconfigure.service.trigger()
+        reconfigure.service.start()
+
     # log interfaces
     log.info(f'Listening on interfaces: {" ".join(IF_NAME)}')
 
@@ -132,6 +142,10 @@ def run():
         udp_server.serve_forever()
     except KeyboardInterrupt:
         sys.exit(0)
+    finally:
+        if reconfigure.service is not None:
+            reconfigure.service.close()
+        udp_server.server_close()
 
 
 if __name__ == '__main__':

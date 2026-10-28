@@ -103,10 +103,14 @@ fi
 if [ ! -f ${file} ]
     then
     /bin/touch ${file}
-    /bin/chmod 0775 %{_localstatedir}/lib/%{name}
+    /bin/chmod 0770 %{_localstatedir}/lib/%{name}
 fi
 /bin/chown %{dhcpy6d_uid}:%{dhcpy6d_gid} ${file}
 /bin/chmod 0640 ${file}
+
+# Prepare private state without enabling Reconfigure or replacing existing keys.
+%{__python3} %{_datadir}/%{name}/setup-reconfigure-state \
+    %{_localstatedir}/lib/%{name} %{dhcpy6d_uid} %{dhcpy6d_gid}
 
 %preun
 if [ "$1" = "0" ]; then
@@ -146,12 +150,15 @@ fi
 %{_mandir}/man?/*
 %{_sbindir}/%{name}
 %{python3_sitelib}/*dhcpy6*
+%{_datadir}/%{name}/setup-reconfigure-state
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}.conf
 %exclude %{_localstatedir}/log/%{name}.log
 %{_unitdir}/%{name}.service
-%dir %attr(0775,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}
+%dir %attr(0770,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}
 %config(noreplace) %attr(0644,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/volatile.sqlite
+
+%ghost %attr(0600,%{dhcpy6d_uid},%{dhcpy6d_gid}) %{_localstatedir}/lib/%{name}/reconfigure.sqlite
 
 %changelog
 * Fri Jul 24 2020 Henri Wahl <h.wahl@ifw-dresden.de> - 1.0.1-1

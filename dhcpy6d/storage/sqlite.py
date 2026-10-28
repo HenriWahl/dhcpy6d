@@ -47,10 +47,9 @@ class SQLite(Store):
         """
         initialize DB connection
         """
-        # only import if needed
-        if 'sqlite3' not in sys.modules:
-            import sqlite3
-            self.db_module = sqlite3
+        # Each backend instance needs its module even if another user imported it.
+        import sqlite3
+        self.db_module = sqlite3
         try:
             if storage_type == 'volatile':
                 storage = cfg.STORE_SQLITE_VOLATILE

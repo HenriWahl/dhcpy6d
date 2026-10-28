@@ -1,3 +1,4 @@
 man/man8/dhcpy6d.8
 man/man5/dhcpy6d.conf.5
 man/man5/dhcpy6d-clients.conf.5
+man/man7/dhcpy6d-reconfigure.7

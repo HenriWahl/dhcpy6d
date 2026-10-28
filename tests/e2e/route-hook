@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+printf '%s %s %s\n' "$1" "$2" "$3" >> /work/routes.log
+if [ "$1" = up ]; then
+    ip -6 route replace "$2" via "$3" dev srv
+else
+    ip -6 route del "$2" via "$3" dev srv 2>/dev/null || true
+fi

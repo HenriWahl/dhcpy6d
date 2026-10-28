@@ -1,0 +1,64 @@
+name: DHCPv6 interoperability
+
+on:
+  pull_request:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clients:
+    name: DHCPv6 / ${{ matrix.client }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        client: [kea, dhclient, dhcpcd, networkd]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build isolated test image
+        run: docker build -t dhcpy6d-e2e:local -f tests/e2e/Dockerfile .
+      - name: Run real client and relay tests
+        env:
+          E2E_SKIP_BUILD: '1'
+        run: scripts/test-e2e.sh "${{ matrix.client }}"
+      - name: Upload packet captures, logs, versions and JUnit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dhcpv6-${{ matrix.client }}
+          path: e2e-artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
+  packaging:
+    name: Package installation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Debian build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debhelper dh-python fakeroot python3-all python3-setuptools python3-docutils
+      - name: Build Debian package and manual
+        # Git checkouts already contain applied downstream patches. Test the
+        # checked-out binary without trying to reapply a quilt source series.
+        run: |
+          debian/rules clean
+          debian/rules build
+          fakeroot debian/rules binary
+      - name: Build isolated installation-check image
+        run: docker build -t dhcpy6d-packaging-check -f tests/packaging/Dockerfile .
+      - name: Check Debian install/upgrade/purge and RPM scriptlets
+        run: |
+          version="$(dpkg-parsechangelog -SVersion)"
+          package="$(readlink -f "../dhcpy6d_${version#*:}_all.deb")"
+          docker run --rm --network none \
+            --mount "type=bind,src=$PWD,dst=/src,readonly" \
+            --mount "type=bind,src=$package,dst=/tmp/package.deb,readonly" \
+            dhcpy6d-packaging-check sh /src/tests/packaging/check-install.sh /tmp/package.deb

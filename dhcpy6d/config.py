@@ -227,6 +227,9 @@ class Config:
         # restore still valid routes at startup and remove inactive ones
         self.MANAGE_ROUTES_AT_START = 'False'
 
+        # Empty disables authenticated, server-initiated renewals.
+        self.RECONFIGURE_STATE_FILE = ''
+
         # regexp filters for hostnames etc.
         self.FILTERS = {'mac': [], 'duid': [], 'hostname': []}
 

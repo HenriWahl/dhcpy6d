@@ -1,0 +1,47 @@
+#!/usr/bin/python3
+"""Prepare private RKAP state without resetting keys or replay counters."""
+import errno
+import grp
+import os
+import pwd
+import stat
+import sys
+
+
+def prepare_state(directory, user, group):
+    uid = pwd.getpwnam(user).pw_uid
+    gid = grp.getgrnam(group).gr_gid
+    os.makedirs(directory, mode=0o770, exist_ok=True)
+    directory_fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fchown(directory_fd, uid, gid)
+        os.fchmod(directory_fd, 0o770)
+        try:
+            state_fd = os.open('reconfigure.sqlite',
+                os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK,
+                0o600, dir_fd=directory_fd)
+        except OSError as error:
+            if error.errno == errno.ELOOP:
+                raise ValueError('Reconfigure state must be a regular file') from error
+            raise
+        try:
+            info = os.fstat(state_fd)
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise ValueError('Reconfigure state must be a regular file with one link')
+            # Operate only on the opened inode: a daemon-controlled pathname may
+            # be replaced during an upgrade while this script runs as root.
+            os.fchown(state_fd, uid, gid)
+            os.fchmod(state_fd, 0o600)
+        finally:
+            os.close(state_fd)
+    finally:
+        os.close(directory_fd)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 4:
+        sys.exit('usage: setup-reconfigure-state DIRECTORY USER GROUP')
+    try:
+        prepare_state(*sys.argv[1:])
+    except (OSError, KeyError, ValueError) as error:
+        sys.exit(f'Cannot prepare Reconfigure state: {error}')

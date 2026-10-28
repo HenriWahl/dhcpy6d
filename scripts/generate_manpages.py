@@ -15,6 +15,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 MAPPINGS = [
     ("doc/dhcpy6d.rst", "man/man8/dhcpy6d.8"),
+    ("doc/reconfigure.rst", "man/man7/dhcpy6d-reconfigure.7"),
     ("doc/dhcpy6d.conf.rst", "man/man5/dhcpy6d.conf.5"),
     ("doc/dhcpy6d-clients.conf.rst", "man/man5/dhcpy6d-clients.conf.5"),
 ]

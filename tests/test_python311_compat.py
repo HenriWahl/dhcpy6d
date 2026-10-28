@@ -135,3 +135,17 @@ class StoreCloseTest(unittest.TestCase):
         store.cursor.close.assert_called_once_with()
         store.connection.close.assert_called_once_with()
         self.assertFalse(store.connected)
+
+
+class SQLiteImportOrderTest(unittest.TestCase):
+    def test_connects_when_sqlite_is_already_imported(self):
+        import sqlite3
+        from dhcpy6d.storage.sqlite import SQLite
+        from dhcpy6d.config import cfg
+        with mock.patch.object(cfg, 'STORE_SQLITE_CONFIG', ':memory:'):
+            store = SQLite(None, None, storage_type='config')
+            try:
+                self.assertTrue(store.connected)
+                self.assertEqual(store.db_query('SELECT 1'), [(1,)])
+            finally:
+                store.close()

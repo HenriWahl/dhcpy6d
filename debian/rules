@@ -8,7 +8,7 @@ override_dh_auto_build:
 
 override_dh_auto_clean:
 	dh_auto_clean
-	rm -f man/man5/dhcpy6d.conf.5 man/man5/dhcpy6d-clients.conf.5 man/man8/dhcpy6d.8
+	rm -f man/man5/dhcpy6d.conf.5 man/man5/dhcpy6d-clients.conf.5 man/man8/dhcpy6d.8 man/man7/dhcpy6d-reconfigure.7
 
 override_dh_auto_install:
 	dh_auto_install -- --install-args="--install-scripts=/usr/sbin --install-layout=deb"

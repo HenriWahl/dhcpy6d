@@ -13,3 +13,6 @@ include var/log/dhcpy6d.log
 include etc/dhcpy6d.conf
 include etc/logrotate.d/dhcpy6d
 include lib/systemd/system/dhcpy6d.service
+
+include doc/reconfigure.rst
+include scripts/setup-reconfigure-state
