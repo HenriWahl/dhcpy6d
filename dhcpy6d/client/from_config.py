@@ -78,6 +78,9 @@ def from_config(client=None, client_config=None, transaction=None):
 
                 ia_pd = Prefix(prefix=prefix['address'],
                                length=prefix['length'],
+                               category='fixed',
+                               ptype='fixed',
+                               pclass=client.client_class,
                                preferred_lifetime=cfg.PREFERRED_LIFETIME,
                                valid_lifetime=cfg.VALID_LIFETIME,
                                route_link_local=client_config.PREFIX_ROUTE_LINK_LOCAL)

@@ -316,6 +316,9 @@ class PrefixSubstitutionTest(unittest.TestCase):
                 # stale: configured class does not contain this prefix type anymore
                 return ('20010db808388f000000000000000000', '63', 'obsolete', 'default', 1)
 
+            def get_prefix_owner(self, _prefix):
+                return None
+
             def deactivate_prefix(self, prefix):
                 self.deactivated.append(prefix)
 

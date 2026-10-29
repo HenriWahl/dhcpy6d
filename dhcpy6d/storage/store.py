@@ -567,6 +567,26 @@ class Store:
             return answer[0]
         return None
 
+    def get_prefix_owner(self, prefix):
+        """Return the identity and allocation category of a persisted delegation."""
+        answer = self.query(f"SELECT hostname, mac, duid, category FROM {self.table_prefixes} "
+                            f"WHERE prefix = '{prefix}'")
+        return answer[0] if answer else None
+
+    def find_client_config(self, transaction):
+        """Resolve an identity without allocating or renewing any leases."""
+        if not cfg.STORE_CONFIG:
+            return None
+        if cfg.STORE_CONFIG != 'file':
+            self.build_config_from_db(transaction)
+        matches = []
+        for identification in cfg.IDENTIFICATION:
+            hosts = getattr(self, 'get_client_config_by_' + identification)(transaction)
+            if hosts or cfg.IDENTIFICATION_MODE == 'match_all':
+                matches.append(set(hosts or []))
+        candidates = set.intersection(*matches) if matches else set()
+        return candidates.pop() if len(candidates) == 1 else None
+
     def deactivate_prefix(self, prefix):
         """
         mark a persisted prefix inactive so it is not reused as active lease

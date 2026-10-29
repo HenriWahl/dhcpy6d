@@ -16,12 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+from types import SimpleNamespace
+
 from .config import cfg
 from .globals import (route_queue,
                       timer)
 from .helpers import normalize_route_prefix
 from .log import log
-from .storage import volatile_store
+from .storage import config_store, volatile_store
 
 
 class Route:
@@ -89,6 +91,23 @@ def manage_prefixes_routes():
         _prefix, length, ptype, pclass, _active = record
         if pclass not in cfg.CLASSES:
             return True
+        owner = volatile_store.get_prefix_owner(prefix)
+        if owner is not None:
+            hostname, mac, duid, category = owner
+            identity = SimpleNamespace(hostname=hostname, mac=mac, duid=duid,
+                                       client_config_dicts=None)
+            client = config_store.find_client_config(identity)
+            if client is not None and client.CLASS == pclass:
+                expected = normalize_route_prefix(prefix, length)
+                for assignment in client.PREFIX or []:
+                    if str(assignment['length']) == str(length) and \
+                            normalize_route_prefix(assignment['address'], assignment['length']) == expected:
+                        return False
+            # New records identify fixed assignments explicitly. Legacy records
+            # used the generic 'default' type/range category: allow their current
+            # client assignment above before applying the normal pool guard.
+            if category == 'fixed':
+                return True
         if ptype not in cfg.CLASSES[pclass].PREFIXES:
             return True
         if ptype not in cfg.PREFIXES:

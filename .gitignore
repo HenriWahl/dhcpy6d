@@ -26,3 +26,5 @@ debian/*.debhelper.log
 debian/*.substvars
 debian/tmp/
 debian/dhcpy6d/
+
+startup-route-artifacts/
